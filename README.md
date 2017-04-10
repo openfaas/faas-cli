@@ -2,6 +2,8 @@
 
 This CLI can be used to build and deploy functions to FaaS.
 
+> Functions as a Service is a serverless framework for Docker: [Star on Github](https://github.com/alexellis/faas)
+
 **Installation (require Go 1.7 or later)**
 
 ```
