@@ -6,7 +6,11 @@ This CLI can be used to build and deploy functions to FaaS.
 
 ```
 $ cd $GOPATH
-$ mkdir -p src/github.com/alexellis/faas-cli
+$ mkdir -p src/github.com/alexellis/
+$ git clone https://github.com/alexellis/faas-cli
+$ cd faas-cli
+$ go get -d -v
+
 $ go install
 ```
 
