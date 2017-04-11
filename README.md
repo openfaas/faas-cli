@@ -4,18 +4,6 @@ This CLI can be used to build and deploy functions to FaaS.
 
 > Functions as a Service is a serverless framework for Docker: [Star on Github](https://github.com/alexellis/faas)
 
-**Installation (require Go 1.7 or later)**
-
-```
-$ cd $GOPATH
-$ mkdir -p src/github.com/alexellis/
-$ git clone https://github.com/alexellis/faas-cli
-$ cd faas-cli
-$ go get -d -v
-
-$ go install
-```
-
 ### Running the tool
 
 **Build a Docker image:**
@@ -42,6 +30,20 @@ URL: http://localhost:8080/function/hellofunction
 
 **Accessing the function:**
 
+You can pass input with the `-d` flag or `--data-binary @filename.txt` to send a whole file including newlines.
+
 ```
-curl -d "input" http://localhost:8080/function/hellofunction
+$ curl -d '{"hello": "world"}' http://localhost:8080/function/hellofunction
+```
+
+**Installation (require Go 1.7 or later)**
+
+```
+$ cd $GOPATH
+$ mkdir -p src/github.com/alexellis/
+$ git clone https://github.com/alexellis/faas-cli
+$ cd faas-cli
+$ go get -d -v
+
+$ go install
 ```
