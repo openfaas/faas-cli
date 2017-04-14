@@ -5,11 +5,14 @@ RUN chmod +x /usr/bin/fwatchdog
 
 WORKDIR /root/
 
-COPY package.json .
+COPY package.json   .
 
 RUN npm i
-COPY index.js .
-COPY handler.js .
+COPY index.js       .
+COPY function       function
+WORKDIR /root/function
+RUN npm i || :
+WORKDIR /root/
 
 ENV fprocess="node index.js"
 
