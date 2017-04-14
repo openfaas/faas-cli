@@ -1,4 +1,5 @@
 **/node_modules/
 build/
 faas-cli
+*.jpg
 

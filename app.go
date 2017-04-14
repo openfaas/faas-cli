@@ -24,12 +24,14 @@ func main() {
 	var action string
 	var functionName string
 	var gateway string
+        var fprocess string
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
 	flag.StringVar(&action, "action", "", "either build or deploy")
 	flag.StringVar(&functionName, "name", "", "give the name of your deployed function")
 	flag.StringVar(&gateway, "gateway", "http://localhost:8080", "gateway URI - i.e. http://localhost:8080")
+        flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 
 	flag.Parse()
 
@@ -77,9 +79,13 @@ func main() {
 			fmt.Println("Give a -name for your function as it will be deployed on FaaS")
 			return
 		}
+		fprocessTemplate:="node index.js"
+                if len(fprocess) > 0 {
+			fprocessTemplate = fprocess
+                }
 
 		req := requests.CreateFunctionRequest{
-			EnvProcess: "node index.js",
+			EnvProcess: fprocessTemplate,
 			Image:      image,
 			Network:    "func_functions",
 			Service:    functionName,
