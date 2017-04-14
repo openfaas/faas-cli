@@ -8,25 +8,40 @@ This CLI can be used to build and deploy functions to FaaS.
 
 **Build a Docker image:**
 
-This will generate a Docker image for Node.js.
+This will generate a Docker image for a Node.js function using the code in `/samples/info`.
 
 ```
-$ ./faas-cli -action=build -image=alexellis2/hello-function \
-   -name=hello-function -handler=./samples/info
+$ ./faas-cli -action=build \ 
+   -image=alexellis2/hello-function \
+   -name=hello-function \
+   -handler=./samples/info
 
 Building: alexellis2/hello-cli with Docker. Please wait..
 ...
 Image: alexellis2/hello-cli built.
 ```
 
-This will use the handler.js file found in the template/node folder to build a Docker image containing the FaaS watchdog.
+Put your code in the handler.js file, for example:
+
+```
+"use strict"
+
+module.exports = (context, callback) => {
+    console.log("echo - " + context);
+    
+    callback(undefined, {status: "done"});
+}
+```
+
+The CLI will build Docker image containing the FaaS watchdog to handle communication between the gateway and Node.js.
 
 **Deploy the Docker image as a FaaS function:**
 
 Now we can deploy the image as a named function called `hello-function`.
 
 ```
-$ ./faas-cli -action=deploy -image=alexellis2/hello-function \
+$ ./faas-cli -action=deploy \
+   -image=alexellis2/hello-function \
    -name=hello-function
 
 200 OK
