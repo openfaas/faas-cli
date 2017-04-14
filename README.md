@@ -11,7 +11,8 @@ This CLI can be used to build and deploy functions to FaaS.
 This will generate a Docker image for Node.js.
 
 ```
-$ ./faas-cli -action=build -image=alexellis2/hello-function -name=hello-function -handler=./samples/info
+$ ./faas-cli -action=build -image=alexellis2/hello-function \
+   -name=hello-function -handler=./samples/info
 
 Building: alexellis2/hello-cli with Docker. Please wait..
 ...
@@ -25,7 +26,8 @@ This will use the handler.js file found in the template/node folder to build a D
 Now we can deploy the image as a named function called `hello-function`.
 
 ```
-$ ./faas-cli -action=deploy -image=alexellis2/hello-function -name=hello-function
+$ ./faas-cli -action=deploy -image=alexellis2/hello-function \
+   -name=hello-function
 
 200 OK
 
