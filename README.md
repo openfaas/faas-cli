@@ -11,8 +11,10 @@ This CLI can be used to build and deploy functions to FaaS.
 This will generate a Docker image for Node.js.
 
 ```
-$ faas-cli -action=build -image=alexellis2/hello-function
+$ ./faas-cli -action=build -image=alexellis2/hello-function -name=hello-function -handler=./samples/info
+
 Building: alexellis2/hello-cli with Docker. Please wait..
+...
 Image: alexellis2/hello-cli built.
 ```
 
@@ -20,12 +22,14 @@ This will use the handler.js file found in the template/node folder to build a D
 
 **Deploy the Docker image as a FaaS function:**
 
-Now we can deploy the image as `hellofunction`.
+Now we can deploy the image as a named function called `hello-function`.
 
 ```
-$ faas-cli -action=deploy -image=alexellis2/hello-function -name=hellofunction
+$ ./faas-cli -action=deploy -image=alexellis2/hello-function -name=hello-function
+
 200 OK
-URL: http://localhost:8080/function/hellofunction
+
+URL: http://localhost:8080/function/hello-function
 ```
 
 **Accessing the function:**
@@ -33,7 +37,7 @@ URL: http://localhost:8080/function/hellofunction
 You can pass input with the `-d` flag or `--data-binary @filename.txt` to send a whole file including newlines.
 
 ```
-$ curl -d '{"hello": "world"}' http://localhost:8080/function/hellofunction
+$ curl -d '{"hello": "world"}' http://localhost:8080/function/hello-function
 ```
 
 **Installation (require Go 1.7 or later)**
