@@ -10,13 +10,17 @@ This CLI can be used to and deploy functions to FaaS or to build Node.js or Pyth
 
 The tool can be used to create a Docker image to be deployed on FaaS through a template meaning you only have to write a single handler file. The templates currently supported are:
 
-* NodeJS (via handler.js)
+There are two tester scripts included in the repository test_python.sh and test_node.sh - check them out or read on for a detailled explanation.
+
+#### Worked example with Node.js
 
 So if you want to write in another language, just prepare a Dockerfile and build an image manually, like in the [FaaS samples](https://github.com/alexellis/faas/tree/master/sample-functions).
 
 **Build a FaaS function in NodeJS from a template:**
 
 This will generate a Docker image for a Node.js function using the code in `/samples/info`.
+
+* The `faas-cli` can accept a `-lang` option of `python` or `node` and is `node` by default.
 
 ```
 $ ./faas-cli -action=build \ 
