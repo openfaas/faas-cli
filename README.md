@@ -78,12 +78,23 @@ $ curl -d '{"hello": "world"}' http://localhost:8080/function/hello-function
 
 **Installation (require Go 1.7 or later)**
 
+> Here's how to install Go in 60 seconds.
+
+* Grab Go 1.7.x from https://golang.org/dl/
+
+Then after installing run this command or place it in your `$HOME/.bash_profile/`
+
+```
+export GOPATH=$HOME/go
+```
+
+* Now clone / build `faas-cli`:
+
 ```
 $ cd $GOPATH
 $ mkdir -p src/github.com/alexellis/
 $ git clone https://github.com/alexellis/faas-cli
 $ cd faas-cli
 $ go get -d -v
-
-$ go install
+$ go build
 ```
