@@ -1,8 +1,10 @@
 ## faas-cli
 
-This CLI can be used to build and deploy functions to FaaS.
+[![Build Status](https://travis-ci.org/alexellis/faas-cli.svg?branch=master)](https://travis-ci.org/alexellis/faas-cli)
 
-> Functions as a Service is a serverless framework for Docker: [Star on Github](https://github.com/alexellis/faas)
+This CLI can be used to and deploy functions to FaaS or to build Node.js or Python functions from a templates meaning you just write a handler file (handler.py/handler.js). Read on for examples and usage.
+
+> Functions as a Service is a serverless framework for Docker: [Read more on docs.get-faas.com](http://docs.get-faas.com/)
 
 ### Running the tool
 
