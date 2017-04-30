@@ -3,4 +3,4 @@ build/
 faas-cli
 faas-cli-macos
 *.jpg
-
+*.pyc
