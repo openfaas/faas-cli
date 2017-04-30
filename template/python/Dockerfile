@@ -8,6 +8,7 @@ WORKDIR /root/
 COPY index.py           .
 COPY requirements.txt   .
 COPY function           function
+RUN touch ./function/__init__.py
 RUN pip install -r requirements.txt
 
 ENV fprocess="python index.py"
@@ -15,4 +16,3 @@ ENV fprocess="python index.py"
 HEALTHCHECK --interval=1s CMD [ -e /tmp/.lock ] || exit 1
 
 CMD ["fwatchdog"]
-

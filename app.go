@@ -86,9 +86,14 @@ func main() {
 			fmt.Println("Give a -name for your function as it will be deployed on FaaS")
 			return
 		}
+
+		// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 		fprocessTemplate := "node index.js"
 		if len(fprocess) > 0 {
 			fprocessTemplate = fprocess
+		}
+		if language == "python" {
+			fprocessTemplate = "python index.py"
 		}
 
 		req := requests.CreateFunctionRequest{
