@@ -1,8 +1,11 @@
 import requests
 
 def print_url(url):
-    r =  requests.get(url)
-    print(url +" => " + str(r.status_code))
+    try:
+        r =  requests.get(url,timeout = 1)
+        print(url +" => " + str(r.status_code))
+    except:
+        print("Timed out trying to reach URL.")
 
 def handle(req):
     print("Handle this -> " + req)
@@ -11,3 +14,5 @@ def handle(req):
         return
     
     print_url(req)
+
+# handle("http://faaster.io")
