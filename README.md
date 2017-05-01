@@ -111,8 +111,8 @@ export GOPATH=$HOME/go
 * Now clone / build `faas-cli`:
 
 ```
-$ cd $GOPATH
-$ mkdir -p src/github.com/alexellis/
+$ mkdir -p $GOPATH/src/github.com/alexellis/
+$ cd $GOPATH/src/github.com/alexellis/
 $ git clone https://github.com/alexellis/faas-cli
 $ cd faas-cli
 $ go get -d -v
