@@ -102,7 +102,7 @@ This CLI can build and deploy templated functions, so it's best if you have FaaS
 
 * Grab Go 1.7.x from https://golang.org/dl/
 
-Then after installing run this command or place it in your `$HOME/.bash_profile/`
+Then after installing run this command or place it in your `$HOME/.bash_profile`
 
 ```
 export GOPATH=$HOME/go
