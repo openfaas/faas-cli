@@ -92,6 +92,10 @@ $ uname -a | curl http://localhost:8080/function/hello-function --data-binary @-
 
 Install Docker because it is used to build Docker images if you create new functions.
 
+* FaaS - deployed and live
+
+This CLI can build and deploy templated functions, so it's best if you have FaaS started up on your laptop. Head over to http://docs.get-faas.com/ and get up and running with a sample stack in 60 seconds.
+
 * Golang
 
 > Here's how to install Go in 60 seconds.
