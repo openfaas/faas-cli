@@ -60,7 +60,7 @@ func main() {
 
 		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
 
-		builder := strings.Split(fmt.Sprintf("docker build -t %s .", image), " ")
+		builder := strings.Split(fmt.Sprintf("docker build --no-cache -t %s .", image), " ")
 		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
 			builder = strings.Split(fmt.Sprintf("docker build --build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
 		}
@@ -134,7 +134,13 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		exec.Command("cp", "./template/python/requirements.txt", tempPath).Run()
 	}
 
+        fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"/function")
 	exec.Command("mkdir", "-p", tempPath+"/function").Run()
-	exec.Command("cp", "-rf", handler+"/", tempPath+"/function/").Run()
+	if language== "node" {
+		exec.Command("cp", "-rf", handler+"/", tempPath+"/function").Run()
+	} else if language == "python" {
+		exec.Command("cp", handler+"/handler.py", tempPath+"/function/").Run()
+		exec.Command("cp", handler+"/requirements.txt", tempPath+"/function/").Run()
+	}
 	return tempPath
 }
