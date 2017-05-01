@@ -86,7 +86,7 @@ $ curl --data-binary @README.md http://localhost:8080/function/hello-function
 $ uname -a | curl http://localhost:8080/function/hello-function --data-binary @-
 ```
 
-**Installation/pre-reqs**
+### Installation / pre-requirements
 
 * Docker
 
