@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/alexellis/faas-cli.svg?branch=master)](https://travis-ci.org/alexellis/faas-cli)
 
-This CLI can be used to and deploy functions to FaaS or to build Node.js or Python functions from a templates meaning you just write a handler file (handler.py/handler.js). Read on for examples and usage.
+This experimental CLI can be used to and deploy functions to FaaS or to build Node.js or Python functions from a templates meaning you just write a handler file (handler.py/handler.js). Read on for examples and usage.
 
 > Functions as a Service is a serverless framework for Docker: [Read more on docs.get-faas.com](http://docs.get-faas.com/)
 
@@ -23,10 +23,10 @@ This will generate a Docker image for a Node.js function using the code in `/sam
 * The `faas-cli` can accept a `-lang` option of `python` or `node` and is `node` by default.
 
 ```
-$ ./faas-cli -action=build \ 
-   -image=alexellis2/hello-function \
-   -name=hello-function \
-   -handler=./samples/info
+   $ ./faas-cli -action=build \
+      -image=alexellis2/hello-function \
+      -name=hello-function \
+      -handler=./sample/info
 
 Building: alexellis2/hello-cli with Docker. Please wait..
 ...
@@ -65,18 +65,34 @@ URL: http://localhost:8080/function/hello-function
 
 > This tool can be used to deploy any Docker image as a FaaS function, as long as it includes the watchdog binary as the `CMD` or `ENTRYPOINT` of the image.
 
+*Deploy remotely*
+
+You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `-gateway=http://remote-site.com:8080`
+
 **Accessing the function with `curl`**
 
 You can initiate a HTTP POST via `curl`:
 
 * with the `-d` flag i.e. `-d "my data here"` 
 * or with `--data-binary @filename.txt` to send a whole file including newlines
+* if you want to pass input from STDIN then use `--data-binary @-`
 
 ```
 $ curl -d '{"hello": "world"}' http://localhost:8080/function/hello-function
+{ nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
+
+$ curl --data-binary @README.md http://localhost:8080/function/hello-function
+
+$ uname -a | curl http://localhost:8080/function/hello-function --data-binary @-
 ```
 
-**Installation (require Go 1.7 or later)**
+**Installation/pre-reqs**
+
+* Docker
+
+Install Docker because it is used to build Docker images if you create new functions.
+
+* Golang
 
 > Here's how to install Go in 60 seconds.
 
