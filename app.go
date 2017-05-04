@@ -69,15 +69,13 @@ func main() {
 		targetCmd := exec.Command(builder[0], builder[1:]...)
 		targetCmd.Dir = tempPath
 		targetCmd.Stdout = os.Stdout
-
-		var stderr bytes.Buffer
-		targetCmd.Stderr = &stderr
+		targetCmd.Stderr = os.Stderr
 		targetCmd.Start()
+
 		cmdErr := targetCmd.Wait()
 
 		if cmdErr != nil {
 			fmt.Printf("Error: %s\n", cmdErr)
-			fmt.Printf(stderr.String())
 		}
 
 		fmt.Printf("Image: %s built.\n", image)
