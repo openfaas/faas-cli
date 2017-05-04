@@ -1,3 +1,6 @@
+// Copyright (c) Alex Ellis 2017. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 package main
 
 import (
@@ -70,13 +73,17 @@ func main() {
 		fmt.Println(strings.Join(builder, " "))
 		targetCmd := exec.Command(builder[0], builder[1:]...)
 		targetCmd.Dir = tempPath
-		cmdOutput, cmdErr := targetCmd.CombinedOutput()
+		targetCmd.Stdout = os.Stdout
+		targetCmd.Stderr = os.Stderr
+		//cmdOutput, cmdErr := targetCmd.CombinedOutput()
 
-		if cmdErr != nil {
-			fmt.Printf("Error: %s\n" + cmdErr.Error())
-		}
+		//if cmdErr != nil {
+		//	fmt.Printf("Error: %s\n" + cmdErr.Error())
+		//}
+		targetCmd.Start()
+		targetCmd.Wait()
 
-		fmt.Println(string(cmdOutput))
+		//fmt.Println(string(cmdOutput))
 
 		fmt.Printf("Image: %s built.\n", image)
 	} else if action == "deploy" {
