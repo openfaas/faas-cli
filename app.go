@@ -26,7 +26,7 @@ func main() {
 	var gateway string
 	var fprocess string
 	var language string
-    var replace bool
+	var replace bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -35,7 +35,7 @@ func main() {
 	flag.StringVar(&gateway, "gateway", "http://localhost:8080", "gateway URI - i.e. http://localhost:8080")
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 	flag.StringVar(&language, "lang", "node", "programming language template, default is: node")
-    flag.BoolVar(&replace, "replace", true, "replace any existing function")
+	flag.BoolVar(&replace, "replace", true, "replace any existing function")
 
 	flag.Parse()
 
@@ -98,10 +98,10 @@ func main() {
 			fprocessTemplate = "python index.py"
 		}
 
-        // TODO: Extract to function
-        if replace {
-          deleteFunction(gateway, functionName) 
-        }
+		// TODO: Extract to function
+		if replace {
+			deleteFunction(gateway, functionName)
+		}
 
 		req := requests.CreateFunctionRequest{
 			EnvProcess: fprocessTemplate,
@@ -112,7 +112,7 @@ func main() {
 
 		reqBytes, _ := json.Marshal(&req)
 		reader := bytes.NewReader(reqBytes)
-        res, err := http.Post(gateway+"/system/functions", "application/json", reader)
+		res, err := http.Post(gateway+"/system/functions", "application/json", reader)
 		if err != nil {
 			fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
 			fmt.Println(err)
@@ -126,27 +126,26 @@ func main() {
 }
 
 func deleteFunction(gateway string, functionName string) {
-     delReq := requests.DeleteFunctionRequest{ FunctionName: functionName }
-    		reqBytes, _ := json.Marshal(&delReq)
-    		reader := bytes.NewReader(reqBytes)
-	
-            c := http.Client{}
-            req, _ := http.NewRequest("DELETE", gateway + "/system/functions", reader)
-            req.Header.Set("Content-Type", "application/json")
-            delRes, delErr:= c.Do(req)
+	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
+	reqBytes, _ := json.Marshal(&delReq)
+	reader := bytes.NewReader(reqBytes)
 
-            if(delErr!=nil) {
-                fmt.Println(delErr.Error())
-            }
-            switch delRes.StatusCode {
-                case 200:
-                    fmt.Println("Removing old service.")
-                case 404:
-                    fmt.Println("No existing service to remove")
+	c := http.Client{}
+	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
+	req.Header.Set("Content-Type", "application/json")
+	delRes, delErr := c.Do(req)
 
-            }
+	if delErr != nil {
+		fmt.Println(delErr.Error())
+	}
+	switch delRes.StatusCode {
+	case 200:
+		fmt.Println("Removing old service.")
+	case 404:
+		fmt.Println("No existing service to remove")
+
+	}
 }
-
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
 func createBuildTemplate(functionName string, handler string, language string) string {
