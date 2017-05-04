@@ -68,13 +68,17 @@ func main() {
 		fmt.Println(strings.Join(builder, " "))
 		targetCmd := exec.Command(builder[0], builder[1:]...)
 		targetCmd.Dir = tempPath
-		cmdOutput, cmdErr := targetCmd.CombinedOutput()
+		targetCmd.Stdout = os.Stdout
+
+		var stderr bytes.Buffer
+		targetCmd.Stderr = &stderr
+		targetCmd.Start()
+		cmdErr := targetCmd.Wait()
 
 		if cmdErr != nil {
-			fmt.Printf("Error: %s\n" + cmdErr.Error())
+			fmt.Printf("Error: %s\n", cmdErr)
+			fmt.Printf(stderr.String())
 		}
-
-		fmt.Println(string(cmdOutput))
 
 		fmt.Printf("Image: %s built.\n", image)
 	} else if action == "deploy" {
