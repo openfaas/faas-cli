@@ -1,3 +1,6 @@
+// Copyright (c) Alex Ellis 2017. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 package main
 
 import (
@@ -26,6 +29,7 @@ func main() {
 	var gateway string
 	var fprocess string
 	var language string
+	var replace bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -34,6 +38,7 @@ func main() {
 	flag.StringVar(&gateway, "gateway", "http://localhost:8080", "gateway URI - i.e. http://localhost:8080")
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 	flag.StringVar(&language, "lang", "node", "programming language template, default is: node")
+	flag.BoolVar(&replace, "replace", true, "replace any existing function")
 
 	flag.Parse()
 
@@ -77,7 +82,7 @@ func main() {
 		if cmdErr != nil {
 			fmt.Printf("Error: %s\n", cmdErr)
 		}
-
+    
 		fmt.Printf("Image: %s built.\n", image)
 	} else if action == "deploy" {
 		if len(image) == 0 {
@@ -98,6 +103,11 @@ func main() {
 			fprocessTemplate = "python index.py"
 		}
 
+		// TODO: Extract to function
+		if replace {
+			deleteFunction(gateway, functionName)
+		}
+
 		req := requests.CreateFunctionRequest{
 			EnvProcess: fprocessTemplate,
 			Image:      image,
@@ -116,6 +126,28 @@ func main() {
 		fmt.Println(res.Status)
 		deployedUrl := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
 		fmt.Println(deployedUrl)
+
+	}
+}
+
+func deleteFunction(gateway string, functionName string) {
+	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
+	reqBytes, _ := json.Marshal(&delReq)
+	reader := bytes.NewReader(reqBytes)
+
+	c := http.Client{}
+	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
+	req.Header.Set("Content-Type", "application/json")
+	delRes, delErr := c.Do(req)
+
+	if delErr != nil {
+		fmt.Println(delErr.Error())
+	}
+	switch delRes.StatusCode {
+	case 200:
+		fmt.Println("Removing old service.")
+	case 404:
+		fmt.Println("No existing service to remove")
 
 	}
 }

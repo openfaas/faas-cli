@@ -86,6 +86,13 @@ $ curl --data-binary @README.md http://localhost:8080/function/hello-function
 $ uname -a | curl http://localhost:8080/function/hello-function --data-binary @-
 ```
 
+### License and contributing
+
+This project is part of the FaaS project licensed under the MIT License.
+
+For more details see the [Contributing guide](https://github.com/alexellis/faas-cli/blob/master/CONTRIBUTING.md).
+
+
 ### Installation / pre-requirements
 
 * Docker
