@@ -14,4 +14,5 @@ before_script:
 script:
   - go get -d -v
   - go build
+  - build_samples.sh
 #  - ./test_python.sh # requires a deployed FaaS

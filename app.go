@@ -143,7 +143,6 @@ func deleteFunction(gateway string, functionName string) {
 		fmt.Println("Removing old service.")
 	case 404:
 		fmt.Println("No existing service to remove")
-
 	}
 }
 
