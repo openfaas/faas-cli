@@ -32,6 +32,7 @@ func main() {
 	var fprocess string
 	var language string
 	var replace bool
+	var nocache bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -41,6 +42,7 @@ func main() {
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 	flag.StringVar(&language, "lang", "node", "programming language template, default is: node")
 	flag.BoolVar(&replace, "replace", true, "replace any existing function")
+	flag.BoolVar(&nocache, "no-cache", false, "do not use Docker's build cache")
 
 	flag.Parse()
 
@@ -69,9 +71,14 @@ func main() {
 
 			fmt.Printf("Building: %s with Docker. Please wait..\n", image)
 
-			builder := strings.Split(fmt.Sprintf("docker build --no-cache -t %s .", image), " ")
+			cacheFlag := ""
+			if nocache {
+				cacheFlag = " --no-cache"
+			}
+
+			builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
 			if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
-				builder = strings.Split(fmt.Sprintf("docker build --build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+				builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
 			}
 
 			fmt.Println(strings.Join(builder, " "))
