@@ -47,7 +47,7 @@ module.exports = (context, callback) => {
 }
 ```
 
-The CLI will thenn build a Docker image containing the FaaS watchdog and a bootstrap file to invoke your NodeJS function.
+The CLI will then build a Docker image containing the FaaS watchdog and a bootstrap file to invoke your NodeJS function.
 
 **Deploy the Docker image as a FaaS function:**
 
