@@ -6,6 +6,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os/exec"
 	"strings"
 
@@ -30,6 +32,7 @@ func main() {
 	var fprocess string
 	var language string
 	var replace bool
+	var nocache bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -39,6 +42,7 @@ func main() {
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 	flag.StringVar(&language, "lang", "node", "programming language template, default is: node")
 	flag.BoolVar(&replace, "replace", true, "replace any existing function")
+	flag.BoolVar(&nocache, "no-cache", false, "do not use Docker's build cache")
 
 	flag.Parse()
 
@@ -61,29 +65,27 @@ func main() {
 			return
 		}
 
-		tempPath := createBuildTemplate(functionName, handler, language)
+		switch language {
+		case "node", "python":
+			tempPath := createBuildTemplate(functionName, handler, language)
 
-		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
+			fmt.Printf("Building: %s with Docker. Please wait..\n", image)
 
-		builder := strings.Split(fmt.Sprintf("docker build -t %s .", image), " ")
-		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
-			builder = strings.Split(fmt.Sprintf("docker build --build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+			cacheFlag := ""
+			if nocache {
+				cacheFlag = " --no-cache"
+			}
+
+			builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
+			if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
+				builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+			}
+
+			fmt.Println(strings.Join(builder, " "))
+			execBuild(tempPath, builder)
+		default:
+			log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
 		}
-
-		fmt.Println(strings.Join(builder, " "))
-		targetCmd := exec.Command(builder[0], builder[1:]...)
-		targetCmd.Dir = tempPath
-		targetCmd.Stdout = os.Stdout
-		targetCmd.Stderr = os.Stderr
-		//cmdOutput, cmdErr := targetCmd.CombinedOutput()
-
-		//if cmdErr != nil {
-		//	fmt.Printf("Error: %s\n" + cmdErr.Error())
-		//}
-		targetCmd.Start()
-		targetCmd.Wait()
-
-		//fmt.Println(string(cmdOutput))
 
 		fmt.Printf("Image: %s built.\n", image)
 	} else if action == "deploy" {
@@ -105,7 +107,6 @@ func main() {
 			fprocessTemplate = "python index.py"
 		}
 
-		// TODO: Extract to function
 		if replace {
 			deleteFunction(gateway, functionName)
 		}
@@ -128,7 +129,6 @@ func main() {
 		fmt.Println(res.Status)
 		deployedUrl := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
 		fmt.Println(deployedUrl)
-
 	}
 }
 
@@ -150,27 +150,68 @@ func deleteFunction(gateway string, functionName string) {
 		fmt.Println("Removing old service.")
 	case 404:
 		fmt.Println("No existing service to remove")
-
 	}
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
 func createBuildTemplate(functionName string, handler string, language string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Creating temporary folder: %s\n", tempPath)
-	exec.Command("mkdir", "-p", tempPath).Run()
+	fmt.Printf("Clearing temporary folder: %s\n", tempPath)
 
-	if language == "node" {
-		exec.Command("cp", "./template/node/index.js", tempPath).Run()
-		exec.Command("cp", "./template/node/Dockerfile", tempPath).Run()
-		exec.Command("cp", "./template/node/package.json", tempPath).Run()
-	} else if language == "python" {
-		exec.Command("cp", "./template/python/index.py", tempPath).Run()
-		exec.Command("cp", "./template/python/Dockerfile", tempPath).Run()
-		exec.Command("cp", "./template/python/requirements.txt", tempPath).Run()
+	clearErr := os.RemoveAll(tempPath)
+	if clearErr != nil {
+		fmt.Printf("Error clearing down temporary build folder %s\n", tempPath)
 	}
 
-	exec.Command("mkdir", "-p", tempPath+"/function").Run()
-	exec.Command("cp", "-rf", handler+"/", tempPath+"/function/").Run()
+	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
+
+	functionPath := tempPath + "/function"
+	mkdirErr := os.MkdirAll(functionPath, 0700)
+	if mkdirErr != nil {
+		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
+	}
+
+	// Drop in template
+	copyFiles("./template/"+language, tempPath)
+
+	// Overlay in user-function
+	copyFiles(handler, tempPath+"function/")
+
 	return tempPath
+}
+
+func copyFiles(path string, destination string) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if file.IsDir() == false {
+			cp(path+"/"+file.Name(), destination+file.Name())
+		}
+	}
+}
+
+func cp(src string, destination string) error {
+	fmt.Printf("cp - %s %s\n", src, destination)
+	memoryBuffer, readErr := ioutil.ReadFile(src)
+	if readErr != nil {
+		return fmt.Errorf("Error reading source file: %s\n" + readErr.Error())
+	}
+	writeErr := ioutil.WriteFile(destination, memoryBuffer, 0660)
+	if writeErr != nil {
+		return fmt.Errorf("Error writing file: %s\n" + writeErr.Error())
+	}
+
+	return nil
+}
+
+func execBuild(tempPath string, builder []string) {
+	targetCmd := exec.Command(builder[0], builder[1:]...)
+	targetCmd.Dir = tempPath
+	targetCmd.Stdout = os.Stdout
+	targetCmd.Stderr = os.Stderr
+	targetCmd.Start()
+	targetCmd.Wait()
 }
