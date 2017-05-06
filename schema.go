@@ -17,6 +17,8 @@ type Function struct {
 
 	// Image Docker image name
 	Image string `yaml:"image"`
+
+	FProcess string `yaml:"fprocess"`
 }
 
 // Services root level YAML file to define FaaS function-set

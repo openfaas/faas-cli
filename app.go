@@ -69,8 +69,6 @@ func main() {
 			return
 		}
 
-		fmt.Println(services.Functions["urlPing"].Name)
-		return
 	}
 
 	if len(action) == 0 {
@@ -82,7 +80,7 @@ func main() {
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
 				function.Name = k
-				fmt.Println(k, function)
+				// fmt.Println(k, function)
 				fmt.Printf("Building: %s.\n", function.Name)
 				buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
 			}
@@ -102,47 +100,62 @@ func main() {
 			buildImage(image, handler, functionName, language, nocache)
 		}
 	} else if action == "deploy" {
-		if len(image) == 0 {
-			fmt.Println("Give an image name to be deployed.")
-			return
-		}
-		if len(functionName) == 0 {
-			fmt.Println("Give a -name for your function as it will be deployed on FaaS")
-			return
-		}
+		if len(services.Functions) > 0 {
+			for k, function := range services.Functions {
+				function.Name = k
+				// fmt.Println(k, function)
+				fmt.Printf("Deploying: %s.\n", function.Name)
 
-		// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
-		fprocessTemplate := "node index.js"
-		if len(fprocess) > 0 {
-			fprocessTemplate = fprocess
+				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace)
+			}
+		} else {
+			if len(image) == 0 {
+				fmt.Println("Give an image name to be deployed.")
+				return
+			}
+			if len(functionName) == 0 {
+				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
+				return
+			}
+			deployFunction(fprocess, gateway, functionName, image, language, replace)
 		}
-		if language == "python" {
-			fprocessTemplate = "python index.py"
-		}
-
-		if replace {
-			deleteFunction(gateway, functionName)
-		}
-
-		req := requests.CreateFunctionRequest{
-			EnvProcess: fprocessTemplate,
-			Image:      image,
-			Network:    "func_functions",
-			Service:    functionName,
-		}
-
-		reqBytes, _ := json.Marshal(&req)
-		reader := bytes.NewReader(reqBytes)
-		res, err := http.Post(gateway+"/system/functions", "application/json", reader)
-		if err != nil {
-			fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(res.Status)
-		deployedUrl := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
-		fmt.Println(deployedUrl)
 	}
+}
+
+func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool) {
+
+	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
+	fprocessTemplate := "node index.js"
+	if len(fprocess) > 0 {
+		fprocessTemplate = fprocess
+	}
+	if language == "python" {
+		fprocessTemplate = "python index.py"
+	}
+
+	if replace {
+		deleteFunction(gateway, functionName)
+	}
+
+	req := requests.CreateFunctionRequest{
+		EnvProcess: fprocessTemplate,
+		Image:      image,
+		Network:    "func_functions",
+		Service:    functionName,
+	}
+
+	reqBytes, _ := json.Marshal(&req)
+	reader := bytes.NewReader(reqBytes)
+	res, err := http.Post(gateway+"/system/functions", "application/json", reader)
+	if err != nil {
+		fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(res.Status)
+	deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
+	fmt.Println(deployedURL)
 }
 
 func deleteFunction(gateway string, functionName string) {
