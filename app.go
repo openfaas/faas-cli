@@ -11,6 +11,8 @@ import (
 	"os/exec"
 	"strings"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"net/http"
 
 	"encoding/json"
@@ -33,6 +35,7 @@ func main() {
 	var language string
 	var replace bool
 	var nocache bool
+	var yamlFile string
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -44,7 +47,31 @@ func main() {
 	flag.BoolVar(&replace, "replace", true, "replace any existing function")
 	flag.BoolVar(&nocache, "no-cache", false, "do not use Docker's build cache")
 
+	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
+
 	flag.Parse()
+
+	var services Services
+	if len(yamlFile) > 0 {
+		fileData, err := ioutil.ReadFile(yamlFile)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err.Error())
+			return
+		}
+		err = yaml.Unmarshal(fileData, &services)
+		if err != nil {
+			fmt.Printf("Error with YAML file: %s\n", err.Error())
+			return
+		}
+
+		if services.Provider.Name != "faas" {
+			fmt.Println("'faas' is the only valid provider for the faas-cli.")
+			return
+		}
+
+		fmt.Println(services.Functions["urlPing"].Name)
+		return
+	}
 
 	if len(action) == 0 {
 		fmt.Println("give either -action= build or deploy")
@@ -52,42 +79,28 @@ func main() {
 	}
 
 	if action == "build" {
-		if len(image) == 0 {
-			fmt.Println("Give a valid -image name for your Docker image.")
-			return
-		}
-		if len(handler) == 0 {
-			fmt.Println("Please give the full path to your function's handler.")
-			return
-		}
-		if len(functionName) == 0 {
-			fmt.Println("Please give the deployed -name of your function")
-			return
-		}
-
-		switch language {
-		case "node", "python":
-			tempPath := createBuildTemplate(functionName, handler, language)
-
-			fmt.Printf("Building: %s with Docker. Please wait..\n", image)
-
-			cacheFlag := ""
-			if nocache {
-				cacheFlag = " --no-cache"
+		if len(services.Functions) > 0 {
+			for k, function := range services.Functions {
+				function.Name = k
+				fmt.Println(k, function)
+				fmt.Printf("Building: %s.\n", function.Name)
+				buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
 			}
-
-			builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
-			if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
-				builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+		} else {
+			if len(image) == 0 {
+				fmt.Println("Give a valid -image name for your Docker image.")
+				return
 			}
-
-			fmt.Println(strings.Join(builder, " "))
-			execBuild(tempPath, builder)
-		default:
-			log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+			if len(handler) == 0 {
+				fmt.Println("Please give the full path to your function's handler.")
+				return
+			}
+			if len(functionName) == 0 {
+				fmt.Println("Please give the deployed -name of your function")
+				return
+			}
+			buildImage(image, handler, functionName, language, nocache)
 		}
-
-		fmt.Printf("Image: %s built.\n", image)
 	} else if action == "deploy" {
 		if len(image) == 0 {
 			fmt.Println("Give an image name to be deployed.")
@@ -151,6 +164,33 @@ func deleteFunction(gateway string, functionName string) {
 	case 404:
 		fmt.Println("No existing service to remove")
 	}
+}
+
+func buildImage(image string, handler string, functionName string, language string, nocache bool) {
+
+	switch language {
+	case "node", "python":
+		tempPath := createBuildTemplate(functionName, handler, language)
+
+		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
+
+		cacheFlag := ""
+		if nocache {
+			cacheFlag = " --no-cache"
+		}
+
+		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
+		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
+			builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+		}
+
+		fmt.Println(strings.Join(builder, " "))
+		execBuild(tempPath, builder)
+	default:
+		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+	}
+
+	fmt.Printf("Image: %s built.\n", image)
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
