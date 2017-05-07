@@ -106,7 +106,7 @@ func main() {
 				// fmt.Println(k, function)
 				fmt.Printf("Deploying: %s.\n", function.Name)
 
-				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, []string{})
+				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment)
 			}
 		} else {
 			if len(image) == 0 {
@@ -117,13 +117,13 @@ func main() {
 				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
 				return
 			}
-
-			deployFunction(fprocess, gateway, functionName, image, language, replace, []string{})
+			var envs map[string]string
+			deployFunction(fprocess, gateway, functionName, image, language, replace, envs)
 		}
 	}
 }
 
-func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars []string) {
+func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	fprocessTemplate := "node index.js"
@@ -143,6 +143,7 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 		Image:      image,
 		Network:    "func_functions",
 		Service:    functionName,
+		EnvVars:    envVars,
 	}
 
 	reqBytes, _ := json.Marshal(&req)
@@ -225,6 +226,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
 
+	// TODO: index folders and copy everything from template, rather than set folders.
 	// Drop in template
 	copyFiles("./template/"+language, tempPath)
 	copyFiles("./template/"+language+"/function", tempPath+"function/")
