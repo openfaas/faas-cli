@@ -106,7 +106,7 @@ func main() {
 				// fmt.Println(k, function)
 				fmt.Printf("Deploying: %s.\n", function.Name)
 
-				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace)
+				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, []string{})
 			}
 		} else {
 			if len(image) == 0 {
@@ -117,12 +117,13 @@ func main() {
 				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
 				return
 			}
-			deployFunction(fprocess, gateway, functionName, image, language, replace)
+
+			deployFunction(fprocess, gateway, functionName, image, language, replace, []string{})
 		}
 	}
 }
 
-func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool) {
+func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars []string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	fprocessTemplate := "node index.js"
@@ -226,6 +227,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 
 	// Drop in template
 	copyFiles("./template/"+language, tempPath)
+	copyFiles("./template/"+language+"/function", tempPath)
 
 	// Overlay in user-function
 	copyFiles(handler, tempPath+"function/")
