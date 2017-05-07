@@ -19,6 +19,8 @@ type Function struct {
 	Image string `yaml:"image"`
 
 	FProcess string `yaml:"fprocess"`
+
+	Environment map[string]string `yaml:"environment"`
 }
 
 // Services root level YAML file to define FaaS function-set
