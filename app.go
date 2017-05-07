@@ -227,7 +227,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 
 	// Drop in template
 	copyFiles("./template/"+language, tempPath)
-	copyFiles("./template/"+language+"/function", tempPath)
+	copyFiles("./template/"+language+"/function", tempPath+"function/")
 
 	// Overlay in user-function
 	copyFiles(handler, tempPath+"function/")
