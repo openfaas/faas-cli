@@ -8,9 +8,11 @@ This experimental CLI can be used to and deploy functions to FaaS or to build No
 
 ### Running the tool
 
-The tool can be used to create a Docker image to be deployed on FaaS through a template meaning you only have to write a single handler file. The templates currently supported are:
+The tool can be used to create a Docker image to be deployed on FaaS through a template meaning you only have to write a single handler file. The templates currently supported are: node and python, however you can create a FaaS function out of any process.
 
 There are two tester scripts included in the repository test_python.sh and test_node.sh - check them out or read on for a detailled explanation.
+
+*Update: read-on for YAML support.*
 
 #### Worked example with Node.js
 
@@ -68,6 +70,44 @@ URL: http://localhost:8080/function/hello-function
 *Deploy remotely*
 
 You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `-gateway=http://remote-site.com:8080`
+
+**Making use of YAML**
+
+You can also make use of YAML to manage one or more functions in the same file, and reduce the amount of typing required.
+
+Here's an example yaml file for the samples:
+
+```
+provider:
+  name: faas
+  gateway: http://localhost:8080
+
+functions:
+  captainsList:
+    lang: node
+    handler: ./sample/getCaptains
+    image: alexellis2/faas-getcaptains
+
+  urlPing:
+    lang: python
+    handler: ./sample/py
+    image: alexellis2/faas-urlping
+```
+
+You can run `./faas-cli -action build -yaml ./test.yml` followed by `./faas-cli -action build -yaml ./test.yml`
+
+Possible entries for functions are:
+
+```
+functions:
+  deployed_function_name:
+    lang: node or python (optional)
+    handler: ./path/to/handler (optional)
+    image: docker-image-name
+    environment:
+      env1: value1
+      env2: "value2"
+```
 
 **Accessing the function with `curl`**
 
