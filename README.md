@@ -61,6 +61,23 @@ functions:
 
 Use environmental variables for setting tokens and configuration.
 
+**Accessing the function with `curl`**
+
+You can initiate a HTTP POST via `curl`:
+
+* with the `-d` flag i.e. `-d "my data here"` 
+* or with `--data-binary @filename.txt` to send a whole file including newlines
+* if you want to pass input from STDIN then use `--data-binary @-`
+
+```
+$ curl -d '{"hello": "world"}' http://localhost:8080/function/node_info
+{ nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
+
+$ curl --data-binary @README.md http://localhost:8080/function/node_info
+
+$ uname -a | curl http://localhost:8080/function/node_info --data-binary @-
+```
+
 *Read on for manual CLI instructions.*
 
 ### Installation / pre-requirements
@@ -162,58 +179,3 @@ URL: http://localhost:8080/function/node_info
 *Deploy remotely*
 
 You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `-gateway=http://remote-site.com:8080`
-
-**Making use of YAML**
-
-You can also make use of YAML to manage one or more functions in the same file, and reduce the amount of typing required.
-
-Here's an example yaml file for the samples:
-
-```
-provider:
-  name: faas
-  gateway: http://localhost:8080
-
-functions:
-  captainsList:
-    lang: node
-    handler: ./sample/getCaptains
-    image: alexellis2/faas-getcaptains
-
-  urlPing:
-    lang: python
-    handler: ./sample/py
-    image: alexellis2/faas-urlping
-```
-
-You can run `./faas-cli -action build -yaml ./test.yml` followed by `./faas-cli -action build -yaml ./test.yml`
-
-Possible entries for functions are:
-
-```
-functions:
-  deployed_function_name:
-    lang: node or python (optional)
-    handler: ./path/to/handler (optional)
-    image: docker-image-name
-    environment:
-      env1: value1
-      env2: "value2"
-```
-
-**Accessing the function with `curl`**
-
-You can initiate a HTTP POST via `curl`:
-
-* with the `-d` flag i.e. `-d "my data here"` 
-* or with `--data-binary @filename.txt` to send a whole file including newlines
-* if you want to pass input from STDIN then use `--data-binary @-`
-
-```
-$ curl -d '{"hello": "world"}' http://localhost:8080/function/node_info
-{ nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
-
-$ curl --data-binary @README.md http://localhost:8080/function/node_info
-
-$ uname -a | curl http://localhost:8080/function/node_info --data-binary @-
-```
