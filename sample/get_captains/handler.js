@@ -14,7 +14,7 @@ module.exports = (context, callback) => {
 let createList = (next) => {
     let parser = new Parser(cheerio);
 
-    request.get("https://www.docker.com/community/docker-captains", (err, res, text) => {
+    request.get(process.env.url, (err, res, text) => {
         if (err) {
             return next(err, {});
         }

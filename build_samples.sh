@@ -1,10 +1,9 @@
 #!/bin/sh
 
-docker rmi -f py-hello
-docker rmi -f hello-py
+# docker rmi alexellis2/faas-get_captains
+# docker rmi alexellis2/faas-urlping 
+# docker rmi alexellis2/faas-node_info
 
-./faas-cli -action build -handler=./sample/info -name=node-info -image=node-info -lang=node
-./faas-cli -action build -handler=./sample/py -name=py-hello -image=py-hello -lang=python
+./faas-cli -action build -yaml ./samples.yml
 
-docker images |grep node-info
-docker images |grep py-hello
+docker images |head -n 4
