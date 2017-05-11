@@ -76,7 +76,8 @@ func main() {
 		return
 	}
 
-	if action == "build" {
+	switch action {
+	case "build":
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
 				function.Name = k
@@ -99,7 +100,8 @@ func main() {
 			}
 			buildImage(image, handler, functionName, language, nocache)
 		}
-	} else if action == "deploy" {
+		break
+	case "deploy":
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
 				function.Name = k
@@ -120,6 +122,10 @@ func main() {
 			var envs map[string]string
 			deployFunction(fprocess, gateway, functionName, image, language, replace, envs)
 		}
+		break
+	default:
+		fmt.Println("-action must be 'build' or 'deploy'.")
+		break
 	}
 }
 
