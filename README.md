@@ -33,7 +33,7 @@ This url_ping function is defined in the samples/url__ping folder makes use of P
 * Build the files in the .yml file:
 
 ```
-$ ./faas-cli -action build -yaml ./samples.py
+$ ./faas-cli -action build -yaml ./samples.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
@@ -43,7 +43,7 @@ Docker along with a Python template will be used to build an image named alexell
 Now you can use the following command to deploy your function(s):
 
 ```
-$ ./faas-cli -action deploy -yaml ./samples.py
+$ ./faas-cli -action deploy -yaml ./samples.yml
 ```
 
 * Possible entries for functions are documented below:
