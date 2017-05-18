@@ -1,0 +1,13 @@
+provider:
+  name: faas
+  gateway: http://localhost:80
+
+functions:
+  hmac:
+    lang: golang
+    fprocess: handler
+    handler: ./hmac
+    image: alexellis2/hmac
+    environment:
+      secret_key: "keep-this-secret"
+

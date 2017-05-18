@@ -1,0 +1,14 @@
+provider:
+  name: faas
+  gateway: http://localhost:8080
+
+functions:
+  captainsList:
+    lang: node
+    handler: ./sample/getCaptains
+    image: alexellis2/faas-getcaptains
+
+  urlPing:
+    lang: python
+    handler: ./sample/py
+    image: alexellis2/faas-urlping

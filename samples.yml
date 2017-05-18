@@ -1,0 +1,21 @@
+provider:
+  name: faas
+  gateway: http://localhost:8080
+
+functions:
+  url_ping:
+    lang: python
+    handler: ./sample/url_ping
+    image: alexellis2/faas-urlping
+
+  get_captains:
+    lang: node
+    handler: ./sample/get_captains
+    image: alexellis2/faas-get_captains
+    environment:
+      url: "https://www.docker.com/community/docker-captains"
+
+  node_info:
+    lang: node
+    handler: ./sample/node_info
+    image: alexellis2/faas-node_info

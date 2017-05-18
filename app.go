@@ -6,8 +6,12 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os/exec"
 	"strings"
+
+	yaml "gopkg.in/yaml.v2"
 
 	"net/http"
 
@@ -30,6 +34,8 @@ func main() {
 	var fprocess string
 	var language string
 	var replace bool
+	var nocache bool
+	var yamlFile string
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -39,95 +45,125 @@ func main() {
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
 	flag.StringVar(&language, "lang", "node", "programming language template, default is: node")
 	flag.BoolVar(&replace, "replace", true, "replace any existing function")
+	flag.BoolVar(&nocache, "no-cache", false, "do not use Docker's build cache")
+
+	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
 
 	flag.Parse()
+
+	var services Services
+	if len(yamlFile) > 0 {
+		fileData, err := ioutil.ReadFile(yamlFile)
+		if err != nil {
+			fmt.Printf("Error: %s\n", err.Error())
+			return
+		}
+		err = yaml.Unmarshal(fileData, &services)
+		if err != nil {
+			fmt.Printf("Error with YAML file: %s\n", err.Error())
+			return
+		}
+
+		if services.Provider.Name != "faas" {
+			fmt.Println("'faas' is the only valid provider for the faas-cli.")
+			return
+		}
+
+	}
 
 	if len(action) == 0 {
 		fmt.Println("give either -action= build or deploy")
 		return
 	}
 
-	if action == "build" {
-		if len(image) == 0 {
-			fmt.Println("Give a valid -image name for your Docker image.")
-			return
+	switch action {
+	case "build":
+		if len(services.Functions) > 0 {
+			for k, function := range services.Functions {
+				function.Name = k
+				// fmt.Println(k, function)
+				fmt.Printf("Building: %s.\n", function.Name)
+				buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
+			}
+		} else {
+			if len(image) == 0 {
+				fmt.Println("Give a valid -image name for your Docker image.")
+				return
+			}
+			if len(handler) == 0 {
+				fmt.Println("Please give the full path to your function's handler.")
+				return
+			}
+			if len(functionName) == 0 {
+				fmt.Println("Please give the deployed -name of your function")
+				return
+			}
+			buildImage(image, handler, functionName, language, nocache)
 		}
-		if len(handler) == 0 {
-			fmt.Println("Please give the full path to your function's handler.")
-			return
-		}
-		if len(functionName) == 0 {
-			fmt.Println("Please give the deployed -name of your function")
-			return
-		}
+		break
+	case "deploy":
+		if len(services.Functions) > 0 {
+			for k, function := range services.Functions {
+				function.Name = k
+				// fmt.Println(k, function)
+				fmt.Printf("Deploying: %s.\n", function.Name)
 
-		tempPath := createBuildTemplate(functionName, handler, language)
-
-		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
-
-		builder := strings.Split(fmt.Sprintf("docker build -t %s .", image), " ")
-		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
-			builder = strings.Split(fmt.Sprintf("docker build --build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment)
+			}
+		} else {
+			if len(image) == 0 {
+				fmt.Println("Give an image name to be deployed.")
+				return
+			}
+			if len(functionName) == 0 {
+				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
+				return
+			}
+			var envs map[string]string
+			deployFunction(fprocess, gateway, functionName, image, language, replace, envs)
 		}
-
-		fmt.Println(strings.Join(builder, " "))
-		targetCmd := exec.Command(builder[0], builder[1:]...)
-		targetCmd.Dir = tempPath
-		targetCmd.Stdout = os.Stdout
-		targetCmd.Stderr = os.Stderr
-		targetCmd.Start()
-
-		cmdErr := targetCmd.Wait()
-
-		if cmdErr != nil {
-			fmt.Printf("Error: %s\n", cmdErr)
-		}
-    
-		fmt.Printf("Image: %s built.\n", image)
-	} else if action == "deploy" {
-		if len(image) == 0 {
-			fmt.Println("Give an image name to be deployed.")
-			return
-		}
-		if len(functionName) == 0 {
-			fmt.Println("Give a -name for your function as it will be deployed on FaaS")
-			return
-		}
-
-		// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
-		fprocessTemplate := "node index.js"
-		if len(fprocess) > 0 {
-			fprocessTemplate = fprocess
-		}
-		if language == "python" {
-			fprocessTemplate = "python index.py"
-		}
-
-		// TODO: Extract to function
-		if replace {
-			deleteFunction(gateway, functionName)
-		}
-
-		req := requests.CreateFunctionRequest{
-			EnvProcess: fprocessTemplate,
-			Image:      image,
-			Network:    "func_functions",
-			Service:    functionName,
-		}
-
-		reqBytes, _ := json.Marshal(&req)
-		reader := bytes.NewReader(reqBytes)
-		res, err := http.Post(gateway+"/system/functions", "application/json", reader)
-		if err != nil {
-			fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
-			fmt.Println(err)
-			return
-		}
-		fmt.Println(res.Status)
-		deployedUrl := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
-		fmt.Println(deployedUrl)
-
+		break
+	default:
+		fmt.Println("-action must be 'build' or 'deploy'.")
+		break
 	}
+}
+
+func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string) {
+
+	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
+	fprocessTemplate := "node index.js"
+	if len(fprocess) > 0 {
+		fprocessTemplate = fprocess
+	}
+	if language == "python" {
+		fprocessTemplate = "python index.py"
+	}
+
+	if replace {
+		deleteFunction(gateway, functionName)
+	}
+
+	req := requests.CreateFunctionRequest{
+		EnvProcess: fprocessTemplate,
+		Image:      image,
+		Network:    "func_functions",
+		Service:    functionName,
+		EnvVars:    envVars,
+	}
+
+	reqBytes, _ := json.Marshal(&req)
+	reader := bytes.NewReader(reqBytes)
+	res, err := http.Post(gateway+"/system/functions", "application/json", reader)
+	if err != nil {
+		fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(res.Status)
+	deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
+	fmt.Println(deployedURL)
 }
 
 func deleteFunction(gateway string, functionName string) {
@@ -148,27 +184,97 @@ func deleteFunction(gateway string, functionName string) {
 		fmt.Println("Removing old service.")
 	case 404:
 		fmt.Println("No existing service to remove")
-
 	}
+}
+
+func buildImage(image string, handler string, functionName string, language string, nocache bool) {
+
+	switch language {
+	case "node", "python":
+		tempPath := createBuildTemplate(functionName, handler, language)
+
+		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
+
+		cacheFlag := ""
+		if nocache {
+			cacheFlag = " --no-cache"
+		}
+
+		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
+		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
+			builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
+		}
+
+		fmt.Println(strings.Join(builder, " "))
+		execBuild(tempPath, builder)
+	default:
+		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+	}
+
+	fmt.Printf("Image: %s built.\n", image)
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
 func createBuildTemplate(functionName string, handler string, language string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Creating temporary folder: %s\n", tempPath)
-	exec.Command("mkdir", "-p", tempPath).Run()
+	fmt.Printf("Clearing temporary folder: %s\n", tempPath)
 
-	if language == "node" {
-		exec.Command("cp", "./template/node/index.js", tempPath).Run()
-		exec.Command("cp", "./template/node/Dockerfile", tempPath).Run()
-		exec.Command("cp", "./template/node/package.json", tempPath).Run()
-	} else if language == "python" {
-		exec.Command("cp", "./template/python/index.py", tempPath).Run()
-		exec.Command("cp", "./template/python/Dockerfile", tempPath).Run()
-		exec.Command("cp", "./template/python/requirements.txt", tempPath).Run()
+	clearErr := os.RemoveAll(tempPath)
+	if clearErr != nil {
+		fmt.Printf("Error clearing down temporary build folder %s\n", tempPath)
 	}
 
-	exec.Command("mkdir", "-p", tempPath+"/function").Run()
-	exec.Command("cp", "-rf", handler+"/", tempPath+"/function/").Run()
+	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
+
+	functionPath := tempPath + "/function"
+	mkdirErr := os.MkdirAll(functionPath, 0700)
+	if mkdirErr != nil {
+		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
+	}
+
+	// TODO: index folders and copy everything from template, rather than set folders.
+	// Drop in template
+	copyFiles("./template/"+language, tempPath)
+	copyFiles("./template/"+language+"/function", tempPath+"function/")
+
+	// Overlay in user-function
+	copyFiles(handler, tempPath+"function/")
+
 	return tempPath
+}
+
+func copyFiles(path string, destination string) {
+	files, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, file := range files {
+		if file.IsDir() == false {
+			cp(path+"/"+file.Name(), destination+file.Name())
+		}
+	}
+}
+
+func cp(src string, destination string) error {
+	fmt.Printf("cp - %s %s\n", src, destination)
+	memoryBuffer, readErr := ioutil.ReadFile(src)
+	if readErr != nil {
+		return fmt.Errorf("Error reading source file: %s\n" + readErr.Error())
+	}
+	writeErr := ioutil.WriteFile(destination, memoryBuffer, 0660)
+	if writeErr != nil {
+		return fmt.Errorf("Error writing file: %s\n" + writeErr.Error())
+	}
+
+	return nil
+}
+
+func execBuild(tempPath string, builder []string) {
+	targetCmd := exec.Command(builder[0], builder[1:]...)
+	targetCmd.Dir = tempPath
+	targetCmd.Stdout = os.Stdout
+	targetCmd.Stderr = os.Stderr
+	targetCmd.Start()
+	targetCmd.Wait()
 }
