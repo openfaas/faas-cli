@@ -21,6 +21,8 @@ type Function struct {
 	FProcess string `yaml:"fprocess"`
 
 	Environment map[string]string `yaml:"environment"`
+
+	SkipBuild bool `yaml:"skipBuild"`
 }
 
 // Services root level YAML file to define FaaS function-set
