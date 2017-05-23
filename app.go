@@ -103,10 +103,14 @@ func main() {
 	case "build":
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
-				function.Name = k
-				// fmt.Println(k, function)
-				fmt.Printf("Building: %s.\n", function.Name)
-				buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
+				if function.SkipBuild {
+					fmt.Printf("Skipping build of: %s.\n", function.Name)
+				} else {
+					function.Name = k
+					// fmt.Println(k, function)
+					fmt.Printf("Building: %s.\n", function.Name)
+					buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
+				}
 			}
 		} else {
 			if len(image) == 0 {
