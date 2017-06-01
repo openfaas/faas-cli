@@ -4,6 +4,7 @@ package main
 type Provider struct {
 	Name       string `yaml:"name"`
 	GatewayURL string `yaml:"gateway"`
+	Network    string `yaml:"network"`
 }
 
 // Function as deployed or built on FaaS

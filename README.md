@@ -33,7 +33,15 @@ This url_ping function is defined in the samples/url__ping folder makes use of P
 * Build the files in the .yml file:
 
 ```
-$ ./faas-cli -action build -yaml ./samples.yml
+$ ./faas-cli -action build -f ./samples.yml
+```
+
+> `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `-yaml`.
+
+You can also download over HTTP/s:
+
+```
+$ ./faas-cli -action build -f https://github.com/alexellis/faas-cli/blob/master/samples.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
@@ -43,7 +51,7 @@ Docker along with a Python template will be used to build an image named alexell
 Now you can use the following command to deploy your function(s):
 
 ```
-$ ./faas-cli -action deploy -yaml ./samples.yml
+$ ./faas-cli -action deploy -f ./samples.yml
 ```
 
 * Possible entries for functions are documented below:
@@ -78,7 +86,7 @@ $ curl --data-binary @README.md http://localhost:8080/function/node_info
 $ uname -a | curl http://localhost:8080/function/node_info --data-binary @-
 ```
 
-*Read on for manual CLI instructions.*
+> For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)
 
 ### Installation / pre-requirements
 
@@ -118,64 +126,3 @@ $ go build
 This project is part of the FaaS project licensed under the MIT License.
 
 For more details see the [Contributing guide](https://github.com/alexellis/faas-cli/blob/master/CONTRIBUTING.md).
-
-### Manual CLI options
-
-*Update: read-on for YAML support.*
-
-#### Worked example with Node.js
-
-So if you want to write in another language, just prepare a Dockerfile and build an image manually, like in the [FaaS samples](https://github.com/alexellis/faas/tree/master/sample-functions).
-
-**Build a FaaS function in NodeJS from a template:**
-
-This will generate a Docker image for a Node.js function using the code in `/samples/info`.
-
-* The `faas-cli` can accept a `-lang` option of `python` or `node` and is `node` by default.
-
-```
-   $ ./faas-cli -action=build \
-      -image=alexellis2/node_info \
-      -name=node_info \
-      -handler=./sample/node_info
-
-Building: alexellis2/node_info with Docker. Please wait..
-...
-Image: alexellis2/node_info built.
-```
-
-You can customise the code by editing the handler.js file and changing the `-handler` parameter. You can also edit the packages.json file, which will be used during the build to make sure all your dependencies are available at runtime.
-
-For example:
-
-```
-"use strict"
-
-module.exports = (context, callback) => {
-    console.log("echo - " + context);
-    
-    callback(undefined, {status: "done"});
-}
-```
-
-The CLI will then build a Docker image containing the FaaS watchdog and a bootstrap file to invoke your NodeJS function.
-
-**Deploy the Docker image as a FaaS function:**
-
-Now we can deploy the image as a named function called `node_info`.
-
-```
-$ ./faas-cli -action=deploy \
-   -image=alexellis2/node_info \
-   -name=node_info
-
-200 OK
-
-URL: http://localhost:8080/function/node_info
-```
-
-> This tool can be used to deploy any Docker image as a FaaS function, as long as it includes the watchdog binary as the `CMD` or `ENTRYPOINT` of the image.
-
-*Deploy remotely*
-
-You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `-gateway=http://remote-site.com:8080`

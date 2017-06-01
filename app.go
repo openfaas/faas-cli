@@ -20,8 +20,13 @@ import (
 	"bytes"
 	"os"
 
+	"net/url"
+
 	"github.com/alexellis/faas/gateway/requests"
 )
+
+const providerName = "FaaS"
+const defaultNetwork = "func_functions"
 
 func main() {
 	// var handler string
@@ -36,6 +41,7 @@ func main() {
 	var replace bool
 	var nocache bool
 	var yamlFile string
+	var yamlFileShort string
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -48,27 +54,44 @@ func main() {
 	flag.BoolVar(&nocache, "no-cache", false, "do not use Docker's build cache")
 
 	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
+	flag.StringVar(&yamlFileShort, "f", "", "use a yaml file for a set of functions (same as -yaml)")
 
 	flag.Parse()
 
+	// support short-argument -f
+	if len(yamlFile) == 0 && len(yamlFileShort) > 0 {
+		yamlFile = yamlFileShort
+	}
+
 	var services Services
 	if len(yamlFile) > 0 {
-		fileData, err := ioutil.ReadFile(yamlFile)
-		if err != nil {
-			fmt.Printf("Error: %s\n", err.Error())
-			return
+		var err error
+		var fileData []byte
+		urlParsed, err := url.Parse(yamlFile)
+		if err == nil && len(urlParsed.Scheme) > 0 {
+			fmt.Println("Parsed: " + urlParsed.String())
+			fileData, err = fetchYaml(urlParsed)
+			if err != nil {
+				fmt.Println(err.Error())
+				return
+			}
+		} else {
+			fileData, err = ioutil.ReadFile(yamlFile)
+			if err != nil {
+				fmt.Printf("Error: %s\n", err.Error())
+				return
+			}
 		}
+
 		err = yaml.Unmarshal(fileData, &services)
 		if err != nil {
 			fmt.Printf("Error with YAML file: %s\n", err.Error())
 			return
 		}
-
-		if services.Provider.Name != "faas" {
-			fmt.Println("'faas' is the only valid provider for the faas-cli.")
+		if services.Provider.Name != providerName {
+			fmt.Printf("'%s' is the only valid provider for this tool - found: %s.\n", providerName, services.Provider.Name)
 			return
 		}
-
 	}
 
 	if len(action) == 0 {
@@ -103,12 +126,16 @@ func main() {
 		break
 	case "deploy":
 		if len(services.Functions) > 0 {
+			if len(services.Provider.Network) == 0 {
+				services.Provider.Network = defaultNetwork
+			}
+
 			for k, function := range services.Functions {
 				function.Name = k
 				// fmt.Println(k, function)
 				fmt.Printf("Deploying: %s.\n", function.Name)
 
-				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment)
+				deployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment, services.Provider.Network)
 			}
 		} else {
 			if len(image) == 0 {
@@ -119,17 +146,28 @@ func main() {
 				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
 				return
 			}
-			var envs map[string]string
-			deployFunction(fprocess, gateway, functionName, image, language, replace, envs)
+
+			deployFunction(fprocess, gateway, functionName, image, language, replace, map[string]string{}, defaultNetwork)
 		}
 		break
+	case "push":
+		if len(services.Functions) > 0 {
+			for k, function := range services.Functions {
+				function.Name = k
+				fmt.Printf("Pushing: %s to remote repository.\n", function.Name)
+				pushImage(function.Image)
+			}
+		} else {
+			fmt.Println("The '-action push' flag only works with a YAML file.")
+			return
+		}
 	default:
-		fmt.Println("-action must be 'build' or 'deploy'.")
+		fmt.Println("-action must be 'build', 'deploy' or 'push'.")
 		break
 	}
 }
 
-func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string) {
+func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	fprocessTemplate := "node index.js"
@@ -144,10 +182,11 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 		deleteFunction(gateway, functionName)
 	}
 
+	// TODO: allow registry auth to be specified or read from local Docker credentials store
 	req := requests.CreateFunctionRequest{
 		EnvProcess: fprocessTemplate,
 		Image:      image,
-		Network:    "func_functions",
+		Network:    "func_functions", // todo: specify network as an override
 		Service:    functionName,
 		EnvVars:    envVars,
 	}
@@ -177,7 +216,8 @@ func deleteFunction(gateway string, functionName string) {
 	delRes, delErr := c.Do(req)
 
 	if delErr != nil {
-		fmt.Println(delErr.Error())
+		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), gateway, functionName)
+		return
 	}
 	switch delRes.StatusCode {
 	case 200:
@@ -185,6 +225,10 @@ func deleteFunction(gateway string, functionName string) {
 	case 404:
 		fmt.Println("No existing service to remove")
 	}
+}
+
+func pushImage(image string) {
+	execBuild("./", []string{"docker", "push", image})
 }
 
 func buildImage(image string, handler string, functionName string, language string, nocache bool) {
@@ -277,4 +321,21 @@ func execBuild(tempPath string, builder []string) {
 	targetCmd.Stderr = os.Stderr
 	targetCmd.Start()
 	targetCmd.Wait()
+}
+
+func fetchYaml(address *url.URL) ([]byte, error) {
+	req, err := http.NewRequest("GET", address.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	c := http.Client{}
+	res, err := c.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	resBytes, err := ioutil.ReadAll(res.Body)
+
+	return resBytes, err
 }

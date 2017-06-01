@@ -1,6 +1,7 @@
 provider:
   name: faas
   gateway: http://localhost:8080
+  network: "func_functions" # this is optional and defaults to func_functions
 
 functions:
   url_ping:
