@@ -1,6 +1,6 @@
 provider:
   name: faas
-  gateway: http://localhost:80
+  gateway: http://localhost:8080
 
 functions:
   hmac:
