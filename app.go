@@ -25,7 +25,7 @@ import (
 	"github.com/alexellis/faas/gateway/requests"
 )
 
-const providerName = "FaaS"
+const providerName = "faas"
 const defaultNetwork = "func_functions"
 
 func main() {
