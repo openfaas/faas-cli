@@ -1,6 +1,8 @@
 **/node_modules/
 build/
 faas-cli
-faas-cli-macos
+faas-cli-darwin
+faas-cli-armhf
+
 *.jpg
 *.pyc

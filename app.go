@@ -27,6 +27,7 @@ import (
 
 const providerName = "faas"
 const defaultNetwork = "func_functions"
+var GitCommit string
 
 func main() {
 	// var handler string
@@ -42,6 +43,7 @@ func main() {
 	var nocache bool
 	var yamlFile string
 	var yamlFileShort string
+	var version bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -55,8 +57,14 @@ func main() {
 
 	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
 	flag.StringVar(&yamlFileShort, "f", "", "use a yaml file for a set of functions (same as -yaml)")
+        flag.BoolVar(&version, "version", false, "show version and quit")        
 
 	flag.Parse()
+
+        if version {
+		fmt.Printf("Git Commit: %s\n", GitCommit)
+		return
+        }
 
 	// support short-argument -f
 	if len(yamlFile) == 0 && len(yamlFileShort) > 0 {
