@@ -1,0 +1,11 @@
+FROM armhf/alpine:latest
+RUN apk --no-cache add nodejs
+
+COPY fwatchdog-armhf /usr/bin/fwatchdog
+RUN chmod +x /usr/bin/fwatchdog
+
+COPY package.json .
+COPY main.js .
+RUN npm i
+ENV fprocess="node main.js"
+CMD ["fwatchdog"]

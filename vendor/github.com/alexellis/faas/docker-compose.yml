@@ -1,0 +1,170 @@
+version: "3"
+services:
+
+# Core API services are pinned, HA is provided for functions.
+    gateway:
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        ports:
+            - 8080:8080
+        image: functions/gateway:0.5.6
+        networks:
+            - functions
+        environment:
+            dnsrr: "true"  # Temporarily use dnsrr in place of VIP while issue persists on PWD
+        deploy:
+            placement:
+                constraints: [node.role == manager]
+ 
+    prometheus:
+        image: functions/prometheus-legacy:1.5.2 # Mirrors version 1.5.2 of quay.io/prometheus/prometheus:latest
+        volumes:
+            - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+            - ./prometheus/alert.rules:/etc/prometheus/alert.rules
+
+        command: "-config.file=/etc/prometheus/prometheus.yml -storage.local.path=/prometheus -storage.local.memory-chunks=10000 --alertmanager.url=http://alertmanager:9093"
+        ports:
+            - 9090:9090
+        depends_on:
+            - gateway
+            - alertmanager
+        environment:
+            no_proxy: "gateway"
+        networks:
+            - functions
+        deploy:
+            placement:
+                constraints: [node.role == manager]
+
+    alertmanager:
+        image: quay.io/prometheus/alertmanager
+        environment:
+            no_proxy: "gateway"
+        volumes:
+            - ./prometheus/alertmanager.yml:/alertmanager.yml
+        command:
+            - '-config.file=/alertmanager.yml'
+        networks:
+            - functions
+        ports:
+            - 9093:9093
+        deploy:
+            placement:
+                constraints: [node.role == manager]
+
+    # Sample functions go here.
+
+    # Service label of "function" allows functions to show up in UI on http://gateway:8080/
+    webhookstash:
+        image: functions/webhookstash:latest
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Pass a username as an argument to find how many images user has pushed to Docker Hub.
+    hubstats:
+        image: alexellis2/faas-dockerhubstats:latest
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Node.js gives OS info about the node (Host)
+    nodeinfo:
+        image: alexellis2/faas-nodeinfo:latest
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Uses `cat` to echo back response, fastest function to execute.
+    echoit:
+        image: functions/alpine:health
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            fprocess: "cat"
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Counts words in request with `wc` utility
+    wordcount:
+        image: functions/alpine:health
+        labels:
+            function: "true"
+            com.faas.max_replicas: "10"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            fprocess: "wc"
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Calculates base64 representation of request body.
+    base64:
+        image: functions/alpine:health
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            fprocess: "base64"
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Decodes base64 representation of request body.
+    decodebase64:
+        image: functions/alpine:health
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            fprocess: "base64 -d"
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+    # Converts body in (markdown format) -> (html)
+    markdown:
+        image: alexellis2/faas-markdownrender:latest
+        labels:
+            function: "true"
+        depends_on:
+            - gateway
+        networks:
+            - functions
+        environment:
+            no_proxy: "gateway"
+            https_proxy: $https_proxy
+
+networks:
+    functions:
+        driver: overlay
+        # Docker does not support this option yet - maybe create outside of the stack and reference as "external"?
+        #attachable: true
