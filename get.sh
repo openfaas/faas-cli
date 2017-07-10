@@ -1,4 +1,8 @@
-version=0.3
+#!/bin/sh
+
+# Deployed to cli.get-faas.com
+
+version=0.4
 
 hasCli() {
     has=$(which faas-cli)

@@ -27,6 +27,7 @@ import (
 
 const providerName = "faas"
 const defaultNetwork = "func_functions"
+
 var GitCommit string
 
 func main() {
@@ -57,14 +58,14 @@ func main() {
 
 	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
 	flag.StringVar(&yamlFileShort, "f", "", "use a yaml file for a set of functions (same as -yaml)")
-        flag.BoolVar(&version, "version", false, "show version and quit")        
+	flag.BoolVar(&version, "version", false, "show version and quit")
 
 	flag.Parse()
 
-        if version {
+	if version {
 		fmt.Printf("Git Commit: %s\n", GitCommit)
 		return
-        }
+	}
 
 	// support short-argument -f
 	if len(yamlFile) == 0 && len(yamlFileShort) > 0 {
@@ -109,6 +110,19 @@ func main() {
 
 	switch action {
 	case "build":
+
+		exists, err := os.Stat("./template")
+		if err != nil || exists == nil {
+			log.Println("No templates found in current directory.")
+
+			err = fetchTemplates()
+			if err != nil {
+				log.Println("Unable to download templates from Github.")
+				log.Println(err)
+				return
+			}
+		}
+
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
 				if function.SkipBuild {
