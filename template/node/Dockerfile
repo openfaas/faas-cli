@@ -11,8 +11,12 @@ RUN npm i
 COPY index.js       .
 COPY function       function
 WORKDIR /root/function
+
+ENV NPM_CONFIG_LOGLEVEL warn
 RUN npm i || :
 WORKDIR /root/
+
+ENV cgi_headers="true"
 
 ENV fprocess="node index.js"
 
