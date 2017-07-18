@@ -9,8 +9,20 @@ getStdin().then(val => {
         if (err) {
             return console.error(err);
         }
-        console.log(res);
+        if(isArray(res) || isObject(res)) {
+            console.log(JSON.stringify(res));
+        } else {
+            console.log(res);
+        }
     });
 }).catch(e => {
     console.error(e.stack);
 });
+
+let isArray = (a) => {
+    return (!!a) && (a.constructor === Array);
+};
+
+let isObject = (a) => {
+    return (!!a) && (a.constructor === Object);
+};
