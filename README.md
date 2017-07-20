@@ -6,6 +6,16 @@ This experimental CLI can be used to and deploy functions to FaaS or to build No
 
 > Functions as a Service is a serverless framework for Docker: [Read more on docs.get-faas.com](http://docs.get-faas.com/)
 
+### Installing the tool
+
+The easiest way to install the faas-cli is by doing:
+
+```
+$ curl -sSL cli.get-faas.com | sudo sh
+```
+
+Note that the tool is also available on brew. The last section also documents how to build it from source.
+
 ### Running the tool
 
 The tool can be used to create a Docker image to be deployed on FaaS through a template meaning you only have to write a single handler file. The templates currently supported are: node and python, however you can create a FaaS function out of any process.
@@ -73,7 +83,7 @@ Use environmental variables for setting tokens and configuration.
 
 You can initiate a HTTP POST via `curl`:
 
-* with the `-d` flag i.e. `-d "my data here"` 
+* with the `-d` flag i.e. `-d "my data here"`
 * or with `--data-binary @filename.txt` to send a whole file including newlines
 * if you want to pass input from STDIN then use `--data-binary @-`
 
