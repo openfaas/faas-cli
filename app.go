@@ -27,6 +27,7 @@ import (
 
 const providerName = "faas"
 const defaultNetwork = "func_functions"
+
 var GitCommit string
 
 func main() {
@@ -57,14 +58,14 @@ func main() {
 
 	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
 	flag.StringVar(&yamlFileShort, "f", "", "use a yaml file for a set of functions (same as -yaml)")
-        flag.BoolVar(&version, "version", false, "show version and quit")        
+	flag.BoolVar(&version, "version", false, "show version and quit")
 
 	flag.Parse()
 
-        if version {
+	if version {
 		fmt.Printf("Git Commit: %s\n", GitCommit)
 		return
-        }
+	}
 
 	// support short-argument -f
 	if len(yamlFile) == 0 && len(yamlFileShort) > 0 {
@@ -122,15 +123,15 @@ func main() {
 			}
 		} else {
 			if len(image) == 0 {
-				fmt.Println("Give a valid -image name for your Docker image.")
+				fmt.Println("Please provide a valid -image name for your Docker image.")
 				return
 			}
 			if len(handler) == 0 {
-				fmt.Println("Please give the full path to your function's handler.")
+				fmt.Println("Please provide the full path to your function's handler.")
 				return
 			}
 			if len(functionName) == 0 {
-				fmt.Println("Please give the deployed -name of your function")
+				fmt.Println("Please provide the deployed -name of your function.")
 				return
 			}
 			buildImage(image, handler, functionName, language, nocache)
@@ -151,11 +152,11 @@ func main() {
 			}
 		} else {
 			if len(image) == 0 {
-				fmt.Println("Give an image name to be deployed.")
+				fmt.Println("Please provide an image name to be deployed.")
 				return
 			}
 			if len(functionName) == 0 {
-				fmt.Println("Give a -name for your function as it will be deployed on FaaS")
+				fmt.Println("Please provide a -name for your function as it will be deployed on FaaS")
 				return
 			}
 
@@ -273,11 +274,11 @@ func buildImage(image string, handler string, functionName string, language stri
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
 func createBuildTemplate(functionName string, handler string, language string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Clearing temporary folder: %s\n", tempPath)
+	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
 	clearErr := os.RemoveAll(tempPath)
 	if clearErr != nil {
-		fmt.Printf("Error clearing down temporary build folder %s\n", tempPath)
+		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
 	}
 
 	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
@@ -288,28 +289,58 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
 
-	// TODO: index folders and copy everything from template, rather than set folders.
-	// Drop in template
-	copyFiles("./template/"+language, tempPath)
-	copyFiles("./template/"+language+"/function", tempPath+"function/")
+	// Drop in directory tree from template
+	copyFiles("./template/"+language, tempPath, true)
 
 	// Overlay in user-function
-	copyFiles(handler, tempPath+"function/")
+	copyFiles(handler, tempPath+"function/", false)
 
 	return tempPath
 }
 
-func copyFiles(path string, destination string) {
-	files, err := ioutil.ReadDir(path)
+func copyFiles(src string, destination string, recursive bool) {
+
+	files, err := ioutil.ReadDir(src)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	for _, file := range files {
+
 		if file.IsDir() == false {
-			cp(path+"/"+file.Name(), destination+file.Name())
+
+			cp(src+"/"+file.Name(), destination+file.Name())
+
+		} else {
+
+			//make new destination dir
+			newDir := destination + file.Name() + "/"
+			if !pathExists(newDir) {
+
+				newDirErr := os.Mkdir(newDir, 0700)
+
+				if err != nil {
+					fmt.Printf("Error creating path %s - %s.\n", newDir, newDirErr.Error())
+				}
+			}
+
+			//did the call ask to recurse into sub directories?
+			if recursive == true {
+				//call copyTree to copy the contents
+				copyFiles(src+"/"+file.Name(), newDir, true)
+			}
 		}
 	}
+}
+
+func pathExists(path string) bool {
+	exists := true
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		exists = false
+	}
+
+	return exists
 }
 
 func cp(src string, destination string) error {
