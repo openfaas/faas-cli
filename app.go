@@ -45,6 +45,7 @@ func main() {
 	var yamlFile string
 	var yamlFileShort string
 	var version bool
+	var squash bool
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
@@ -59,6 +60,7 @@ func main() {
 	flag.StringVar(&yamlFile, "yaml", "", "use a yaml file for a set of functions")
 	flag.StringVar(&yamlFileShort, "f", "", "use a yaml file for a set of functions (same as -yaml)")
 	flag.BoolVar(&version, "version", false, "show version and quit")
+	flag.BoolVar(&squash, "squash", false, "use Docker's squash flag for potentially smaller images (currently experimental)")
 
 	flag.Parse()
 
@@ -118,7 +120,7 @@ func main() {
 					function.Name = k
 					// fmt.Println(k, function)
 					fmt.Printf("Building: %s.\n", function.Name)
-					buildImage(function.Image, function.Handler, function.Name, function.Language, nocache)
+					buildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
 				}
 			}
 		} else {
@@ -134,7 +136,7 @@ func main() {
 				fmt.Println("Please provide the deployed -name of your function.")
 				return
 			}
-			buildImage(image, handler, functionName, language, nocache)
+			buildImage(image, handler, functionName, language, nocache, squash)
 		}
 		break
 	case "deploy":
@@ -244,7 +246,7 @@ func pushImage(image string) {
 	execBuild("./", []string{"docker", "push", image})
 }
 
-func buildImage(image string, handler string, functionName string, language string, nocache bool) {
+func buildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
 
 	switch language {
 	case "node", "python":
@@ -252,16 +254,9 @@ func buildImage(image string, handler string, functionName string, language stri
 
 		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
 
-		cacheFlag := ""
-		if nocache {
-			cacheFlag = " --no-cache"
-		}
+		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
 
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", cacheFlag, image), " ")
-		if len(os.Getenv("http_proxy")) > 0 || len(os.Getenv("http_proxy")) > 0 {
-			builder = strings.Split(fmt.Sprintf("docker build %s--build-arg http_proxy=%s --build-arg https_proxy=%s -t %s .", cacheFlag, os.Getenv("http_proxy"), os.Getenv("https_proxy"), image), " ")
-		}
-
+		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
 		fmt.Println(strings.Join(builder, " "))
 		execBuild(tempPath, builder)
 	default:
@@ -381,4 +376,26 @@ func fetchYaml(address *url.URL) ([]byte, error) {
 	resBytes, err := ioutil.ReadAll(res.Body)
 
 	return resBytes, err
+}
+
+func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy string) string {
+
+	buildFlags := ""
+
+	if nocache {
+		buildFlags += "--no-cache "
+	}
+	if squash {
+		buildFlags += "--squash "
+	}
+
+	if len(httpProxy) > 0 {
+		buildFlags += fmt.Sprintf("--build-arg http_proxy=%s ", httpProxy)
+	}
+
+	if len(httpsProxy) > 0 {
+		buildFlags += fmt.Sprintf("--build-arg https_proxy=%s ", httpsProxy)
+	}
+
+	return buildFlags
 }
