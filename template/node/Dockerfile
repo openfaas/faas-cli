@@ -1,18 +1,25 @@
-FROM node:6.9.1-alpine
+FROM node:6.11.2-alpine
 
-ADD https://github.com/alexellis/faas/releases/download/0.5.7c-alpha/fwatchdog /usr/bin
-RUN chmod +x /usr/bin/fwatchdog
+# Alternatively use ADD https:// (which will not be cached by Docker builder)
+RUN apk --no-cache add curl \ 
+    && echo "Pulling watchdog binary from Github." \
+    && curl -sSL https://github.com/alexellis/faas/releases/download/0.5.8-alpha/fwatchdog > /usr/bin/fwatchdog \
+    && chmod +x /usr/bin/fwatchdog \
+    && apk del curl --no-cache
 
 WORKDIR /root/
 
-COPY package.json   .
+# Turn down the verbosity to default level.
+ENV NPM_CONFIG_LOGLEVEL warn
 
+# Wrapper/boot-strapper
+COPY package.json   .
 RUN npm i
+
+# Function
 COPY index.js       .
 COPY function       function
 WORKDIR /root/function
-
-ENV NPM_CONFIG_LOGLEVEL warn
 RUN npm i || :
 WORKDIR /root/
 
