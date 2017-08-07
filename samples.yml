@@ -1,22 +1,21 @@
 provider:
   name: faas
-  gateway: http://localhost:8080
+  gateway: http://localhost:8080  # can be remote server
   network: "func_functions" # this is optional and defaults to func_functions
 
 functions:
-  url_ping:
+  url-ping:
     lang: python
-    handler: ./sample/url_ping
-    image: alexellis2/faas-urlping
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping
 
-  get_captains:
+  nodejs-echo:
     lang: node
-    handler: ./sample/get_captains
-    image: alexellis2/faas-get_captains
-    environment:
-      url: "https://www.docker.com/community/docker-captains"
+    handler: ./sample/nodejs-echo
+    image: alexellis/faas-nodejs-echo
 
-  node_info:
-    lang: node
-    handler: ./sample/node_info
-    image: alexellis2/faas-node_info
+  # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
+  shrink-image:
+    skip_build: true  # this example is a binary, doesn't use a template
+    image: functions/resizer
+    fprocess: "convert - -resize 50% fd:1"

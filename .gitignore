@@ -6,3 +6,6 @@ faas-cli-armhf
 
 *.jpg
 *.pyc
+master.zip
+*.png
+

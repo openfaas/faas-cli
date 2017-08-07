@@ -2,11 +2,19 @@
 
 ./faas-cli -action deploy -yaml ./samples.yml
 
-curl -d "" http://localhost:8080/function/get_captains
+sleep 2
+
+# Get sample image for resizer function.
+curl -SL https://raw.githubusercontent.com/alexellis/faas/master/sample-functions/ResizeImageMagick/gordon.png > gordon.png
+
+echo "Testing nodejs-echo"
+curl -sd "This was the input string." http://localhost:8080/function/nodejs-echo
 echo
 
-curl -d "This was the input string." http://localhost:8080/function/node_info
+echo "Testing url-ping"
+curl -sd "https://shop.pimoroni.com" http://localhost:8080/function/url-ping
 echo
 
-curl -d "https://shop.pimoroni.com" http://localhost:8080/function/url_ping
+echo "Testing shrink-image"
+curl -d "" http://localhost:8080/function/shrink-image --data-binary @gordon.png > small_gordon.png
 echo

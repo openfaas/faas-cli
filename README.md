@@ -32,7 +32,7 @@ provider:
   gateway: http://localhost:8080
 
 functions:
-  url_ping:
+  url-ping:
     lang: python
     handler: ./sample/url_ping
     image: alexellis2/faas-urlping
@@ -88,12 +88,12 @@ You can initiate a HTTP POST via `curl`:
 * if you want to pass input from STDIN then use `--data-binary @-`
 
 ```
-$ curl -d '{"hello": "world"}' http://localhost:8080/function/node_info
+$ curl -d '{"hello": "world"}' http://localhost:8080/function/nodejs-echo
 { nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
 
-$ curl --data-binary @README.md http://localhost:8080/function/node_info
+$ curl --data-binary @README.md http://localhost:8080/function/nodejs-echo
 
-$ uname -a | curl http://localhost:8080/function/node_info --data-binary @-
+$ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 ```
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)

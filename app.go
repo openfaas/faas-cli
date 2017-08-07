@@ -185,12 +185,13 @@ func main() {
 func deployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
-	fprocessTemplate := "node index.js"
+	var fprocessTemplate string
 	if len(fprocess) > 0 {
 		fprocessTemplate = fprocess
-	}
-	if language == "python" {
+	} else if language == "python" {
 		fprocessTemplate = "python index.py"
+	} else if language == "node" {
+		fprocessTemplate = "node index.js"
 	}
 
 	if replace {
@@ -215,7 +216,22 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 		return
 	}
 
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case 200, 201:
+		fmt.Println("Deployed.")
+	default:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			fmt.Println("Server returned unexpected status code", res.StatusCode, string(bytesOut))
+		}
+	}
+
 	fmt.Println(res.Status)
+
 	deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
 	fmt.Println(deployedURL)
 }
@@ -229,16 +245,25 @@ func deleteFunction(gateway string, functionName string) {
 	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
 	req.Header.Set("Content-Type", "application/json")
 	delRes, delErr := c.Do(req)
-
 	if delErr != nil {
 		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), gateway, functionName)
 		return
 	}
+
+	if delRes.Body != nil {
+		defer delRes.Body.Close()
+	}
+
 	switch delRes.StatusCode {
-	case 200:
+	case 200, 201:
 		fmt.Println("Removing old service.")
 	case 404:
 		fmt.Println("No existing service to remove")
+	default:
+		bytesOut, err := ioutil.ReadAll(delRes.Body)
+		if err == nil {
+			fmt.Println("Server returned unexpected status code", delRes.StatusCode, string(bytesOut))
+		}
 	}
 }
 
@@ -339,7 +364,11 @@ func pathExists(path string) bool {
 }
 
 func cp(src string, destination string) error {
-	fmt.Printf("cp - %s %s\n", src, destination)
+
+	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
+		fmt.Printf("cp - %s %s\n", src, destination)
+	}
+
 	memoryBuffer, readErr := ioutil.ReadFile(src)
 	if readErr != nil {
 		return fmt.Errorf("Error reading source file: %s\n" + readErr.Error())
