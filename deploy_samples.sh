@@ -2,7 +2,7 @@
 
 ./faas-cli -action deploy -yaml ./samples.yml
 
-sleep 2
+sleep 5
 
 # Get sample image for resizer function.
 curl -SL https://raw.githubusercontent.com/alexellis/faas/master/sample-functions/ResizeImageMagick/gordon.png > gordon.png
