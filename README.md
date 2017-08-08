@@ -104,6 +104,19 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 
 The `brew` formula for the faas-cli is part of the official [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/faas-cli.rb) repo on Github. It needs to be updated for each subsequent release.
 
+These are the guidelines for updating brew:
+
+https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md
+
+After `brew edit` run the build and test the results:
+
+```
+$ brew uninstall --force faas-cli ; \
+  brew install --build-from-source faas-cli ; \
+  brew test faas-cli ; \
+  brew audit --strict faas-cli
+```
+
 **Updating the utility-script**
 
 Please raise a PR for the get.sh file held in this repository. It's used when people install via `curl` and `cli.openfaas.com`. The updated file then has to be redeployed to the hosting server.
