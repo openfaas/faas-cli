@@ -98,6 +98,16 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)
 
+## FaaS-CLI Developers / Contributors
+
+**Updating the brew formula**
+
+The `brew` formula for the faas-cli is part of the official [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/faas-cli.rb) repo on Github. It needs to be updated for each subsequent release.
+
+**Updating the utility-script**
+
+Please raise a PR for the get.sh file held in this repository. It's used when people install via `curl` and `cli.openfaas.com`. The updated file then has to be redeployed to the hosting server.
+
 ### Installation / pre-requirements
 
 * Docker
