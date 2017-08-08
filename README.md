@@ -11,7 +11,7 @@ This experimental CLI can be used to and deploy functions to FaaS or to build No
 The easiest way to install the faas-cli is by doing:
 
 ```
-$ curl -sSL cli.get-faas.com | sudo sh
+$ curl -sSL https://cli.openfaas.com | sudo sh
 ```
 
 Note that the tool is also available on brew. The last section also documents how to build it from source.
