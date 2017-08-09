@@ -221,7 +221,7 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	switch res.StatusCode {
-	case 200, 201:
+	case 200, 201, 202:
 		fmt.Println("Deployed.")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
@@ -255,7 +255,7 @@ func deleteFunction(gateway string, functionName string) {
 	}
 
 	switch delRes.StatusCode {
-	case 200, 201:
+	case 200, 201, 202:
 		fmt.Println("Removing old service.")
 	case 404:
 		fmt.Println("No existing service to remove")
