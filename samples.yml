@@ -1,7 +1,7 @@
 provider:
   name: faas
-  gateway: http://localhost:8080  # can be remote server
-  network: "func_functions" # this is optional and defaults to func_functions
+  gateway: http://localhost:8080  # can be a remote server
+  network: "func_functions"       # this is optional and defaults to func_functions
 
 functions:
   url-ping:
@@ -19,3 +19,8 @@ functions:
     skip_build: true  # this example is a binary, doesn't use a template
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"
+
+  ruby-echo:
+    lang: ruby
+    handler: ./sample/ruby-echo
+    image: alexellis/ruby-echo

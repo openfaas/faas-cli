@@ -192,6 +192,8 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 		fprocessTemplate = "python index.py"
 	} else if language == "node" {
 		fprocessTemplate = "node index.js"
+	} else if language == "ruby" {
+		fprocessTemplate = "ruby index.rb"
 	}
 
 	if replace {
@@ -274,7 +276,7 @@ func pushImage(image string) {
 func buildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
 
 	switch language {
-	case "node", "python":
+	case "node", "python", "ruby":
 		tempPath := createBuildTemplate(functionName, handler, language)
 
 		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
