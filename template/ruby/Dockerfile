@@ -9,15 +9,16 @@ RUN apk --no-cache add curl \
 
 WORKDIR /root/
 
+COPY Gemfile		.
 COPY index.rb           .
 COPY function           function
+RUN bundle install 
 
 WORKDIR /root/function/
+RUN bundle install 
 
 WORKDIR /root/
-
 ENV fprocess="ruby index.rb"
-
-HEALTHCHECK --interval=1s CMD [ -e /tmp/.lock ] || exit 1
+HEALTHCHECK --interval=2s CMD [ -e /tmp/.lock ] || exit 1
 
 CMD ["fwatchdog"]
