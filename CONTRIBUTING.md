@@ -14,6 +14,6 @@ Here are a few guidelines for contributing:
 
 **Practical stuff**
 
-* Please sign your commits with `git commit -s` so that commits are traceable.
+* Please sign your commits with `git commit -S` so that commits are traceable.
 * Please always provide a summary of what you changed, how you did it and how it can be tested
 
