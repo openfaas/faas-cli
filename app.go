@@ -112,6 +112,11 @@ func main() {
 
 	switch action {
 	case "build":
+
+		if pullErr := pullTemplates(); pullErr != nil {
+			log.Fatalln("Could not pull templates for FaaS.", pullErr)
+		}
+
 		if len(services.Functions) > 0 {
 			for k, function := range services.Functions {
 				if function.SkipBuild {
@@ -429,4 +434,19 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 	}
 
 	return buildFlags
+}
+
+func pullTemplates() error {
+	var err error
+	exists, err := os.Stat("./template")
+	if err != nil || exists == nil {
+		log.Println("No templates found in current directory.")
+
+		err = fetchTemplates()
+		if err != nil {
+			log.Println("Unable to download templates from Github.")
+			return err
+		}
+	}
+	return err
 }
