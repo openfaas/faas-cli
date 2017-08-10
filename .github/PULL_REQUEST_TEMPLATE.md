@@ -7,7 +7,7 @@
 <!--- Why is this change required? What problem does it solve? -->
 <!--- If it fixes an open issue, please link to the issue here. -->
 
-- [ ] I have raise an issue to discuss the change
+- [ ] I have raised an issue to propose this change
 
 ## How Has This Been Tested?
 <!--- Please describe in detail how you tested your changes. -->
