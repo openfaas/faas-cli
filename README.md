@@ -131,7 +131,7 @@ Install Docker because it is used to build Docker images if you create new funct
 
 This CLI can build and deploy templated functions, so it's best if you have FaaS started up on your laptop. Head over to http://docs.get-faas.com/ and get up and running with a sample stack in 60 seconds.
 
-* Golang
+* Golang 1.7.x (1.8.x will also work)
 
 > Here's how to install Go in 60 seconds.
 
