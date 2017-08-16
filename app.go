@@ -322,7 +322,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	copyFiles("./template/"+language, tempPath, true)
 
 	// Overlay in user-function
-	copyFiles(handler, tempPath+"/", false)
+	copyFiles(handler, tempPath+"function/", false)
 
 	return tempPath
 }
