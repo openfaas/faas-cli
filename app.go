@@ -199,6 +199,8 @@ func deployFunction(fprocess string, gateway string, functionName string, image 
 		fprocessTemplate = "node index.js"
 	} else if language == "ruby" {
 		fprocessTemplate = "ruby index.rb"
+	} else if language == "csharp" {
+		fprocessTemplate = "dotnet ./bin/Debug/netcoreapp2.0/root.dll"
 	}
 
 	if replace {
@@ -281,7 +283,7 @@ func pushImage(image string) {
 func buildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
 
 	switch language {
-	case "node", "python", "ruby":
+	case "node", "python", "ruby", "csharp":
 		tempPath := createBuildTemplate(functionName, handler, language)
 
 		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
@@ -320,7 +322,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	copyFiles("./template/"+language, tempPath, true)
 
 	// Overlay in user-function
-	copyFiles(handler, tempPath+"function/", false)
+	copyFiles(handler, tempPath+"/", false)
 
 	return tempPath
 }
