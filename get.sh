@@ -1,4 +1,4 @@
-version=0.3
+version=$(curl -s https://api.github.com/repos/alexellis/faas-cli/releases/latest | grep 'tag_name' | cut -d\" -f4)
 
 hasCli() {
     has=$(which faas-cli)
