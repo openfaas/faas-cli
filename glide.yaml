@@ -1,6 +1,0 @@
-package: github.com/alexellis/faas-cli
-import:
-- package: github.com/alexellis/faas
-  subpackages:
-  - gateway/requests
-- package: gopkg.in/yaml.v2
