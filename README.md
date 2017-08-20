@@ -26,7 +26,7 @@ You can define individual functions or a set of of them within a YAML file. This
 
 Here is an example file using the `samples.yml` file included in the repository.
 
-```
+```yaml
 provider:
   name: faas
   gateway: http://localhost:8080
@@ -66,7 +66,7 @@ $ ./faas-cli -action deploy -f ./samples.yml
 
 * Possible entries for functions are documented below:
 
-```
+```yaml
 functions:
   deployed_function_name:
     lang: node or python (optional)
@@ -151,7 +151,7 @@ This CLI can build and deploy templated functions, so it's best if you have FaaS
 
 Then after installing run this command or place it in your `$HOME/.bash_profile`
 
-```
+```bash
 export GOPATH=$HOME/go
 ```
 
