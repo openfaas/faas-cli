@@ -1,4 +1,4 @@
-package main
+package stack
 
 // Provider for the FaaS set of functions.
 type Provider struct {
