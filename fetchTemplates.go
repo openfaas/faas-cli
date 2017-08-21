@@ -12,6 +12,7 @@ import (
 	"strings"
 )
 
+// fetchTemplates fetch code templates from GitHub master zip file.
 func fetchTemplates() error {
 
 	err := fetchMasterZip()
