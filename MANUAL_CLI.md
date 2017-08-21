@@ -10,20 +10,20 @@ So if you want to write in another language, just prepare a Dockerfile and build
 
 This will generate a Docker image for a Node.js function using the code in `/samples/info`.
 
-* The `faas-cli` can accept a `-lang` option of `python` or `node` and is `node` by default.
+* The `faas-cli build` command can accept a `--lang` option of `python` or `node` and is `node` by default.
 
 ```
-   $ ./faas-cli -action=build \
-      -image=alexellis2/node_info \
-      -name=node_info \
-      -handler=./sample/node_info
+   $ faas-cli build \
+      --image=alexellis2/node_info \
+      --name=node_info \
+      --handler=./sample/node_info
 
 Building: alexellis2/node_info with Docker. Please wait..
 ...
 Image: alexellis2/node_info built.
 ```
 
-You can customise the code by editing the handler.js file and changing the `-handler` parameter. You can also edit the packages.json file, which will be used during the build to make sure all your dependencies are available at runtime.
+You can customise the code by editing the handler.js file and changing the `--handler` parameter. You can also edit the packages.json file, which will be used during the build to make sure all your dependencies are available at runtime.
 
 For example:
 
@@ -44,9 +44,9 @@ The CLI will then build a Docker image containing the FaaS watchdog and a bootst
 Now we can deploy the image as a named function called `node_info`.
 
 ```
-$ ./faas-cli -action=deploy \
-   -image=alexellis2/node_info \
-   -name=node_info
+$ faas-cli deploy \
+   --image=alexellis2/node_info \
+   --name=node_info
 
 200 OK
 
@@ -57,4 +57,4 @@ URL: http://localhost:8080/function/node_info
 
 *Deploy remotely*
 
-You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `-gateway=http://remote-site.com:8080`
+You can deploy to a remote FaaS instance as along as you push the image to the Docker Hub, or another accessible Docker registry. Specify your remote gateway with the following flag: `--gateway=http://remote-site.com:8080`

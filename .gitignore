@@ -1,6 +1,7 @@
 **/node_modules/
 build/
 faas-cli
+!contrib/bash/faas-cli
 faas-cli-darwin
 faas-cli-armhf
 
