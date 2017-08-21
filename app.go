@@ -144,6 +144,28 @@ func main() {
 			buildImage(image, handler, functionName, language, nocache, squash)
 		}
 		break
+	case "delete":
+		if len(services.Functions) > 0 {
+			if len(services.Provider.Network) == 0 {
+				services.Provider.Network = defaultNetwork
+			}
+
+			for k, function := range services.Functions {
+				function.Name = k
+				fmt.Printf("Deleting: %s.\n", function.Name)
+
+				deleteFunction(services.Provider.GatewayURL, function.Name)
+			}
+		} else {
+			if len(functionName) == 0 {
+				fmt.Println("Please provide a -name for your function as it will be deployed on FaaS")
+				return
+			}
+			fmt.Printf("Deleting: %s.\n", functionName)
+			deleteFunction(gateway, functionName)
+		}
+
+		break
 	case "deploy":
 		if len(services.Functions) > 0 {
 			if len(services.Provider.Network) == 0 {
