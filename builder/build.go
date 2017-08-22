@@ -9,28 +9,54 @@ import (
 )
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
+func BuildImage(image string, handler string, functionName string, languageTemplate string, nocache bool, squash bool) {
+	var tempPath string
+	var builder []string
+	flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
 
-	switch language {
+	switch languageTemplate {
 	case "node", "python", "ruby", "csharp":
-		tempPath := createBuildTemplate(functionName, handler, language)
-
-		fmt.Printf("Building: %s with Docker. Please wait..\n", image)
-
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
+		tempPath = createBuildTemplate(functionName, handler, languageTemplate)
+		builder = strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
+	case "custom":
+		tempPath = createBuildCustom(functionName, handler, handler)
+		builder = strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
 	default:
-		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead and set lang to 'custom'.", languageTemplate)
 	}
 
+	fmt.Printf("Building: %s with Docker. Please wait..\n", image)
+	fmt.Println(strings.Join(builder, " "))
+	ExecCommand(tempPath, builder)
 	fmt.Printf("Image: %s built.\n", image)
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with Node template
-func createBuildTemplate(functionName string, handler string, language string) string {
+func createBuildTemplate(functionName, handler, languageTemplate string) string {
+	tempPath := initBuild(functionName)
+	fmt.Printf("Prepared %s %s\n", handler+"/", tempPath+"function")
+
+	// Drop in directory tree from languageTemplate
+	copyFiles("./template/"+languageTemplate, tempPath, true)
+
+	// Overlay in user-function
+	copyFiles(handler, tempPath+"function/", false)
+
+	return tempPath
+}
+
+// createBuildCustom creates temporary build folder to perform a Docker build with Node template
+func createBuildCustom(functionName, handler, customTemplatePath string) string {
+	tempPath := initBuild(functionName)
+	fmt.Printf("Prepared %s %s\n", handler+"/", tempPath+"function")
+
+	// Drop in directory tree from customTemplatePath
+	copyFiles(customTemplatePath, tempPath, true)
+
+	return tempPath
+}
+
+func initBuild(functionName string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
@@ -39,19 +65,11 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
 	}
 
-	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
-
 	functionPath := tempPath + "/function"
 	mkdirErr := os.MkdirAll(functionPath, 0700)
 	if mkdirErr != nil {
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
-
-	// Drop in directory tree from template
-	copyFiles("./template/"+language, tempPath, true)
-
-	// Overlay in user-function
-	copyFiles(handler, tempPath+"function/", false)
 
 	return tempPath
 }
