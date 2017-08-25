@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/alexellis/faas-cli.svg?branch=master)](https://travis-ci.org/alexellis/faas-cli)
 
-This is a CLI for use with [OpenFaaS](https://github.com/alexellis/faas)
+This is a CLI for use with [OpenFaaS](https://github.com/alexellis/faas) - a serverless functions framework for Docker & Kubernetes.
 
 The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/alexellis/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
