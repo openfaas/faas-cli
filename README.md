@@ -67,11 +67,11 @@ provider:
 functions:
   url-ping:
     lang: python
-    handler: ./sample/url_ping
+    handler: ./sample/url-ping
     image: alexellis2/faas-urlping
 ```
 
-This url_ping function is defined in the samples/url__ping folder makes use of Python. All we had to do was to write a `handler.py` file and then to list off any Python modules in `requirements.txt`.
+This url-ping function is defined in the sample/url-ping folder makes use of Python. All we had to do was to write a `handler.py` file and then to list off any Python modules in `requirements.txt`.
 
 * Build the files in the .yml file:
 
