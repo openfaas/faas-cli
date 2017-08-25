@@ -6,8 +6,6 @@ This experimental CLI can be used to and deploy functions to FaaS or to build No
 
 > Functions as a Service is a serverless framework for Docker: [Read more on docs.get-faas.com](http://docs.get-faas.com/)
 
-Website: www.openfaas.com
-
 ### Installing the tool
 
 The easiest way to install the faas-cli is by doing:
