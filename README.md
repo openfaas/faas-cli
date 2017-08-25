@@ -45,7 +45,7 @@ This url_ping function is defined in the samples/url__ping folder makes use of P
 * Build the files in the .yml file:
 
 ```
-$ ./faas-cli -action build -f ./samples.yml
+$ faas-cli -action build -f ./samples.yml
 ```
 
 > `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `-yaml`.
@@ -53,7 +53,7 @@ $ ./faas-cli -action build -f ./samples.yml
 You can also download over HTTP/s:
 
 ```
-$ ./faas-cli -action build -f https://raw.githubusercontent.com/alexellis/faas-cli/master/samples.yml
+$ faas-cli -action build -f https://raw.githubusercontent.com/alexellis/faas-cli/master/samples.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
@@ -63,7 +63,7 @@ Docker along with a Python template will be used to build an image named alexell
 Now you can use the following command to deploy your function(s):
 
 ```
-$ ./faas-cli -action deploy -f ./samples.yml
+$ faas-cli -action deploy -f ./samples.yml
 ```
 
 * Possible entries for functions are documented below:
