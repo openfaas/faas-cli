@@ -2,29 +2,58 @@
 
 [![Build Status](https://travis-ci.org/alexellis/faas-cli.svg?branch=master)](https://travis-ci.org/alexellis/faas-cli)
 
-This experimental CLI can be used to and deploy functions to FaaS or to build Node.js or Python functions from a templates meaning you just write a handler file (handler.py/handler.js). Read on for examples and usage.
+This is a CLI for use with [OpenFaaS](https://github.com/alexellis/faas)
 
-> Functions as a Service is a serverless framework for Docker: [Read more on docs.get-faas.com](http://docs.get-faas.com/)
-
-Website: www.openfaas.com
+The CLI can be used to and deploy functions to [OpenFaaS](https://github.com/alexellis/faas) or to build functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
 ### Installing the tool
 
-The easiest way to install the faas-cli is by doing:
+The easiest way to install the faas-cli is through a curl script or `brew`:
 
 ```
 $ curl -sSL https://cli.openfaas.com | sudo sh
 ```
 
-Note that the tool is also available on brew. The last section also documents how to build it from source.
+or
 
-### Running the tool
+```
+$ brew install faas-cli
+```
 
-The tool can be used to create a Docker image to be deployed on FaaS through a template meaning you only have to write a single handler file. The templates currently supported are: node and python, however you can create a FaaS function out of any process.
+> The contributing guide has instructions for building from source
+
+### Run the tool
+
+The main actions for the tool are:
+
+* `-action build` - builds Docker images from the supported language types
+* `-action push` - pushes Docker images into a registry
+* `-action deploy` - deploys the functions into a local or remote OpenFaaS gateway
+
+You can chose between using a [programming language template](https://github.com/alexellis/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
+
+**Templates**
+
+* Supports common languages
+* Quick and easy - just write one file
+* Specify depenencies on Gemfile / requirements.txt or package.json etc
+
+* Customise the provided templates
+
+Perhaps you need to have [`gcc` or another dependency](https://github.com/alexellis/faas-office-sample) in your Python template? That's not a problem.
+
+You can customise the Dockerfile or code for any of the templates. Just create a new directory and copy in the templates folder from this repository. The templates in your current working directory are always used for builds.
+
+**Docker image**
+
+* Ultimate versatility and control
+* Package anything
+* If you are using a stack file add the `skip_build: true` attribute
+* Use one of the [samples as a basis](https://github.com/alexellis/faas/tree/master/sample-functions)
 
 #### YAML files for ease of use
 
-You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your FaaS instance.
+You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.
 
 Here is an example file using the `samples.yml` file included in the repository.
 
