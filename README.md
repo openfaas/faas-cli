@@ -10,7 +10,7 @@ The CLI can be used to build and deploy functions to [OpenFaaS](https://github.c
 
 Demo: [ASCII cinema](https://asciinema.org/a/121234)
 
-### Installing the tool
+### Intall the CLI
 
 The easiest way to install the faas-cli is through a curl script or `brew`:
 
@@ -26,7 +26,7 @@ $ brew install faas-cli
 
 > The contributing guide has instructions for building from source
 
-### Run the tool
+### Run the CLI
 
 The main actions for the tool are:
 
@@ -37,6 +37,8 @@ The main actions for the tool are:
 You can chose between using a [programming language template](https://github.com/alexellis/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
 **Templates**
+
+Specify `lang: node/python/csharp/ruby`
 
 * Supports common languages
 * Quick and easy - just write one file
@@ -49,6 +51,8 @@ Perhaps you need to have [`gcc` or another dependency](https://github.com/alexel
 You can customise the Dockerfile or code for any of the templates. Just create a new directory and copy in the templates folder from this repository. The templates in your current working directory are always used for builds.
 
 **Docker image**
+
+Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_build: true` for pre-supplied images.
 
 * Ultimate versatility and control
 * Package anything
