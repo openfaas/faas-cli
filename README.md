@@ -133,6 +133,24 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)
 
+#### Adding custom function support
+
+If you want to add a function that does not have a template (such as `go`),
+you only need to place a dockerfile within a directory such that:
+
+1. The dockerfile builds successfully with appropriate settings:
+   * The `fprocess` env var should be the path + flags for an executable binary
+   * The binary should accept stdin and print to stdout
+2. You specify the directory that contains the dockerfile as a 'handler':
+   * For the yaml, just put in the path. You can see this in `samples.yml`
+  for the golang-echo function
+   * On the command line, use the `-handler` flag
+3. You specify the the `language` as `custom`:
+   * For the yaml, specify `lang: custom` under the function config
+   * On the command line, use the flag `-lang custom`
+
+You can look at [the golang-echo sample for reference](./sample/golang-echo)
+
 ## FaaS-CLI Developers / Contributors
 
 See [contributing guide](https://github.com/alexellis/faas-cli/blob/master/CONTRIBUTING.md).
