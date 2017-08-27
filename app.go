@@ -40,7 +40,7 @@ func main() {
 
 	flag.StringVar(&handler, "handler", "", "handler for function, i.e. handler.js")
 	flag.StringVar(&image, "image", "", "Docker image name to build")
-	flag.StringVar(&action, "action", "", "either build or deploy")
+	flag.StringVar(&action, "action", "", "Available actions: build, deploy, push, delete")
 	flag.StringVar(&functionName, "name", "", "give the name of your deployed function")
 	flag.StringVar(&gateway, "gateway", "http://localhost:8080", "gateway URI - i.e. http://localhost:8080")
 	flag.StringVar(&fprocess, "fprocess", "", "fprocess to be run by the watchdog")
@@ -177,7 +177,7 @@ func main() {
 			return
 		}
 	default:
-		fmt.Println("-action must be 'build', 'deploy' or 'push'.")
+		fmt.Println("-action must be 'build', 'deploy', 'push' or 'delete'.")
 		break
 	}
 }
