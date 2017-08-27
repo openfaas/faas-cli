@@ -10,3 +10,4 @@ master.zip
 *.png
 
 obj
+.vscode
