@@ -16,7 +16,8 @@ functions:
 
   # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
-    skip_build: true  # this example is a binary, doesn't use a template
+    lang: Dockerfile
+    handler: ./sample/imagemagick
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"
 
