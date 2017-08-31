@@ -43,7 +43,7 @@ var buildCmd = &cobra.Command{
   faas-cli build --image IMAGE_NAME
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
-                 [--lang <ruby|python|python-armf|node|node-armf|csharp>]
+                 [--lang <ruby|python|python-armf|node|node-armf|csharp|Dockerfile>]
                  [--no-cache] [--squash]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
@@ -83,6 +83,11 @@ func runBuild(cmd *cobra.Command, args []string) {
 				function.Name = k
 				// fmt.Println(k, function)
 				fmt.Printf("Building: %s.\n", function.Name)
+				if len(function.Language) == 0 {
+					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
+					return
+				}
+
 				builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
 			}
 		}
