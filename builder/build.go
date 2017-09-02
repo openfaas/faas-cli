@@ -50,7 +50,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 	}
 }
 
-// createBuildTemplate creates temporary build folder to perform a Docker build with Node template
+// createBuildTemplate creates temporary build folder to perform a Docker build with language template
 func createBuildTemplate(functionName string, handler string, language string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
@@ -72,7 +72,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	copyFiles("./template/"+language, tempPath, true)
 
 	// Overlay in user-function
-	copyFiles(handler, tempPath+"function/", false)
+	copyFiles(handler, tempPath+"function/", true)
 
 	return tempPath
 }
@@ -91,21 +91,22 @@ func copyFiles(src string, destination string, recursive bool) {
 			cp(src+"/"+file.Name(), destination+file.Name())
 
 		} else {
-
 			//make new destination dir
 			newDir := destination + file.Name() + "/"
+
 			if !pathExists(newDir) {
 
+				debugPrint(fmt.Sprintf("Creating directory: %s at %s", file.Name(), newDir))
 				newDirErr := os.Mkdir(newDir, 0700)
 
-				if err != nil {
+				if newDirErr != nil {
 					fmt.Printf("Error creating path %s - %s.\n", newDir, newDirErr.Error())
 				}
 			}
 
 			//did the call ask to recurse into sub directories?
 			if recursive == true {
-				//call copyTree to copy the contents
+				//call copyFiles to copy the contents
 				copyFiles(src+"/"+file.Name(), newDir, true)
 			}
 		}
@@ -124,9 +125,7 @@ func pathExists(path string) bool {
 
 func cp(src string, destination string) error {
 
-	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
-		fmt.Printf("cp - %s %s\n", src, destination)
-	}
+	debugPrint(fmt.Sprintf("cp - %s %s", src, destination))
 
 	memoryBuffer, readErr := ioutil.ReadFile(src)
 	if readErr != nil {
@@ -160,4 +159,11 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 	}
 
 	return buildFlags
+}
+
+func debugPrint(message string) {
+
+	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
+		fmt.Println(message)
+	}
 }
