@@ -5,10 +5,10 @@ COPY . .
 RUN go get -d -v
 
 RUN GIT_COMMIT=$(git rev-list -1 HEAD) \
- && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-X commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-armhf \
- && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-X commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-darwin \
- && CGO_ENABLED=0 GOOS=linux go build --ldflags "-X commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli \
- && CGO_ENABLED=0 GOOS=windows go build --ldflags "-X commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli.exe
+ && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-armhf \
+ && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-darwin \
+ && CGO_ENABLED=0 GOOS=linux go build --ldflags "-X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli \
+ && CGO_ENABLED=0 GOOS=windows go build --ldflags "-X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli.exe
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
