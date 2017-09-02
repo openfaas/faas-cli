@@ -72,7 +72,7 @@ func runBuild(cmd *cobra.Command, args []string) {
 	}
 
 	if pullErr := pullTemplates(); pullErr != nil {
-		log.Fatalln("Could not pull templates for FaaS.", pullErr)
+		log.Fatalln("Could not pull templates for OpenFaaS.", pullErr)
 	}
 
 	if len(services.Functions) > 0 {
