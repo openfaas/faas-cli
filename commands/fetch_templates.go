@@ -56,6 +56,9 @@ func fetchTemplates() error {
 	if _, err := os.Stat(zipFileName); err == nil {
 		os.Remove(zipFileName)
 	}
+	else {
+		return err
+	}
 
 	return err
 }
