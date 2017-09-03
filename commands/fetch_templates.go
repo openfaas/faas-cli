@@ -15,17 +15,19 @@ import (
 	"strings"
 )
 
+const ZipFileName string = "master.zip"
+
 // fetchTemplates fetch code templates from GitHub master zip file.
-func fetchTemplates() error {
+func fetchTemplates(templateUrl string) error {
 
-	err := fetchMasterZip()
+	err := fetchMasterZip(templateUrl)
 
-	zipFile, err := zip.OpenReader("./master.zip")
+	zipFile, err := zip.OpenReader(ZipFileName)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("Attempting to expand templates from master.zip\n")
+	log.Printf("Attempting to expand templates from %s\n", ZipFileName)
 
 	for _, z := range zipFile.File {
 		relativePath := strings.Replace(z.Name, "faas-cli-master/", "", -1)
@@ -51,26 +53,32 @@ func fetchTemplates() error {
 		}
 	}
 
+	log.Printf("Cleaning up zip file...")
+	if _, err := os.Stat(ZipFileName); err == nil {
+		os.Remove(ZipFileName)
+	} else {
+		return err
+	}
 	fmt.Println("")
 
 	return err
 }
 
-func fetchMasterZip() error {
+func fetchMasterZip(templateUrl string) error {
 	var err error
-	if _, err = os.Stat("master.zip"); err != nil {
-		templateURL := os.Getenv("templateUrl")
-		if len(templateURL) == 0 {
-			templateURL = "https://github.com/alexellis/faas-cli/archive/master.zip"
+	if _, err = os.Stat(ZipFileName); err != nil {
+
+		if len(templateUrl) == 0 {
+			templateUrl = "https://github.com/alexellis/faas-cli/archive/" + ZipFileName
 		}
 		c := http.Client{}
 
-		req, err := http.NewRequest("GET", templateURL, nil)
+		req, err := http.NewRequest("GET", templateUrl, nil)
 		if err != nil {
 			log.Println(err.Error())
 			return err
 		}
-		log.Printf("HTTP GET %s\n", templateURL)
+		log.Printf("HTTP GET %s\n", templateUrl)
 		res, err := c.Do(req)
 		if err != nil {
 			log.Println(err.Error())
@@ -85,12 +93,13 @@ func fetchMasterZip() error {
 			return err
 		}
 
-		log.Printf("Writing %dKb to master.zip\n", len(bytesOut)/1024)
-		err = ioutil.WriteFile("./master.zip", bytesOut, 0700)
+		log.Printf("Writing %dKb to %s\n", len(bytesOut)/1024, ZipFileName)
+		err = ioutil.WriteFile(ZipFileName, bytesOut, 0700)
 		if err != nil {
 			log.Println(err.Error())
 		}
 	}
+	fmt.Println("")
 	return err
 }
 

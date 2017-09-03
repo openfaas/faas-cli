@@ -63,7 +63,7 @@ the "Dockerfile" lang type in your YAML file.
 		return
 	}
 
-	PullTemplates()
+	PullTemplates("")
 
 	if _, err := os.Stat(functionName); err == nil {
 		fmt.Printf("Folder: %s already exists\n", functionName)

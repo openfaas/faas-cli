@@ -75,7 +75,7 @@ func runBuild(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	if pullErr := PullTemplates(); pullErr != nil {
+	if pullErr := PullTemplates(""); pullErr != nil {
 		log.Fatalln("Could not pull templates for OpenFaaS.", pullErr)
 	}
 
@@ -114,13 +114,13 @@ func runBuild(cmd *cobra.Command, args []string) {
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.
-func PullTemplates() error {
+func PullTemplates(templateUrl string) error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates()
+		err = fetchTemplates(templateUrl)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err
