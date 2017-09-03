@@ -18,9 +18,10 @@ import (
 // fetchTemplates fetch code templates from GitHub master zip file.
 func fetchTemplates() error {
 
+	const zipFileName = "./master.zip"
 	err := fetchMasterZip()
 
-	zipFile, err := zip.OpenReader("./master.zip")
+	zipFile, err := zip.OpenReader(zipFileName)
 	if err != nil {
 		return err
 	}
@@ -49,6 +50,14 @@ func fetchTemplates() error {
 				}
 			}
 		}
+	}
+
+	log.Printf("Cleaning up zip file...")
+	if _, err := os.Stat(zipFileName); err == nil {
+		os.Remove(zipFileName)
+	}
+	else {
+		return err
 	}
 
 	return err
