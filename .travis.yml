@@ -19,3 +19,19 @@ script:
   - ./build_samples.sh
   - ./test/version.sh ./faas-cli
 #  - ./deploy_samples.sh # requires a deployed FaaS
+
+before_deploy:
+  - ./build_redist.sh
+
+deploy:
+  provider: releases
+  api_key:
+      secure: "ADD SECURE TOKEN HERE"
+  file: 
+  - faas-cli
+  - faas-cli-darwin
+  - faas-cli-armhf
+  - faas-cli.exe
+  skip_cleanup: true
+  on:
+    tags: true
