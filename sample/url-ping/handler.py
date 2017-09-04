@@ -8,11 +8,12 @@ def print_url(url):
         print("Timed out trying to reach URL.")
 
 def handle(req):
-    print("Handle this -> " + req)
-    if req.find("http") == -1:
+    url = req.rstrip()
+    print("Handle this -> " + url)
+    if url.find("http") == -1:
         print("Give me a URL and I'll ping it for you.")
         return
     
-    print_url(req)
+    print_url(url)
 
 # handle("http://faaster.io")
