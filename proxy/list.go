@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/alexellis/faas/gateway/requests"
 )
@@ -15,6 +16,8 @@ import (
 // ListFunctions list deployed functions
 func ListFunctions(gateway string) ([]requests.Function, error) {
 	var results []requests.Function
+
+	gateway = strings.TrimRight(gateway, "/")
 
 	res, err := http.Get(gateway + "/system/functions")
 	if err != nil {

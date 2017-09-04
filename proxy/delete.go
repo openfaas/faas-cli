@@ -9,12 +9,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/alexellis/faas/gateway/requests"
 )
 
 // DeleteFunction delete a function from the FaaS server
 func DeleteFunction(gateway string, functionName string) {
+	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
 	reader := bytes.NewReader(reqBytes)

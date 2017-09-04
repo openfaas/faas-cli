@@ -8,11 +8,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 )
 
 // InvokeFunction a function
 func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string) (*[]byte, error) {
 	var resBytes []byte
+
+	gateway = strings.TrimRight(gateway, "/")
 
 	reader := bytes.NewReader(*bytesIn)
 	res, err := http.Post(gateway+"/function/"+name, contentType, reader)
