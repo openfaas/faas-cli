@@ -4,6 +4,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -51,5 +53,6 @@ Manage your OpenFaaS functions from the command line`,
 
 // runFaas TODO
 func runFaas(cmd *cobra.Command, args []string) {
+	fmt.Printf(figletStr)
 	cmd.Help()
 }

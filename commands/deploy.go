@@ -17,8 +17,9 @@ import (
 // Flags that are to be added to commands.
 
 var (
-	envvarOpts []string
-	replace    bool
+	envvarOpts  []string
+	replace     bool
+	constraints []string
 )
 
 func init() {
@@ -33,6 +34,8 @@ func init() {
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
 	deployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
+
+	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -88,8 +91,11 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		for k, function := range services.Functions {
 			function.Name = k
 			fmt.Printf("Deploying: %s.\n", function.Name)
+			if function.Constraints != nil {
+				constraints = *function.Constraints
+			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment, services.Provider.Network)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment, services.Provider.Network, constraints)
 		}
 	} else {
 		if len(image) == 0 {
@@ -107,7 +113,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, defaultNetwork)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, defaultNetwork, constraints)
 	}
 }
 

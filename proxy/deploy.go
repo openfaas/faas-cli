@@ -14,7 +14,7 @@ import (
 )
 
 // DeployFunction call FaaS server to deploy a new function
-func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string) {
+func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string

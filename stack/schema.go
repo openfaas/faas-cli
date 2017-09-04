@@ -27,6 +27,8 @@ type Function struct {
 	Environment map[string]string `yaml:"environment"`
 
 	SkipBuild bool `yaml:"skip_build"`
+
+	Constraints *[]string `yaml:"constraints"`
 }
 
 // Services root level YAML file to define FaaS function-set
