@@ -13,14 +13,20 @@ WORKDIR /root/
 ENV NPM_CONFIG_LOGLEVEL warn
 
 # Wrapper/boot-strapper
-COPY package.json   .
+COPY package.json       .
 RUN npm i
 
 # Function
-COPY index.js       .
-COPY function       function
+COPY index.js           .
+RUN mkdir -p ./root/function
+
+COPY function/*.json    ./function/
 WORKDIR /root/function
 RUN npm i || :
+WORKDIR /root/
+COPY function           function
+WORKDIR /root/function
+
 WORKDIR /root/
 
 ENV cgi_headers="true"

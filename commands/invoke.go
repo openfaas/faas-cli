@@ -66,9 +66,11 @@ func runInvoke(cmd *cobra.Command, args []string) {
 			gatewayAddress = services.Provider.GatewayURL
 		}
 	}
-	if len(gatewayAddress) == 0 {
+
+	if len(gateway) > 0 && gateway != "http://localhost:8080" {
 		gatewayAddress = gateway
 	}
+
 	fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
 	functionInput, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
