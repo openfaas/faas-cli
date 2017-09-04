@@ -38,8 +38,8 @@ var invokeCmd = &cobra.Command{
 	Use: `invoke --gateway GATEWAY_URL
   faas-cli invoke [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] STDIN`,
 
-	Short: "invoke an OpenFaaS function",
-	Long:  `invokes an OpenFaaS function and reads from STDIN for the body of the request`,
+	Short: "Invoke an OpenFaaS function",
+	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
 	Example: `  faas-cli invoke --gateway https://domain:port --name echo
   faas-cli invoke --gateway https://domain:port --name echo --content-type application/json`,
 	Run: runInvoke,
