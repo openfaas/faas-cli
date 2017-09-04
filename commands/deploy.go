@@ -78,6 +78,11 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			return
 		}
 
+		// Override gateway if passed
+		if len(gateway) > 0 && gateway != "http://localhost:8080" {
+			parsedServices.Provider.GatewayURL = gateway
+		}
+
 		if parsedServices != nil {
 			services = *parsedServices
 		}
