@@ -71,7 +71,11 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		gatewayAddress = gateway
 	}
 
-	fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) != 0 {
+		fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
+	}
+
 	functionInput, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Printf("Unable to read standard input: %s\n", err.Error())
