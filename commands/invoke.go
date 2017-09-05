@@ -21,13 +21,10 @@ var (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	invokeCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
 	invokeCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080", "Gateway URI")
-	invokeCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
-	invokeCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
-	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 
+	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().BoolVar(&verboseInvoke, "verbose", false, "Verbose output for the function list")
 
