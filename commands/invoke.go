@@ -51,7 +51,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 	}
 
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAML(yamlFile)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return

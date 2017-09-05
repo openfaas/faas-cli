@@ -14,6 +14,8 @@ const defaultNetwork = "func_functions"
 // Flags that are to be added to all commands.
 var (
 	yamlFile string
+	regex    string
+	filter   string
 )
 
 // Flags that are to be added to subset of commands.
@@ -28,6 +30,8 @@ var (
 
 func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
+	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
+	faasCmd.PersistentFlags().StringVarP(&filter, "filter", "", "", "Wildcard to match with function names in YAML file")
 
 	// Set Bash completion options
 	validYAMLFilenames := []string{"yaml", "yml"}

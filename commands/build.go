@@ -44,13 +44,17 @@ var buildCmd = &cobra.Command{
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
                  [--lang <ruby|python|python-armf|node|node-armf|csharp|Dockerfile>]
-                 [--no-cache] [--squash]`,
+                 [--no-cache] [--squash]
+                 [--regex "REGEX"]
+                 [--filter "WILDCARD"]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
   faas-cli build -f ./samples.yml --no-cache
+  faas-cli build -f ./samples.yml --filter "*gif*"
+  faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
                  --name=my_fn --squash`,
 	Run: runBuild,
@@ -60,7 +64,7 @@ func runBuild(cmd *cobra.Command, args []string) {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAML(yamlFile)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
