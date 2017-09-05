@@ -21,7 +21,7 @@ func init() {
 	newFunctionCmd.Flags().StringVar(&functionName, "name", "", "Name for your function")
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080",
-		"Gateway URL or http://localhost:8080 to store in YAML stack file")
+		"Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 
@@ -30,12 +30,12 @@ func init() {
 
 // newFunctionCmd displays newFunction information
 var newFunctionCmd = &cobra.Command{
-	Use:   "new [--name] [--lang] [--list]",
+	Use:   "new (--name=FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list)",
 	Short: "Create a new template in the current folder with the name given as name",
-	Long: fmt.Sprintf(`The new command creates a new function based upon hello-world in the
-given language or type in --list for a list of languages available.`),
-	Example: `  faas-cli new
-  faas-cli new --name chatbot --lang node
+	Long: `The new command creates a new function based upon hello-world in the given
+language or type in --list for a list of languages available.`,
+	Example: `faas-cli new --name chatbot --lang node
+  faas-cli new --name textparser --lang python --gateway http://mydomain:8080
   faas-cli new --list`,
 	Run: runNewFunction,
 }
@@ -54,12 +54,12 @@ the "Dockerfile" lang type in your YAML file.
 		return
 	}
 	if len(functionName) == 0 {
-		fmt.Printf("You must give a --function name\n")
+		fmt.Println("You must supply a function name with the --name flag")
 		return
 	}
 
 	if len(lang) == 0 {
-		fmt.Printf("You must give a --lang parameter\n")
+		fmt.Println("You must supply a function language with the --lang flag")
 		return
 	}
 
