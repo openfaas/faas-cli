@@ -53,7 +53,10 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--replace=false]`,
+                  [--replace=false]
+                  [--constraint PLACEMENT_CONSTRAINT ...]
+                  [--regex "REGEX"]
+                  [--filter "WILDCARD"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -61,6 +64,8 @@ the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
   faas-cli deploy -f ./samples.yml
+  faas-cli deploy -f ./samples.yml --filter "*gif*"
+  faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./samples.yml --replace=false
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
@@ -72,7 +77,7 @@ via flags.`,
 func runDeploy(cmd *cobra.Command, args []string) {
 	var services stack.Services
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAML(yamlFile)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return
