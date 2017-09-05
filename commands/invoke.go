@@ -47,7 +47,6 @@ var invokeCmd = &cobra.Command{
 
 func runInvoke(cmd *cobra.Command, args []string) {
 	var services stack.Services
-	var gatewayAddress string
 
 	if len(functionName) == 0 {
 		fmt.Println("Give a function to invoke via --name")
@@ -63,12 +62,8 @@ func runInvoke(cmd *cobra.Command, args []string) {
 
 		if parsedServices != nil {
 			services = *parsedServices
-			gatewayAddress = services.Provider.GatewayURL
+			gateway = services.Provider.GatewayURL
 		}
-	}
-
-	if len(gateway) > 0 && gateway != "http://localhost:8080" {
-		gatewayAddress = gateway
 	}
 
 	stat, _ := os.Stdin.Stat()
@@ -82,7 +77,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType)
+	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType)
 	if err != nil {
 		fmt.Println(err)
 		return
