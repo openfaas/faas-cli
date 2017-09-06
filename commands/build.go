@@ -43,7 +43,7 @@ var buildCmd = &cobra.Command{
   faas-cli build --image IMAGE_NAME
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
-                 [--lang <ruby|python|python-armf|node|node-armf|csharp|Dockerfile>]
+                 [--lang <csharp|Dockerfile|node|node-armf|perl|python|python-armf|ruby>]
                  [--no-cache] [--squash]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using

@@ -4,15 +4,20 @@ provider:
   network: "func_functions"       # this is optional and defaults to func_functions
 
 functions:
-  url-ping:
-    lang: python
-    handler: ./sample/url-ping
-    image: alexellis/faas-url-ping
-
   nodejs-echo:
     lang: node
     handler: ./sample/nodejs-echo
     image: alexellis/faas-nodejs-echo
+
+  perl-echo:
+    lang: perl
+    handler: ./perl-echo/
+    image: faas-perl-echo
+
+  ruby-echo:
+    lang: ruby
+    handler: ./sample/ruby-echo
+    image: alexellis/ruby-echo
 
   # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
@@ -21,7 +26,7 @@ functions:
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"
 
-  ruby-echo:
-    lang: ruby
-    handler: ./sample/ruby-echo
-    image: alexellis/ruby-echo
+  url-ping:
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping

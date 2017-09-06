@@ -21,14 +21,16 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	var fprocessTemplate string
 	if len(fprocess) > 0 {
 		fprocessTemplate = fprocess
-	} else if language == "python" {
-		fprocessTemplate = "python index.py"
-	} else if language == "node" {
-		fprocessTemplate = "node index.js"
-	} else if language == "ruby" {
-		fprocessTemplate = "ruby index.rb"
 	} else if language == "csharp" {
 		fprocessTemplate = "dotnet ./bin/Debug/netcoreapp2.0/root.dll"
+	} else if language == "node" {
+		fprocessTemplate = "node index.js"
+	} else if language == "perl" {
+		fprocessTemplate = "perl index.pl"
+	} else if language == "python" {
+		fprocessTemplate = "python index.py"
+	} else if language == "ruby" {
+		fprocessTemplate = "ruby index.rb"
 	}
 
 	gateway = strings.TrimRight(gateway, "/")

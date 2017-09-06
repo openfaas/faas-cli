@@ -18,3 +18,7 @@ echo
 echo "Testing shrink-image"
 curl -d "" http://localhost:8080/function/shrink-image --data-binary @gordon.png > small_gordon.png
 echo
+
+echo "Testing perl-echo"
+curl -sd "Hello World" http://localhost:8080/function/perl-echo
+echo
