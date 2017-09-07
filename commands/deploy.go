@@ -66,7 +66,7 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]				  
+                  [--label LABEL=VALUE ...]
 				  [--replace=false]
 				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
@@ -163,6 +163,15 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
 				log.Fatalln(envErr)
+			}
+
+			// Get FProcess to use from the ./template/template.yml, if a template is being used
+			if function.Language != "" && strings.ToLower(function.Language) != "dockerfile" {
+				var fprocessErr error
+				function.FProcess, fprocessErr = deriveFprocess(function)
+				if fprocessErr != nil {
+					log.Fatalln(fprocessErr)
+				}
 			}
 
 			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels)
@@ -281,4 +290,28 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 
 	functionAndStack := mergeMap(yamlEnvironment, fileEnvironment)
 	return mergeMap(functionAndStack, envvarArguments), nil
+}
+
+func deriveFprocess(function stack.Function) (string, error) {
+	var fprocess string
+
+	pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
+	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+		return "", err
+	}
+
+	var langTemplate stack.LanguageTemplate
+	parsedLangTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
+
+	if err != nil {
+		return "", err
+
+	}
+
+	if parsedLangTemplate != nil {
+		langTemplate = *parsedLangTemplate
+		fprocess = langTemplate.FProcess
+	}
+
+	return fprocess, nil
 }
