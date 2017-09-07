@@ -19,28 +19,39 @@ import (
 
 const providerName = "faas"
 
-// ParseYAMLData parse YAML file into a stack of "services".
-func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
-	var err error
-	var fileData []byte
-	urlParsed, err := url.Parse(yamlFile)
-	if err == nil && len(urlParsed.Scheme) > 0 {
-		fmt.Println("Parsed: " + urlParsed.String())
-		fileData, err = fetchYAML(urlParsed)
-		if err != nil {
-			return nil, err
-		}
+// ParseYAMLFileForStack parses a YAML file and returns a stack of "services".
+func ParseYAMLFileForStack(file string, regex string, filter string) (*Services, error) {
+	if object, err := ParseYAML(
+		file,
+		iParseYAMLDataForStack,
+		regex,
+		filter,
+	); err != nil {
+		return nil, err
 	} else {
-		fileData, err = ioutil.ReadFile(yamlFile)
-		if err != nil {
-			return nil, err
-		}
+		return object.(*Services), nil
 	}
-	return ParseYAMLData(fileData, regex, filter)
 }
 
-// ParseYAMLData parse YAML data into a stack of "services".
-func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, error) {
+// ParseYAMLDataForStack parses YAML data into a stack of "services".
+func ParseYAMLDataForStack(fileData []byte, args ...string) (*Services, error) {
+	if object, err := iParseYAMLDataForStack(fileData, args...); err != nil {
+		return nil, err
+	} else {
+		return object.(*Services), nil
+	}
+}
+
+// iParseYAMLDataForStack parse YAML data into a stack of "services".
+// Use the alias ParseYAMLDataForStack
+func iParseYAMLDataForStack(fileData []byte, args ...string) (interface{}, error) {
+	if len(args) != 2 {
+		panic("ParseYAMLData func need exactly 3 arguments, (fileData, regex, filter)")
+	}
+
+	regex := args[0]
+	filter := args[1]
+
 	var services Services
 	regexExists := len(regex) > 0
 	filterExists := len(filter) > 0

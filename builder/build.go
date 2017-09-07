@@ -5,6 +5,7 @@ package builder
 
 import (
 	"fmt"
+	"github.com/openfaas/faas-cli/stack"
 	"io/ioutil"
 	"log"
 	"os"
@@ -14,29 +15,26 @@ import (
 // BuildImage construct Docker image from function parameters
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
 
-	switch language {
-	case "node", "python", "ruby", "csharp", "python3", "go":
-		tempPath := createBuildTemplate(functionName, handler, language)
+	if stack.IsValidTemplate(language) {
 
-		fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
+		var tempPath string
+		if strings.ToLower(language) == "dockerfile" {
 
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+			tempPath = handler
+			if _, err := os.Stat(handler); err != nil {
+				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
+				fmt.Printf("Image: %s not built.\n", image)
 
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
+				return
+			}
+			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
 
-		break
-	case "Dockerfile", "dockerfile":
-		tempPath := handler
-		if _, err := os.Stat(handler); err != nil {
-			fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-			fmt.Printf("Image: %s not built.\n", image)
+		} else {
 
-			break
+			tempPath = createBuildTemplate(functionName, handler, language)
+			fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
+
 		}
-		fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
 
 		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
 
@@ -45,7 +43,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 		ExecCommand(tempPath, builder)
 		fmt.Printf("Image: %s built.\n", image)
 
-	default:
+	} else {
 		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
 	}
 }

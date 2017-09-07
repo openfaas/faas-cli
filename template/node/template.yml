@@ -1,0 +1,2 @@
+language: node
+fprocess: node index.js

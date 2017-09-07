@@ -68,7 +68,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFileForStack(yamlFile, regex, filter)
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if pullErr := PullTemplates(""); pullErr != nil {
+	if pullErr := PullTemplates(); pullErr != nil {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
@@ -139,13 +139,13 @@ func build(services *stack.Services, queueDepth int) {
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.
-func PullTemplates(templateUrl string) error {
+func PullTemplates() error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates(templateUrl)
+		err = fetchTemplates("", false)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err

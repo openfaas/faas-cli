@@ -26,16 +26,8 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	var fprocessTemplate string
 	if len(fprocess) > 0 {
 		fprocessTemplate = fprocess
-	} else if language == "python" {
-		fprocessTemplate = "python index.py"
-	} else if language == "node" {
-		fprocessTemplate = "node index.js"
-	} else if language == "ruby" {
-		fprocessTemplate = "ruby index.rb"
-	} else if language == "csharp" {
-		fprocessTemplate = "dotnet ./root.dll"
-	} else if language == "python3" {
-		fprocessTemplate = "python3 index.py"
+	} else {
+		fmt.Printf("Command to be invoked for function %s not found.\n", functionName)
 	}
 
 	gateway = strings.TrimRight(gateway, "/")
