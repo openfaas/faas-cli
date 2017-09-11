@@ -1,5 +1,7 @@
 FROM ruby:2.4-alpine3.6
 
+RUN adduser app -D
+
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add curl \ 
     && echo "Pulling watchdog binary from Github." \
@@ -7,17 +9,22 @@ RUN apk --no-cache add curl \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
-WORKDIR /root/
+RUN mkdir -p /home/app/
+WORKDIR /home/app/
 
 COPY Gemfile		.
 COPY index.rb           .
 COPY function           function
 RUN bundle install 
 
-WORKDIR /root/function/
+WORKDIR /home/app/function/
 RUN bundle install 
 
-WORKDIR /root/
+WORKDIR /home/app/
+
+RUN chown -R app ./
+USER app
+
 ENV fprocess="ruby index.rb"
 HEALTHCHECK --interval=2s CMD [ -e /tmp/.lock ] || exit 1
 

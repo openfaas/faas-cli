@@ -1,5 +1,7 @@
 FROM python:3-alpine
 
+RUN adduser app -D
+
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add curl \ 
     && echo "Pulling watchdog binary from Github." \
@@ -7,7 +9,7 @@ RUN apk --no-cache add curl \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
-WORKDIR /root/
+WORKDIR /home/app
 
 COPY index.py           .
 COPY requirements.txt   .
@@ -17,11 +19,15 @@ COPY function           function
 
 RUN touch ./function/__init__.py
 
-WORKDIR /root/function/
+WORKDIR /home/app/function/
+
 COPY function/requirements.txt	.
 RUN pip install -r requirements.txt
 
-WORKDIR /root/
+WORKDIR /home/app
+
+RUN chown -R app ./
+USER app
 
 ENV fprocess="python3 index.py"
 
