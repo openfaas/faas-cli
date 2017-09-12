@@ -30,7 +30,7 @@ func fetchTemplates() error {
 	for _, z := range zipFile.File {
 		relativePath := strings.Replace(z.Name, "faas-cli-master/", "", -1)
 		if strings.Index(relativePath, "template") == 0 {
-			fmt.Printf("Found %s.\n", relativePath)
+			fmt.Printf("Found \"%s\"\n", relativePath)
 			rc, err := z.Open()
 			if err != nil {
 				return err
@@ -50,6 +50,8 @@ func fetchTemplates() error {
 			}
 		}
 	}
+
+	fmt.Println("")
 
 	return err
 }
@@ -96,10 +98,19 @@ func writeFile(rc io.ReadCloser, size uint64, relativePath string, perms os.File
 	var err error
 
 	defer rc.Close()
-	fmt.Printf("Writing %d bytes to %s.\n", size, relativePath)
+	fmt.Printf("Writing %d bytes to \"%s\"\n", size, relativePath)
+	if strings.HasSuffix(relativePath, "/") {
+		mkdirErr := os.MkdirAll(relativePath, perms)
+		if mkdirErr != nil {
+			return fmt.Errorf("error making directory %s got: %s", relativePath, mkdirErr)
+		}
+		return err
+	}
+
+	// Create a file instead.
 	f, err := os.OpenFile(relativePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, perms)
 	if err != nil {
-		return err
+		return fmt.Errorf("error writing to %s got: %s", relativePath, err)
 	}
 	defer f.Close()
 	_, err = io.CopyN(f, rc, int64(size))

@@ -77,6 +77,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	return tempPath
 }
 
+// CopyFiles copies files from src to destination, optionally recursively.
 func CopyFiles(src string, destination string, recursive bool) {
 
 	files, err := ioutil.ReadDir(src)
