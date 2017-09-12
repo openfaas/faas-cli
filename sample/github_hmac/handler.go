@@ -38,4 +38,3 @@ func CheckMAC(message, messageMAC, key []byte) bool {
 	fmt.Printf("CalculatedMAC: %x\n", expectedMAC)
 	return hmac.Equal(messageMAC, expectedMAC)
 }
-
