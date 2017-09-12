@@ -3,7 +3,7 @@ sudo: required
 language: go
 
 go:
-  - 1.7.x
+  - 1.9.x
 install:
   - echo "Please don't go get"
   
@@ -11,7 +11,7 @@ services:
   - docker
 
 before_script:
-- curl -sSL test.docker.com | sudo -E sh
+  - curl -sSL test.docker.com | sudo -E sh
 
 script:
   - go get -d -v
