@@ -3,9 +3,9 @@
 package stack
 
 import (
-	"testing"
 	"reflect"
 	"sort"
+	"testing"
 )
 
 const TestData_1 string = `provider:
@@ -49,152 +49,152 @@ const TestData_2 string = `provider:
 `
 
 var ParseYAMLTests_Regex = []struct {
-	title        string
-	searchTerm   string
-	functions    []string
-	file         string
-	expectError  bool
+	title       string
+	searchTerm  string
+	functions   []string
+	file        string
+	expectError bool
 }{
 	{
-		title:        "Regex search for functions only containing 'node'",
-		searchTerm:   "node",
-		functions:    []string{"nodejs-echo"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for functions only containing 'node'",
+		searchTerm:  "node",
+		functions:   []string{"nodejs-echo"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for functions only containing 'echo'",
-		searchTerm:   "echo",
-		functions:    []string{"nodejs-echo", "ruby-echo"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for functions only containing 'echo'",
+		searchTerm:  "echo",
+		functions:   []string{"nodejs-echo", "ruby-echo"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for functions only containing '.+-.+'",
-		searchTerm:   ".+-.+",
-		functions:    []string{"abcd-eeee", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for functions only containing '.+-.+'",
+		searchTerm:  ".+-.+",
+		functions:   []string{"abcd-eeee", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for all functions: '.*'",
-		searchTerm:   ".*",
-		functions:    []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for all functions: '.*'",
+		searchTerm:  ".*",
+		functions:   []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for no functions: '----'",
-		searchTerm:   "----",
-		functions:    []string{},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for no functions: '----'",
+		searchTerm:  "----",
+		functions:   []string{},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for functions without dashes: '^[^-]+$'",
-		searchTerm:   "^[^-]+$",
-		functions:    []string{"imagemagick"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for functions without dashes: '^[^-]+$'",
+		searchTerm:  "^[^-]+$",
+		functions:   []string{"imagemagick"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for functions with 8 characters: '^.{8}$'",
-		searchTerm:   "^.{8}$",
-		functions:    []string{"url-ping"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for functions with 8 characters: '^.{8}$'",
+		searchTerm:  "^.{8}$",
+		functions:   []string{"url-ping"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex search for function with repeated 'e': 'e{2}'",
-		searchTerm:   "e{2}",
-		functions:    []string{"abcd-eeee"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex search for function with repeated 'e': 'e{2}'",
+		searchTerm:  "e{2}",
+		functions:   []string{"abcd-eeee"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex empty search term: ''",
-		searchTerm:   "",
-		functions:    []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
-		expectError:  false,
+		title:       "Regex empty search term: ''",
+		searchTerm:  "",
+		functions:   []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:        TestData_1,
+		expectError: false,
 	},
 	{
-		title:        "Regex invalid regex 1: '['",
-		searchTerm:   "[",
-		functions:    []string{},
-		file:         TestData_1,
-		expectError:  true,
+		title:       "Regex invalid regex 1: '['",
+		searchTerm:  "[",
+		functions:   []string{},
+		file:        TestData_1,
+		expectError: true,
 	},
 	{
-		title:        "Regex invalid regex 2: '*'",
-		searchTerm:   "*",
-		functions:    []string{},
-		file:         TestData_1,
-		expectError:  true,
+		title:       "Regex invalid regex 2: '*'",
+		searchTerm:  "*",
+		functions:   []string{},
+		file:        TestData_1,
+		expectError: true,
 	},
 	{
-		title:        "Regex invalid regex 3: '(\\w)\\1'",
-		searchTerm:   `(\w)\1`,
-		functions:    []string{},
-		file:         TestData_1,
-		expectError:  true,
+		title:       "Regex invalid regex 3: '(\\w)\\1'",
+		searchTerm:  `(\w)\1`,
+		functions:   []string{},
+		file:        TestData_1,
+		expectError: true,
 	},
 	{
-		title:        "Regex empty search term in empty YAML file: ",
-		searchTerm:   "",
-		functions:    []string{},
-		file:         TestData_2,
-		expectError:  false,
+		title:       "Regex empty search term in empty YAML file: ",
+		searchTerm:  "",
+		functions:   []string{},
+		file:        TestData_2,
+		expectError: false,
 	},
 }
 
 var ParseYAMLTests_Filter = []struct {
-	title        string
-	searchTerm   string
-	functions    []string
-	file         string
+	title      string
+	searchTerm string
+	functions  []string
+	file       string
 }{
 	{
-		title:        "Wildcard search for functions ending with 'echo'",
-		searchTerm:   "*echo",
-		functions:    []string{"nodejs-echo", "ruby-echo"},
-		file:         TestData_1,
+		title:      "Wildcard search for functions ending with 'echo'",
+		searchTerm: "*echo",
+		functions:  []string{"nodejs-echo", "ruby-echo"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard search for functions with a - in between two words: '*-*'",
-		searchTerm:   "*-*",
-		functions:    []string{"abcd-eeee", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
+		title:      "Wildcard search for functions with a - in between two words: '*-*'",
+		searchTerm: "*-*",
+		functions:  []string{"abcd-eeee", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard search for specific function: 'imagemagick'",
-		searchTerm:   "imagemagick",
-		functions:    []string{"imagemagick"},
-		file:         TestData_1,
+		title:      "Wildcard search for specific function: 'imagemagick'",
+		searchTerm: "imagemagick",
+		functions:  []string{"imagemagick"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard search for all functions: '*'",
-		searchTerm:   "*",
-		functions:    []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
+		title:      "Wildcard search for all functions: '*'",
+		searchTerm: "*",
+		functions:  []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard empty search term: ''",
-		searchTerm:   "",
-		functions:    []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
+		title:      "Wildcard empty search term: ''",
+		searchTerm: "",
+		functions:  []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard multiple wildcard characters: '**'",
-		searchTerm:   "**",
-		functions:    []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
-		file:         TestData_1,
+		title:      "Wildcard multiple wildcard characters: '**'",
+		searchTerm: "**",
+		functions:  []string{"abcd-eeee", "imagemagick", "nodejs-echo", "ruby-echo", "url-ping"},
+		file:       TestData_1,
 	},
 	{
-		title:        "Wildcard empty search term in empty YAML file: ''",
-		searchTerm:   "",
-		functions:    []string{},
-		file:         TestData_2,
+		title:      "Wildcard empty search term in empty YAML file: ''",
+		searchTerm: "",
+		functions:  []string{},
+		file:       TestData_2,
 	},
 }
 

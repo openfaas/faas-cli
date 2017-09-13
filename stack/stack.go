@@ -4,12 +4,12 @@
 package stack
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"regexp"
-	"errors"
 
 	"github.com/ryanuber/go-glob"
 	yaml "gopkg.in/yaml.v2"
