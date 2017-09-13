@@ -4,7 +4,7 @@ WORKDIR /go/src/github.com/alexellis/faas-cli
 COPY . .
 
 # Run a gofmt and exclude all vendored code.
-RUN gofmt -l -d $(find . -type f -name '*.go' -not -path "./vendor/*")
+RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 
 # ldflags "-s -w" strips binary
 # ldflags -X injects commit version into binary
