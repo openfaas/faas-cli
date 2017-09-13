@@ -15,13 +15,13 @@ before_script:
 
 script:
   - go get -d -v
-  - ./build.sh
+  - make build
   - ./build_samples.sh
   - ./test/version.sh ./faas-cli
 #  - ./deploy_samples.sh # requires a deployed FaaS
 
 before_deploy:
-  - ./build_redist.sh
+  - make build_redist
 
 deploy:
   provider: releases
