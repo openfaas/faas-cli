@@ -41,7 +41,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	req := requests.CreateFunctionRequest{
 		EnvProcess:  fprocessTemplate,
 		Image:       image,
-		Network:     "func_functions", // todo: specify network as an override
+		Network:     network,
 		Service:     functionName,
 		EnvVars:     envVars,
 		Constraints: constraints,

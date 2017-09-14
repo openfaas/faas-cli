@@ -23,6 +23,7 @@ var (
 var (
 	fprocess     string
 	functionName string
+	network      string
 	gateway      string
 	handler      string
 	image        string

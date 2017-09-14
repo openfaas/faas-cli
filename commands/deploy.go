@@ -30,6 +30,7 @@ func init() {
 	deployCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	deployCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	deployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
+	deployCmd.Flags().StringVar(&network, "network", defaultNetwork, "Name of the network")
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
@@ -50,6 +51,7 @@ var deployCmd = &cobra.Command{
                   --name FUNCTION_NAME
                   [--lang <ruby|python|node|csharp>]
                   [--gateway GATEWAY_URL]
+                  [--network NETWORK_NAME]
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
@@ -88,6 +90,11 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			parsedServices.Provider.GatewayURL = gateway
 		}
 
+		// Override network if passed
+		if len(network) > 0 && network != defaultNetwork {
+			parsedServices.Provider.Network = network
+		}
+
 		if parsedServices != nil {
 			services = *parsedServices
 		}
@@ -123,7 +130,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, defaultNetwork, constraints)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints)
 	}
 }
 
