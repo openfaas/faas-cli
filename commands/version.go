@@ -11,6 +11,7 @@ import (
 
 // GitCommit injected at build-time
 var GitCommit string
+var Version string
 var (
 	shortVersion bool
 )
@@ -36,11 +37,21 @@ This currently consists of the GitSHA from which the client was built.
 
 func runVersion(cmd *cobra.Command, args []string) {
 
+	if len(Version) == 0 {
+		Version = "dev"
+	}
+
+	if len(GitCommit) > 7 {
+		GitCommit = GitCommit[:7]
+	}
+
+	versionStr := fmt.Sprintf("%s-%s", Version, GitCommit)
+
 	if shortVersion {
-		fmt.Println(GitCommit)
+		fmt.Println(versionStr)
 	} else {
 		fmt.Printf(figletStr)
-		fmt.Printf("Git Commit: %s\n", GitCommit)
+		fmt.Printf("Version: %s\n", versionStr)
 	}
 	return
 }
