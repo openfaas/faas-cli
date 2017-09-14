@@ -1,4 +1,4 @@
-FROM golang:1.8.3
+FROM golang:1.8.3 as builder
 
 WORKDIR /go/src/github.com/alexellis/faas-cli
 COPY . .
