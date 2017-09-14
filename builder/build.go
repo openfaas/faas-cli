@@ -20,30 +20,16 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
 
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+		build(tempPath, image, nocache, squash)
 
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
-
-		break
 	case "Dockerfile", "dockerfile":
 		tempPath := handler
 		if _, err := os.Stat(handler); err != nil {
 			fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
 			fmt.Printf("Image: %s not built.\n", image)
-
-			break
+		} else {
+			build(tempPath, image, nocache, squash)
 		}
-		fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
-
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
 
 	default:
 		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
@@ -167,4 +153,13 @@ func debugPrint(message string) {
 	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
 		fmt.Println(message)
 	}
+}
+
+func build(tempPath string, image string, nocache bool, squash bool) {
+	flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+
+	builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
+	fmt.Println(strings.Join(builder, " "))
+	ExecCommand(tempPath, builder)
+	fmt.Printf("Image: %s built.\n", image)
 }

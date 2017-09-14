@@ -4,16 +4,38 @@
 package builder
 
 import (
+	"bytes"
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 // ExecCommand run a system command
 func ExecCommand(tempPath string, builder []string) {
+	var out bytes.Buffer
 	targetCmd := exec.Command(builder[0], builder[1:]...)
 	targetCmd.Dir = tempPath
-	targetCmd.Stdout = os.Stdout
-	targetCmd.Stderr = os.Stderr
+	targetCmd.Stdout = &out
+	targetCmd.Stderr = &out
 	targetCmd.Start()
-	targetCmd.Wait()
+
+	defer func() {
+		targetCmd.Wait()
+
+		logDir := ""
+		if err := os.MkdirAll("logs/", os.FileMode(0755)); err == nil {
+			logDir = "logs/"
+		}
+
+		f, err := os.OpenFile(fmt.Sprintf("%s%s.log", logDir, strings.Replace(builder[3], "/", "-", 1)), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			fmt.Printf("error opening file: %v", err)
+		}
+		defer f.Close()
+
+		log.SetOutput(f)
+		log.Printf("%s\n%s", strings.Join(builder, " "), out.String())
+	}()
 }
