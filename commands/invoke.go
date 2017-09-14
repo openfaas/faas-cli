@@ -21,7 +21,7 @@ var (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	invokeCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080", "Gateway URI")
+	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 
 	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")

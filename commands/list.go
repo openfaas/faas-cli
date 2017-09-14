@@ -19,7 +19,7 @@ var (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	listCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
-	listCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080", "Gateway URI")
+	listCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 	listCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	listCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	listCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")

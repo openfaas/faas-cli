@@ -20,7 +20,7 @@ var (
 func init() {
 	newFunctionCmd.Flags().StringVar(&functionName, "name", "", "Name for your function")
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
-	newFunctionCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080",
+	newFunctionCmd.Flags().StringVar(&gateway, "gateway", defaultGateway,
 		"Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
