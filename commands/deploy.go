@@ -25,7 +25,7 @@ var (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
-	deployCmd.Flags().StringVar(&gateway, "gateway", "http://localhost:8080", "Gateway URI")
+	deployCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 	deployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	deployCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	deployCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
@@ -84,7 +84,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		}
 
 		// Override gateway if passed
-		if len(gateway) > 0 && gateway != "http://localhost:8080" {
+		if len(gateway) > 0 && gateway != defaultGateway {
 			parsedServices.Provider.GatewayURL = gateway
 		}
 
