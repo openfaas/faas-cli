@@ -9,11 +9,12 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 # ldflags "-s -w" strips binary
 # ldflags -X injects commit version into binary
 
-RUN GIT_COMMIT=$(git rev-list -1 HEAD) \
- && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-armhf \
- && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli-darwin \
- && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli \
- && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT}" -a -installsuffix cgo -o faas-cli.exe
+RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
+ && GIT_COMMIT=$(git rev-list -1 HEAD) \
+ && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-armhf \
+ && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-darwin \
+ && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli \
+ && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli.exe
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
