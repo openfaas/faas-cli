@@ -9,12 +9,14 @@ import (
 )
 
 var (
-	repository string
-	overwrite  bool
+	repository  string
+	overwrite   bool
+	keepArchive bool
 )
 
 func init() {
 	addTemplateCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
+	addTemplateCmd.Flags().BoolVar(&keepArchive, "keep-archive", false, "Keep downloaded archives?")
 
 	faasCmd.AddCommand(addTemplateCmd)
 }
@@ -36,7 +38,7 @@ var addTemplateCmd = &cobra.Command{
 func runAddTemplate(cmd *cobra.Command, args []string) {
 	repository = args[0]
 
-	if err := fetchTemplates(repository, overwrite); err != nil {
+	if err := fetchTemplates(repository, keepArchive, overwrite); err != nil {
 		fmt.Println(err)
 	}
 }

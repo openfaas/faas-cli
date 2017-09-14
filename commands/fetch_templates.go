@@ -5,7 +5,6 @@ package commands
 
 import (
 	"archive/zip"
-	"crypto/sha1"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,9 +16,13 @@ import (
 )
 
 const defaultTemplateRepository = "https://github.com/alexellis/faas-cli/archive/master.zip"
+const cacheDirectory = "./.cache/"
+const templateDirectory = "./template/"
+
+var cache = make(map[string]bool)
 
 // fetchTemplates fetch code templates from GitHub master zip file.
-func fetchTemplates(templateURL string, overwrite bool) error {
+func fetchTemplates(templateURL string, keepArchive bool, overwrite bool) error {
 	if len(templateURL) == 0 {
 		templateURL = os.Getenv("templateUrl")
 		if len(templateURL) == 0 {
@@ -43,11 +46,13 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 		relativePath := z.Name[strings.Index(z.Name, "/")+1:]
 
 		var language string
-		if idx := strings.Index(relativePath, "/"); idx != -1 {
-			language = relativePath[:idx]
+		if languageSplit := strings.Split(relativePath, "/"); len(languageSplit) > 1 {
+			language = languageSplit[1]
+		} else {
+			continue
 		}
 
-		if err = verifyLanguage(language, overwrite); err != nil {
+		if !canWriteLanguage(language, overwrite) {
 			continue
 		}
 
@@ -71,12 +76,12 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 	}
 
 	// Remove the archive
-	if err = os.Remove("./" + archive); err != nil {
-		log.Printf("Could not remove %s", archive)
-	}
-
-	if err != nil {
-		return err
+	if keepArchive == false {
+		if err := os.Remove(archive); err != nil {
+			log.Printf("Could not remove %s\n", archive)
+		} else {
+			fmt.Printf("Archive %s was removed\n", archive)
+		}
 	}
 
 	fmt.Println("")
@@ -87,9 +92,15 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 func fetchMasterZip(templateURL string) (string, error) {
 	var err error
 
-	templateURLSHA1 := sha1.New()
-	templateURLSHA1.Write([]byte(templateURL))
-	archive := fmt.Sprintf("template-%x.zip", templateURLSHA1.Sum(nil))
+	if err = createPath(cacheDirectory, os.FileMode(0755)); err != nil {
+		log.Fatalf("Could not create %s directory", cacheDirectory)
+	}
+
+	templateURLSplit := strings.Split(templateURL, "/")
+	templateURLSplit = templateURLSplit[len(templateURLSplit)-4 : len(templateURLSplit)-2]
+	templateRepository := strings.Join(templateURLSplit, "-")
+
+	archive := fmt.Sprintf(cacheDirectory+"template-%s.zip", templateRepository)
 
 	if _, err = os.Stat(archive); err != nil {
 		c := http.Client{}
@@ -115,7 +126,7 @@ func fetchMasterZip(templateURL string) (string, error) {
 		}
 
 		log.Printf("Writing %dKb to %s\n", len(bytesOut)/1024, archive)
-		err = ioutil.WriteFile("./"+archive, bytesOut, 0700)
+		err = ioutil.WriteFile(archive, bytesOut, 0700)
 		if err != nil {
 			log.Println(err.Error())
 			return "", err
@@ -154,14 +165,25 @@ func createPath(relativePath string, perms os.FileMode) error {
 	return err
 }
 
-func verifyLanguage(language string, overwrite bool) error {
+// canWriteLanguage tells whether the language can be processed or not
+func canWriteLanguage(language string, overwrite bool) bool {
 	if len(language) > 0 {
-		dir := filepath.Dir("template/" + language)
-
-		if _, err := os.Stat(dir); err == nil && overwrite == false {
-			return fmt.Errorf("directory %s exists, overwriting is not allowed", dir)
+		if cache, ok := cache[language]; ok {
+			return cache
 		}
+
+		dir := templateDirectory + language
+		if _, err := os.Stat(dir); err == nil && overwrite == false {
+			fmt.Println(err, overwrite)
+			log.Printf("Directory %s exists, overwrite is not allowed\n", dir)
+			cache[language] = false
+		} else {
+			cache[language] = true
+		}
+
+		return cache[language]
 	}
 
-	return nil
+	log.Println("Language is unkwown, skip")
+	return false
 }
