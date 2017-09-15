@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/alexellis/faas-cli/builder"
 	"github.com/alexellis/faas-cli/stack"
@@ -15,8 +16,9 @@ import (
 
 // Flags that are to be added to commands.
 var (
-	nocache bool
-	squash  bool
+	nocache  bool
+	squash   bool
+	parallel int
 )
 
 func init() {
@@ -29,7 +31,8 @@ func init() {
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
 	buildCmd.Flags().BoolVar(&squash, "squash", false, `Use Docker's squash flag for smaller images
-                         [experimental] `)
+						 [experimental] `)
+	buildCmd.Flags().IntVar(&parallel, "parallel", 1, "Build in parallel to depth specified.")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -46,7 +49,8 @@ var buildCmd = &cobra.Command{
                  [--lang <ruby|python|python3|node|csharp|Dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
-                 [--filter "WILDCARD"]`,
+				 [--filter "WILDCARD"]
+				 [--parallel PARALLEL_DEPTH]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
@@ -80,21 +84,7 @@ func runBuild(cmd *cobra.Command, args []string) {
 	}
 
 	if len(services.Functions) > 0 {
-		for k, function := range services.Functions {
-			if function.SkipBuild {
-				fmt.Printf("Skipping build of: %s.\n", function.Name)
-			} else {
-				function.Name = k
-				// fmt.Println(k, function)
-				fmt.Printf("Building: %s.\n", function.Name)
-				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
-					return
-				}
-
-				builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
-			}
-		}
+		build(&services, parallel)
 	} else {
 		if len(image) == 0 {
 			fmt.Println("Please provide a valid -image name for your Docker image.")
@@ -127,4 +117,41 @@ func PullTemplates(templateUrl string) error {
 		}
 	}
 	return err
+}
+
+func build(services *stack.Services, queueDepth int) {
+	wg := sync.WaitGroup{}
+
+	workChannel := make(chan stack.Function)
+
+	for i := 0; i < queueDepth; i++ {
+
+		go func(index int) {
+			wg.Add(1)
+			for function := range workChannel {
+				fmt.Printf("Building: %s.\n", function.Name)
+				if len(function.Language) == 0 {
+					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
+
+				} else {
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
+				}
+			}
+			fmt.Printf("worker done.\n")
+			wg.Done()
+		}(i)
+	}
+
+	for k, function := range services.Functions {
+		if function.SkipBuild {
+			fmt.Printf("Skipping build of: %s.\n", function.Name)
+		} else {
+			function.Name = k
+			workChannel <- function
+		}
+	}
+	close(workChannel)
+
+	wg.Wait()
+
 }
