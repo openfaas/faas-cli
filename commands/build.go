@@ -129,7 +129,7 @@ func build(services *stack.Services, queueDepth int) {
 		go func(index int) {
 			wg.Add(1)
 			for function := range workChannel {
-				fmt.Printf("Building: %s.\n", function.Name)
+				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
 
@@ -137,7 +137,8 @@ func build(services *stack.Services, queueDepth int) {
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
 				}
 			}
-			fmt.Printf("worker done.\n")
+
+			fmt.Printf("[%d] < Builder done.\n", index)
 			wg.Done()
 		}(i)
 	}
