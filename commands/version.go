@@ -36,24 +36,17 @@ This currently consists of the GitSHA from which the client was built.
 }
 
 func runVersion(cmd *cobra.Command, args []string) {
-
 	if len(Version) == 0 {
 		Version = "dev"
 	}
 
-	if len(GitCommit) > 7 {
-		GitCommit = GitCommit[:7]
-	}
-
-	versionStr := fmt.Sprintf("%s-%s", Version, GitCommit)
-
 	if shortVersion {
-		fmt.Println(versionStr)
+		fmt.Println(Version)
 	} else {
 		fmt.Printf(figletStr)
-		fmt.Printf("Version: %s\n", versionStr)
+		fmt.Printf("Commit: %s\n", GitCommit)
+		fmt.Printf("Version: %s\n", Version)
 	}
-	return
 }
 
 const figletStr = `  ___                   _____           ____  
