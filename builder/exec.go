@@ -19,23 +19,20 @@ func ExecCommand(tempPath string, builder []string) {
 	targetCmd.Dir = tempPath
 	targetCmd.Stdout = &out
 	targetCmd.Stderr = &out
-	targetCmd.Start()
+	targetCmd.Run()
 
-	defer func() {
-		targetCmd.Wait()
+	logDir := ""
+	if err := os.MkdirAll("logs/", 0755); err == nil {
+		logDir = "logs/"
+	}
 
-		logDir := ""
-		if err := os.MkdirAll("logs/", os.FileMode(0755)); err == nil {
-			logDir = "logs/"
-		}
+	f, err := os.OpenFile(fmt.Sprintf("%s%s.log", logDir, strings.Replace(builder[3], "/", "-", 1)), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Printf("error opening file: %v", err)
+	}
+	defer f.Close()
 
-		f, err := os.OpenFile(fmt.Sprintf("%s%s.log", logDir, strings.Replace(builder[3], "/", "-", 1)), os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-		if err != nil {
-			fmt.Printf("error opening file: %v", err)
-		}
-		defer f.Close()
-
-		log.SetOutput(f)
-		log.Printf("%s\n%s", strings.Join(builder, " "), out.String())
-	}()
+	log.SetOutput(f)
+	log.Printf("%s\n%s", strings.Join(builder, " "), out.String())
+	log.SetOutput(os.Stdout)
 }
