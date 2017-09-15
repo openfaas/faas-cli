@@ -1,0 +1,7 @@
+test:
+	@$(DOCKER_RUN) go test ./...
+
+test_version: faas-cli
+	GIT_COMMIT=$(shell git rev-list -1 HEAD) \
+	&& ./faas-cli version | tee /dev/stderr | grep $$GIT_COMMIT \
+	&& test $$? -eq 0

@@ -1,0 +1,18 @@
+build: Dockerfile
+	@$(DOCKER_BUILD)
+	docker create --name faas-cli faas-cli
+	docker cp faas-cli:/root/faas-cli .
+	docker rm -f faas-cli
+
+build_redist: Dockerfile.redist
+	@$(DOCKER_BUILD) -f Dockerfile.redist
+	docker create --name faas-cli faas-cli
+	docker cp faas-cli:/root/faas-cli .
+	docker cp faas-cli:/root/faas-cli-darwin .
+	docker cp faas-cli:/root/faas-cli-armhf .
+	docker cp faas-cli:/root/faas-cli.exe .
+	docker rm -f faas-cli
+
+build_samples: faas-cli samples.yml
+	./faas-cli build --yaml ./samples.yml # --squash=true
+	docker images | head -n 4
