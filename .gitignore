@@ -1,7 +1,9 @@
 **/node_modules/
 build/
-faas-cli
+logs/
 !contrib/bash/faas-cli
+
+faas-cli
 faas-cli-darwin
 faas-cli-armhf
 faas-cli.exe

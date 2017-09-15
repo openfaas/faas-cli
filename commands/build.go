@@ -10,13 +10,17 @@ import (
 
 	"github.com/alexellis/faas-cli/builder"
 	"github.com/alexellis/faas-cli/stack"
+	"github.com/remeh/sizedwaitgroup"
 	"github.com/spf13/cobra"
 )
 
+const defaultParallelBuilds int = 8
+
 // Flags that are to be added to commands.
 var (
-	nocache bool
-	squash  bool
+	nocache        bool
+	squash         bool
+	parallelBuilds int
 )
 
 func init() {
@@ -25,6 +29,7 @@ func init() {
 	buildCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	buildCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	buildCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
+	buildCmd.Flags().IntVar(&parallelBuilds, "parallel", defaultParallelBuilds, "Number of parallel builds")
 
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
@@ -80,21 +85,33 @@ func runBuild(cmd *cobra.Command, args []string) {
 	}
 
 	if len(services.Functions) > 0 {
+		swg := sizedwaitgroup.New(parallelBuilds)
+
 		for k, function := range services.Functions {
 			if function.SkipBuild {
 				fmt.Printf("Skipping build of: %s.\n", function.Name)
 			} else {
 				function.Name = k
-				// fmt.Println(k, function)
-				fmt.Printf("Building: %s.\n", function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
+					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function %s\n", function.Name)
 					return
 				}
 
-				builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
+				swg.Add()
+				go func(function stack.Function) {
+					fmt.Printf(">>> Building %s for %s:%s\n", function.Image, function.Language, function.Name)
+
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
+
+					defer func(function stack.Function) {
+						fmt.Printf("<<< Built image %s for %s:%s\n", function.Image, function.Language, function.Name)
+						swg.Done()
+					}(function)
+				}(function)
 			}
 		}
+
+		swg.Wait()
 	} else {
 		if len(image) == 0 {
 			fmt.Println("Please provide a valid -image name for your Docker image.")
@@ -108,6 +125,7 @@ func runBuild(cmd *cobra.Command, args []string) {
 			fmt.Println("Please provide the deployed -name of your function.")
 			return
 		}
+
 		builder.BuildImage(image, handler, functionName, language, nocache, squash)
 	}
 

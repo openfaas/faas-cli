@@ -13,59 +13,46 @@ import (
 
 // BuildImage construct Docker image from function parameters
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
+	prefix := fmt.Sprintf("[%s:%s]", language, functionName)
 
 	switch language {
 	case "node", "python", "ruby", "csharp":
 		tempPath := createBuildTemplate(functionName, handler, language)
+		fmt.Printf("%s Building %s\n", prefix, image)
+		build(tempPath, image, nocache, squash)
 
-		fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
-
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
-
-		break
 	case "Dockerfile", "dockerfile":
-		tempPath := handler
 		if _, err := os.Stat(handler); err != nil {
-			fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-			fmt.Printf("Image: %s not built.\n", image)
-
-			break
+			fmt.Printf("%s Unable to build %s, %s is an invalid path\n", prefix, image, handler)
+			fmt.Printf("%s Image: %s not built.\n", prefix, image)
+		} else {
+			tempPath := handler
+			fmt.Printf("%s Building %s\n", prefix, image)
+			build(tempPath, image, nocache, squash)
 		}
-		fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
-
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
 
 	default:
-		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+		log.Fatalf("%s Language template: %s not supported. Build a custom Dockerfile instead.", prefix, language)
 	}
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
 func createBuildTemplate(functionName string, handler string, language string) string {
+	prefix := fmt.Sprintf("[%s:%s]", language, functionName)
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
+	fmt.Printf("%s Clearing temporary build folder: %s\n", prefix, tempPath)
 
 	clearErr := os.RemoveAll(tempPath)
 	if clearErr != nil {
-		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
+		fmt.Printf("%s Error clearing temporary build folder %s\n", prefix, tempPath)
 	}
 
-	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath+"function")
+	fmt.Printf("%s Preparing %s %s\n", prefix, handler+"/", tempPath+"function")
 
 	functionPath := tempPath + "/function"
 	mkdirErr := os.MkdirAll(functionPath, 0700)
 	if mkdirErr != nil {
-		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
+		fmt.Printf("%s Error creating path %s - %s.\n", prefix, functionPath, mkdirErr.Error())
 	}
 
 	// Drop in directory tree from template
@@ -167,4 +154,13 @@ func debugPrint(message string) {
 	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
 		fmt.Println(message)
 	}
+}
+
+func build(tempPath string, image string, nocache bool, squash bool) {
+	flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+
+	builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
+	log.Println(strings.Join(builder, " "))
+	ExecCommand(tempPath, builder)
+	log.Printf("Image: %s built.\n", image)
 }
