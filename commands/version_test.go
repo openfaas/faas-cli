@@ -3,29 +3,26 @@
 package commands
 
 import (
-	"bytes"
-	"io"
-	"os"
 	"regexp"
 	"testing"
+
+	"github.com/openfaas/faas-cli/test"
 )
 
 func Test_addVersionDev(t *testing.T) {
 	GitCommit = "sha-test"
 
-	output := captureStdout(func() {
+	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version"})
 		faasCmd.Execute()
 	})
 
-	rCommit := regexp.MustCompile(`(?m:Commit: sha-test)`)
-	if !rCommit.MatchString(output) {
-		t.Fatal(output)
+	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 
-	rVersion := regexp.MustCompile(`(?m:Version: dev)`)
-	if !rVersion.MatchString(output) {
-		t.Fatal(output)
+	if found, err := regexp.MatchString(`(?m:Version: dev)`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 }
 
@@ -33,50 +30,29 @@ func Test_addVersion(t *testing.T) {
 	GitCommit = "sha-test"
 	Version = "version.tag"
 
-	output := captureStdout(func() {
+	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version"})
 		faasCmd.Execute()
 	})
 
-	rCommit := regexp.MustCompile(`(?m:Commit: sha-test)`)
-	if !rCommit.MatchString(output) {
-		t.Fatal(output)
+	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 
-	rVersion := regexp.MustCompile(`(?m:Version: version.tag)`)
-	if !rVersion.MatchString(output) {
-		t.Fatal(output)
+	if found, err := regexp.MatchString(`(?m:Version: version.tag)`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 }
 
 func Test_addVersion_short_version(t *testing.T) {
 	Version = "version.tag"
 
-	output := captureStdout(func() {
+	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version", "--short-version"})
 		faasCmd.Execute()
 	})
 
-	rVersion := regexp.MustCompile("^version\\.tag")
-	if !rVersion.MatchString(output) {
-		t.Fatal(output)
+	if found, err := regexp.MatchString("^version\\.tag", stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
-}
-
-func captureStdout(f func()) string {
-	stdOut := os.Stdout
-	r, w, _ := os.Pipe()
-	defer r.Close()
-	defer w.Close()
-	os.Stdout = w
-
-	f()
-
-	w.Close()
-	os.Stdout = stdOut
-
-	var b bytes.Buffer
-	io.Copy(&b, r)
-
-	return b.String()
 }

@@ -63,7 +63,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	res, err := client.Do(request)
 
 	if err != nil {
-		fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
+		fmt.Println("Is FaaS deployed? Do you need to specify the --gateway flag?")
 		fmt.Println(err)
 		return
 	}
