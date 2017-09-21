@@ -63,7 +63,9 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 * If you are using a stack file add the `skip_build: true` attribute
 * Use one of the [samples as a basis](https://github.com/alexellis/faas/tree/master/sample-functions)
 
-#### YAML files for ease of use
+### Use a YAML stack file
+
+A YAML stack file groups functions together and also saves on typing.
 
 You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.
 
@@ -107,7 +109,44 @@ Now you can use the following command to deploy your function(s):
 $ faas-cli deploy -f ./samples.yml
 ```
 
-* Possible entries for functions are documented below:
+### Managing secrets
+
+You can deploy secrets and configuration via environmental variables.
+
+Imagine you needed to define a `http_proxy` variable to operate within a corporate network:
+
+```yaml
+functions:
+  url-ping:
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis2/faas-urlping
+    environment:
+      http_proxy: http://proxy1.corp.com:3128
+      no_proxy: http://gateway/
+```
+
+### Constraints
+
+Constraints work with Docker Swarm and are useful for pinning functions to certain hosts.
+
+Here is an example of picking only Linux:
+
+```
+   constraints:
+     - "node.platform.os == linux"
+```
+
+Or only Windows:
+
+```
+   constraints:
+     - "node.platform.os == windows"
+```
+
+### YAML reference
+
+The possible entries for functions are documented below:
 
 ```yaml
 functions:
@@ -118,6 +157,8 @@ functions:
     environment:
       env1: value1
       env2: "value2"
+   constraints:
+     - "com.hdd == ssd"
 ```
 
 Use environmental variables for setting tokens and configuration.
