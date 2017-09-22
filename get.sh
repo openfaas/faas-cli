@@ -30,7 +30,7 @@ getPackage() {
         echo $arch
         case $arch in
         "aarch64")
-        suffix="-amd64"
+        suffix="-arm64"
         ;;
         esac
         case $arch in
