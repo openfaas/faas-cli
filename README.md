@@ -111,7 +111,29 @@ $ faas-cli deploy -f ./samples.yml
 
 ### Managing secrets
 
-You can deploy secrets and configuration via environmental variables.
+You can deploy secrets and configuration via environmental variables in-line or via external files.
+
+> Note: external files take priority over in-line environmental variables. This allows you to specify a default and then have overrides within an external file.
+
+Priority:
+
+* environment_file - defined in zero to many external files
+
+```yaml
+  environment_file:
+    - file1.yml
+    - file2.yml
+```
+
+Environment file format:
+
+```
+environment:
+  - access_key: key1
+  - secret_key: key2
+```
+
+* Define environment in-line within the file:
 
 Imagine you needed to define a `http_proxy` variable to operate within a corporate network:
 
