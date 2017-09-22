@@ -14,7 +14,8 @@ RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags 
  && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-armhf \
  && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-darwin \
  && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli \
- && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli.exe
+ && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli.exe \
+ && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w -X github.com/alexellis/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/alexellis/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-arm64
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
@@ -25,5 +26,6 @@ COPY --from=0 /go/src/github.com/alexellis/faas-cli/faas-cli                .
 COPY --from=0 /go/src/github.com/alexellis/faas-cli/faas-cli-darwin         .
 COPY --from=0 /go/src/github.com/alexellis/faas-cli/faas-cli-armhf          .
 COPY --from=0 /go/src/github.com/alexellis/faas-cli/faas-cli.exe            .
+COPY --from=0 /go/src/github.com/alexellis/faas-cli/faas-cli-arm64          .
 
 CMD ["./faas"]
