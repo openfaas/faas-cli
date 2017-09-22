@@ -5,9 +5,12 @@ package commands
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/alexellis/faas-cli/proxy"
 	"github.com/alexellis/faas-cli/stack"
@@ -112,7 +115,14 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				constraints = *function.Constraints
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, function.Environment, services.Provider.Network, constraints)
+			fileEnvironment, err := readFiles(function.EnvironmentFile)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			allEnvironment := mergeMap(function.Environment, fileEnvironment)
+
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints)
 		}
 	} else {
 		if len(image) == 0 {
@@ -134,8 +144,29 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	}
 }
 
+func readFiles(files []string) (map[string]string, error) {
+	envs := make(map[string]string)
+
+	for _, file := range files {
+		bytesOut, readErr := ioutil.ReadFile(file)
+		if readErr != nil {
+			return nil, readErr
+		}
+
+		envFile := stack.EnvironmentFile{}
+		unmarshalErr := yaml.Unmarshal(bytesOut, &envFile)
+		if unmarshalErr != nil {
+			return nil, unmarshalErr
+		}
+		for k, v := range envFile.Environment {
+			envs[k] = v
+		}
+	}
+	return envs, nil
+}
+
 func parseEnvvars(envvars []string) (map[string]string, error) {
-	result := map[string]string{}
+	result := make(map[string]string)
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
 		envvarName := s[0]
@@ -151,4 +182,16 @@ func parseEnvvars(envvars []string) (map[string]string, error) {
 		result[envvarName] = envvarValue
 	}
 	return result, nil
+}
+
+func mergeMap(i map[string]string, j map[string]string) map[string]string {
+	merged := make(map[string]string)
+
+	for k, v := range i {
+		merged[k] = v
+	}
+	for k, v := range j {
+		merged[k] = v
+	}
+	return merged
 }
