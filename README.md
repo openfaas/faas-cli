@@ -125,6 +125,8 @@ Priority:
     - file2.yml
 ```
 
+If you specify a variable such as "access_key" in more than one `environment_file` file then the last file in the list will take priority.
+
 Environment file format:
 
 ```
