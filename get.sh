@@ -18,17 +18,21 @@ hasCli() {
 }
 
 getPackage() {
-
     uname=$(uname)
 
     suffix=""
-    case $uname in 
+    case $uname in
     "Darwin")
     suffix="-darwin"
     ;;
     "Linux")
         arch=$(uname -m)
         echo $arch
+        case $arch in
+        "aarch64")
+        suffix="-amd64"
+        ;;
+        esac
         case $arch in
         "armv6l" | "armv7l")
         suffix="-armhf"
