@@ -32,7 +32,7 @@ deploy:
   - faas-cli-darwin
   - faas-cli-armhf
   - faas-cli.exe
-  - faas-cli-amd64
+  - faas-cli-arm64
   skip_cleanup: true
   on:
     tags: true
