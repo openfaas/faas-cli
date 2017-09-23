@@ -43,7 +43,7 @@ var buildCmd = &cobra.Command{
   faas-cli build --image IMAGE_NAME
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
-                 [--lang <ruby|python|python-armf|node|node-armf|csharp|Dockerfile>]
+                 [--lang <ruby|python|python3|node|csharp|Dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
                  [--filter "WILDCARD"]`,
