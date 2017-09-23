@@ -22,6 +22,7 @@ import (
 var (
 	envvarOpts  []string
 	replace     bool
+	update      bool
 	constraints []string
 )
 
@@ -38,6 +39,7 @@ func init() {
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
 	deployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
+	deployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
 
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 
@@ -58,7 +60,8 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--replace=false]
+				  [--replace=false]
+				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]`,
@@ -66,12 +69,13 @@ var deployCmd = &cobra.Command{
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
-via flags.`,
+via flags. Note: --replace and --update are mutually exclusive.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
   faas-cli deploy -f ./samples.yml
   faas-cli deploy -f ./samples.yml --filter "*gif*"
   faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./samples.yml --replace=false
+  faas-cli deploy -f ./samples.yml --update=true
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -80,6 +84,14 @@ via flags.`,
 }
 
 func runDeploy(cmd *cobra.Command, args []string) {
+
+	if update && replace {
+		fmt.Println(`Cannot specify --update and --replace at the same time.
+  --replace    removes an existing deployment before re-creating it
+  --update     provides a rolling update to a new function image or configuration`)
+		return
+	}
+
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -122,7 +134,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			allEnvironment := mergeMap(function.Environment, fileEnvironment)
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update)
 		}
 	} else {
 		if len(image) == 0 {
@@ -140,7 +152,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update)
 	}
 }
 
