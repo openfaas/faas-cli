@@ -15,7 +15,7 @@ import (
 )
 
 // DeployFunction call FaaS server to deploy a new function
-func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string) {
+func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string, update bool) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
@@ -51,7 +51,17 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 	reqBytes, _ := json.Marshal(&req)
 	reader := bytes.NewReader(reqBytes)
-	res, err := http.Post(gateway+"/system/functions", "application/json", reader)
+	var request *http.Request
+	client := http.Client{}
+	method := "POST"
+	// "application/json"
+	if update {
+		method = "UPDATE"
+	}
+
+	request, _ = http.NewRequest(method, gateway+"/system/functions", reader)
+	res, err := client.Do(request)
+
 	if err != nil {
 		fmt.Println("Is FaaS deployed? Do you need to specify the -gateway flag?")
 		fmt.Println(err)
@@ -65,15 +75,16 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	switch res.StatusCode {
 	case 200, 201, 202:
 		fmt.Println("Deployed.")
+
+		deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
+		fmt.Println(deployedURL)
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			fmt.Println("Server returned unexpected status code", res.StatusCode, string(bytesOut))
+			fmt.Printf("Unexpected status: %d, message: %s\n", res.StatusCode, string(bytesOut))
 		}
 	}
 
 	fmt.Println(res.Status)
 
-	deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
-	fmt.Println(deployedURL)
 }
