@@ -29,6 +29,8 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		fprocessTemplate = "ruby index.rb"
 	} else if language == "csharp" {
 		fprocessTemplate = "dotnet ./root.dll"
+	} else if language == "python3" {
+		fprocessTemplate = "python3 index.py"
 	}
 
 	gateway = strings.TrimRight(gateway, "/")
