@@ -1,33 +1,36 @@
 FROM node:6.11.2-alpine
 
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
-RUN apk --no-cache add curl \ 
+RUN apk --no-cache add curl \
     && echo "Pulling watchdog binary from Github." \
     && curl -sSL https://github.com/alexellis/faas/releases/download/0.6.1/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
+RUN addgroup -S app && adduser -S -g app app
 WORKDIR /root/
 
 # Turn down the verbosity to default level.
 ENV NPM_CONFIG_LOGLEVEL warn
 
+RUN mkdir -p /home/app
+
 # Wrapper/boot-strapper
-COPY package.json       .
+COPY package.json       /home/app
+
+WORKDIR /home/app
 RUN npm i
 
 # Function
-COPY index.js           .
-RUN mkdir -p ./root/function
+COPY index.js           /home/app
 
-COPY function/*.json    ./function/
-WORKDIR /root/function
+COPY function/*.json    /home/app/function/
+WORKDIR /home/app/function
 RUN npm i || :
-WORKDIR /root/
-COPY function           function
-WORKDIR /root/function
+WORKDIR /home/app/
+COPY function           ./function
 
-WORKDIR /root/
+USER app
 
 ENV cgi_headers="true"
 
