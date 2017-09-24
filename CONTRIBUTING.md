@@ -35,7 +35,11 @@ export PATH=$PATH:$GOPATH/bin
 
 * Now clone / build `faas-cli`:
 
+<<<<<<< HEAD
 ```bash
+=======
+```
+>>>>>>> Migrate all imports/references to OpenFaaS org
 $ mkdir -p $GOPATH/src/github.com/openfaas/
 $ cd $GOPATH/src/github.com/openfaas/
 $ git clone https://github.com/openfaas/faas-cli
