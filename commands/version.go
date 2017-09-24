@@ -29,7 +29,7 @@ var versionCmd = &cobra.Command{
 	Long: fmt.Sprintf(`The version command returns the current clients version information.
 
 This currently consists of the GitSHA from which the client was built.
-- https://github.com/alexellis/faas-cli/tree/%s`, GitCommit),
+- https://github.com/openfaas/faas-cli/tree/%s`, GitCommit),
 	Example: `  faas-cli version
   faas-cli version --short-version`,
 	Run: runVersion,

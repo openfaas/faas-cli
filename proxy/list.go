@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/alexellis/faas/gateway/requests"
+	"github.com/openfaas/faas/gateway/requests"
 )
 
 // ListFunctions list deployed functions

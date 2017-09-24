@@ -1,11 +1,11 @@
 ## faas-cli
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/faas-cli)](https://goreportcard.com/report/github.com/openfaas/faas-cli) [![Build Status](https://travis-ci.org/openfaas/faas-cli.svg?branch=master)](https://travis-ci.org/openfaas/faas-cli)
 
-This is a CLI for use with [OpenFaaS](https://github.com/alexellis/faas) - a serverless functions framework for Docker & Kubernetes.
+This is a CLI for use with [OpenFaaS](https://github.com/openfaas/faas) - a serverless functions framework for Docker & Kubernetes.
 
 > Before using this tool please setup OpenFaaS by following instructions over on the main repo.
 
-The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/alexellis/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
+The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/openfaas/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
 Demo: [ASCII cinema](https://asciinema.org/a/121234)
 
@@ -42,7 +42,7 @@ Help for all of the commands supported by the CLI can be found by running:
 
 * `faas-cli help` or `faas-cli [command] --help`
 
-You can chose between using a [programming language template](https://github.com/alexellis/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
+You can chose between using a [programming language template](https://github.com/openfaas/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
 **Templates**
 
@@ -54,7 +54,7 @@ Specify `lang: node/python/csharp/ruby`
 
 * Customise the provided templates
 
-Perhaps you need to have [`gcc` or another dependency](https://github.com/alexellis/faas-office-sample) in your Python template? That's not a problem.
+Perhaps you need to have [`gcc` or another dependency](https://github.com/openfaas/faas-office-sample) in your Python template? That's not a problem.
 
 You can customise the Dockerfile or code for any of the templates. Just create a new directory and copy in the templates folder from this repository. The templates in your current working directory are always used for builds.
 
@@ -65,7 +65,7 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 * Ultimate versatility and control
 * Package anything
 * If you are using a stack file add the `skip_build: true` attribute
-* Use one of the [samples as a basis](https://github.com/alexellis/faas/tree/master/sample-functions)
+* Use one of the [samples as a basis](https://github.com/openfaas/faas/tree/master/sample-functions)
 
 ### Use a YAML stack file
 
@@ -208,7 +208,7 @@ $ curl --data-binary @README.md http://localhost:8080/function/nodejs-echo
 $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 ```
 
-> For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)
+> For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
 
 **Bash Auto-completion [experimental]**
@@ -240,7 +240,7 @@ Refer to your distributions instructions on installing and enabling `bash-comple
 
 ## FaaS-CLI Developers / Contributors
 
-See [contributing guide](https://github.com/alexellis/faas-cli/blob/master/CONTRIBUTING.md).
+See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
 
 ### License
 

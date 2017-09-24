@@ -4,7 +4,7 @@ In addition to YAML file support, you can use the CLI to build and deploy indivi
 
 #### Worked example with Node.js
 
-So if you want to write in another language, just prepare a Dockerfile and build an image manually, like in the [FaaS samples](https://github.com/alexellis/faas/tree/master/sample-functions).
+So if you want to write in another language, just prepare a Dockerfile and build an image manually, like in the [FaaS samples](https://github.com/openfaas/faas/tree/master/sample-functions).
 
 **Build a FaaS function in NodeJS from a template:**
 

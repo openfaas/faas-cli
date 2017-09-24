@@ -3,7 +3,7 @@ FROM arm64v8/node:6.11.2
 RUN apt-get update -qy \
     && apt-get install -qy curl ca-certificates --no-install-recommends \ 
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/alexellis/faas/releases/download/0.6.5/fwatchdog-arm64 > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.5/fwatchdog-arm64 > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && apt-get -qy remove curl \
     && apt-get clean \

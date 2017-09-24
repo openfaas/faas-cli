@@ -9,8 +9,8 @@ import (
 	"os"
 	"sync"
 
-	"github.com/alexellis/faas-cli/builder"
-	"github.com/alexellis/faas-cli/stack"
+	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 

@@ -69,7 +69,7 @@ func fetchMasterZip(templateUrl string) error {
 	if _, err = os.Stat(ZipFileName); err != nil {
 
 		if len(templateUrl) == 0 {
-			templateUrl = "https://github.com/alexellis/faas-cli/archive/" + ZipFileName
+			templateUrl = "https://github.com/openfaas/faas-cli/archive/" + ZipFileName
 		}
 		c := http.Client{}
 
