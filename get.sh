@@ -1,4 +1,4 @@
-version=$(curl -s https://api.github.com/repos/alexellis/faas-cli/releases/latest | grep 'tag_name' | cut -d\" -f4)
+version=$(curl -s https://api.github.com/repos/openfaas/faas-cli/releases/latest | grep 'tag_name' | cut -d\" -f4)
 
 hasCli() {
     has=$(which faas-cli)
@@ -45,7 +45,7 @@ getPackage() {
         rm /tmp/faas-cli
     fi
 
-    url=https://github.com/alexellis/faas-cli/releases/download/$version/faas-cli$suffix
+    url=https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli$suffix
     echo "Getting package $url"
 
     curl -sSL $url > /tmp/faas-cli
