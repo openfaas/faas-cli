@@ -1,5 +1,5 @@
 ## faas-cli
-[![Go Report Card](https://goreportcard.com/badge/github.com/alexellis/faas-cli)](https://goreportcard.com/report/github.com/alexellis/faas-cli) [![Build Status](https://travis-ci.org/alexellis/faas-cli.svg?branch=master)](https://travis-ci.org/alexellis/faas-cli)
+[![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/faas-cli)](https://goreportcard.com/report/github.com/openfaas/faas-cli) [![Build Status](https://travis-ci.org/openfaas/faas-cli.svg?branch=master)](https://travis-ci.org/openfaas/faas-cli)
 
 This is a CLI for use with [OpenFaaS](https://github.com/alexellis/faas) - a serverless functions framework for Docker & Kubernetes.
 
