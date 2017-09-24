@@ -9,6 +9,10 @@ The CLI can be used to build and deploy functions to [OpenFaaS](https://github.c
 
 Demo: [ASCII cinema](https://asciinema.org/a/121234)
 
+#### TL;DR
+
+[Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
+
 ### Intall the CLI
 
 The easiest way to install the faas-cli is through a curl script or `brew`:
