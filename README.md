@@ -100,7 +100,7 @@ $ faas-cli build -f ./samples.yml
 You can also download over HTTP/s:
 
 ```
-$ faas-cli build -f https://raw.githubusercontent.com/alexellis/faas-cli/master/samples.yml
+$ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/samples.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
