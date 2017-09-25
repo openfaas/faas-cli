@@ -16,32 +16,52 @@ See guide for [FaaS](https://github.com/openfaas/faas/blob/master/CONTRIBUTING.m
 
 Install Docker because it is used to build Docker images if you create new functions.
 
-* FaaS - deployed and live
+* OpenFaaS - deployed and live
 
-This CLI can build and deploy templated functions, so it's best if you have FaaS started up on your laptop. Head over to http://docs.get-faas.com/ and get up and running with a sample stack in 60 seconds.
+This CLI can build and deploy templated functions, so it's best if you have FaaS started up on your laptop. Head over to http://github.com/openfaas/faas/ and get up and running with a sample stack in 60 seconds.
 
 * Golang
 
 > Here's how to install Go in 60 seconds.
 
-* Grab Go 1.7.x from https://golang.org/dl/
+* Grab Go 1.7.x or 1.8.3 from https://golang.org/dl/
 
 Then after installing run this command or place it in your `$HOME/.bash_profile`
 
 ```bash
 export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
 ```
 
 * Now clone / build `faas-cli`:
 
-```
+```bash
 $ mkdir -p $GOPATH/src/github.com/openfaas/
 $ cd $GOPATH/src/github.com/openfaas/
 $ git clone https://github.com/openfaas/faas-cli
 $ cd faas-cli
-$ go get -d -v
 $ go build
 ```
+
+* Build multi-arch binaries
+
+To build the release binaries type in:
+
+```
+./build_redist.sh
+```
+
+This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
+
+* Get the vendoring tool called `vndr`
+
+```
+$ go install github.com/LK4D4/vndr
+```
+
+Use the tool if you add new dependencies or want to update the existing ones.
+
+> See also: [vndr docs](https://github.com/LK4D4/vndr)
 
 ### How to update the `brew` formula
 
