@@ -12,7 +12,7 @@ OpenFaaS is a framework for building serverless functions with Docker which has 
 * Ease of use through UI portal and *one-click* install
 * Write functions in any language for Linux or Windows and package in Docker/OCI image format
 * Portable - runs on existing hardware or public/private cloud - [Kubernetes](https://github.com/alexellis/faas-netes) or Docker Swarm
-* [CLI](http://github.com/alexellis/faas-cli) available with YAML format for templating and defining functions
+* [CLI](http://github.com/openfaas/faas-cli) available with YAML format for templating and defining functions
 * Auto-scales as demand increases
 
 ## Overview of OpenFaaS
@@ -34,7 +34,7 @@ OpenFaaS is a framework for building serverless functions with Docker which has 
 
 ### CLI
 
-Any container or process in a Docker container can be a serverless function in FaaS. Using the [FaaS CLI](http://github.com/alexellis/faas-cli) you can deploy your functions or quickly create new functions from templates such as Node.js or Python.
+Any container or process in a Docker container can be a serverless function in FaaS. Using the [FaaS CLI](http://github.com/openfaas/faas-cli) you can deploy your functions or quickly create new functions from templates such as Node.js or Python.
 
 > The CLI is effectively a RESTful client for the API Gateway.
 
@@ -62,7 +62,7 @@ $ curl -sSL https://cli.openfaas.com | sudo sh
 Clone the samples and templates from Github:
 
 ```
-$ git clone https://github.com/alexellis/faas-cli
+$ git clone https://github.com/openfaas/faas-cli
 $ cd faas-cli
 ```
 

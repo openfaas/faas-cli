@@ -8,7 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/alexellis/faas-cli/builder"
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/spf13/cobra"
 )
 

@@ -9,8 +9,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/alexellis/faas-cli/proxy"
-	"github.com/alexellis/faas-cli/stack"
+	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 
