@@ -6,7 +6,7 @@ This project is licensed under the MIT License.
 
 ## Guidelines apply from main OpenFaaS repo
 
-See guide for [FaaS](https://github.com/alexellis/faas/blob/master/CONTRIBUTING.md) here.
+See guide for [FaaS](https://github.com/openfaas/faas/blob/master/CONTRIBUTING.md) here.
 
 ## Hacking on the faas-cli
 
@@ -35,9 +35,9 @@ export GOPATH=$HOME/go
 * Now clone / build `faas-cli`:
 
 ```
-$ mkdir -p $GOPATH/src/github.com/alexellis/
-$ cd $GOPATH/src/github.com/alexellis/
-$ git clone https://github.com/alexellis/faas-cli
+$ mkdir -p $GOPATH/src/github.com/openfaas/
+$ cd $GOPATH/src/github.com/openfaas/
+$ git clone https://github.com/openfaas/faas-cli
 $ cd faas-cli
 $ go get -d -v
 $ go build
