@@ -18,6 +18,8 @@ script:
   - make build
   - ./build_samples.sh
   - ./test/version.sh ./faas-cli
+
+# todo:
 #  - ./deploy_samples.sh # requires a deployed FaaS
 
 before_deploy:
