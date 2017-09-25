@@ -10,6 +10,7 @@ import (
 )
 
 const defaultGateway = "http://localhost:8080"
+
 const defaultNetwork = "func_functions"
 
 // Flags that are to be added to all commands.

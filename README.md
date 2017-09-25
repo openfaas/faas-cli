@@ -42,7 +42,7 @@ Help for all of the commands supported by the CLI can be found by running:
 
 * `faas-cli help` or `faas-cli [command] --help`
 
-You can chose between using a [programming language template](https://github.com/alexellis/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
+You can chose between using a [programming language template](https://github.com/openfaas/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
 **Templates**
 
@@ -208,7 +208,7 @@ $ curl --data-binary @README.md http://localhost:8080/function/nodejs-echo
 $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 ```
 
-> For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/alexellis/faas-cli/blob/master/MANUAL_CLI.md)
+> For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
 
 **Bash Auto-completion [experimental]**
@@ -240,7 +240,7 @@ Refer to your distributions instructions on installing and enabling `bash-comple
 
 ## FaaS-CLI Developers / Contributors
 
-See [contributing guide](https://github.com/alexellis/faas-cli/blob/master/CONTRIBUTING.md).
+See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
 
 ### License
 
