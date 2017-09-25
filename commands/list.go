@@ -31,10 +31,10 @@ func init() {
 }
 
 var listCmd = &cobra.Command{
-	Use: `list [--gateway GATEWAY_URL] [--verbose]`,
-
-	Short: "List OpenFaaS functions",
-	Long:  `Lists OpenFaaS functions either on a local or remote gateway`,
+	Use:     `list [--gateway GATEWAY_URL] [--verbose]`,
+	Aliases: []string{"ls"},
+	Short:   "List OpenFaaS functions",
+	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
 	Example: `  faas-cli list
   faas-cli list --gateway https://localhost:8080 --verbose`,
 	Run: runList,
