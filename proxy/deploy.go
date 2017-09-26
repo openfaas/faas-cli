@@ -74,7 +74,11 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 	switch res.StatusCode {
 	case 200, 201, 202:
-		fmt.Println("Deployed.")
+		if update {
+			fmt.Println("Updated.")
+		} else {
+			fmt.Println("Deployed.")
+		}
 
 		deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
 		fmt.Println(deployedURL)
