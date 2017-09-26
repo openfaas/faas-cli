@@ -5,12 +5,16 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
 
-const defaultGateway = "http://localhost:8080"
-const defaultNetwork = "func_functions"
+const (
+	defaultGateway = "http://localhost:8080"
+	defaultNetwork = "func_functions"
+	defaultYAML    = "stack.yml"
+)
 
 // Flags that are to be added to all commands.
 var (
@@ -42,9 +46,18 @@ func init() {
 
 // Execute TODO
 func Execute(customArgs []string) {
+	checkAndSetDefaultYaml()
+
 	faasCmd.SilenceUsage = true
 	faasCmd.SetArgs(customArgs[1:])
 	faasCmd.Execute()
+}
+
+func checkAndSetDefaultYaml() {
+	// Check if there is a default yaml file and set it
+	if _, err := os.Stat(defaultYAML); err == nil {
+		yamlFile = defaultYAML
+	}
 }
 
 // faasCmd is the FaaS CLI root command and mimics the legacy client behaviour
