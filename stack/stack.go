@@ -66,7 +66,6 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 			if regexExists {
 				match, err = regexp.MatchString(regex, function.Name)
 				if err != nil {
-					fmt.Printf("Invalid regex passed to --regex option\n")
 					return nil, err
 				}
 			} else {
@@ -76,6 +75,10 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 			if !match {
 				delete(services.Functions, function.Name)
 			}
+		}
+
+		if len(services.Functions) == 0 {
+			return nil, errors.New("No functions matching --filter/--regex were found in the YAML file")
 		}
 
 	}
