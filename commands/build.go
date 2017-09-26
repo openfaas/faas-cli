@@ -103,22 +103,6 @@ func runBuild(cmd *cobra.Command, args []string) {
 
 }
 
-// PullTemplates pulls templates from Github from the master zip download file.
-func PullTemplates(templateUrl string) error {
-	var err error
-	exists, err := os.Stat("./template")
-	if err != nil || exists == nil {
-		log.Println("No templates found in current directory.")
-
-		err = fetchTemplates(templateUrl)
-		if err != nil {
-			log.Println("Unable to download templates from Github.")
-			return err
-		}
-	}
-	return err
-}
-
 func build(services *stack.Services, queueDepth int) {
 	wg := sync.WaitGroup{}
 
@@ -155,4 +139,20 @@ func build(services *stack.Services, queueDepth int) {
 
 	wg.Wait()
 
+}
+
+// PullTemplates pulls templates from Github from the master zip download file.
+func PullTemplates(templateUrl string) error {
+	var err error
+	exists, err := os.Stat("./template")
+	if err != nil || exists == nil {
+		log.Println("No templates found in current directory.")
+
+		err = fetchTemplates(templateUrl)
+		if err != nil {
+			log.Println("Unable to download templates from Github.")
+			return err
+		}
+	}
+	return err
 }
