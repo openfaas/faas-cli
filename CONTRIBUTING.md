@@ -104,6 +104,8 @@ Please raise a PR for the get.sh file held in this repository. It's used when pe
 
 ### Sign your work
 
+> Note: all of the commits in your PR/Patch must be signed-off.
+
 The sign-off is a simple line at the end of the explanation for a patch. Your
 signature certifies that you wrote the patch or otherwise have the right to pass
 it on as an open-source patch. The rules are pretty simple: if you can certify
