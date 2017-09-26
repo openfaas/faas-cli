@@ -56,7 +56,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	method := "POST"
 	// "application/json"
 	if update {
-		method = "UPDATE"
+		method = "PUT"
 	}
 
 	request, _ = http.NewRequest(method, gateway+"/system/functions", reader)
