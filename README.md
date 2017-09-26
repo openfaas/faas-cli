@@ -82,7 +82,7 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 
 A YAML stack file groups functions together and also saves on typing.
 
-You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.
+You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
 
 Here is an example file using the `samples.yml` file included in the repository.
 
