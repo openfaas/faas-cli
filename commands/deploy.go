@@ -122,7 +122,11 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 		for k, function := range services.Functions {
 			function.Name = k
-			fmt.Printf("Deploying: %s.\n", function.Name)
+			if update {
+				fmt.Printf("Updating: %s.\n", function.Name)
+			} else {
+				fmt.Printf("Deploying: %s.\n", function.Name)
+			}
 			if function.Constraints != nil {
 				constraints = *function.Constraints
 			}
