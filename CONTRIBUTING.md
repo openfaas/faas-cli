@@ -8,6 +8,10 @@ This project is licensed under the MIT License.
 
 See guide for [FaaS](https://github.com/openfaas/faas/blob/master/CONTRIBUTING.md) here.
 
+## Unit testing with Golang
+
+Please follow style guide on [this blog post](https://blog.alexellis.io/golang-writing-unit-tests/) from [The Go Programming Language](https://www.amazon.co.uk/Programming-Language-Addison-Wesley-Professional-Computing/dp/0134190440)
+
 ## Hacking on the faas-cli
 
 ## Installation / pre-requirements
