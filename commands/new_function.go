@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/spf13/cobra"
 )
@@ -87,7 +88,7 @@ functions:
     image: ` + functionName + `
 `
 
-	fmt.Printf(figletStr)
+	fmt.Printf(aec.BlueF.Apply(figletStr))
 	fmt.Println()
 	fmt.Printf("Function created in folder: %s\n", functionName)
 
