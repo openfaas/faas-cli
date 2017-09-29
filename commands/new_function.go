@@ -87,6 +87,8 @@ functions:
     image: ` + functionName + `
 `
 
+	fmt.Printf(figletStr)
+	fmt.Println()
 	fmt.Printf("Function created in folder: %s\n", functionName)
 
 	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stack), 0600)
