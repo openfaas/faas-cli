@@ -12,6 +12,7 @@ import (
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -25,6 +26,7 @@ func init() {
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVar(&gateway, "gateway", defaultGateway,
 		"Gateway URL to store in YAML stack file")
+	newFunctionCmd.Flags().StringVar(&image, "image", "", "Name for docker image")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 
@@ -60,22 +62,48 @@ the "Dockerfile" lang type in your YAML file.
 		return
 	}
 
-	if len(args) < 1 {
-		fmt.Println("Please provide a name for the function")
-		return
+	// Support legacy '--name' usage for function name
+	if len(functionName) == 0 {
+		if len(args) < 1 {
+			fmt.Println("Please provide a name for the function")
+			return
+		}
+		functionName = args[0]
 	}
-	functionName = args[0]
 
 	if len(lang) == 0 {
 		fmt.Println("You must supply a function language with the --lang flag")
 		return
 	}
 
-	PullTemplates("")
+	var stackFileName string
+	var services stack.Services
+	if len(yamlFile) == 0 {
+		// We will create a new YAML file for this function
+		stackFileName = functionName + ".yml"
+	} else {
+		// YAML file was passed in, so parse to see if it is valid
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, "", "")
+		if err != nil {
+			fmt.Printf("Specified file (" + yamlFile + ") is not valid YAML\n")
+			return
+		}
+
+		services = *parsedServices
+		// Make sure that services.Functions is not a nil map
+		if len(services.Functions) == 0 {
+			fmt.Printf("Error in YAML file - `functions` map is empty\n")
+			return
+		}
+
+		stackFileName = yamlFile
+	}
 
 	if validTemplate(lang) == false {
 		fmt.Printf("%s is unavailable or not supported.\n", lang)
 	}
+
+	PullTemplates("")
 
 	if _, err := os.Stat(functionName); err == nil {
 		fmt.Printf("Folder: %s already exists\n", functionName)
@@ -101,26 +129,27 @@ the "Dockerfile" lang type in your YAML file.
 `), 0600)
 	}
 
-	stack := `provider:
-  name: faas
-  gateway: ` + gateway + `
+	if len(yamlFile) == 0 {
+		services.Provider = stack.Provider{Name: "faas", GatewayURL: gateway}
+		services.Functions = make(map[string]stack.Function)
+	}
 
-functions:
-  ` + functionName + `:
-    lang: ` + lang + `
-    handler: ./` + functionName + `
-    image: ` + functionName + `
-`
+	if len(image) > 0 {
+		services.Functions[functionName] = stack.Function{Language: lang, Image: image, Handler: "./" + functionName}
+	} else {
+		services.Functions[functionName] = stack.Function{Language: lang, Image: functionName, Handler: "./" + functionName}
+	}
 
 	fmt.Printf(aec.BlueF.Apply(figletStr))
 	fmt.Println()
 	fmt.Printf("Function created in folder: %s\n", functionName)
 
-	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stack), 0600)
+	stackWriteErr := stack.WriteYAMLData(&services, stackFileName)
+
 	if stackWriteErr != nil {
-		fmt.Printf("Error writing stack file %s\n", stackWriteErr)
+		fmt.Printf("Error writing stack file %v\n", stackWriteErr)
 	} else {
-		fmt.Printf("Stack file written: %s\n", functionName+".yml")
+		fmt.Printf("Stack file written: %s\n", stackFileName)
 	}
 
 	return

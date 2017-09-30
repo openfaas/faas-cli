@@ -7,13 +7,13 @@ package stack
 type Provider struct {
 	Name       string `yaml:"name"`
 	GatewayURL string `yaml:"gateway"`
-	Network    string `yaml:"network"`
+	Network    string `yaml:"network,omitempty"`
 }
 
 // Function as deployed or built on FaaS
 type Function struct {
 	// Name of deployed function
-	Name     string `yaml:"-"`
+	Name     string `yaml:"-,omitempty"`
 	Language string `yaml:"lang"`
 
 	// Handler Local folder to use for function
@@ -22,17 +22,17 @@ type Function struct {
 	// Image Docker image name
 	Image string `yaml:"image"`
 
-	FProcess string `yaml:"fprocess"`
+	FProcess string `yaml:"fprocess,omitempty"`
 
-	Environment map[string]string `yaml:"environment"`
+	Environment map[string]string `yaml:"environment,omitempty"`
 
-	SkipBuild bool `yaml:"skip_build"`
+	SkipBuild bool `yaml:"skip_build,omitempty"`
 
-	Constraints *[]string `yaml:"constraints"`
+	Constraints *[]string `yaml:"constraints,omitempty"`
 
 	// EnvironmentFile is a list of files to import and override environmental variables.
 	// These are overriden in order.
-	EnvironmentFile []string `yaml:"environment_file"`
+	EnvironmentFile []string `yaml:"environment_file,omitempty"`
 
 	Labels *map[string]string `yaml:"labels"`
 }
