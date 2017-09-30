@@ -18,7 +18,11 @@ func Test_remove(t *testing.T) {
 			ResponseStatusCode: http.StatusOK,
 		},
 	})
-	defer s.Close()
+
+	defer func() {
+		gateway = defaultGateway
+		s.Close()
+	}()
 
 	faasCmd.SetArgs([]string{
 		"remove",

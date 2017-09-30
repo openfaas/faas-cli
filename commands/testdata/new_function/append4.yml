@@ -1,0 +1,11 @@
+functions:
+
+  url-ping:
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping
+
+provider:
+
+  name: faas
+  gateway: http://localhost:8080
