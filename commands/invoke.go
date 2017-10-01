@@ -21,8 +21,8 @@ var (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
+	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 
 	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
@@ -32,23 +32,23 @@ func init() {
 }
 
 var invokeCmd = &cobra.Command{
-	Use: `invoke --gateway GATEWAY_URL
-  faas-cli invoke [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] STDIN`,
-
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
-	Example: `  faas-cli invoke --gateway https://domain:port --name echo
-  faas-cli invoke --gateway https://domain:port --name echo --content-type application/json`,
+	Example: `  faas-cli invoke echo --gateway https://domain:port
+  faas-cli invoke echo --gateway https://domain:port --content-type application/json`,
 	Run: runInvoke,
 }
 
 func runInvoke(cmd *cobra.Command, args []string) {
 	var services stack.Services
 
-	if len(functionName) == 0 {
-		fmt.Println("Give a function to invoke via --name")
+	if len(args) < 1 {
+		fmt.Println("Please provide a name for the function")
 		return
 	}
+
+	functionName = args[0]
 
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -79,6 +79,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		fmt.Println(err)
 		return
 	}
+
 	if response != nil {
 		os.Stdout.Write(*response)
 	}
