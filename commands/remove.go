@@ -68,6 +68,7 @@ func runDelete(cmd *cobra.Command, args []string) {
 			fmt.Println("Please provide the name of a function to delete")
 			return
 		}
+
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
 		proxy.DeleteFunction(gateway, functionName)

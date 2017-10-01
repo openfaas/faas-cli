@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
+	"strings"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
@@ -31,12 +33,12 @@ func init() {
 
 // newFunctionCmd displays newFunction information
 var newFunctionCmd = &cobra.Command{
-	Use:   "new (--name=FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list)",
+	Use:   "new FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list)",
 	Short: "Create a new template in the current folder with the name given as name",
 	Long: `The new command creates a new function based upon hello-world in the given
 language or type in --list for a list of languages available.`,
-	Example: `faas-cli new --name chatbot --lang node
-  faas-cli new --name textparser --lang python --gateway http://mydomain:8080
+	Example: `faas-cli new chatbot --lang node
+  faas-cli new textparser --lang python --gateway http://mydomain:8080
   faas-cli new --list`,
 	Run: runNewFunction,
 }
@@ -46,18 +48,22 @@ func runNewFunction(cmd *cobra.Command, args []string) {
 		fmt.Printf(`Languages available as templates:
 - node
 - python
+- python3
 - ruby
 - csharp
+- Dockerfile
 
-Or alternatively create a folder and a new Dockerfile, then pick
+Or alternatively create a folder containing a Dockerfile, then pick
 the "Dockerfile" lang type in your YAML file.
 `)
 		return
 	}
-	if len(functionName) == 0 {
-		fmt.Println("You must supply a function name with the --name flag")
+
+	if len(args) < 1 {
+		fmt.Println("Please provide a name for the function")
 		return
 	}
+	functionName = args[0]
 
 	if len(lang) == 0 {
 		fmt.Println("You must supply a function language with the --lang flag")
@@ -65,6 +71,10 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	PullTemplates("")
+
+	if validTemplate(lang) == false {
+		fmt.Printf("%s is unavailable or not supported.\n", lang)
+	}
 
 	if _, err := os.Stat(functionName); err == nil {
 		fmt.Printf("Folder: %s already exists\n", functionName)
@@ -75,7 +85,20 @@ the "Dockerfile" lang type in your YAML file.
 		fmt.Printf("Folder: %s created.\n", functionName)
 	}
 
-	builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
+	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
+	if strings.ToLower(lang) != "dockerfile" {
+		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
+	} else {
+		ioutil.WriteFile("./"+functionName+"/Dockerfile", []byte(`# Use any image as your base image, or "scratch"
+# Add fwatchdog binary via https://github.com/openfaas/faas/releases/
+# Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
+
+# FROM ...
+# ADD https://...
+# ENV fprocess=./my_binary
+# CMD ["fwatchdog"]
+`), 0600)
+	}
 
 	stack := `provider:
   name: faas
@@ -100,4 +123,16 @@ functions:
 	}
 
 	return
+}
+
+func validTemplate(lang string) bool {
+	var found bool
+	if strings.ToLower(lang) != "dockerfile" {
+		found = true
+	}
+	if _, err := os.Stat(path.Join("./template/", lang)); err == nil {
+		found = true
+	}
+
+	return found
 }
