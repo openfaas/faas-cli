@@ -33,6 +33,7 @@ $ brew install faas-cli
 
 The main commands supported by the CLI are:
 
+* `faas-cli new` - creates a new function via a template in the current directory
 * `faas-cli build` - builds Docker images from the supported language types
 * `faas-cli push` - pushes Docker images into a registry
 * `faas-cli deploy` - deploys the functions into a local or remote OpenFaaS gateway
@@ -46,7 +47,9 @@ You can chose between using a [programming language template](https://github.com
 
 **Templates**
 
-Specify `lang: node/python/csharp/ruby`
+Command: `faas-cli new FUNCTION_NAME --lang python/node/ruby/Dockerfile/etc`
+
+In your YAML you can also specify `lang: node/python/csharp/ruby`
 
 * Supports common languages
 * Quick and easy - just write one file
@@ -57,6 +60,8 @@ Specify `lang: node/python/csharp/ruby`
 Perhaps you need to have [`gcc` or another dependency](https://github.com/openfaas/faas-office-sample) in your Python template? That's not a problem.
 
 You can customise the Dockerfile or code for any of the templates. Just create a new directory and copy in the templates folder from this repository. The templates in your current working directory are always used for builds.
+
+See also: `faas-cli new --help`
 
 **Docker image**
 
@@ -210,33 +215,6 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
-
-**Bash Auto-completion [experimental]**
-
-An experimental initial Bash auto-completion script for `faas-cli` is available at `contrib/bash/faas-cli`.
-
-Please raise issues with feedback and suggestions on improvements to the auto-completion support.
-
-This may be enabled it as follows.
-
-*Enabling Bash auto-completion on OSX*
-
-Brew install the `bash_completions` package.
-```
-$ brew install bash-completion
-```
-Add the following line to your `~/.bash_profile` if not already present.
-```
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-```
-Copy the provided `faas-cli` bash completion script from this repo.
-```
-cp contrib/bash/faas-cli /usr/local/etc/bash_completion.d/
-```
-
-*Enabling Bash auto-completion on Linux*
-
-Refer to your distributions instructions on installing and enabling `bash-completion`, then copy the `faas-cli` completion script from `contrib/bash/` into the appropriate completion directory.
 
 ## FaaS-CLI Developers / Contributors
 
