@@ -1,16 +1,36 @@
-**/node_modules/
-build/
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
 faas-cli
-!contrib/bash/faas-cli
 faas-cli-darwin
 faas-cli-armhf
 faas-cli.exe
 faas-cli-arm64
 
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+template/*
+
+# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
+.glide/
+**/node_modules/
+
+build/
+!contrib/bash/faas-cli
+
+# images, compress files, metadata
 *.jpg
 *.pyc
 master.zip
 *.png
 
 obj
+
+# Editors
 .vscode
+*.swp
