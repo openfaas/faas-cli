@@ -2,10 +2,18 @@ FROM microsoft/dotnet:2.0-sdk as builder
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 
-WORKDIR /root/
-WORKDIR /root/src
-COPY .  .
+# Optimize for Docker builder caching by adding projects first.
+
+RUN mkdir -p /root/src/function
+WORKDIR /root/src/function
+COPY ./function/Function.csproj  .
+
+WORKDIR /root/src/
+COPY ./root.csproj  .
 RUN dotnet restore ./root.csproj
+
+COPY .  .
+
 RUN dotnet publish -c release -o published
 
 FROM microsoft/dotnet:2.0-runtime
