@@ -85,6 +85,10 @@ the "Dockerfile" lang type in your YAML file.
 		fmt.Printf("Folder: %s created.\n", functionName)
 	}
 
+	if err := updateGitignore(); err != nil {
+		fmt.Println("Got unexpected error while updating .gitignore file.")
+	}
+
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
 	if strings.ToLower(lang) != "dockerfile" {
 		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
