@@ -4,8 +4,12 @@
 package builder
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"os/exec"
+
+	"github.com/morikuni/aec"
 )
 
 // ExecCommand run a system command
@@ -15,5 +19,9 @@ func ExecCommand(tempPath string, builder []string) {
 	targetCmd.Stdout = os.Stdout
 	targetCmd.Stderr = os.Stderr
 	targetCmd.Start()
-	targetCmd.Wait()
+	err := targetCmd.Wait()
+	if err != nil {
+		errString := fmt.Sprintf("ERROR - Could not execute command: %s", builder)
+		log.Fatalf(aec.RedF.Apply(errString))
+	}
 }
