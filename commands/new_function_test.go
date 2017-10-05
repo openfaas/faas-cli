@@ -139,7 +139,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		services := *parsedServices
 
 		var testServices stack.Services
-		testServices.Provider = stack.Provider{Name: "faas", GatewayURL: "http://localhost:8080"}
+		testServices.Provider = stack.Provider{Name: "faas", GatewayURL: defaultGateway}
 		if !reflect.DeepEqual(services.Provider, testServices.Provider) {
 			t.Fatalf("YAML `provider` section was not created correctly for file %s: got %v", funcYAML, services.Provider)
 		}
@@ -154,17 +154,14 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 }
 
 func Test_newFunctionTests(t *testing.T) {
-	defer func() {
-		os.Remove("template")
-	}()
+	// Reset parameters which may have been modified by other tests
+	gateway = defaultGateway
+	image = ""
 
 	// Change directory to testdata
 	if err := os.Chdir("testdata/new_function"); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
-
-	// Symlink template directory at root to current directory to avoid re-downloading templates
-	os.Symlink("../../../template", "template")
 
 	for _, test := range NewFunctionTests {
 		t.Run(test.title, func(t *testing.T) {
