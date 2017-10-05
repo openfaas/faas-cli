@@ -155,8 +155,9 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 
 func Test_newFunctionTests(t *testing.T) {
 	// Reset parameters which may have been modified by other tests
-	gateway = defaultGateway
-	image = ""
+	defer func() {
+		yamlFile = ""
+	}()
 
 	// Change directory to testdata
 	if err := os.Chdir("testdata/new_function"); err != nil {
