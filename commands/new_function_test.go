@@ -25,7 +25,7 @@ func Test_new(t *testing.T) {
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{
 			"new",
-			"--name=" + funcName,
+			funcName,
 			"--lang=python",
 		})
 		faasCmd.Execute()

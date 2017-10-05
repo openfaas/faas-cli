@@ -36,7 +36,7 @@ func Test_invoke(t *testing.T) {
 		faasCmd.SetArgs([]string{
 			"invoke",
 			"--gateway=" + s.URL,
-			"--name=" + funcName,
+			funcName,
 		})
 		faasCmd.Execute()
 	})
