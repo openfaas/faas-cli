@@ -13,16 +13,12 @@ import (
 
 // BuildImage construct Docker image from function parameters
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
-
 	switch language {
-	case "node", "python", "ruby", "csharp", "python3":
-		buildLanguage(image, handler, functionName, language, nocache, squash)
-
 	case "Dockerfile", "dockerfile":
 		buildDockerfile(image, handler, functionName, language, nocache, squash)
 
 	default:
-		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+		buildLanguage(image, handler, functionName, language, nocache, squash)
 	}
 }
 
@@ -78,6 +74,9 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	}
 
 	// Drop in directory tree from template
+	if _, err := os.Stat("./template/" + language); err != nil {
+		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+	}
 	CopyFiles("./template/"+language, tempPath, true)
 
 	// Overlay in user-function
