@@ -15,7 +15,7 @@ import (
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
 
 	switch language {
-	case "node", "python", "ruby", "csharp", "python3":
+	case "node", "python", "ruby", "csharp", "python3", "go":
 		tempPath := createBuildTemplate(functionName, handler, language)
 
 		fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
