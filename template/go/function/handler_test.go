@@ -3,7 +3,7 @@ package function
 import "testing"
 
 func TestHandleReturnsCorrectResponse(t *testing.T) {
-	expected := "Hello, Go. You said: Hello World ss"
+	expected := "Hello, Go. You said: Hello World"
 	resp := Handle([]byte("Hello World"))
 
 	if resp != expected {
