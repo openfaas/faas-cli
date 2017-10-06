@@ -34,6 +34,10 @@ var (
 	language     string
 )
 
+var stat = func(filename string) (os.FileInfo, error) {
+	return os.Stat(filename)
+}
+
 func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
@@ -57,7 +61,7 @@ func Execute(customArgs []string) {
 
 func checkAndSetDefaultYaml() {
 	// Check if there is a default yaml file and set it
-	if _, err := os.Stat(defaultYAML); err == nil {
+	if _, err := stat(defaultYAML); err == nil {
 		yamlFile = defaultYAML
 	}
 }
