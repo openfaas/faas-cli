@@ -16,7 +16,7 @@ RUN CGO_ENABLED=0 GOOS=linux \
     go build --ldflags "-s -w" -a -installsuffix cgo -o handler . && \
     go test ./... -cover
 
-FROM alpine:latest
+FROM alpine:3.6
 RUN apk --no-cache add ca-certificates
 
 # Add non root user
