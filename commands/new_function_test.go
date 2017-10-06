@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"io/ioutil"
 	"os"
 	"reflect"
 	"regexp"
@@ -23,6 +24,12 @@ type NewFunctionTest struct {
 	funcLang    string
 	file        string
 	expectedMsg string
+}
+
+type WriteYAMLTest struct {
+	title        string
+	services     stack.Services
+	expectedText string
 }
 
 var NewFunctionTests = []NewFunctionTest{
@@ -74,6 +81,96 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:    "python3",
 		file:        "invalid3.yml",
 		expectedMsg: InvalidYAMLMsg,
+	},
+}
+
+var WriteYAMLTests = []WriteYAMLTest{
+	{
+		title: "writeYAML-test1",
+		services: stack.Services{
+			Functions: map[string]stack.Function{
+				"test1": {
+					Language: "testLang1",
+					Handler:  "testHandler1",
+					Image:    "testImage1",
+				},
+			},
+			Provider: stack.Provider{
+				Name:       "testProvider1",
+				GatewayURL: "testGate1",
+				Network:    "testNet1",
+			},
+		},
+		expectedText: `provider:
+  name: testProvider1
+  gateway: testGate1
+  network: testNet1
+functions:
+  test1:
+    lang: testLang1
+    handler: testHandler1
+    image: testImage1
+`,
+	},
+	{
+		title: "writeYAML-test2",
+		services: stack.Services{
+			Functions: map[string]stack.Function{
+				"test2": {
+					Language: "testLang2",
+					Handler:  "testHandler2",
+					Image:    "testImage2",
+				},
+			},
+		},
+		expectedText: `functions:
+  test2:
+    lang: testLang2
+    handler: testHandler2
+    image: testImage2
+`,
+	},
+	{
+		title: "writeYAML-test3",
+		services: stack.Services{
+			Functions: map[string]stack.Function{
+				"test3": {
+					Name:     "testName3",
+					Language: "testLang3",
+					Handler:  "testHandler3",
+					Image:    "testImage3",
+					FProcess: "testFProcess3",
+					Environment: map[string]string{
+						"envKey1": "envVal1",
+						"envKey2": "envVal2",
+						"envKey3": "envVal3",
+					},
+					SkipBuild:       true,
+					Constraints:     &[]string{"Constraint1", "Constraint2"},
+					EnvironmentFile: []string{"EnvFile1", "EnvFile2", "EnvFile3"},
+				},
+			},
+		},
+		expectedText: `functions:
+  test3:
+    '-': testName3
+    lang: testLang3
+    handler: testHandler3
+    image: testImage3
+    fprocess: testFProcess3
+    environment:
+      envKey1: envVal1
+      envKey2: envVal2
+      envKey3: envVal3
+    skip_build: true
+    constraints:
+    - Constraint1
+    - Constraint2
+    environment_file:
+    - EnvFile1
+    - EnvFile2
+    - EnvFile3
+`,
 	},
 }
 
@@ -153,6 +250,28 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 
 }
 
+func runWriteYAMLTest(t *testing.T, wyt WriteYAMLTest) {
+	testFile := "WriteYAMLTestFile.yml"
+
+	defer func() {
+		os.Remove(testFile)
+	}()
+
+	err := stack.WriteYAMLData(&wyt.services, testFile)
+	if err != nil {
+		t.Fatalf("Error running WriteYAMLData to file %s: %v", testFile, err)
+	}
+
+	byteData, err := ioutil.ReadFile(testFile)
+	if err != nil {
+		t.Fatalf("Error reading from file %s: %v", testFile, err)
+	}
+
+	if string(byteData[:]) != wyt.expectedText {
+		t.Fatalf("Test %s failed, mismatch between expected and actual YAML", wyt.title)
+	}
+}
+
 func Test_newFunctionTests(t *testing.T) {
 	// Reset parameters which may have been modified by other tests
 	defer func() {
@@ -167,6 +286,13 @@ func Test_newFunctionTests(t *testing.T) {
 	for _, test := range NewFunctionTests {
 		t.Run(test.title, func(t *testing.T) {
 			runNewFunctionTest(t, test)
+		})
+	}
+
+	// Run WriteYAMLData tests
+	for _, test := range WriteYAMLTests {
+		t.Run(test.title, func(t *testing.T) {
+			runWriteYAMLTest(t, test)
 		})
 	}
 }

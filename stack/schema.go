@@ -34,7 +34,7 @@ type Function struct {
 	// These are overriden in order.
 	EnvironmentFile []string `yaml:"environment_file,omitempty"`
 
-	Labels *map[string]string `yaml:"labels"`
+	Labels *map[string]string `yaml:"labels,omitempty"`
 }
 
 // EnvironmentFile represents external file for environment data
@@ -44,6 +44,6 @@ type EnvironmentFile struct {
 
 // Services root level YAML file to define FaaS function-set
 type Services struct {
-	Functions map[string]Function `yaml:"functions,omitempty"`
 	Provider  Provider            `yaml:"provider,omitempty"`
+	Functions map[string]Function `yaml:"functions,omitempty"`
 }
