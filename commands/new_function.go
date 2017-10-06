@@ -52,6 +52,7 @@ func runNewFunction(cmd *cobra.Command, args []string) {
 - ruby
 - csharp
 - Dockerfile
+- go
 
 Or alternatively create a folder containing a Dockerfile, then pick
 the "Dockerfile" lang type in your YAML file.
