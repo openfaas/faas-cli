@@ -13,16 +13,24 @@ COPY . .
 RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))" || { echo "Run \"gofmt -s -w\" on your Golang code"; exit 1; }
 
 RUN CGO_ENABLED=0 GOOS=linux \
-    go build --ldflags "-s -w" -a -installsuffix cgo -o handler . &&
+    go build --ldflags "-s -w" -a -installsuffix cgo -o handler . && \
     go test ./... -cover
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 
-WORKDIR /root/
+# Add non root user
+RUN addgroup -S app && adduser -S -g app app
+RUN mkdir -p /home/app
+RUN chown app /home/app
+
+WORKDIR /home/app
 
 COPY --from=0 /go/src/handler/handler    .
 COPY --from=0 /usr/bin/fwatchdog         .
+
+USER app
+
 ENV fprocess="./handler"
 
 CMD ["./fwatchdog"]
