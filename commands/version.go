@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/morikuni/aec"
 	"github.com/spf13/cobra"
@@ -44,8 +45,11 @@ func runVersion(cmd *cobra.Command, args []string) {
 	if shortVersion {
 		fmt.Println(Version)
 	} else {
-
-		fmt.Printf(aec.BlueF.Apply(figletStr))
+		figletColoured := aec.BlueF.Apply(figletStr)
+		if runtime.GOOS == "windows" {
+			figletColoured = aec.GreenF.Apply(figletStr)
+		}
+		fmt.Printf(figletColoured)
 		fmt.Printf("Commit: %s\n", GitCommit)
 		fmt.Printf("Version: %s\n", Version)
 	}
