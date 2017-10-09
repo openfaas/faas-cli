@@ -15,7 +15,7 @@ getStdin().then(val => {
         if(isArray(res) || isObject(res)) {
             console.log(JSON.stringify(res));
         } else {
-            console.log(res);
+            process.stdout.write(res);
         }
     });
 }).catch(e => {
