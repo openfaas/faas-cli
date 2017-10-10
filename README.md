@@ -140,10 +140,10 @@ If you specify a variable such as "access_key" in more than one `environment_fil
 
 Environment file format:
 
-```
+```yaml
 environment:
-  - access_key: key1
-  - secret_key: key2
+  access_key: key1
+  secret_key: key2
 ```
 
 * Define environment in-line within the file:
@@ -167,14 +167,14 @@ Constraints work with Docker Swarm and are useful for pinning functions to certa
 
 Here is an example of picking only Linux:
 
-```
+```yaml
    constraints:
      - "node.platform.os == linux"
 ```
 
 Or only Windows:
 
-```
+```yaml
    constraints:
      - "node.platform.os == windows"
 ```
