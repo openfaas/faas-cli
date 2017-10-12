@@ -33,6 +33,7 @@ func Test_DeployFunction(t *testing.T) {
 			"network",
 			[]string{},
 			false,
+			[]string{},
 		)
 	})
 
@@ -62,6 +63,7 @@ func Test_DeployFunction_Not2xx(t *testing.T) {
 			"network",
 			[]string{},
 			false,
+			[]string{},
 		)
 	})
 
