@@ -24,6 +24,7 @@ var (
 	replace     bool
 	update      bool
 	constraints []string
+	secrets     []string
 )
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
 
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
+	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -64,7 +66,8 @@ var deployCmd = &cobra.Command{
 				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
-                  [--filter "WILDCARD"]`,
+                  [--filter "WILDCARD"]
+				  [--secret "SECRET_NAME"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -72,7 +75,7 @@ the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags. Note: --replace and --update are mutually exclusive.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
   faas-cli deploy -f ./samples.yml
-  faas-cli deploy -f ./samples.yml --filter "*gif*"
+  faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
   faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./samples.yml --replace=false
   faas-cli deploy -f ./samples.yml --update=true
@@ -138,7 +141,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			allEnvironment := mergeMap(function.Environment, fileEnvironment)
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets)
 		}
 	} else {
 		if len(image) == 0 {
@@ -156,7 +159,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets)
 	}
 }
 
