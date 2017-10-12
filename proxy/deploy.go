@@ -15,7 +15,7 @@ import (
 )
 
 // DeployFunction call FaaS server to deploy a new function
-func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string, update bool) {
+func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string, update bool, secrets []string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
@@ -39,7 +39,6 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		DeleteFunction(gateway, functionName)
 	}
 
-	// TODO: allow registry auth to be specified or read from local Docker credentials store
 	req := requests.CreateFunctionRequest{
 		EnvProcess:  fprocessTemplate,
 		Image:       image,
@@ -47,6 +46,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		Service:     functionName,
 		EnvVars:     envVars,
 		Constraints: constraints,
+		Secrets:     secrets, // TODO: allow registry auth to be specified or read from local Docker credentials store
 	}
 
 	reqBytes, _ := json.Marshal(&req)
@@ -90,5 +90,4 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	fmt.Println(res.Status)
-
 }
