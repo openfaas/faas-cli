@@ -39,6 +39,9 @@ getPackage() {
         ;;
         esac
     ;;
+    *_NT*)
+    suffix=".exe"
+    ;;
     esac
 
     if [ -e /tmp/faas-cli ]; then
