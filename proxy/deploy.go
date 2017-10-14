@@ -52,7 +52,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	reqBytes, _ := json.Marshal(&req)
 	reader := bytes.NewReader(reqBytes)
 	var request *http.Request
-	client := http.Client{}
+	client := MakeHTTPClient()
 	method := "POST"
 	// "application/json"
 	if update {

@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"regexp"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/ryanuber/go-glob"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -92,8 +93,8 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	c := http.Client{}
-	res, err := c.Do(req)
+	client := proxy.MakeHTTPClient()
+	res, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}

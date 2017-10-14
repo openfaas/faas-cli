@@ -18,7 +18,11 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	gateway = strings.TrimRight(gateway, "/")
 
 	reader := bytes.NewReader(*bytesIn)
-	res, err := http.Post(gateway+"/function/"+name, contentType, reader)
+	client := MakeHTTPClient()
+
+	postRequest, _ := http.NewRequest("POST", gateway+"/function/"+name, reader)
+	res, err := client.Do(postRequest)
+
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)
