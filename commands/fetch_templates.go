@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
 )
@@ -73,7 +74,9 @@ func fetchMasterZip(templateUrl string) error {
 		if len(templateUrl) == 0 {
 			templateUrl = "https://github.com/openfaas/faas-cli/archive/" + ZipFileName
 		}
-		c := proxy.MakeHTTPClient()
+
+		timeout := 120 * time.Second
+		client := proxy.MakeHTTPClient(&timeout)
 
 		req, err := http.NewRequest("GET", templateUrl, nil)
 		if err != nil {
@@ -81,7 +84,7 @@ func fetchMasterZip(templateUrl string) error {
 			return err
 		}
 		log.Printf("HTTP GET %s\n", templateUrl)
-		res, err := c.Do(req)
+		res, err := client.Do(req)
 		if err != nil {
 			log.Println(err.Error())
 			return err

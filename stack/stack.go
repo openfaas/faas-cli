@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/ryanuber/go-glob"
@@ -93,7 +94,10 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	client := proxy.MakeHTTPClient()
+
+	timeout := 120 * time.Second
+	client := proxy.MakeHTTPClient(&timeout)
+
 	res, err := client.Do(req)
 	if err != nil {
 		return nil, err

@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/openfaas/faas/gateway/requests"
 )
@@ -52,7 +53,10 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	reqBytes, _ := json.Marshal(&req)
 	reader := bytes.NewReader(reqBytes)
 	var request *http.Request
-	client := MakeHTTPClient()
+
+	timeout := 120 * time.Second
+	client := MakeHTTPClient(&timeout)
+
 	method := "POST"
 	// "application/json"
 	if update {

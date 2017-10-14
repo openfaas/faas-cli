@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 // InvokeFunction a function
@@ -18,7 +19,8 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	gateway = strings.TrimRight(gateway, "/")
 
 	reader := bytes.NewReader(*bytesIn)
-	client := MakeHTTPClient()
+	var timeout *time.Duration
+	client := MakeHTTPClient(timeout)
 
 	postRequest, _ := http.NewRequest("POST", gateway+"/function/"+name, reader)
 	res, err := client.Do(postRequest)
