@@ -19,7 +19,10 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 
 	gateway = strings.TrimRight(gateway, "/")
 
-	res, err := http.Get(gateway + "/system/functions")
+	client := MakeHTTPClient()
+
+	getRequest, _ := http.NewRequest("GET", gateway+"/system/functions", nil)
+	res, err := client.Do(getRequest)
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)

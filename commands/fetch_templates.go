@@ -13,6 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/openfaas/faas-cli/proxy"
 )
 
 const ZipFileName string = "master.zip"
@@ -71,7 +73,7 @@ func fetchMasterZip(templateUrl string) error {
 		if len(templateUrl) == 0 {
 			templateUrl = "https://github.com/openfaas/faas-cli/archive/" + ZipFileName
 		}
-		c := http.Client{}
+		c := proxy.MakeHTTPClient()
 
 		req, err := http.NewRequest("GET", templateUrl, nil)
 		if err != nil {
