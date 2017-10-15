@@ -18,9 +18,11 @@ func Test_InvokeFunction(t *testing.T) {
 	defer s.Close()
 
 	bytesIn := []byte("test data")
+	query := []string{"ascii=<key: 0x90>", "key=foo & bar"}
 	_, err := InvokeFunction(
 		s.URL,
 		"function",
+		&query,
 		&bytesIn,
 		"text/plain",
 	)
@@ -35,9 +37,11 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 	defer s.Close()
 
 	bytesIn := []byte("test data")
+	query := []string{"key=val"}
 	_, err := InvokeFunction(
 		s.URL,
 		"function",
+		&query,
 		&bytesIn,
 		"text/plain",
 	)
