@@ -21,6 +21,7 @@ getPackage() {
     uname=$(uname)
 
     suffix=""
+    temp="/tmp/faas-cli"
     case $uname in
     "Darwin")
     suffix="-darwin"
@@ -41,22 +42,23 @@ getPackage() {
     ;;
     *_NT*)
     suffix=".exe"
+    temp=$temp$suffix
     ;;
     esac
 
-    if [ -e /tmp/faas-cli ]; then
-        rm /tmp/faas-cli
+    if [ -e $temp ]; then
+        rm $temp
     fi
 
     url=https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli$suffix
     echo "Getting package $url"
 
-    curl -sSL $url > /tmp/faas-cli
+    curl -sSL $url > $temp
 
     if [ "$?" = "0" ]; then
         echo "Attemping to move faas-cli to /usr/local/bin"
-        chmod +x /tmp/faas-cli
-        cp /tmp/faas-cli /usr/local/bin/
+        chmod +x $temp
+        cp $temp /usr/local/bin/
         if [ "$?" = "0" ]; then
             echo "New version of faas-cli installed to /usr/local/bin"
         fi
