@@ -10,11 +10,12 @@ So if you want to write in another language, just prepare a Dockerfile and build
 
 This will generate a Docker image for a Node.js function using the code in `/samples/info`.
 
-* The `faas-cli build` command can accept a `--lang` option of `python` or `node` and is `node` by default.
+* The `faas-cli build` command can accept a `--lang` option of `python`, `node`, `ruby`, `csharp`, `python3`, `go`, or `dockerfile`.
 
 ```
    $ faas-cli build \
       --image=alexellis2/node_info \
+      --lang= node \
       --name=node_info \
       --handler=./sample/node_info
 

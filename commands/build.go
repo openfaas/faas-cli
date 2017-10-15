@@ -26,7 +26,7 @@ func init() {
 	buildCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	buildCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	buildCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
-	buildCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
+	buildCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
 
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")

@@ -15,8 +15,7 @@ import (
 )
 
 var (
-	verboseInvoke bool
-	contentType   string
+	contentType string
 )
 
 func init() {
@@ -24,9 +23,7 @@ func init() {
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 
-	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
-	invokeCmd.Flags().BoolVar(&verboseInvoke, "verbose", false, "Verbose output for the function list")
 
 	faasCmd.AddCommand(invokeCmd)
 }

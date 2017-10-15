@@ -33,7 +33,7 @@ func init() {
 	deployCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 	deployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	deployCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
-	deployCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
+	deployCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
 	deployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	deployCmd.Flags().StringVar(&network, "network", defaultNetwork, "Name of the network")
 
