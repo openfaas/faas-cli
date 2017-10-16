@@ -1,5 +1,7 @@
 FROM node:6.11.2-alpine
 
+RUN addgroup -S app && adduser -S -g app app
+
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add curl \
     && echo "Pulling watchdog binary from Github." \
@@ -7,7 +9,6 @@ RUN apk --no-cache add curl \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
-RUN addgroup -S app && adduser -S -g app app
 WORKDIR /root/
 
 # Turn down the verbosity to default level.
