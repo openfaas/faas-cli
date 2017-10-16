@@ -103,10 +103,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		// Override gateway if passed
-		if len(gateway) > 0 && gateway != parsedServices.Provider.GatewayURL {
-			parsedServices.Provider.GatewayURL = gateway
-		}
+		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL)
 
 		// Override network if passed
 		if len(network) > 0 && network != defaultNetwork {
@@ -213,4 +210,18 @@ func mergeMap(i map[string]string, j map[string]string) map[string]string {
 		merged[k] = v
 	}
 	return merged
+}
+
+func getGatewayURL(argumentURL string, defaultURL string, yamlURL string) string {
+	var gatewayURL string
+
+	if len(argumentURL) > 0 && argumentURL != defaultURL {
+		gatewayURL = argumentURL
+	} else if len(yamlURL) > 0 {
+		gatewayURL = yamlURL
+	} else {
+		gatewayURL = defaultURL
+	}
+
+	return gatewayURL
 }
