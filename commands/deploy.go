@@ -104,7 +104,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		}
 
 		// Override gateway if passed
-		if len(gateway) > 0 && gateway != defaultGateway {
+		if len(gateway) > 0 && gateway != parsedServices.Provider.GatewayURL {
 			parsedServices.Provider.GatewayURL = gateway
 		}
 
