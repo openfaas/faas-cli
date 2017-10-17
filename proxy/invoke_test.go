@@ -55,3 +55,28 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		t.Fatalf("Error not matched: %s", err)
 	}
 }
+
+func Test_buildURL(t *testing.T) {
+
+	baseURL := "http://localhost:8080/function/function"
+	query := []string{"ascii=<key: 0x90>", "key=foo & bar"}
+	fullURL := baseURL + "?ascii=%3Ckey%3A+0x90%3E&key=foo+%26+bar"
+	u, err := buildURL(baseURL, &query)
+	if err != nil {
+		if u != fullURL {
+			t.Fatalf("building the URL failed")
+		}
+	}
+
+	query = []string{"no_equal_sign"}
+	u, err = buildURL(baseURL, &query)
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+
+	baseURL = "http://127.0.0.%31:8080"
+	u, err = buildURL(baseURL, &query)
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+}
