@@ -23,6 +23,8 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	invokeCmd.Flags().StringVar(&username, "username", "", "Username to be used in authentication with gateway")
+	invokeCmd.Flags().StringVar(&password, "password", "", "Password to be used in authentication with gateway")
 
 	invokeCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
@@ -32,7 +34,7 @@ func init() {
 }
 
 var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE]`,
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--username USERNAME] [--password PASSWORD]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
 	Example: `  faas-cli invoke echo --gateway https://domain:port
@@ -74,7 +76,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType)
+	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType, username, password)
 	if err != nil {
 		fmt.Println(err)
 		return

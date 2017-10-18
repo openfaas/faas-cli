@@ -12,13 +12,17 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, username string, password string) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
 
 	reader := bytes.NewReader(*bytesIn)
-	res, err := http.Post(gateway+"/function/"+name, contentType, reader)
+	c := http.Client{}
+	req, _ := http.NewRequest("POST", gateway+"/function/"+name, reader)
+	req.Header.Set("Content-Type", contentType)
+	BasicAuthIfSet(req, username, password)
+	res, err := c.Do(req)
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)
