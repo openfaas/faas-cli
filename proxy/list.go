@@ -14,12 +14,15 @@ import (
 )
 
 // ListFunctions list deployed functions
-func ListFunctions(gateway string) ([]requests.Function, error) {
+func ListFunctions(gateway string, username string, password string) ([]requests.Function, error) {
 	var results []requests.Function
 
 	gateway = strings.TrimRight(gateway, "/")
 
-	res, err := http.Get(gateway + "/system/functions")
+	c := http.Client{}
+	req, _ := http.NewRequest("GET", gateway+"/system/functions", nil)
+	BasicAuthIfSet(req, username, password)
+	res, err := c.Do(req)
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)
