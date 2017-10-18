@@ -15,13 +15,15 @@ import (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	removeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	removeCmd.Flags().StringVar(&username, "username", "", "Username to be used in authentication with gateway")
+	removeCmd.Flags().StringVar(&password, "password", "", "Password to be used in authentication with gateway")
 
 	faasCmd.AddCommand(removeCmd)
 }
 
 // removeCmd deletes/removes OpenFaaS function containers
 var removeCmd = &cobra.Command{
-	Use: `remove FUNCTION_NAME [--gateway GATEWAY_URL]
+	Use: `remove FUNCTION_NAME [--gateway GATEWAY_URL] [--username USERNAME] [--password PASSWORD]
   faas-cli remove -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"]`,
 	Aliases: []string{"rm"},
 	Short:   "Remove deployed OpenFaaS functions",
@@ -60,7 +62,7 @@ func runDelete(cmd *cobra.Command, args []string) {
 			function.Name = k
 			fmt.Printf("Deleting: %s.\n", function.Name)
 
-			proxy.DeleteFunction(services.Provider.GatewayURL, function.Name)
+			proxy.DeleteFunction(services.Provider.GatewayURL, function.Name, username, password)
 		}
 	} else {
 		if len(args) < 1 {
@@ -70,6 +72,6 @@ func runDelete(cmd *cobra.Command, args []string) {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxy.DeleteFunction(gateway, functionName)
+		proxy.DeleteFunction(gateway, functionName, username, password)
 	}
 }

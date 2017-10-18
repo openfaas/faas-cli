@@ -28,6 +28,8 @@ var (
 	handler      string
 	image        string
 	language     string
+	username     string
+	password     string
 )
 
 func init() {

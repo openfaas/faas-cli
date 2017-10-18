@@ -36,6 +36,8 @@ func init() {
 	deployCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	deployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	deployCmd.Flags().StringVar(&network, "network", defaultNetwork, "Name of the network")
+	deployCmd.Flags().StringVar(&username, "username", "", "Username to be used in authentication with gateway")
+	deployCmd.Flags().StringVar(&password, "password", "", "Password to be used in authentication with gateway")
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
@@ -61,6 +63,8 @@ var deployCmd = &cobra.Command{
                   [--network NETWORK_NAME]
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
+                  [--username USERNAME]
+                  [--password PASSWORD]
                   [--env ENVVAR=VALUE ...]
 				  [--replace=false]
 				  [--update=false]
@@ -138,7 +142,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			allEnvironment := mergeMap(function.Environment, fileEnvironment)
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, username, password, secrets)
 		}
 	} else {
 		if len(image) == 0 {
@@ -156,7 +160,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, username, password, secrets)
 	}
 }
 
