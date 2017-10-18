@@ -24,6 +24,8 @@ func init() {
 	listCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	listCmd.Flags().StringVar(&language, "lang", "node", "Programming language template")
 	listCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
+	listCmd.Flags().StringVar(&username, "username", "", "Username to be used in authentication with gateway")
+	listCmd.Flags().StringVar(&password, "password", "", "Password to be used in authentication with gateway")
 
 	listCmd.Flags().BoolVar(&verboseList, "verbose", false, "Verbose output for the function list")
 
@@ -31,7 +33,7 @@ func init() {
 }
 
 var listCmd = &cobra.Command{
-	Use:     `list [--gateway GATEWAY_URL] [--verbose]`,
+	Use:     `list [--gateway GATEWAY_URL] [--username USERNAME] [--password PASSWORD] [--verbose]`,
 	Aliases: []string{"ls"},
 	Short:   "List OpenFaaS functions",
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
@@ -61,7 +63,7 @@ func runList(cmd *cobra.Command, args []string) {
 	}
 
 	// fmt.Println(gatewayAddress)
-	functions, err := proxy.ListFunctions(gatewayAddress)
+	functions, err := proxy.ListFunctions(gatewayAddress, username, password)
 	if err != nil {
 		log.Println(err)
 		return

@@ -23,7 +23,8 @@ func Test_InvokeFunction(t *testing.T) {
 		"function",
 		&bytesIn,
 		"text/plain",
-	)
+		"",
+		"")
 
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
@@ -40,7 +41,8 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		"function",
 		&bytesIn,
 		"text/plain",
-	)
+		"",
+		"")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")

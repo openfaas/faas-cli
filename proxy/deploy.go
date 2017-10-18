@@ -15,7 +15,7 @@ import (
 )
 
 // DeployFunction call FaaS server to deploy a new function
-func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string, update bool, secrets []string) {
+func DeployFunction(fprocess string, gateway string, functionName string, image string, language string, replace bool, envVars map[string]string, network string, constraints []string, update bool, username string, password string, secrets []string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
@@ -36,7 +36,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {
-		DeleteFunction(gateway, functionName)
+		DeleteFunction(gateway, functionName, username, password)
 	}
 
 	req := requests.CreateFunctionRequest{
@@ -60,6 +60,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	request, _ = http.NewRequest(method, gateway+"/system/functions", reader)
+	BasicAuthIfSet(request, username, password)
 	res, err := client.Do(request)
 
 	if err != nil {

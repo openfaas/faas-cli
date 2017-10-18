@@ -22,7 +22,7 @@ func Test_ListFunctions(t *testing.T) {
 	})
 	defer s.Close()
 
-	result, err := ListFunctions(s.URL)
+	result, err := ListFunctions(s.URL, "", "")
 
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
@@ -37,7 +37,7 @@ func Test_ListFunctions(t *testing.T) {
 func Test_ListFunctions_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := ListFunctions(s.URL)
+	_, err := ListFunctions(s.URL, "", "")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")

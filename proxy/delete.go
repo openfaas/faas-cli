@@ -15,7 +15,7 @@ import (
 )
 
 // DeleteFunction delete a function from the FaaS server
-func DeleteFunction(gateway string, functionName string) {
+func DeleteFunction(gateway string, functionName string, username string, password string) {
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
@@ -23,6 +23,7 @@ func DeleteFunction(gateway string, functionName string) {
 
 	c := http.Client{}
 	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
+	BasicAuthIfSet(req, username, password)
 	req.Header.Set("Content-Type", "application/json")
 	delRes, delErr := c.Do(req)
 	if delErr != nil {

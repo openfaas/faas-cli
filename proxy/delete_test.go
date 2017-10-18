@@ -18,7 +18,7 @@ func Test_DeleteFunction(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete")
+		DeleteFunction(s.URL, "function-to-delete", "", "")
 	})
 
 	r := regexp.MustCompile(`(?m:Removing old service.)`)
@@ -32,7 +32,7 @@ func Test_DeleteFunction_404(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete")
+		DeleteFunction(s.URL, "function-to-delete", "", "")
 	})
 
 	r := regexp.MustCompile(`(?m:No existing service to remove)`)
@@ -46,7 +46,7 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete")
+		DeleteFunction(s.URL, "function-to-delete", "", "")
 	})
 
 	r := regexp.MustCompile(`(?m:Server returned unexpected status code)`)
