@@ -22,6 +22,9 @@ type Function struct {
 	// Image Docker image name
 	Image string `yaml:"image"`
 
+	// Docker registry Authorization
+	RegistryAuth string `yaml:"registry_auth,omitempty"`
+
 	FProcess string `yaml:"fprocess"`
 
 	Environment map[string]string `yaml:"environment"`
