@@ -49,6 +49,8 @@ func init() {
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
 
+	deployCmd.Flags().StringVar(&registryAuth, "registry_auth", "", "pass your registry authentication")
+
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -72,7 +74,8 @@ var deployCmd = &cobra.Command{
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-				  [--secret "SECRET_NAME"]`,
+				  [--secret "SECRET_NAME"]
+				  [--registryAuth "BASE64 USER:PASS"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -137,6 +140,10 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				constraints = *function.Constraints
 			}
 
+			if len(registryAuth) > 0 {
+				function.RegistryAuth = registryAuth
+			}
+
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
 				log.Fatalln(err)
@@ -160,7 +167,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				log.Fatalln(envErr)
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
 		}
 	} else {
 		if len(image) == 0 {
@@ -184,7 +191,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, registryAuth, language, replace, envvars, network, constraints, update, secrets, labelMap)
 	}
 }
 
