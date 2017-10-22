@@ -25,6 +25,7 @@ var (
 	update      bool
 	constraints []string
 	secrets     []string
+	labelOpts   []string
 )
 
 func init() {
@@ -39,6 +40,9 @@ func init() {
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
+
+	deployCmd.Flags().StringArrayVarP(&labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
+
 	deployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
 	deployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
 
@@ -62,6 +66,7 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
+                  [--label LABEL=VALUE ...]				  
 				  [--replace=false]
 				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
@@ -75,6 +80,7 @@ the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags. Note: --replace and --update are mutually exclusive.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
   faas-cli deploy -f ./samples.yml
+  faas-cli deploy -f ./samples.yml --label canary=true
   faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
   faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./samples.yml --replace=false
@@ -136,9 +142,22 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				log.Fatalln(err)
 			}
 
+			labelMap := map[string]string{}
+			if function.Labels != nil {
+				labelMap = *function.Labels
+			}
+
+			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
+			if labelErr != nil {
+				fmt.Printf("Error parsing labels: %v\n", labelErr)
+				os.Exit(1)
+			}
+
+			allLabels := mergeMap(labelMap, labelArgumentMap)
+
 			allEnvironment := mergeMap(function.Environment, fileEnvironment)
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
 		}
 	} else {
 		if len(image) == 0 {
@@ -150,14 +169,34 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		envvars, err := parseEnvvars(envvarOpts)
+		envvars, err := parseMap(envvarOpts, "env")
 		if err != nil {
 			fmt.Printf("Error parsing envvars: %v\n", err)
 			os.Exit(1)
 		}
 
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets)
+		labelMap, labelErr := parseMap(labelOpts, "label")
+		if labelErr != nil {
+			fmt.Printf("Error parsing labels: %v\n", labelErr)
+			os.Exit(1)
+		}
+
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
 	}
+}
+
+func buildLabelMap(labelOpts []string) map[string]string {
+	labelMap := map[string]string{}
+	for _, opt := range labelOpts {
+		if !strings.Contains(opt, "=") {
+			fmt.Println("Error - label option does not contain a value")
+		} else {
+			index := strings.Index(opt, "=")
+
+			labelMap[opt[0:index]] = opt[index+1:]
+		}
+	}
+	return labelMap
 }
 
 func readFiles(files []string) (map[string]string, error) {
@@ -181,7 +220,7 @@ func readFiles(files []string) (map[string]string, error) {
 	return envs, nil
 }
 
-func parseEnvvars(envvars []string) (map[string]string, error) {
+func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	result := make(map[string]string)
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
@@ -189,10 +228,10 @@ func parseEnvvars(envvars []string) (map[string]string, error) {
 		envvarValue := s[1]
 
 		if !(len(envvarName) > 0) {
-			return nil, fmt.Errorf("Empty envvar name: [%s]", envvar)
+			return nil, fmt.Errorf("Empty %s name: [%s]", keyName, envvar)
 		}
 		if !(len(envvarValue) > 0) {
-			return nil, fmt.Errorf("Empty envvar value: [%s]", envvar)
+			return nil, fmt.Errorf("Empty %s value: [%s]", keyName, envvar)
 		}
 
 		result[envvarName] = envvarValue
