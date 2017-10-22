@@ -30,6 +30,8 @@ type CreateFunctionRequest struct {
 
 	// Secrets list of secrets to be made available to function
 	Secrets []string `json:"secrets"`
+
+	Labels *map[string]string `yaml:"labels"`
 }
 
 // DeleteFunctionRequest delete a deployed function

@@ -30,9 +30,14 @@ type Function struct {
 
 	Constraints *[]string `yaml:"constraints"`
 
+	// EnvironmentFile is a list of files to import and override environmental variables.
+	// These are overriden in order.
 	EnvironmentFile []string `yaml:"environment_file"`
+
+	Labels *map[string]string `yaml:"labels"`
 }
 
+// EnvironmentFile represents external file for environment data
 type EnvironmentFile struct {
 	Environment map[string]string `yaml:"environment"`
 }
