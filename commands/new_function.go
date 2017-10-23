@@ -95,9 +95,10 @@ the "Dockerfile" lang type in your YAML file.
 # Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
 
 # FROM ...
-# ADD https://...
+# ADD https://... /bin
+# RUN chmod +x /bin/fwatchdog
 # ENV fprocess=./my_binary
-# CMD ["fwatchdog"]
+# CMD ["/bin/fwatchdog"]
 `), 0600)
 	}
 
