@@ -22,7 +22,7 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	var timeout *time.Duration
 	client := MakeHTTPClient(timeout)
 
-	postRequest, _ := http.NewRequest("POST", gateway+"/function/"+name, reader)
+	postRequest, _ := http.NewRequest(http.MethodPost, gateway+"/function/"+name, reader)
 	res, err := client.Do(postRequest)
 
 	if err != nil {

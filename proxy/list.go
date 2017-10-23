@@ -23,7 +23,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	timeout := 120 * time.Second
 	client := MakeHTTPClient(&timeout)
 
-	getRequest, _ := http.NewRequest("GET", gateway+"/system/functions", nil)
+	getRequest, _ := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
 	res, err := client.Do(getRequest)
 	if err != nil {
 		fmt.Println()

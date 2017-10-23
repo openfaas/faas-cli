@@ -78,7 +78,7 @@ func fetchMasterZip(templateUrl string) error {
 		timeout := 120 * time.Second
 		client := proxy.MakeHTTPClient(&timeout)
 
-		req, err := http.NewRequest("GET", templateUrl, nil)
+		req, err := http.NewRequest(http.MethodGet, templateUrl, nil)
 		if err != nil {
 			log.Println(err.Error())
 			return err

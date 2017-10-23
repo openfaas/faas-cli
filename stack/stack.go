@@ -90,7 +90,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 
 // fetchYAML pulls in file from remote location such as GitHub raw file-view
 func fetchYAML(address *url.URL) ([]byte, error) {
-	req, err := http.NewRequest("GET", address.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, address.String(), nil)
 	if err != nil {
 		return nil, err
 	}
