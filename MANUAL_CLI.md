@@ -15,7 +15,7 @@ This will generate a Docker image for a Node.js function using the code in `/sam
 ```
    $ faas-cli build \
       --image=alexellis2/node_info \
-      --lang= node \
+      --lang=node \
       --name=node_info \
       --handler=./sample/node_info
 
