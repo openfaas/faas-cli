@@ -13,17 +13,28 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
 
 	reader := bytes.NewReader(*bytesIn)
+
 	var timeout *time.Duration
 	client := MakeHTTPClient(timeout)
 
-	postRequest, _ := http.NewRequest(http.MethodPost, gateway+"/function/"+name, reader)
-	res, err := client.Do(postRequest)
+	qs, qsErr := buildQueryString(query)
+	if qsErr != nil {
+		return nil, qsErr
+
+	}
+
+	gatewayURL := gateway + "/function/" + name + qs
+	// fmt.Println(gatewayURL)
+	req, _ := http.NewRequest(http.MethodPost, gatewayURL, reader)
+	req.Header.Add("Content-Type", contentType)
+
+	res, err := client.Do(req)
 
 	if err != nil {
 		fmt.Println()
@@ -51,4 +62,24 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	return &resBytes, nil
+}
+
+func buildQueryString(query []string) (string, error) {
+	qs := ""
+
+	if len(query) > 0 {
+		qs = "?"
+		for _, queryValue := range query {
+			qs = qs + queryValue + "&"
+			if strings.Contains(queryValue, "=") == false {
+				return "", fmt.Errorf("The --query flags must take the form of key=value (= not found)")
+			}
+			if strings.HasSuffix(queryValue, "=") {
+				return "", fmt.Errorf("The --query flag must take the form of: key=value (empty value given, or value ends in =)")
+			}
+		}
+		qs = strings.TrimRight(qs, "&")
+	}
+
+	return qs, nil
 }

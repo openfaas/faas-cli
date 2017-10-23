@@ -16,6 +16,7 @@ import (
 
 var (
 	contentType string
+	query       []string
 )
 
 func init() {
@@ -24,16 +25,18 @@ func init() {
 	invokeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
 
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
+	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
 
 	faasCmd.AddCommand(invokeCmd)
 }
 
 var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE]`,
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
 	Example: `  faas-cli invoke echo --gateway https://domain:port
-  faas-cli invoke echo --gateway https://domain:port --content-type application/json`,
+  faas-cli invoke echo --gateway https://domain:port --content-type application/json
+  faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
 	Run: runInvoke,
 }
 
@@ -71,7 +74,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType)
+	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType, query)
 	if err != nil {
 		fmt.Println(err)
 		return
