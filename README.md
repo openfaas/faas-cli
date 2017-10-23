@@ -179,6 +179,18 @@ Or only Windows:
      - "node.platform.os == windows"
 ```
 
+### Labels
+
+Labels can be applied through a map which may be consumed by the back-end scheduler such as Docker Swarm or Kubernetes.
+
+For example:
+
+```yaml
+   labels:
+     kafka.topic: topic1
+     canary: true
+```
+
 ### YAML reference
 
 The possible entries for functions are documented below:
@@ -192,6 +204,9 @@ functions:
     environment:
       env1: value1
       env2: "value2"
+    labels:
+      label1: value1
+      label2: "value2"
    constraints:
      - "com.hdd == ssd"
 ```
