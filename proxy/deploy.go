@@ -57,10 +57,10 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	timeout := 120 * time.Second
 	client := MakeHTTPClient(&timeout)
 
-	method := "POST"
+	method := http.MethodPost
 	// "application/json"
 	if update {
-		method = "PUT"
+		method = http.MethodPut
 	}
 
 	request, _ = http.NewRequest(method, gateway+"/system/functions", reader)
