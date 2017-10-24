@@ -30,10 +30,9 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	gatewayURL := gateway + "/function/" + name + qs
-	// fmt.Println(gatewayURL)
 	req, _ := http.NewRequest(http.MethodPost, gatewayURL, reader)
 	req.Header.Add("Content-Type", contentType)
-
+	AddUserAgent(req)
 	res, err := client.Do(req)
 
 	if err != nil {

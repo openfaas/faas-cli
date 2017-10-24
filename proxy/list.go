@@ -24,6 +24,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	client := MakeHTTPClient(&timeout)
 
 	getRequest, _ := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	AddUserAgent(getRequest)
 	res, err := client.Do(getRequest)
 	if err != nil {
 		fmt.Println()

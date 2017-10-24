@@ -24,6 +24,7 @@ func DeleteFunction(gateway string, functionName string) {
 	c := http.Client{}
 	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
 	req.Header.Set("Content-Type", "application/json")
+	AddUserAgent(req)
 	delRes, delErr := c.Do(req)
 	if delErr != nil {
 		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), gateway, functionName)
