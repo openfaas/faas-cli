@@ -7,21 +7,27 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/spf13/cobra"
 )
 
 const (
-	defaultGateway = "http://localhost:8080"
-	defaultNetwork = "func_functions"
-	defaultYAML    = "stack.yml"
+	analyticsTimeout = time.Millisecond * 300
+	defaultGateway   = "http://localhost:8080"
+	defaultNetwork   = "func_functions"
+	defaultYAML      = "stack.yml"
 )
+
+var analyticsCh chan int
 
 // Flags that are to be added to all commands.
 var (
-	yamlFile string
-	regex    string
-	filter   string
+	yamlFile         string
+	regex            string
+	filter           string
+	disableAnalytics bool
 )
 
 // Flags that are to be added to subset of commands.
@@ -47,6 +53,8 @@ func init() {
 	// Set Bash completion options
 	validYAMLFilenames := []string{"yaml", "yml"}
 	_ = faasCmd.PersistentFlags().SetAnnotation("yaml", cobra.BashCompFilenameExt, validYAMLFilenames)
+
+	analyticsCh = make(chan int)
 }
 
 // Execute TODO
@@ -60,6 +68,18 @@ func Execute(customArgs []string) {
 		e := err.Error()
 		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
 		os.Exit(1)
+	}
+
+	if analytics.Disabled() {
+		return
+	}
+
+	// Block on the submission of an analytics event or timeout expiration, this
+	// is to allow sufficient time for the event submission goroutine to complete
+	// when the Gateway responds extremely quickly.
+	select {
+	case <-analyticsCh:
+	case <-time.After(analyticsTimeout):
 	}
 }
 
@@ -77,6 +97,9 @@ var faasCmd = &cobra.Command{
 	Short: "Manage your OpenFaaS functions from the command line",
 	Long: `
 Manage your OpenFaaS functions from the command line`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("root", "", analyticsCh)
+	},
 	Run: runFaas,
 }
 

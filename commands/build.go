@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -97,6 +98,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
+		analytics.Event("build", language, analyticsCh)
+
 		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 	}
 
@@ -118,6 +121,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
 
 				} else {
+					analytics.Event("build", function.Language, analyticsCh)
+
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
 				}
 			}

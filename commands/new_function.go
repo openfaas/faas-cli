@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/morikuni/aec"
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -80,6 +81,8 @@ the "Dockerfile" lang type in your YAML file.
 	if len(lang) == 0 {
 		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
+
+	analytics.Event("new", lang, analyticsCh)
 
 	PullTemplates("")
 

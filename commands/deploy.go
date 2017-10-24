@@ -11,6 +11,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -171,6 +172,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				}
 			}
 
+			analytics.Event("deploy", function.Language, analyticsCh)
+
 			functionResourceRequest1 := proxy.FunctionResourceRequest{
 				Limits:   function.Limits,
 				Requests: function.Requests,
@@ -195,6 +198,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		if labelErr != nil {
 			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
+		analytics.Event("deploy", language, analyticsCh)
+
 		functionResourceRequest1 := proxy.FunctionResourceRequest{}
 		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
 	}
