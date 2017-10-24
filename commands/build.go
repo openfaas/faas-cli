@@ -16,9 +16,10 @@ import (
 
 // Flags that are to be added to commands.
 var (
-	nocache  bool
-	squash   bool
-	parallel int
+	nocache    bool
+	squash     bool
+	parallel   int
+	shrinkwrap bool
 )
 
 func init() {
@@ -33,6 +34,8 @@ func init() {
 	buildCmd.Flags().BoolVar(&squash, "squash", false, `Use Docker's squash flag for smaller images
 						 [experimental] `)
 	buildCmd.Flags().IntVar(&parallel, "parallel", 1, "Build in parallel to depth specified.")
+
+	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -61,17 +64,16 @@ via flags.`,
   faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
                  --name=my_fn --squash`,
-	Run: runBuild,
+	RunE: runBuild,
 }
 
-func runBuild(cmd *cobra.Command, args []string) {
+func runBuild(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			return err
 		}
 
 		if parsedServices != nil {
@@ -80,30 +82,28 @@ func runBuild(cmd *cobra.Command, args []string) {
 	}
 
 	if pullErr := PullTemplates(""); pullErr != nil {
-		log.Fatalln("Could not pull templates for OpenFaaS.", pullErr)
+		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
 	if len(services.Functions) > 0 {
-		build(&services, parallel)
+		build(&services, parallel, shrinkwrap)
 	} else {
 		if len(image) == 0 {
-			fmt.Println("Please provide a valid -image name for your Docker image.")
-			return
+			return fmt.Errorf("please provide a valid -image name for your Docker image")
 		}
 		if len(handler) == 0 {
-			fmt.Println("Please provide the full path to your function's handler.")
-			return
+			return fmt.Errorf("please provide the full path to your function's handler")
 		}
 		if len(functionName) == 0 {
-			fmt.Println("Please provide the deployed -name of your function.")
-			return
+			return fmt.Errorf("please provide the deployed -name of your function")
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash)
+		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 	}
 
+	return nil
 }
 
-func build(services *stack.Services, queueDepth int) {
+func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
@@ -118,7 +118,7 @@ func build(services *stack.Services, queueDepth int) {
 					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
 
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash)
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
 				}
 			}
 
@@ -135,6 +135,7 @@ func build(services *stack.Services, queueDepth int) {
 			workChannel <- function
 		}
 	}
+
 	close(workChannel)
 
 	wg.Wait()

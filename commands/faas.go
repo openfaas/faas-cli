@@ -5,12 +5,16 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
 
-const defaultGateway = "http://localhost:8080"
-const defaultNetwork = "func_functions"
+const (
+	defaultGateway = "http://localhost:8080"
+	defaultNetwork = "func_functions"
+	defaultYAML    = "stack.yml"
+)
 
 // Flags that are to be added to all commands.
 var (
@@ -30,6 +34,10 @@ var (
 	language     string
 )
 
+var stat = func(filename string) (os.FileInfo, error) {
+	return os.Stat(filename)
+}
+
 func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
@@ -42,9 +50,20 @@ func init() {
 
 // Execute TODO
 func Execute(customArgs []string) {
+	checkAndSetDefaultYaml()
+
 	faasCmd.SilenceUsage = true
 	faasCmd.SetArgs(customArgs[1:])
-	faasCmd.Execute()
+	if err := faasCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
+}
+
+func checkAndSetDefaultYaml() {
+	// Check if there is a default yaml file and set it
+	if _, err := stat(defaultYAML); err == nil {
+		yamlFile = defaultYAML
+	}
 }
 
 // faasCmd is the FaaS CLI root command and mimics the legacy client behaviour

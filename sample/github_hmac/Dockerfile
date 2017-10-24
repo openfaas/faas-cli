@@ -8,7 +8,7 @@ COPY . /go/src/github.com/openfaas/faas/sample-functions/handler
 RUN go get -d -v
 RUN go install
 
-ADD https://github.com/openfaas/faas/releases/download/0.5.5-alpha/fwatchdog /usr/bin
+ADD https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog /usr/bin
 RUN chmod +x /usr/bin/fwatchdog
 
 ENV cgi_headers true

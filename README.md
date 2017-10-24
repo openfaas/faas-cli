@@ -14,7 +14,7 @@ Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
 [Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
 
-### Intall the CLI
+### Install the CLI
 
 The easiest way to install the faas-cli is through a curl script or `brew`:
 
@@ -28,7 +28,9 @@ or
 $ brew install faas-cli
 ```
 
-> The contributing guide has instructions for building from source
+Note: The `brew` release may not run the latest minor release but is updated regularly.
+
+> Build from source: the contributing guide has instructions for building from source and for configuring a Golang development environment.
 
 ### Run the CLI
 
@@ -40,6 +42,8 @@ The main commands supported by the CLI are:
 * `faas-cli deploy` - deploys the functions into a local or remote OpenFaaS gateway
 * `faas-cli remove` - removes the functions from a local or remote OpenFaaS gateway
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
+* `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
+* `faas-cli logout` - removes basic auth credentials fora given gateway
 
 Help for all of the commands supported by the CLI can be found by running:
 
@@ -49,9 +53,9 @@ You can chose between using a [programming language template](https://github.com
 
 **Templates**
 
-Command: `faas-cli new FUNCTION_NAME --lang python/node/ruby/Dockerfile/etc`
+Command: `faas-cli new FUNCTION_NAME --lang python/node/go/ruby/Dockerfile/etc`
 
-In your YAML you can also specify `lang: node/python/csharp/ruby`
+In your YAML you can also specify `lang: node/python/go/csharp/ruby`
 
 * Supports common languages
 * Quick and easy - just write one file
@@ -67,7 +71,7 @@ See also: `faas-cli new --help`
 
 **Docker image**
 
-Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_build: true` for pre-supplied images.
+Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_build: true` for pre-built images.
 
 * Ultimate versatility and control
 * Package anything
@@ -78,7 +82,7 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 
 A YAML stack file groups functions together and also saves on typing.
 
-You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.
+You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
 
 Here is an example file using the `samples.yml` file included in the repository.
 

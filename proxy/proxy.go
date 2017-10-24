@@ -4,20 +4,23 @@
 package proxy
 
 import (
+	"fmt"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/openfaas/faas-cli/version"
 )
 
 // MakeHTTPClient makes a HTTP client with good defaults for timeouts.
 func MakeHTTPClient(timeout *time.Duration) http.Client {
 	if timeout != nil {
 		return http.Client{
-			Timeout: 3 * time.Second,
+			Timeout: *timeout,
 			Transport: &http.Transport{
 				Proxy: http.ProxyFromEnvironment,
 				DialContext: (&net.Dialer{
-					Timeout: 3 * time.Second,
+					Timeout: *timeout,
 					// KeepAlive: 0,
 				}).DialContext,
 				// MaxIdleConns:          1,
@@ -30,4 +33,13 @@ func MakeHTTPClient(timeout *time.Duration) http.Client {
 
 	// This should be used for faas-cli invoke etc.
 	return http.Client{}
+}
+
+// MakeHTTPRequest makes HTTP requests with built-in user-agent string
+func AddUserAgent(req *http.Request) {
+	req.Header.Set("User-Agent", getUserAgent())
+}
+
+func getUserAgent() string {
+	return fmt.Sprintf("%s/%s", version.UserAgent, version.BuildVersion())
 }

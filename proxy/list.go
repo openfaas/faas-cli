@@ -5,6 +5,7 @@ package proxy
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -20,10 +21,18 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 
 	gateway = strings.TrimRight(gateway, "/")
 
-	timeout := 120 * time.Second
+	timeout := 60 * time.Second
 	client := MakeHTTPClient(&timeout)
 
-	getRequest, _ := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	SetAuth(getRequest, gateway)
+	AddUserAgent(getRequest)
+	if err != nil {
+		fmt.Println()
+		fmt.Println(err)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
 	res, err := client.Do(getRequest)
 	if err != nil {
 		fmt.Println()
@@ -36,7 +45,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	}
 
 	switch res.StatusCode {
-	case 200:
+	case http.StatusOK:
 
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -46,7 +55,8 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 		if jsonErr != nil {
 			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
 		}
-
+	case http.StatusUnauthorized:
+		return nil, errors.New("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
