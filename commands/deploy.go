@@ -156,6 +156,9 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			} else {
 				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
 			}
+			if (function.RegistryAuth != "") && !strings.HasPrefix(services.Provider.GatewayURL, "https") {
+				fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
