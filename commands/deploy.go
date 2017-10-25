@@ -73,14 +73,14 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]				  
-				  [--replace=false]
-				  [--update=false]
+                  [--label LABEL=VALUE ...]
+                  [--replace=false]
+                  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-				  [--secret "SECRET_NAME"]
-				  [--registryAuth "BASE64 USER:PASS"]`,
+                  [--secret "SECRET_NAME"]
+                  [--registryAuth "BASE64 USER:PASS"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
