@@ -38,7 +38,7 @@ var listCmd = &cobra.Command{
 func runList(cmd *cobra.Command, args []string) {
 	var services stack.Services
 	var gatewayAddress string
-
+	var yamlGateway string
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
@@ -48,12 +48,11 @@ func runList(cmd *cobra.Command, args []string) {
 
 		if parsedServices != nil {
 			services = *parsedServices
-			gatewayAddress = services.Provider.GatewayURL
+			yamlGateway = services.Provider.GatewayURL
 		}
 	}
-	if len(gatewayAddress) == 0 {
-		gatewayAddress = gateway
-	}
+
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
 
 	// fmt.Println(gatewayAddress)
 	functions, err := proxy.ListFunctions(gatewayAddress)
