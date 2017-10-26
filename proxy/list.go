@@ -20,7 +20,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 
 	gateway = strings.TrimRight(gateway, "/")
 
-	timeout := 120 * time.Second
+	timeout := 60 * time.Second
 	client := MakeHTTPClient(&timeout)
 
 	getRequest, _ := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)

@@ -13,11 +13,11 @@ import (
 func MakeHTTPClient(timeout *time.Duration) http.Client {
 	if timeout != nil {
 		return http.Client{
-			Timeout: 3 * time.Second,
+			Timeout: *timeout,
 			Transport: &http.Transport{
 				Proxy: http.ProxyFromEnvironment,
 				DialContext: (&net.Dialer{
-					Timeout: 3 * time.Second,
+					Timeout: *timeout,
 					// KeepAlive: 0,
 				}).DialContext,
 				// MaxIdleConns:          1,

@@ -57,7 +57,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	reader := bytes.NewReader(reqBytes)
 	var request *http.Request
 
-	timeout := 120 * time.Second
+	timeout := 60 * time.Second
 	client := MakeHTTPClient(&timeout)
 
 	method := http.MethodPost
