@@ -30,7 +30,7 @@ WORKDIR /home/app/function
 RUN npm i || :
 WORKDIR /home/app/
 COPY function           ./function
-
+RUN chown app:app -R /home/app
 USER app
 
 ENV cgi_headers="true"
