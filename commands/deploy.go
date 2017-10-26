@@ -155,7 +155,10 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
-			allEnvironment := mergeMap(function.Environment, fileEnvironment)
+			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
+			if envErr != nil {
+				log.Fatalln(envErr)
+			}
 
 			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
 		}
@@ -263,4 +266,14 @@ func getGatewayURL(argumentURL string, defaultURL string, yamlURL string) string
 	}
 
 	return gatewayURL
+}
+
+func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, fileEnvironment map[string]string) (map[string]string, error) {
+	envvarArguments, err := parseMap(envvarOpts, "env")
+	if err != nil {
+		return nil, fmt.Errorf("error parsing envvars: %v", err)
+	}
+
+	functionAndStack := mergeMap(yamlEnvironment, fileEnvironment)
+	return mergeMap(functionAndStack, envvarArguments), nil
 }
