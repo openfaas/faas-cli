@@ -230,7 +230,7 @@ func Test_ParseYAMLDataRegex(t *testing.T) {
 	for _, test := range ParseYAMLTests_Regex {
 		t.Run(test.title, func(t *testing.T) {
 
-			parsedYAML, err := ParseYAMLDataForStack([]byte(test.file), test.searchTerm, "")
+			parsedYAML, err := ParseYAMLData([]byte(test.file), test.searchTerm, "")
 
 			if len(test.expectedError) > 0 {
 				if err == nil {
@@ -275,7 +275,7 @@ func Test_ParseYAMLDataFilter(t *testing.T) {
 	for _, test := range ParseYAMLTests_Filter {
 		t.Run(test.title, func(t *testing.T) {
 
-			parsedYAML, err := ParseYAMLDataForStack([]byte(test.file), "", test.searchTerm)
+			parsedYAML, err := ParseYAMLData([]byte(test.file), "", test.searchTerm)
 
 			if len(test.expectedError) > 0 {
 
@@ -317,7 +317,7 @@ func Test_ParseYAMLDataFilter(t *testing.T) {
 }
 
 func Test_ParseYAMLDataFilterAndRegex(t *testing.T) {
-	_, err := ParseYAMLDataForStack([]byte(TestData_1), ".*", "*")
+	_, err := ParseYAMLData([]byte(TestData_1), ".*", "*")
 	if err == nil {
 		t.Errorf("Test_ParseYAMLDataFilterAndRegex test failed, expected error not thrown")
 	}

@@ -61,7 +61,7 @@ Currently supported verbs: %v`, supportedVerbs)
 	Short: "Downloads templates from the specified github repo",
 	Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
 	directory from the root of the repo, if it exists.`,
-	Example: "faas-cli template pull https://github.com/alexellis/faas-cli",
+	Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
 	Run:     runAddTemplate,
 }
 

@@ -26,8 +26,6 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	var fprocessTemplate string
 	if len(fprocess) > 0 {
 		fprocessTemplate = fprocess
-	} else {
-		fmt.Printf("Command to be invoked for function %s not found.\n", functionName)
 	}
 
 	gateway = strings.TrimRight(gateway, "/")

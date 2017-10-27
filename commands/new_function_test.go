@@ -5,6 +5,7 @@ package commands
 
 import (
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -19,11 +20,16 @@ const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
 const ListOptionOutput = `Languages available as templates:
 - csharp
+- go
+- go-armhf
 - node
 - node-arm64
+- node-armhf
 - python
+- python-armhf
 - python3
 - ruby`
+
 const LangNotExistsOutput = `(?m:bash is unavailable or not supported.)`
 
 type NewFunctionTest struct {
@@ -89,7 +95,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 
 		// Make sure that the information in the YAML file is correct:
-		parsedServices, err := stack.ParseYAMLFileForStack(funcYAML, "", "")
+		parsedServices, err := stack.ParseYAMLFile(funcYAML, "", "")
 		if err != nil {
 			t.Fatalf("Couldn't open modified YAML file \"%s\" due to error: %v", funcYAML, err)
 		}
@@ -111,7 +117,8 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 }
 
 func Test_newFunctionTests(t *testing.T) {
-	// Change directory to testdata
+
+	homeDir, _ := filepath.Abs(".")
 	if err := os.Chdir("testdata/new_function"); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
@@ -122,13 +129,14 @@ func Test_newFunctionTests(t *testing.T) {
 		})
 	}
 
-	if err := os.Chdir("../.."); err != nil {
+	if err := os.Chdir(homeDir); err != nil {
 		t.Fatalf("Error on cd back to commands/ directory: %v", err)
 	}
 }
 
 func Test_newFunctionListCmds(t *testing.T) {
 
+	homeDir, _ := filepath.Abs(".")
 	if err := os.Chdir("testdata/new_function"); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
@@ -148,13 +156,14 @@ func Test_newFunctionListCmds(t *testing.T) {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 
-	if err := os.Chdir("../.."); err != nil {
+	if err := os.Chdir(homeDir); err != nil {
 		t.Fatalf("Error on cd back to commands/ directory: %v", err)
 	}
 }
 
 func Test_languageNotExists(t *testing.T) {
 
+	homeDir, _ := filepath.Abs(".")
 	if err := os.Chdir("testdata/new_function"); err != nil {
 		t.Fatalf("Error on cd to testdata dir: %v", err)
 	}
@@ -178,7 +187,7 @@ func Test_languageNotExists(t *testing.T) {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 
-	if err := os.Chdir("../.."); err != nil {
+	if err := os.Chdir(homeDir); err != nil {
 		t.Fatalf("Error on cd back to commands/ directory: %v", err)
 	}
 }

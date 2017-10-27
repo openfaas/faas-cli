@@ -40,19 +40,13 @@ func Test_addTemplate_with_overwriting(t *testing.T) {
 	faasCmd.SetArgs([]string{"template", "pull", repository})
 	faasCmd.Execute()
 
-	// reset cacheCanWriteLanguage
-	cacheCanWriteLanguage = make(map[string]bool)
-
 	var buf bytes.Buffer
 	log.SetOutput(&buf)
 
-	r := regexp.MustCompile(`(?m:Cannot overwrite the following \(\d+\) directories:)`)
+	r := regexp.MustCompile(`(?m:Cannot overwrite the following \d+ directories:)`)
 
 	faasCmd.SetArgs([]string{"template", "pull", repository})
 	faasCmd.Execute()
-
-	// reset cacheCanWriteLanguage
-	cacheCanWriteLanguage = make(map[string]bool)
 
 	if !r.MatchString(buf.String()) {
 		t.Fatal(buf.String())
@@ -63,7 +57,8 @@ func Test_addTemplate_with_overwriting(t *testing.T) {
 	faasCmd.SetArgs([]string{"template", "pull", repository, "--overwrite"})
 	faasCmd.Execute()
 
-	if r.MatchString(buf.String()) {
+	str := buf.String()
+	if r.MatchString(str) {
 		t.Fatal()
 	}
 
@@ -89,7 +84,7 @@ func Test_addTemplate_no_arg(t *testing.T) {
 func Test_addTemplate_error_not_valid_url(t *testing.T) {
 	var buf bytes.Buffer
 
-	faasCmd.SetArgs([]string{"template", "pull", "git@github.com:alexellis/faas-cli.git"})
+	faasCmd.SetArgs([]string{"template", "pull", "git@github.com:openfaas/faas-cli.git"})
 	faasCmd.SetOutput(&buf)
 	faasCmd.Execute()
 

@@ -44,21 +44,22 @@ language or type in --list for a list of languages available.`,
 }
 
 func runNewFunction(cmd *cobra.Command, args []string) {
-	if list == true {
-		var available_templates string
+	var availableTemplates []string
 
-		if f, err := ioutil.ReadDir(templateDirectory); err != nil {
-			available_templates = "There is no available languages"
+	if list == true {
+		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
+			fmt.Printf("No language templates were found. Please run 'faas-cli template pull'.")
+			return
 		} else {
-			for _, file := range f {
+			for _, file := range templateFolders {
 				if file.IsDir() {
-					available_templates += fmt.Sprintf("- %s\n", file.Name())
+					availableTemplates = append(availableTemplates, file.Name())
 				}
 			}
 		}
 
 		fmt.Printf(`Languages available as templates:
-` + available_templates + `
+` + printAvailableTemplates(availableTemplates) + `
 
 Or alternatively create a folder containing a Dockerfile, then pick
 the "Dockerfile" lang type in your YAML file.
@@ -137,4 +138,12 @@ functions:
 	}
 
 	return
+}
+
+func printAvailableTemplates(availableTemplates []string) string {
+	var result string
+	for _, template := range availableTemplates {
+		result += fmt.Sprintf("- %s\n", template)
+	}
+	return result
 }

@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func Test_PullTemplates(t *testing.T) {
+func Test_fetchTemplates(t *testing.T) {
 	defer tearDown_fetch_templates(t)
 
 	// Create fake server for testing.

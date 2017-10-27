@@ -103,7 +103,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFileForStack(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			log.Fatalln(err.Error())
 			return

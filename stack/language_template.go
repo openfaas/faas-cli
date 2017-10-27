@@ -5,6 +5,8 @@ package stack
 
 import (
 	"fmt"
+	"io/ioutil"
+	"net/url"
 	"os"
 	"strings"
 
@@ -12,28 +14,29 @@ import (
 )
 
 func ParseYAMLForLanguageTemplate(file string) (*LanguageTemplate, error) {
-	if object, err := ParseYAML(
-		file,
-		iParseYAMLDataForLanguageTemplate,
-	); err != nil {
-		return nil, err
-	} else {
-		return object.(*LanguageTemplate), nil
-	}
-}
+	var err error
+	var fileData []byte
 
-// ParseYAMLDataForLanguageTemplate parses YAML data into language template
-func ParseYAMLDataForLanguageTemplate(fileData []byte, args ...string) (*LanguageTemplate, error) {
-	if object, err := iParseYAMLDataForLanguageTemplate(fileData, args...); err != nil {
-		return nil, err
+	urlParsed, err := url.Parse(file)
+	if err == nil && len(urlParsed.Scheme) > 0 {
+		fmt.Println("Parsed: " + urlParsed.String())
+		fileData, err = fetchYAML(urlParsed)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		return object.(*LanguageTemplate), nil
+		fileData, err = ioutil.ReadFile(file)
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	return ParseYAMLDataForLanguageTemplate(fileData)
 }
 
 // iParseYAMLDataForLanguageTemplate parses YAML data into language template
 // Use the alias ParseYAMLDataForLanguageTemplate
-func iParseYAMLDataForLanguageTemplate(fileData []byte, args ...string) (interface{}, error) {
+func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error) {
 	var langTemplate LanguageTemplate
 	var err error
 
