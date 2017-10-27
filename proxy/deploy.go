@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"os"
+
 	"github.com/openfaas/faas/gateway/requests"
 )
 
@@ -39,7 +41,11 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {
-		DeleteFunction(gateway, functionName)
+		if deleteError := DeleteFunction(gateway, functionName); deleteError != nil {
+			fmt.Printf("Error while deleting function, so skipping deployment. %s\n", deleteError)
+			os.Exit(-1)
+			return
+		}
 	}
 
 	req := requests.CreateFunctionRequest{

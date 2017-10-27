@@ -15,7 +15,9 @@ import (
 )
 
 // DeleteFunction delete a function from the FaaS server
-func DeleteFunction(gateway string, functionName string) {
+func DeleteFunction(gateway string, functionName string) error {
+	var err error
+
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
@@ -25,9 +27,10 @@ func DeleteFunction(gateway string, functionName string) {
 	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
 	req.Header.Set("Content-Type", "application/json")
 	delRes, delErr := c.Do(req)
+
 	if delErr != nil {
 		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), gateway, functionName)
-		return
+		return delErr
 	}
 
 	if delRes.Body != nil {
@@ -36,13 +39,19 @@ func DeleteFunction(gateway string, functionName string) {
 
 	switch delRes.StatusCode {
 	case 200, 201, 202:
-		fmt.Println("Removing old service.")
+		fmt.Println("Removing old function.")
 	case 404:
-		fmt.Println("No existing service to remove")
+		fmt.Println("No existing function to remove")
 	default:
-		bytesOut, err := ioutil.ReadAll(delRes.Body)
-		if err == nil {
+		var bodyReadErr error
+		bytesOut, bodyReadErr := ioutil.ReadAll(delRes.Body)
+		if bodyReadErr != nil {
+			err = bodyReadErr
+		} else {
+			err = fmt.Errorf("server returned unexpected status code %d %s", delRes.StatusCode, string(bytesOut))
 			fmt.Println("Server returned unexpected status code", delRes.StatusCode, string(bytesOut))
 		}
 	}
+
+	return err
 }
