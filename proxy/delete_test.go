@@ -21,9 +21,9 @@ func Test_DeleteFunction(t *testing.T) {
 		DeleteFunction(s.URL, "function-to-delete")
 	})
 
-	r := regexp.MustCompile(`(?m:Removing old service.)`)
+	r := regexp.MustCompile(`(?m:Removing old function.)`)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+		t.Fatalf("Want: %s, got: %s", "Removing old function", stdout)
 	}
 }
 
@@ -35,9 +35,9 @@ func Test_DeleteFunction_404(t *testing.T) {
 		DeleteFunction(s.URL, "function-to-delete")
 	})
 
-	r := regexp.MustCompile(`(?m:No existing service to remove)`)
+	r := regexp.MustCompile(`(?m:No existing function to remove)`)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+		t.Fatalf("Want: %s, got: %s", "No existing function to remove", stdout)
 	}
 }
 
