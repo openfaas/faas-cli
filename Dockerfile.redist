@@ -11,11 +11,11 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 
 RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
  && GIT_COMMIT=$(git rev-list -1 HEAD) \
- && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/openfaas/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-armhf \
- && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w -X github.com/openfaas/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-darwin \
- && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/openfaas/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli \
- && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/openfaas/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli.exe \
- && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w -X github.com/openfaas/faas-cli/commands.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/commands.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-arm64
+ && GOARCH=arm GOARM=6 CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/version.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-armhf \
+ && CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/version.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-darwin \
+ && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/version.Version=${VERSION}" -a -installsuffix cgo -o faas-cli \
+ && CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/version.Version=${VERSION}" -a -installsuffix cgo -o faas-cli.exe \
+ && CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} -X github.com/openfaas/faas-cli/version.Version=${VERSION}" -a -installsuffix cgo -o faas-cli-arm64
 
 FROM alpine:latest
 RUN apk --no-cache add ca-certificates

@@ -84,6 +84,7 @@ func fetchMasterZip(templateUrl string) error {
 			return err
 		}
 		log.Printf("HTTP GET %s\n", templateUrl)
+		proxy.AddUserAgent(req)
 		res, err := client.Do(req)
 		if err != nil {
 			log.Println(err.Error())

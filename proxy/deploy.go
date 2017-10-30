@@ -67,6 +67,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	request, _ = http.NewRequest(method, gateway+"/system/functions", reader)
+	AddUserAgent(request)
 	res, err := client.Do(request)
 
 	if err != nil {
