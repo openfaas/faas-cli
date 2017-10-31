@@ -106,7 +106,8 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	var dockerConfig configFile
+	dockerConfig := configFile{}
+	readDockerConfig(&dockerConfig)
 	err := readDockerConfig(&dockerConfig)
 	if err != nil {
 		log.Println("Unable to read the docker config - %v", err.Error())
@@ -363,6 +364,10 @@ func readDockerConfig(config *configFile) error {
 }
 
 func getRegistryAuth(config *configFile, image string) string {
+
+	if len(config.AuthConfigs) == 0 {
+		return ""
+	}
 
 	// image format is: <docker registry>/<user>/<image>
 	// so we trim <user>/<image>
