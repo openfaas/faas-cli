@@ -37,6 +37,10 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		fprocessTemplate = "python3 index.py"
 	}
 
+	if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
+		fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+	}
+
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {

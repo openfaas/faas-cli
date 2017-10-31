@@ -27,7 +27,6 @@ var (
 	gateway      string
 	handler      string
 	image        string
-	registryAuth string
 	language     string
 )
 

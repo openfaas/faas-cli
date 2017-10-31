@@ -54,8 +54,6 @@ func init() {
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
 
-	deployCmd.Flags().StringVar(&registryAuth, "registry_auth", "", "pass your registry authentication")
-
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -79,8 +77,7 @@ var deployCmd = &cobra.Command{
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-                  [--secret "SECRET_NAME"]
-                  [--registryAuth "BASE64 USER:PASS"]`,
+                  [--secret "SECRET_NAME"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -151,14 +148,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				constraints = *function.Constraints
 			}
 
-			if len(registryAuth) > 0 {
-				function.RegistryAuth = registryAuth
-			} else {
-				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
-			}
-			if (function.RegistryAuth != "") && !strings.HasPrefix(services.Provider.GatewayURL, "https") {
-				fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-			}
+			function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
@@ -194,6 +184,8 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			fmt.Println("Please provide a --name for your function as it will be deployed on FaaS")
 			return
 		}
+
+		registryAuth := getRegistryAuth(&dockerConfig, image)
 
 		envvars, err := parseMap(envvarOpts, "env")
 		if err != nil {
