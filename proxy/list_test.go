@@ -49,6 +49,19 @@ func Test_ListFunctions_Not200(t *testing.T) {
 	}
 }
 
+func Test_ListFunctions_BadURL(t *testing.T) {
+	_, err := ListFunctions("127.0.0.1:8080")
+
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+
+	r := regexp.MustCompile(`(?m:cannot connect to OpenFaaS on URL: )`)
+	if !r.MatchString(err.Error()) {
+		t.Fatalf("Error not matched: %s", err)
+	}
+}
+
 var expectedListFunctionsResponse = []requests.Function{
 	{
 		Name:            "func-test1",
