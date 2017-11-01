@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -49,16 +50,17 @@ func Test_ListFunctions_Not200(t *testing.T) {
 	}
 }
 
-func Test_ListFunctions_BadURL(t *testing.T) {
+func Test_ListFunctions_MissingURLPrefix(t *testing.T) {
 	_, err := ListFunctions("127.0.0.1:8080")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
 	}
 
-	r := regexp.MustCompile(`(?m:cannot connect to OpenFaaS on URL: )`)
+	expectedErrMsg := "cannot connect to OpenFaaS on URL:"
+	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(err.Error()) {
-		t.Fatalf("Error not matched: %s", err)
+		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
 	}
 }
 

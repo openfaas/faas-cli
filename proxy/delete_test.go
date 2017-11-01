@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 
 	"testing"
@@ -55,15 +56,16 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 	}
 }
 
-func Test_DeleteFunction_BadURL(t *testing.T) {
+func Test_DeleteFunction_MissingURLPrefix(t *testing.T) {
 	url := "127.0.0.1:8080"
 
 	stdout := test.CaptureStdout(func() {
 		DeleteFunction(url, "function-to-delete")
 	})
 
-	r := regexp.MustCompile(`(?m:first path segment in URL cannot contain colon)`)
+	expectedErrMsg := "first path segment in URL cannot contain colon"
+	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
 	}
 }
