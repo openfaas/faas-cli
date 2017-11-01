@@ -42,6 +42,8 @@ The main commands supported by the CLI are:
 * `faas-cli deploy` - deploys the functions into a local or remote OpenFaaS gateway
 * `faas-cli remove` - removes the functions from a local or remote OpenFaaS gateway
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
+* `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
+* `faas-cli logout` - removes basic auth credentials fora given gateway
 
 Help for all of the commands supported by the CLI can be found by running:
 
@@ -51,7 +53,7 @@ You can chose between using a [programming language template](https://github.com
 
 **Templates**
 
-Command: `faas-cli new FUNCTION_NAME --lang python/node/go//ruby/Dockerfile/etc`
+Command: `faas-cli new FUNCTION_NAME --lang python/node/go/ruby/Dockerfile/etc`
 
 In your YAML you can also specify `lang: node/python/go/csharp/ruby`
 

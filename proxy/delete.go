@@ -28,6 +28,7 @@ func DeleteFunction(gateway string, functionName string) error {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	SetAuth(req, gateway)
 	delRes, delErr := c.Do(req)
 
 	if delErr != nil {
@@ -40,10 +41,12 @@ func DeleteFunction(gateway string, functionName string) error {
 	}
 
 	switch delRes.StatusCode {
-	case 200, 201, 202:
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		fmt.Println("Removing old function.")
-	case 404:
+	case http.StatusNotFound:
 		fmt.Println("No existing function to remove")
+	case http.StatusUnauthorized:
+		fmt.Println("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		var bodyReadErr error
 		bytesOut, bodyReadErr := ioutil.ReadAll(delRes.Body)

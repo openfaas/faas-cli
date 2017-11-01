@@ -16,3 +16,6 @@ obj
 .vscode
 
 *.swp
+
+.idea
+.DS_Store
