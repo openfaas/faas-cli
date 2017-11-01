@@ -30,8 +30,14 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	gatewayURL := gateway + "/function/" + name + qs
-	// fmt.Println(gatewayURL)
-	req, _ := http.NewRequest(http.MethodPost, gatewayURL, reader)
+
+	req, err := http.NewRequest(http.MethodPost, gatewayURL, reader)
+	if err != nil {
+		fmt.Println()
+		fmt.Println(err)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
 	req.Header.Add("Content-Type", contentType)
 
 	res, err := client.Do(req)

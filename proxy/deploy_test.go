@@ -74,3 +74,29 @@ func Test_DeployFunction_Not2xx(t *testing.T) {
 		t.Fatalf("Output not matched: %s", stdout)
 	}
 }
+
+func Test_DeployFunction_BadURL(t *testing.T) {
+	url := "127.0.0.1:8080"
+
+	stdout := test.CaptureStdout(func() {
+		DeployFunction(
+			"fprocess",
+			url,
+			"function",
+			"image",
+			"language",
+			false,
+			nil,
+			"network",
+			[]string{},
+			false,
+			[]string{},
+			map[string]string{},
+		)
+	})
+
+	r := regexp.MustCompile(`(?m:first path segment in URL cannot contain colon)`)
+	if !r.MatchString(stdout) {
+		t.Fatalf("Output not matched: %s", stdout)
+	}
+}

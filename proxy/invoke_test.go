@@ -53,3 +53,24 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		t.Fatalf("Error not matched: %s", err)
 	}
 }
+
+func Test_InvokeFunction_BadURL(t *testing.T) {
+
+	bytesIn := []byte("test data")
+	_, err := InvokeFunction(
+		"127.0.0.1:8080",
+		"function",
+		&bytesIn,
+		"text/plain",
+		[]string{},
+	)
+
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+
+	r := regexp.MustCompile(`(?m:cannot connect to OpenFaaS on URL: )`)
+	if !r.MatchString(err.Error()) {
+		t.Fatalf("Error not matched: %s", err)
+	}
+}
