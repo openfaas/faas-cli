@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"strings"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -44,15 +44,22 @@ language or type in --list for a list of languages available.`,
 }
 
 func runNewFunction(cmd *cobra.Command, args []string) {
+	var availableTemplates []string
+
 	if list == true {
+		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
+			fmt.Printf("No language templates were found. Please run 'faas-cli template pull'.")
+			return
+		} else {
+			for _, file := range templateFolders {
+				if file.IsDir() {
+					availableTemplates = append(availableTemplates, file.Name())
+				}
+			}
+		}
+
 		fmt.Printf(`Languages available as templates:
-- node
-- python
-- python3
-- ruby
-- csharp
-- Dockerfile
-- go
+` + printAvailableTemplates(availableTemplates) + `
 
 Or alternatively create a folder containing a Dockerfile, then pick
 the "Dockerfile" lang type in your YAML file.
@@ -71,10 +78,11 @@ the "Dockerfile" lang type in your YAML file.
 		return
 	}
 
-	PullTemplates("")
+	PullTemplates()
 
-	if validTemplate(lang) == false {
+	if stack.IsValidTemplate(lang) == false {
 		fmt.Printf("%s is unavailable or not supported.\n", lang)
+		return
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
@@ -132,14 +140,10 @@ functions:
 	return
 }
 
-func validTemplate(lang string) bool {
-	var found bool
-	if strings.ToLower(lang) != "dockerfile" {
-		found = true
+func printAvailableTemplates(availableTemplates []string) string {
+	var result string
+	for _, template := range availableTemplates {
+		result += fmt.Sprintf("- %s\n", template)
 	}
-	if _, err := os.Stat(path.Join("./template/", lang)); err == nil {
-		found = true
-	}
-
-	return found
+	return result
 }
