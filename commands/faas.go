@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -44,7 +45,9 @@ func init() {
 func Execute(customArgs []string) {
 	faasCmd.SilenceUsage = true
 	faasCmd.SetArgs(customArgs[1:])
-	faasCmd.Execute()
+	if err := faasCmd.Execute(); err != nil {
+		os.Exit(1)
+	}
 }
 
 // faasCmd is the FaaS CLI root command and mimics the legacy client behaviour

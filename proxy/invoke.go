@@ -5,6 +5,7 @@ package proxy
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -26,13 +27,19 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	qs, qsErr := buildQueryString(query)
 	if qsErr != nil {
 		return nil, qsErr
-
 	}
 
 	gatewayURL := gateway + "/function/" + name + qs
-	// fmt.Println(gatewayURL)
-	req, _ := http.NewRequest(http.MethodPost, gatewayURL, reader)
+
+	req, err := http.NewRequest(http.MethodPost, gatewayURL, reader)
+	if err != nil {
+		fmt.Println()
+		fmt.Println(err)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
 	req.Header.Add("Content-Type", contentType)
+	SetAuth(req, gateway)
 
 	res, err := client.Do(req)
 
@@ -47,13 +54,14 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	switch res.StatusCode {
-	case 200:
+	case http.StatusOK:
 		var readErr error
 		resBytes, readErr = ioutil.ReadAll(res.Body)
 		if readErr != nil {
 			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, readErr)
 		}
-
+	case http.StatusUnauthorized:
+		return nil, errors.New("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

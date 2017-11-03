@@ -47,7 +47,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		fmt.Println("Please provide a name for the function")
 		return
 	}
-
+	var yamlGateway string
 	functionName = args[0]
 
 	if len(yamlFile) > 0 {
@@ -59,9 +59,11 @@ func runInvoke(cmd *cobra.Command, args []string) {
 
 		if parsedServices != nil {
 			services = *parsedServices
-			gateway = services.Provider.GatewayURL
+			yamlGateway = services.Provider.GatewayURL
 		}
 	}
+
+	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway)
 
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
@@ -74,7 +76,7 @@ func runInvoke(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	response, err := proxy.InvokeFunction(gateway, functionName, &functionInput, contentType, query)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
 	if err != nil {
 		fmt.Println(err)
 		return

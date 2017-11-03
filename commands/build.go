@@ -61,17 +61,16 @@ via flags.`,
   faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
                  --name=my_fn --squash`,
-	Run: runBuild,
+	RunE: runBuild,
 }
 
-func runBuild(cmd *cobra.Command, args []string) {
+func runBuild(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			return err
 		}
 
 		if parsedServices != nil {
@@ -80,27 +79,25 @@ func runBuild(cmd *cobra.Command, args []string) {
 	}
 
 	if pullErr := PullTemplates(""); pullErr != nil {
-		log.Fatalln("Could not pull templates for OpenFaaS.", pullErr)
+		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
 	if len(services.Functions) > 0 {
 		build(&services, parallel)
 	} else {
 		if len(image) == 0 {
-			fmt.Println("Please provide a valid -image name for your Docker image.")
-			return
+			return fmt.Errorf("please provide a valid -image name for your Docker image")
 		}
 		if len(handler) == 0 {
-			fmt.Println("Please provide the full path to your function's handler.")
-			return
+			return fmt.Errorf("please provide the full path to your function's handler")
 		}
 		if len(functionName) == 0 {
-			fmt.Println("Please provide the deployed -name of your function.")
-			return
+			return fmt.Errorf("please provide the deployed -name of your function")
 		}
 		builder.BuildImage(image, handler, functionName, language, nocache, squash)
 	}
 
+	return nil
 }
 
 func build(services *stack.Services, queueDepth int) {
