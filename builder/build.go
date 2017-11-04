@@ -12,7 +12,7 @@ import (
 )
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool) {
 
 	switch language {
 	case "node", "python", "ruby", "csharp", "python3", "go":
@@ -22,29 +22,35 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
 
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
+		if shrinkwrap {
+			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
+		} else {
+			builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
 
+			ExecCommand(tempPath, builder)
+			fmt.Printf("Image: %s built.\n", image)
+		}
 		break
 	case "Dockerfile", "dockerfile":
-		tempPath := handler
-		if _, err := os.Stat(handler); err != nil {
-			fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-			fmt.Printf("Image: %s not built.\n", image)
+		if shrinkwrap {
+			fmt.Printf("Nothing to do for: %s.\n", functionName)
+		} else {
+			tempPath := handler
+			if _, err := os.Stat(handler); err != nil {
+				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
+				fmt.Printf("Image: %s not built.\n", image)
 
-			break
+				break
+			}
+			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
+
+			flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+
+			builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
+			fmt.Println(strings.Join(builder, " "))
+			ExecCommand(tempPath, builder)
+			fmt.Printf("Image: %s built.\n", image)
 		}
-		fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
-
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
-
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		fmt.Println(strings.Join(builder, " "))
-		ExecCommand(tempPath, builder)
-		fmt.Printf("Image: %s built.\n", image)
-
 	default:
 		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
 	}
