@@ -4,10 +4,10 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -89,24 +89,24 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
                   --env=MYVAR=myval`,
-	Run: runDeploy,
+	RunE: runDeploy,
 }
 
-func runDeploy(cmd *cobra.Command, args []string) {
+func runDeploy(cmd *cobra.Command, args []string) error {
 
 	if update && replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
-		return
+		return errors.New("cannot specify --update and --replace at the same time")
 	}
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			log.Println(err.Error())
+			return err
 		}
 
 		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL)
@@ -144,7 +144,8 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
-				log.Fatalln(err)
+				log.Println(err)
+				return err
 			}
 
 			labelMap := map[string]string{}
@@ -155,14 +156,15 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
 			if labelErr != nil {
 				fmt.Printf("Error parsing labels: %v\n", labelErr)
-				os.Exit(1)
+				return errors.New("error parsing labels")
 			}
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
 			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
-				log.Fatalln(envErr)
+				log.Println(envErr)
+				return envErr
 			}
 
 			// Get FProcess to use from the ./template/template.yml, if a template is being used
@@ -180,27 +182,29 @@ func runDeploy(cmd *cobra.Command, args []string) {
 	} else {
 		if len(image) == 0 {
 			fmt.Println("Please provide a --image to be deployed.")
-			return
+			return errors.New("Please provide a --image to be deployed")
 		}
 		if len(functionName) == 0 {
 			fmt.Println("Please provide a --name for your function as it will be deployed on FaaS")
-			return
+			return errors.New("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
 		envvars, err := parseMap(envvarOpts, "env")
 		if err != nil {
 			fmt.Printf("Error parsing envvars: %v\n", err)
-			os.Exit(1)
+			return err
 		}
 
 		labelMap, labelErr := parseMap(labelOpts, "label")
 		if labelErr != nil {
 			fmt.Printf("Error parsing labels: %v\n", labelErr)
-			os.Exit(1)
+			return err
 		}
 
 		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
 	}
+
+	return nil
 }
 
 func buildLabelMap(labelOpts []string) map[string]string {
@@ -242,6 +246,9 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	result := make(map[string]string)
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
+		if len(s) != 2 {
+			return nil, fmt.Errorf("Label format is not correct, needs key=value")
+		}
 		envvarName := s[0]
 		envvarValue := s[1]
 

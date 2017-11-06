@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -37,15 +38,15 @@ var invokeCmd = &cobra.Command{
 	Example: `  faas-cli invoke echo --gateway https://domain:port
   faas-cli invoke echo --gateway https://domain:port --content-type application/json
   faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
-	Run: runInvoke,
+	RunE: runInvoke,
 }
 
-func runInvoke(cmd *cobra.Command, args []string) {
+func runInvoke(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 
 	if len(args) < 1 {
 		fmt.Println("Please provide a name for the function")
-		return
+		return errors.New("Please provide a name for the function")
 	}
 	var yamlGateway string
 	functionName = args[0]
@@ -53,8 +54,8 @@ func runInvoke(cmd *cobra.Command, args []string) {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			log.Println(err.Error())
+			return err
 		}
 
 		if parsedServices != nil {
@@ -73,16 +74,18 @@ func runInvoke(cmd *cobra.Command, args []string) {
 	functionInput, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		fmt.Printf("Unable to read standard input: %s\n", err.Error())
-		return
+		return err
 	}
 
 	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return err
 	}
 
 	if response != nil {
 		os.Stdout.Write(*response)
 	}
+
+	return nil
 }

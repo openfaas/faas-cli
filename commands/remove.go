@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -34,16 +35,16 @@ explicitly specifying a function name.`,
   faas-cli remove -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli remove url-ping
   faas-cli remove img2ansi --gateway==http://remote-site.com:8080`,
-	Run: runDelete,
+	RunE: runDelete,
 }
 
-func runDelete(cmd *cobra.Command, args []string) {
+func runDelete(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			log.Println(err.Error())
+			return err
 		}
 
 		if parsedServices != nil {
@@ -65,11 +66,13 @@ func runDelete(cmd *cobra.Command, args []string) {
 	} else {
 		if len(args) < 1 {
 			fmt.Println("Please provide the name of a function to delete")
-			return
+			return errors.New("please provide the name of a function to delete")
 		}
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
 		proxy.DeleteFunction(gateway, functionName)
 	}
+
+	return nil
 }

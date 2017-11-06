@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"sync"
@@ -33,17 +34,17 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./samples.yml --parallel 4
   faas-cli push -f ./samples.yml --filter "*gif*"
   faas-cli push -f ./samples.yml --regex "fn[0-9]_.*"`,
-	Run: runPush,
+	RunE: runPush,
 }
 
-func runPush(cmd *cobra.Command, args []string) {
+func runPush(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			log.Println(err.Error())
+			return err
 		}
 
 		if parsedServices != nil {
@@ -55,9 +56,9 @@ func runPush(cmd *cobra.Command, args []string) {
 		pushStack(&services, parallel)
 	} else {
 		fmt.Println("You must supply a valid YAML file.")
-		return
+		return errors.New("you must supply a valid YAML file")
 	}
-
+	return nil
 }
 
 func pushImage(image string) {
@@ -77,7 +78,6 @@ func pushStack(services *stack.Services, queueDepth int) {
 				fmt.Printf("[%d] > Pushing: %s.\n", index, function.Name)
 				if len(function.Image) == 0 {
 					fmt.Println("Please provide a valid Image value in the YAML file.")
-
 				} else {
 					pushImage(function.Image)
 				}
