@@ -8,12 +8,11 @@ import (
 	"runtime"
 
 	"github.com/morikuni/aec"
+	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
 
 // GitCommit injected at build-time
-var GitCommit string
-var Version string
 var (
 	shortVersion bool
 )
@@ -31,35 +30,31 @@ var versionCmd = &cobra.Command{
 	Long: fmt.Sprintf(`The version command returns the current clients version information.
 
 This currently consists of the GitSHA from which the client was built.
-- https://github.com/openfaas/faas-cli/tree/%s`, GitCommit),
+- https://github.com/openfaas/faas-cli/tree/%s`, version.GitCommit),
 	Example: `  faas-cli version
   faas-cli version --short-version`,
 	Run: runVersion,
 }
 
 func runVersion(cmd *cobra.Command, args []string) {
-	if len(Version) == 0 {
-		Version = "dev"
-	}
-
 	if shortVersion {
-		fmt.Println(Version)
+		fmt.Println(version.BuildVersion())
 	} else {
 		figletColoured := aec.BlueF.Apply(figletStr)
 		if runtime.GOOS == "windows" {
 			figletColoured = aec.GreenF.Apply(figletStr)
 		}
 		fmt.Printf(figletColoured)
-		fmt.Printf("Commit: %s\n", GitCommit)
-		fmt.Printf("Version: %s\n", Version)
+		fmt.Printf("Commit: %s\n", version.GitCommit)
+		fmt.Printf("Version: %s\n", version.BuildVersion())
 	}
 }
 
-const figletStr = `  ___                   _____           ____  
- / _ \ _ __   ___ _ __ |  ___|_ _  __ _/ ___| 
-| | | | '_ \ / _ \ '_ \| |_ / _` + "`" + ` |/ _` + "`" + ` \___ \ 
+const figletStr = `  ___                   _____           ____
+ / _ \ _ __   ___ _ __ |  ___|_ _  __ _/ ___|
+| | | | '_ \ / _ \ '_ \| |_ / _` + "`" + ` |/ _` + "`" + ` \___ \
 | |_| | |_) |  __/ | | |  _| (_| | (_| |___) |
- \___/| .__/ \___|_| |_|_|  \__,_|\__,_|____/ 
-      |_|                                     
+ \___/| .__/ \___|_| |_|_|  \__,_|\__,_|____/
+      |_|
 
 `
