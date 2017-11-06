@@ -53,6 +53,7 @@ func Execute(customArgs []string) {
 	checkAndSetDefaultYaml()
 
 	faasCmd.SilenceUsage = true
+	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
 	if err := faasCmd.Execute(); err != nil {
 		os.Exit(1)

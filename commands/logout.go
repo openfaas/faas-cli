@@ -33,6 +33,7 @@ func runLogout(cmd *cobra.Command, args []string) error {
 	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")
 	err := config.RemoveAuthConfig(gateway)
 	if err != nil {
+		fmt.Println(err)
 		return err
 	}
 	fmt.Println("credentials removed for", gateway)

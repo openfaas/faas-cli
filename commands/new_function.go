@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -46,16 +47,16 @@ language or type in --list for a list of languages available.`,
 	Example: `faas-cli new chatbot --lang node
   faas-cli new textparser --lang python --gateway http://mydomain:8080
   faas-cli new --list`,
-	Run: runNewFunction,
+	RunE: runNewFunction,
 }
 
-func runNewFunction(cmd *cobra.Command, args []string) {
 
+func runNewFunction(cmd *cobra.Command, args []string) error {
 	if list == true {
 		var availableTemplates []string
 
 		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
-			fmt.Printf("No language templates were found. Please run 'faas-cli template pull'.")
+			return fmt.Errorf("No language templates were found. Please run 'faas-cli template pull'.")
 			return
 		} else {
 			for _, file := range templateFolders {
@@ -71,30 +72,29 @@ func runNewFunction(cmd *cobra.Command, args []string) {
 Or alternatively create a folder containing a Dockerfile, then pick
 the "Dockerfile" lang type in your YAML file.
 `)
-		return
+		return nil
 	}
 
 	if len(args) < 1 {
 		fmt.Println("Please provide a name for the function")
-		return
+		return errors.New("please provide a name for the function")
 	}
 	functionName = args[0]
 
 	if len(lang) == 0 {
 		fmt.Println("You must supply a function language with the --lang flag")
-		return
+		return errors.New("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates("")
 
 	if stack.IsValidTemplate(lang) == false {
-		fmt.Printf("%s is unavailable or not supported.\n", lang)
-		return
+		return fmt.Errorf("%s is unavailable or not supported.\n", lang)
+		
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
-		fmt.Printf("Folder: %s already exists\n", functionName)
-		return
+		return fmt.Errorf("Folder: %s already exists\n", functionName)
 	}
 
 	if err := os.Mkdir("./"+functionName, 0700); err == nil {
@@ -103,6 +103,7 @@ the "Dockerfile" lang type in your YAML file.
 
 	if err := updateGitignore(); err != nil {
 		fmt.Println("Got unexpected error while updating .gitignore file.")
+		return err
 	}
 
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
@@ -144,18 +145,25 @@ functions:
 	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stack), 0600)
 	if stackWriteErr != nil {
 		fmt.Printf("Error writing stack file %s\n", stackWriteErr)
-	} else {
-		fmt.Printf("Stack file written: %s\n", functionName+".yml")
+		return errors.New("Error writing stack file")
 	}
 
-	return
+	fmt.Printf("Stack file written: %s\n", functionName+".yml")
+	return nil
 }
 
+<<<<<<< HEAD
 func printAvailableTemplates(availableTemplates []string) string {
 	var result string
 	sort.Sort(StrSort(availableTemplates))
 	for _, template := range availableTemplates {
 		result += fmt.Sprintf("- %s\n", template)
+=======
+func validTemplate(lang string) bool {
+	var found bool
+	if strings.ToLower(lang) == "dockerfile" {
+		found = true
+>>>>>>> Change cobra Run to RunE and return errors
 	}
 	return result
 }
