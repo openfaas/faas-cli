@@ -22,7 +22,7 @@ var (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
-	invokeCmd.Flags().StringVarP(&gateway, "gateway", "gw", defaultGateway, "Gateway URL starting with http(s)://")
+	invokeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
