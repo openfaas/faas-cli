@@ -11,6 +11,7 @@ import (
 )
 
 func Test_remove(t *testing.T) {
+
 	s := test.MockHttpServer(t, []test.Request{
 		{
 			Method:             http.MethodDelete,
@@ -19,6 +20,8 @@ func Test_remove(t *testing.T) {
 		},
 	})
 	defer s.Close()
+
+	resetForTest()
 
 	faasCmd.SetArgs([]string{
 		"remove",

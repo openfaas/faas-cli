@@ -23,7 +23,12 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	timeout := 60 * time.Second
 	client := MakeHTTPClient(&timeout)
 
-	getRequest, _ := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	if err != nil {
+		fmt.Println()
+		fmt.Println(err)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
 	res, err := client.Do(getRequest)
 	if err != nil {
 		fmt.Println()

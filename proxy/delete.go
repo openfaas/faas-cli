@@ -16,15 +16,17 @@ import (
 
 // DeleteFunction delete a function from the FaaS server
 func DeleteFunction(gateway string, functionName string) error {
-	var err error
-
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
 	reader := bytes.NewReader(reqBytes)
 
 	c := http.Client{}
-	req, _ := http.NewRequest("DELETE", gateway+"/system/functions", reader)
+	req, err := http.NewRequest("DELETE", gateway+"/system/functions", reader)
+	if err != nil {
+		fmt.Println(err)
+		return err
+	}
 	req.Header.Set("Content-Type", "application/json")
 	delRes, delErr := c.Do(req)
 

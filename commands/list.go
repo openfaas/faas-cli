@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -32,18 +31,17 @@ var listCmd = &cobra.Command{
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
 	Example: `  faas-cli list
   faas-cli list --gateway https://localhost:8080 --verbose`,
-	Run: runList,
+	RunE: runList,
 }
 
-func runList(cmd *cobra.Command, args []string) {
+func runList(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 	var gatewayAddress string
 	var yamlGateway string
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			return err
 		}
 
 		if parsedServices != nil {
@@ -57,8 +55,7 @@ func runList(cmd *cobra.Command, args []string) {
 	// fmt.Println(gatewayAddress)
 	functions, err := proxy.ListFunctions(gatewayAddress)
 	if err != nil {
-		log.Println(err)
-		return
+		return err
 	}
 
 	if verboseList {
@@ -78,4 +75,5 @@ func runList(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	return nil
 }

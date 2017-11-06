@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 
 	"testing"
@@ -51,5 +52,27 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 	r := regexp.MustCompile(`(?m:Server returned unexpected status code)`)
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Error not matched: %s", err)
+	}
+}
+
+func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
+
+	bytesIn := []byte("test data")
+	_, err := InvokeFunction(
+		"127.0.0.1:8080",
+		"function",
+		&bytesIn,
+		"text/plain",
+		[]string{},
+	)
+
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+
+	expectedErrMsg := "cannot connect to OpenFaaS on URL:"
+	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
+	if !r.MatchString(err.Error()) {
+		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
 	}
 }
