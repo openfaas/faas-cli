@@ -95,7 +95,7 @@ the "Dockerfile" lang type in your YAML file.
 # Add fwatchdog binary via https://github.com/openfaas/faas/releases/
 # Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
 
-ADD https://github.com/openfaas/faas/releases/download/0.6.7/fwatchdog /usr/bin
+ADD https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog /usr/bin
 # COPY ./fwatchdog /usr/bin/
 RUN chmod +x /usr/bin/fwatchdog
 
