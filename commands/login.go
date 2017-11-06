@@ -24,7 +24,7 @@ var (
 )
 
 func init() {
-	loginCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	loginCmd.Flags().StringVarP(&gateway, "gateway", "gw", defaultGateway, "Gateway URL starting with http(s)://")
 	loginCmd.Flags().StringVarP(&username, "username", "u", "", "Gateway username")
 	loginCmd.Flags().StringVarP(&password, "password", "p", "", "Gateway password")
 	loginCmd.Flags().BoolVar(&passwordStdin, "password-stdin", false, "Reads the gateway password from stdin")

@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	logoutCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	logoutCmd.Flags().StringVarP(&gateway, "gateway", "gw", defaultGateway, "Gateway URL starting with http(s)://")
 
 	faasCmd.AddCommand(logoutCmd)
 }

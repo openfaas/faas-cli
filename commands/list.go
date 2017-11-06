@@ -18,7 +18,7 @@ var (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	listCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	listCmd.Flags().StringVarP(&gateway, "gateway", "gw", defaultGateway, "Gateway URL starting with http(s)://")
 
 	listCmd.Flags().BoolVar(&verboseList, "verbose", false, "Verbose output for the function list")
 
