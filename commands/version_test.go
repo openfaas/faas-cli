@@ -8,10 +8,11 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
+	"github.com/openfaas/faas-cli/version"
 )
 
 func Test_addVersionDev(t *testing.T) {
-	GitCommit = "sha-test"
+	version.GitCommit = "sha-test"
 
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version"})
@@ -28,8 +29,8 @@ func Test_addVersionDev(t *testing.T) {
 }
 
 func Test_addVersion(t *testing.T) {
-	GitCommit = "sha-test"
-	Version = "version.tag"
+	version.GitCommit = "sha-test"
+	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version"})
@@ -46,7 +47,7 @@ func Test_addVersion(t *testing.T) {
 }
 
 func Test_addVersion_short_version(t *testing.T) {
-	Version = "version.tag"
+	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{"version", "--short-version"})
