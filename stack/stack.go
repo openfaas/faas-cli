@@ -108,3 +108,16 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 
 	return resBytes, err
 }
+
+func WriteYAMLData(services *Services, fileName string) error {
+	bytes, err := yaml.Marshal(services)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(fileName, bytes, 0600)
+	if err != nil {
+		return err
+	}
+	return nil
+}

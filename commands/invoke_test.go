@@ -31,8 +31,10 @@ func Test_invoke(t *testing.T) {
 	os.Stdin, _ = ioutil.TempFile("", "stdin")
 	os.Stdin.WriteString("test-data")
 	os.Stdin.Seek(0, 0)
+
 	defer func() {
 		os.Remove(os.Stdin.Name())
+		gateway = defaultGateway
 	}()
 
 	stdOut := test.CaptureStdout(func() {

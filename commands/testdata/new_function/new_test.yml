@@ -1,0 +1,26 @@
+provider:
+  name: faas
+  gateway: http://localhost:8080  # can be a remote server
+
+functions:
+  url-ping:
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping
+
+  nodejs-echo:
+    lang: node
+    handler: ./sample/nodejs-echo
+    image: alexellis/faas-nodejs-echo
+
+  # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
+  shrink-image:
+    lang: Dockerfile
+    handler: ./sample/imagemagick
+    image: functions/resizer
+    fprocess: "convert - -resize 50% fd:1"
+
+  ruby-echo:
+    lang: ruby
+    handler: ./sample/ruby-echo
+    image: alexellis/ruby-echo
