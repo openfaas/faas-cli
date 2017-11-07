@@ -73,6 +73,7 @@ the "Dockerfile" lang type in your YAML file.
 
 	if validTemplate(lang) == false {
 		fmt.Printf("%s is unavailable or not supported.\n", lang)
+		return
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
@@ -136,7 +137,7 @@ functions:
 
 func validTemplate(lang string) bool {
 	var found bool
-	if strings.ToLower(lang) != "dockerfile" {
+	if strings.ToLower(lang) == "dockerfile" {
 		found = true
 	}
 	if _, err := os.Stat(path.Join("./template/", lang)); err == nil {
