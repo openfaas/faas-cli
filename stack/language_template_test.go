@@ -71,7 +71,7 @@ func Test_IsValidTemplate(t *testing.T) {
 	defer func() {
 		os.RemoveAll("template")
 	}()
-	if !IsValidTemplate("python") {
-		t.Fatalf("python must be valid")
+	if IsValidTemplate("python") {
+		t.Fatalf("python must is not valid because it does not contain template.yml")
 	}
 }
