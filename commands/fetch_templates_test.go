@@ -1,4 +1,4 @@
-// Copyright (c) Alex Ellis, Eric Stoekl 2017. All rights reserved.
+// Copyright (c) Alex Ellis 2017. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 package commands
 
@@ -22,6 +22,8 @@ func Test_PullTemplates(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	tearDown_fetch_templates(t)
 }
 
 func Test_fetchTemplates(t *testing.T) {
@@ -37,6 +39,8 @@ func Test_fetchTemplates(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
+
+	tearDown_fetch_templates(t)
 }
 
 // tearDown_fetch_templates_test cleans all files and directories created by the test

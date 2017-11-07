@@ -34,8 +34,7 @@ func ParseYAMLForLanguageTemplate(file string) (*LanguageTemplate, error) {
 	return ParseYAMLDataForLanguageTemplate(fileData)
 }
 
-// iParseYAMLDataForLanguageTemplate parses YAML data into language template
-// Use the alias ParseYAMLDataForLanguageTemplate
+// ParseYAMLDataForLanguageTemplate parses YAML data into language template
 func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error) {
 	var langTemplate LanguageTemplate
 	var err error

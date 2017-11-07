@@ -48,6 +48,7 @@ type Services struct {
 	Provider  Provider            `yaml:"provider,omitempty"`
 }
 
+// LanguageTemplate read from template.yml within root of a language template folder
 type LanguageTemplate struct {
 	Language string `yaml:"language"`
 	FProcess string `yaml:"fprocess"`
