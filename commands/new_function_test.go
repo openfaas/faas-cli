@@ -30,7 +30,7 @@ const ListOptionOutput = `Languages available as templates:
 - python3
 - ruby`
 
-const LangNotExistsOutput = `(?m:bash is unavailable or not supported.)`
+const LangNotExistsOutput = `(?m:is unavailable or not supported.)`
 
 type NewFunctionTest struct {
 	title       string
@@ -51,6 +51,12 @@ var NewFunctionTests = []NewFunctionTest{
 		funcName:    "new-test-2",
 		funcLang:    "dockerfile",
 		expectedMsg: SuccessMsg,
+	},
+	{
+		title:       "invalid_1",
+		funcName:    "new-test-invalid-1",
+		funcLang:    "dockerfilee",
+		expectedMsg: LangNotExistsOutput,
 	},
 }
 

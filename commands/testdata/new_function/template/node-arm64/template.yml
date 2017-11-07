@@ -1,0 +1,2 @@
+language: node-arm64
+fprocess: node index.js
