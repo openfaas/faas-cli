@@ -161,7 +161,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			}
 
 			// Get FProcess to use from the ./template/template.yml, if a template is being used
-			if function.Language != "" && function.Language != "Dockerfile" && function.Language != "dockerfile" {
+			if languageExistsNotDockerfile(function.Language) {
 				pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
 				if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 					log.Fatalln(err.Error())
@@ -298,4 +298,8 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 
 	functionAndStack := mergeMap(yamlEnvironment, fileEnvironment)
 	return mergeMap(functionAndStack, envvarArguments), nil
+}
+
+func languageExistsNotDockerfile(language string) bool {
+	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
 }
