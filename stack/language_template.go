@@ -53,7 +53,12 @@ func IsValidTemplate(lang string) bool {
 	if strings.ToLower(lang) == "dockerfile" {
 		found = true
 	} else if _, err := os.Stat("./template/" + lang); err == nil {
-		found = true
+		templateYAMLPath := "./template/" + lang + "/template.yml"
+
+		_, err := ParseYAMLForLanguageTemplate(templateYAMLPath)
+		if err == nil {
+			found = true
+		}
 	}
 
 	return found
