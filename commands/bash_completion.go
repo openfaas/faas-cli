@@ -4,7 +4,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -29,14 +28,12 @@ pending a merge of https://github.com/spf13/cobra/pull/520.`,
 
 func runBashcompletion(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Println("Please provide filename for bash completion")
-		return errors.New("Please provide filename for bash completion")
+		return fmt.Errorf("please provide filename for bash completion")
 	}
 	fileName := args[0]
 	err := faasCmd.GenBashCompletionFile(fileName)
 	if err != nil {
-		fmt.Println("Unable to create bash completion file")
-		return errors.New("unable to create bash completion file")
+		return fmt.Errorf("unable to create bash completion file")
 	}
 
 	return nil

@@ -4,10 +4,8 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 
 	"github.com/openfaas/faas-cli/proxy"
@@ -45,8 +43,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 
 	if len(args) < 1 {
-		fmt.Println("Please provide a name for the function")
-		return errors.New("Please provide a name for the function")
+		return fmt.Errorf("please provide a name for the function")
 	}
 	var yamlGateway string
 	functionName = args[0]
@@ -54,7 +51,6 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Println(err.Error())
 			return err
 		}
 
@@ -73,13 +69,12 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 
 	functionInput, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		fmt.Printf("Unable to read standard input: %s\n", err.Error())
-		return err
+		return fmt.Errorf("unable to read standard input: %s", err.Error())
+
 	}
 
 	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 

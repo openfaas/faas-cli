@@ -43,48 +43,27 @@ var loginCmd = &cobra.Command{
 func runLogin(cmd *cobra.Command, args []string) error {
 
 	if len(username) == 0 {
-<<<<<<< HEAD
 		return fmt.Errorf("must provide --username or -u")
-=======
-		fmt.Println("Must provide --username or -u")
-		return errors.New("must provide --username or -u")
->>>>>>> Change cobra Run to RunE and return errors
 	}
 
 	if len(password) > 0 {
 		fmt.Println("WARNING! Using --password is insecure, consider using: cat ~/faas_pass.txt | faas-cli login -u user --password-stdin")
 		if passwordStdin {
-<<<<<<< HEAD
 			return fmt.Errorf("--password and --password-stdin are mutually exclusive")
 		}
 
 		if len(username) == 0 {
 			return fmt.Errorf("must provide --username with --password")
-=======
-			fmt.Println("--password and --password-stdin are mutually exclusive")
-			return errors.New("--password and --password-stdin are mutually exclusive")
-		}
-
-		if len(username) == 0 {
-			fmt.Println("Must provide --username with --password")
-			return errors.New("must provide --username with --password")
->>>>>>> Change cobra Run to RunE and return errors
 		}
 	}
 
 	if passwordStdin {
 		if len(username) == 0 {
-<<<<<<< HEAD
 			return fmt.Errorf("must provide --username with --password-stdin")
-=======
-			fmt.Println("Must provide --username with --password-stdin")
-			return errors.New("must provide --username with --password-stdin")
->>>>>>> Change cobra Run to RunE and return errors
 		}
 
 		passwordStdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
@@ -94,24 +73,20 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	password = strings.TrimSpace(password)
 	if len(password) == 0 {
 		return fmt.Errorf("must provide a non-empty password via --password or --password-stdin")
-
 	}
 
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
 	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")
 	if err := validateLogin(gateway, username, password); err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	if err := config.UpdateAuthConfig(gateway, username, password); err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	user, _, err := config.LookupAuthConfig(gateway)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	fmt.Println("credentials saved for", user, gateway)
@@ -137,7 +112,6 @@ func validateLogin(url string, user string, pass string) error {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gatewayUrl)
 	}
 

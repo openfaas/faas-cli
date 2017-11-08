@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -42,7 +41,6 @@ func runList(cmd *cobra.Command, args []string) error {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Println(err.Error())
 			return err
 		}
 
@@ -58,7 +56,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	functions, err := proxy.ListFunctions(gatewayAddress)
 	if err != nil {
 		// ListFunctions prints out its own error messages
-		return err
+		return fmt.Errorf("")
 	}
 
 	if verboseList {

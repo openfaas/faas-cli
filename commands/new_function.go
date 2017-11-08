@@ -4,7 +4,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -50,7 +49,6 @@ language or type in --list for a list of languages available.`,
 	RunE: runNewFunction,
 }
 
-
 func runNewFunction(cmd *cobra.Command, args []string) error {
 	if list == true {
 		var availableTemplates []string
@@ -76,25 +74,22 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	if len(args) < 1 {
-		fmt.Println("Please provide a name for the function")
-		return errors.New("please provide a name for the function")
+		return fmt.Errorf("please provide a name for the function")
 	}
 	functionName = args[0]
 
 	if len(lang) == 0 {
-		fmt.Println("You must supply a function language with the --lang flag")
-		return errors.New("you must supply a function language with the --lang flag")
+		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates("")
 
 	if stack.IsValidTemplate(lang) == false {
-		return fmt.Errorf("%s is unavailable or not supported.\n", lang)
-		
+		return fmt.Errorf("%s is unavailable or not supported", lang)
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
-		return fmt.Errorf("Folder: %s already exists\n", functionName)
+		return fmt.Errorf("Folder: %s already exists", functionName)
 	}
 
 	if err := os.Mkdir("./"+functionName, 0700); err == nil {
@@ -102,8 +97,7 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	if err := updateGitignore(); err != nil {
-		fmt.Println("Got unexpected error while updating .gitignore file.")
-		return err
+		return fmt.Errorf("Got unexpected error while updating .gitignore file: %s", err)
 	}
 
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
@@ -144,26 +138,19 @@ functions:
 
 	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stack), 0600)
 	if stackWriteErr != nil {
-		fmt.Printf("Error writing stack file %s\n", stackWriteErr)
-		return errors.New("Error writing stack file")
+		return fmt.Errorf("error writing stack file %s", stackWriteErr)
 	}
 
 	fmt.Printf("Stack file written: %s\n", functionName+".yml")
 	return nil
 }
 
-<<<<<<< HEAD
 func printAvailableTemplates(availableTemplates []string) string {
 	var result string
 	sort.Sort(StrSort(availableTemplates))
 	for _, template := range availableTemplates {
 		result += fmt.Sprintf("- %s\n", template)
-=======
-func validTemplate(lang string) bool {
-	var found bool
-	if strings.ToLower(lang) == "dockerfile" {
-		found = true
->>>>>>> Change cobra Run to RunE and return errors
+
 	}
 	return result
 }

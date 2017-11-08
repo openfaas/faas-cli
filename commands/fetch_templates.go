@@ -184,14 +184,12 @@ func fetchMasterZip(templateURL string) (string, error) {
 
 		req, err := http.NewRequest(http.MethodGet, templateURL, nil)
 		if err != nil {
-			log.Println(err.Error())
 			return "", err
 		}
 
 		log.Printf("HTTP GET %s\n", templateURL)
 		res, err := client.Do(req)
 		if err != nil {
-			log.Println(err.Error())
 			return "", err
 		}
 
@@ -207,14 +205,12 @@ func fetchMasterZip(templateURL string) (string, error) {
 
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			log.Println(err.Error())
 			return "", err
 		}
 
 		log.Printf("Writing %dKb to %s\n", len(bytesOut)/1024, archive)
 		err = ioutil.WriteFile(archive, bytesOut, 0700)
 		if err != nil {
-			log.Println(err.Error())
 			return "", err
 		}
 	}
