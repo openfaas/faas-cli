@@ -4,9 +4,7 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
-	"log"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -43,7 +41,6 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Println(err.Error())
 			return err
 		}
 
@@ -65,8 +62,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		if len(args) < 1 {
-			fmt.Println("Please provide the name of a function to delete")
-			return errors.New("please provide the name of a function to delete")
+			return fmt.Errorf("Please provide the name of a function to delete")
 		}
 
 		functionName = args[0]

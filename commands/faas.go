@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -56,6 +57,11 @@ func Execute(customArgs []string) {
 	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
 	if err := faasCmd.Execute(); err != nil {
+		if len(err.Error()) > 2 {
+			splitted := strings.SplitAfterN(err.Error(), "", 2)
+			msg := strings.ToUpper(splitted[0]) + splitted[1]
+			fmt.Println(msg)
+		}
 		os.Exit(1)
 	}
 }

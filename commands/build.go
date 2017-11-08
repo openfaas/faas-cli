@@ -73,7 +73,6 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 
@@ -90,16 +89,13 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		build(&services, parallel, shrinkwrap)
 	} else {
 		if len(image) == 0 {
-			fmt.Println("Please provice a valid -image name for yout Docker image")
-			return fmt.Errorf("please provide a valid -image name for your Docker image")
+			return fmt.Errorf("please provide a valid --image name for your Docker image")
 		}
 		if len(handler) == 0 {
-			fmt.Println("Please provide the full path to your function's handler")
 			return fmt.Errorf("please provide the full path to your function's handler")
 		}
 		if len(functionName) == 0 {
-			fmt.Println("Please provide the deployed -name of your function")
-			return fmt.Errorf("please provide the deployed -name of your function")
+			return fmt.Errorf("please provide the deployed --name of your function")
 		}
 		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 	}
@@ -119,7 +115,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			for function := range workChannel {
 				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
+					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
 
 				} else {
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)

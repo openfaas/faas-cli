@@ -4,9 +4,7 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/openfaas/faas-cli/builder"
@@ -43,7 +41,6 @@ func runPush(cmd *cobra.Command, args []string) error {
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Println(err.Error())
 			return err
 		}
 
@@ -55,8 +52,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 	if len(services.Functions) > 0 {
 		pushStack(&services, parallel)
 	} else {
-		fmt.Println("You must supply a valid YAML file.")
-		return errors.New("you must supply a valid YAML file")
+		return fmt.Errorf("you must supply a valid YAML file")
 	}
 	return nil
 }

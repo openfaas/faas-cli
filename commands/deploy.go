@@ -4,10 +4,8 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -98,14 +96,13 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
-		return errors.New("cannot specify --update and --replace at the same time")
+		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Println(err.Error())
 			return err
 		}
 
@@ -144,7 +141,6 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
-				log.Println(err)
 				return err
 			}
 
@@ -155,15 +151,13 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 
 			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
 			if labelErr != nil {
-				fmt.Printf("Error parsing labels: %v\n", labelErr)
-				return errors.New("error parsing labels")
+				return fmt.Errorf("error parsing labels: %v", labelErr)
 			}
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
 			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
-				log.Println(envErr)
 				return envErr
 			}
 
@@ -181,24 +175,20 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		if len(image) == 0 {
-			fmt.Println("Please provide a --image to be deployed.")
-			return errors.New("Please provide a --image to be deployed")
+			return fmt.Errorf("please provide a --image to be deployed")
 		}
 		if len(functionName) == 0 {
-			fmt.Println("Please provide a --name for your function as it will be deployed on FaaS")
-			return errors.New("please provide a --name for your function as it will be deployed on FaaS")
+			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
 		envvars, err := parseMap(envvarOpts, "env")
 		if err != nil {
-			fmt.Printf("Error parsing envvars: %v\n", err)
-			return err
+			return fmt.Errorf("error parsing envvars: %v", err)
 		}
 
 		labelMap, labelErr := parseMap(labelOpts, "label")
 		if labelErr != nil {
-			fmt.Printf("Error parsing labels: %v\n", labelErr)
-			return err
+			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
 
 		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
