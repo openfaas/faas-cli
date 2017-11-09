@@ -25,6 +25,15 @@ const (
 	rootLanguageDirSplitCount = 3
 )
 
+type ExtractAction int
+
+const (
+	ShouldExtractData ExtractAction = iota
+	NewTemplateFound
+	DirectoryAlreadyExists
+	SkipWritingData
+)
+
 // fetchTemplates fetch code templates from GitHub master zip file.
 func fetchTemplates(templateURL string, overwrite bool) error {
 
@@ -72,7 +81,6 @@ func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string,
 
 	for _, z := range zipFile.File {
 		var rc io.ReadCloser
-		var isDirectory bool
 
 		relativePath := z.Name[strings.Index(z.Name, "/")+1:]
 		if strings.Index(relativePath, "template/") != 0 {
@@ -80,51 +88,74 @@ func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string,
 			continue
 		}
 
-		if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
-			language := pathSplit[1]
+		action, language, isDirectory := canExpandTemplateData(availableLanguages, relativePath)
 
-			// We know that this path is a directory if the last character is a "/"
-			isDirectory = relativePath[len(relativePath)-1:] == "/"
+		var expandFromZip bool
 
-			// Check if this is the root directory for a language (at ./template/lang)
-			if len(pathSplit) == rootLanguageDirSplitCount && isDirectory {
-				// template/language/
+		switch action {
 
-				if !canWriteLanguage(&availableLanguages, language, overwrite) {
-					existingLanguages = append(existingLanguages, language)
-					continue
-				}
-				fetchedLanguages = append(fetchedLanguages, language)
-			} else {
-				// template/language/*
+		case ShouldExtractData:
+			expandFromZip = true
+		case NewTemplateFound:
+			expandFromZip = true
+			fetchedLanguages = append(fetchedLanguages, language)
+		case DirectoryAlreadyExists:
+			expandFromZip = false
+			existingLanguages = append(existingLanguages, language)
+		case SkipWritingData:
+			expandFromZip = false
+		default:
+			return nil, nil, errors.New(fmt.Sprintf("Don't know what to do when extracting zip: %s", archive))
 
-				if !canWriteLanguage(&availableLanguages, language, overwrite) {
-					continue
-				}
+		}
+
+		if expandFromZip {
+			if rc, err = z.Open(); err != nil {
+				break
 			}
-		} else {
-			// template/
-			continue
-		}
 
-		if rc, err = z.Open(); err != nil {
-			break
-		}
+			if err = createPath(relativePath, z.Mode()); err != nil {
+				break
+			}
 
-		if err = createPath(relativePath, z.Mode()); err != nil {
-			break
-		}
-
-		// If relativePath is just a directory, then skip expanding it.
-		if len(relativePath) > 1 && !isDirectory {
-			if err = writeFile(rc, z.UncompressedSize64, relativePath, z.Mode()); err != nil {
-				return nil, nil, err
+			// If relativePath is just a directory, then skip expanding it.
+			if len(relativePath) > 1 && !isDirectory {
+				if err = writeFile(rc, z.UncompressedSize64, relativePath, z.Mode()); err != nil {
+					return nil, nil, err
+				}
 			}
 		}
 	}
 
 	zipFile.Close()
 	return existingLanguages, fetchedLanguages, nil
+}
+
+// canExpandTemplateData() takes the map of available languages, and the
+// path to a file in the zip archive. Returns what we should do with the file
+// in form of ExtractAction enum, the language name, and whether it is a directory
+func canExpandTemplateData(availableLanguages map[string]bool, relativePath string) (ExtractAction, string, bool) {
+	if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
+		language := pathSplit[1]
+
+		// We know that this path is a directory if the last character is a "/"
+		isDirectory := relativePath[len(relativePath)-1:] == "/"
+
+		// Check if this is the root directory for a language (at ./template/lang)
+		if len(pathSplit) == rootLanguageDirSplitCount && isDirectory {
+			if !canWriteLanguage(availableLanguages, language, overwrite) {
+				return DirectoryAlreadyExists, language, isDirectory
+			}
+			return NewTemplateFound, language, isDirectory
+		} else {
+			if !canWriteLanguage(availableLanguages, language, overwrite) {
+				return SkipWritingData, language, isDirectory
+			}
+			return ShouldExtractData, language, isDirectory
+		}
+	}
+	// template/
+	return SkipWritingData, "", true
 }
 
 // removeArchive removes the given file
@@ -208,21 +239,21 @@ func createPath(relativePath string, perms os.FileMode) error {
 // canWriteLanguage() tells whether the language can be expanded from the zip or not.
 // availableLanguages map keeps track of which languages we know to be okay to copy.
 // overwrite flag will allow to force copy the language template
-func canWriteLanguage(availableLanguages *map[string]bool, language string, overwrite bool) bool {
+func canWriteLanguage(availableLanguages map[string]bool, language string, overwrite bool) bool {
 	canWrite := false
 	if availableLanguages != nil && len(language) > 0 {
-		if _, found := (*availableLanguages)[language]; found {
-			return (*availableLanguages)[language]
+		if _, found := availableLanguages[language]; found {
+			return availableLanguages[language]
 		}
-		canWrite = checkLanguage(language, overwrite)
-		(*availableLanguages)[language] = canWrite
+		canWrite = templateFolderExists(language, overwrite)
+		availableLanguages[language] = canWrite
 	}
 
 	return canWrite
 }
 
 // Takes a language input (e.g. "node"), tells whether or not it is OK to download
-func checkLanguage(language string, overwrite bool) bool {
+func templateFolderExists(language string, overwrite bool) bool {
 	dir := templateDirectory + language
 	if _, err := os.Stat(dir); err == nil && !overwrite {
 		// The directory template/language/ exists
