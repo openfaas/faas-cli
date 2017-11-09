@@ -10,7 +10,7 @@ import (
 )
 
 func Test_ParseYAMLDataForLanguageTemplate(t *testing.T) {
-	dataProvider := []struct {
+	langTemplateTest := []struct {
 		Input    string
 		Expected *LanguageTemplate
 	}{
@@ -42,7 +42,7 @@ fprocess: python index.py
 		},
 	}
 
-	for k, i := range dataProvider {
+	for k, i := range langTemplateTest {
 		t.Run(fmt.Sprintf("%d", k), func(t *testing.T) {
 			if actual, err := ParseYAMLDataForLanguageTemplate([]byte(i.Input)); err != nil {
 				t.Errorf("test failed, %s", err)
