@@ -14,7 +14,7 @@ import (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	removeCmd.Flags().StringVar(&gateway, "gateway", defaultGateway, "Gateway URI")
+	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 
 	faasCmd.AddCommand(removeCmd)
 }

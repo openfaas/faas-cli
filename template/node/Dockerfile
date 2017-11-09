@@ -5,7 +5,7 @@ RUN addgroup -S app && adduser -S -g app app
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add curl \
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.6b/fwatchdog > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
@@ -30,7 +30,9 @@ WORKDIR /home/app/function
 RUN npm i || :
 WORKDIR /home/app/
 COPY function           ./function
-RUN chown app:app -R /home/app
+RUN chown app:app -R /home/app \
+    && chown 777 /tmp
+
 USER app
 
 ENV cgi_headers="true"

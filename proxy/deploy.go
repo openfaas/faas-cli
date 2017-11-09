@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"os"
-
 	"github.com/openfaas/faas/gateway/requests"
 )
 
@@ -41,11 +39,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {
-		if deleteError := DeleteFunction(gateway, functionName); deleteError != nil {
-			fmt.Printf("Error while deleting function, so skipping deployment. %s\n", deleteError)
-			os.Exit(-1)
-			return
-		}
+		DeleteFunction(gateway, functionName)
 	}
 
 	req := requests.CreateFunctionRequest{
@@ -74,13 +68,13 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 	var err error
 	request, err = http.NewRequest(method, gateway+"/system/functions", reader)
+	SetAuth(request, gateway)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	res, err := client.Do(request)
-
 	if err != nil {
 		fmt.Println("Is FaaS deployed? Do you need to specify the --gateway flag?")
 		fmt.Println(err)
@@ -92,7 +86,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	switch res.StatusCode {
-	case 200, 201, 202:
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		if update {
 			fmt.Println("Updated.")
 		} else {
@@ -101,6 +95,8 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 		deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
 		fmt.Println(deployedURL)
+	case http.StatusUnauthorized:
+		fmt.Println("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

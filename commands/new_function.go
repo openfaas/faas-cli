@@ -21,10 +21,8 @@ var (
 )
 
 func init() {
-	newFunctionCmd.Flags().StringVar(&functionName, "name", "", "Name for your function")
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
-	newFunctionCmd.Flags().StringVar(&gateway, "gateway", defaultGateway,
-		"Gateway URL to store in YAML stack file")
+	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 
@@ -86,6 +84,10 @@ the "Dockerfile" lang type in your YAML file.
 		fmt.Printf("Folder: %s created.\n", functionName)
 	}
 
+	if err := updateGitignore(); err != nil {
+		fmt.Println("Got unexpected error while updating .gitignore file.")
+	}
+
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
 	if strings.ToLower(lang) != "dockerfile" {
 		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
@@ -95,7 +97,7 @@ the "Dockerfile" lang type in your YAML file.
 # Add fwatchdog binary via https://github.com/openfaas/faas/releases/
 # Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
 
-ADD https://github.com/openfaas/faas/releases/download/0.6.7/fwatchdog /usr/bin
+ADD https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog /usr/bin
 # COPY ./fwatchdog /usr/bin/
 RUN chmod +x /usr/bin/fwatchdog
 

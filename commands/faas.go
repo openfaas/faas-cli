@@ -10,8 +10,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const defaultGateway = "http://localhost:8080"
-const defaultNetwork = "func_functions"
+const (
+	defaultGateway = "http://localhost:8080"
+	defaultNetwork = "func_functions"
+	defaultYAML    = "stack.yml"
+)
 
 // Flags that are to be added to all commands.
 var (
@@ -30,6 +33,10 @@ var (
 	image        string
 	language     string
 )
+
+var stat = func(filename string) (os.FileInfo, error) {
+	return os.Stat(filename)
+}
 
 // TODO: remove this workaround once these vars are no longer global
 func resetForTest() {
@@ -50,10 +57,19 @@ func init() {
 
 // Execute TODO
 func Execute(customArgs []string) {
+	checkAndSetDefaultYaml()
+
 	faasCmd.SilenceUsage = true
 	faasCmd.SetArgs(customArgs[1:])
 	if err := faasCmd.Execute(); err != nil {
 		os.Exit(1)
+	}
+}
+
+func checkAndSetDefaultYaml() {
+	// Check if there is a default yaml file and set it
+	if _, err := stat(defaultYAML); err == nil {
+		yamlFile = defaultYAML
 	}
 }
 
