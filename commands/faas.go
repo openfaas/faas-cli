@@ -6,7 +6,7 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 )
@@ -57,11 +57,7 @@ func Execute(customArgs []string) {
 	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
 	if err := faasCmd.Execute(); err != nil {
-		if len(err.Error()) > 2 {
-			splitted := strings.SplitAfterN(err.Error(), "", 2)
-			msg := strings.ToUpper(splitted[0]) + splitted[1]
-			fmt.Println(msg)
-		}
+		fmt.Println(capitaliseFirst(err.Error()))
 		os.Exit(1)
 	}
 }
@@ -87,4 +83,11 @@ Manage your OpenFaaS functions from the command line`,
 func runFaas(cmd *cobra.Command, args []string) {
 	fmt.Printf(figletStr)
 	cmd.Help()
+}
+
+func capitaliseFirst(str string) string {
+	for _, c := range str {
+		return string(unicode.ToUpper(c)) + str[1:]
+	}
+	return ""
 }

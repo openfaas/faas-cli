@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -166,8 +167,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				var fprocessErr error
 				function.FProcess, fprocessErr = deriveFprocess(function)
 				if fprocessErr != nil {
-					log.Fatalln(fprocessErr)
-
+					return fprocessErr
 				}
 			}
 
@@ -237,7 +237,7 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
 		if len(s) != 2 {
-			return nil, fmt.Errorf("Label format is not correct, needs key=value")
+			return nil, fmt.Errorf("label format is not correct, needs key=value")
 		}
 		envvarName := s[0]
 		envvarValue := s[1]

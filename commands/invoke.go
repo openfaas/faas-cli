@@ -70,7 +70,6 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	functionInput, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
-
 	}
 
 	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
