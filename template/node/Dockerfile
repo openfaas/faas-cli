@@ -31,7 +31,7 @@ RUN npm i || :
 WORKDIR /home/app/
 COPY function           ./function
 RUN chown app:app -R /home/app \
-    && chown 777 /tmp
+    && chmod 777 /tmp
 
 USER app
 
