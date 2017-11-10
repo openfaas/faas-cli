@@ -17,28 +17,33 @@ ENV NPM_CONFIG_LOGLEVEL warn
 RUN mkdir -p /home/app
 
 # Wrapper/boot-strapper
-COPY package.json       /home/app
-
 WORKDIR /home/app
+COPY package.json ./
 RUN npm i
 
-# Function
-COPY index.js           /home/app
+# COPY Function entrypoint
+COPY index.js ./
 
-COPY function/*.json    /home/app/function/
+# COPY function node packages and install, adding this as a separate
+# entry allows caching of npm install
 WORKDIR /home/app/function
+COPY function/*.json ./
 RUN npm i || :
+
+# COPY function files and folders
+COPY function/ ./
+
+# Set correct permissions to use non root user
 WORKDIR /home/app/
-COPY function           ./function
 RUN chown app:app -R /home/app \
     && chmod 777 /tmp
 
 USER app
 
 ENV cgi_headers="true"
-
 ENV fprocess="node index.js"
 
 HEALTHCHECK --interval=1s CMD [ -e /tmp/.lock ] || exit 1
 
 CMD ["fwatchdog"]
+
