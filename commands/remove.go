@@ -62,7 +62,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		if len(args) < 1 {
-			return fmt.Errorf("Please provide the name of a function to delete")
+			return fmt.Errorf("please provide the name of a function to delete")
 		}
 
 		functionName = args[0]

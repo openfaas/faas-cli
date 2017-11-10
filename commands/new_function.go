@@ -54,8 +54,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		var availableTemplates []string
 
 		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
-			return fmt.Errorf("No language templates were found. Please run 'faas-cli template pull'.")
-			return
+			return fmt.Errorf("no language templates were found. Please run 'faas-cli template pull'")
 		} else {
 			for _, file := range templateFolders {
 				if file.IsDir() {
@@ -89,7 +88,7 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
-		return fmt.Errorf("Folder: %s already exists", functionName)
+		return fmt.Errorf("folder: %s already exists", functionName)
 	}
 
 	if err := os.Mkdir("./"+functionName, 0700); err == nil {
@@ -97,7 +96,7 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	if err := updateGitignore(); err != nil {
-		return fmt.Errorf("Got unexpected error while updating .gitignore file: %s", err)
+		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
