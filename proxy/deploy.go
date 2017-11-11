@@ -17,8 +17,9 @@ import (
 
 // DeployFunction call FaaS server to deploy a new function
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
-	language string, replace bool, envVars map[string]string, network string,
-	constraints []string, update bool, secrets []string, labels map[string]string) {
+	registryAuth string, language string, replace bool, envVars map[string]string,
+	network string, constraints []string, update bool, secrets []string,
+	labels map[string]string) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
@@ -36,6 +37,10 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		fprocessTemplate = "python3 index.py"
 	}
 
+	if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
+		fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+	}
+
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {
@@ -43,14 +48,15 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	}
 
 	req := requests.CreateFunctionRequest{
-		EnvProcess:  fprocessTemplate,
-		Image:       image,
-		Network:     network,
-		Service:     functionName,
-		EnvVars:     envVars,
-		Constraints: constraints,
-		Secrets:     secrets, // TODO: allow registry auth to be specified or read from local Docker credentials store
-		Labels:      &labels,
+		EnvProcess:   fprocessTemplate,
+		Image:        image,
+		RegistryAuth: registryAuth,
+		Network:      network,
+		Service:      functionName,
+		EnvVars:      envVars,
+		Constraints:  constraints,
+		Secrets:      secrets,
+		Labels:       &labels,
 	}
 
 	reqBytes, _ := json.Marshal(&req)
