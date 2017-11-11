@@ -10,11 +10,11 @@ The CLI can be used to build and deploy functions to [OpenFaaS](https://github.c
 
 Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
-#### TL;DR
+### TL;DR - Introductory tutorial
 
 [Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
 
-### Install the CLI
+### Get started: Install the CLI
 
 The easiest way to install the faas-cli is through a curl script or `brew`:
 
@@ -43,7 +43,11 @@ The main commands supported by the CLI are:
 * `faas-cli remove` - removes the functions from a local or remote OpenFaaS gateway
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
 * `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
-* `faas-cli logout` - removes basic auth credentials fora given gateway
+* `faas-cli logout` - removes basic auth credentials for a given gateway
+
+Advanced commands:
+
+* `faas-cli template pull` - pull in templates from a remote GitHub repository
 
 Help for all of the commands supported by the CLI can be found by running:
 
@@ -51,7 +55,7 @@ Help for all of the commands supported by the CLI can be found by running:
 
 You can chose between using a [programming language template](https://github.com/openfaas/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
-**Templates**
+#### Templates
 
 Command: `faas-cli new FUNCTION_NAME --lang python/node/go/ruby/Dockerfile/etc`
 
@@ -69,7 +73,20 @@ You can customise the Dockerfile or code for any of the templates. Just create a
 
 See also: `faas-cli new --help`
 
-**Docker image**
+**Third-party community templates**
+
+Templates created and maintained by a third-party can be added to your local system using the `faas-cli template pull` command.
+
+Curated language templates:
+
+| Language  | Author   | URL  |
+|---|---|---|
+| PHP | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
+| PHP5 | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
+
+Read more on [community templates here](guide/TEMPLATE.md).
+
+#### Docker image as a function
 
 Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_build: true` for pre-built images.
 
@@ -124,7 +141,7 @@ Now you can use the following command to deploy your function(s):
 $ faas-cli deploy -f ./samples.yml
 ```
 
-### Managing secrets
+#### Managing secrets
 
 You can deploy secrets and configuration via environmental variables in-line or via external files.
 
@@ -165,7 +182,7 @@ functions:
       no_proxy: http://gateway/
 ```
 
-### Constraints
+#### Constraints
 
 Constraints work with Docker Swarm and are useful for pinning functions to certain hosts.
 
@@ -183,7 +200,7 @@ Or only Windows:
      - "node.platform.os == windows"
 ```
 
-### Labels
+#### Labels
 
 Labels can be applied through a map which may be consumed by the back-end scheduler such as Docker Swarm or Kubernetes.
 
@@ -195,7 +212,7 @@ For example:
      canary: true
 ```
 
-### YAML reference
+#### YAML reference
 
 The possible entries for functions are documented below:
 
@@ -217,7 +234,7 @@ functions:
 
 Use environmental variables for setting tokens and configuration.
 
-**Accessing the function with `curl`**
+#### Access functions with `curl`
 
 You can initiate a HTTP POST via `curl`:
 
@@ -237,10 +254,10 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
 
-## FaaS-CLI Developers / Contributors
+### FaaS-CLI Developers / Contributors
 
 See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
 
-### License
+#### License
 
 This project is part of the OpenFaaS project licensed under the MIT License.

@@ -187,20 +187,24 @@ func fetchMasterZip(templateURL string) (string, error) {
 			log.Println(err.Error())
 			return "", err
 		}
+
 		log.Printf("HTTP GET %s\n", templateURL)
 		res, err := client.Do(req)
 		if err != nil {
 			log.Println(err.Error())
 			return "", err
 		}
+
 		if res.StatusCode != http.StatusOK {
 			err := fmt.Errorf(fmt.Sprintf("%s is not valid, status code %d", templateURL, res.StatusCode))
 			log.Println(err.Error())
 			return "", err
 		}
+
 		if res.Body != nil {
 			defer res.Body.Close()
 		}
+
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Println(err.Error())
@@ -214,6 +218,7 @@ func fetchMasterZip(templateURL string) (string, error) {
 			return "", err
 		}
 	}
+
 	fmt.Println("")
 	return archive, err
 }
