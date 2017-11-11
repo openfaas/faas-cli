@@ -80,7 +80,6 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 	defer zipFile.Close()
 
 	for _, z := range zipFile.File {
-		var rc io.ReadCloser
 
 		relativePath := z.Name[strings.Index(z.Name, "/")+1:]
 		if strings.Index(relativePath, "template/") != 0 {
@@ -109,9 +108,12 @@ func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []str
 		}
 
 		if expandFromZip {
+			var rc io.ReadCloser
+
 			if rc, err = z.Open(); err != nil {
 				break
 			}
+			defer rc.Close()
 
 			if err = createPath(relativePath, z.Mode()); err != nil {
 				break
