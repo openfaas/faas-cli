@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
-	"strings"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
@@ -21,7 +20,6 @@ var (
 	list bool
 )
 
-// Implement interface for sorting array of strings
 type StrSort []string
 
 func (a StrSort) Len() int           { return len(a) }
@@ -54,14 +52,16 @@ func runNewFunction(cmd *cobra.Command, args []string) {
 	if list == true {
 		var availableTemplates []string
 
-		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
-			fmt.Printf("No language templates were found. Please run 'faas-cli template pull'.")
+		templateFolders, err := ioutil.ReadDir(templateDirectory)
+
+		if err != nil {
+			fmt.Printf("No language templates were found. Please run:\n    \"faas-cli template pull\"\n")
 			return
-		} else {
-			for _, file := range templateFolders {
-				if file.IsDir() {
-					availableTemplates = append(availableTemplates, file.Name())
-				}
+		}
+
+		for _, file := range templateFolders {
+			if file.IsDir() {
+				availableTemplates = append(availableTemplates, file.Name())
 			}
 		}
 
@@ -106,25 +106,7 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
-	if strings.ToLower(lang) != "dockerfile" {
-		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
-	} else {
-		ioutil.WriteFile("./"+functionName+"/Dockerfile", []byte(`FROM alpine:3.6
-# Use any image as your base image, or "scratch"
-# Add fwatchdog binary via https://github.com/openfaas/faas/releases/
-# Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
-
-ADD https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog /usr/bin
-# COPY ./fwatchdog /usr/bin/
-RUN chmod +x /usr/bin/fwatchdog
-
-# Populate example here - i.e. "cat", "sha512sum" or "node index.js"
-ENV fprocess="wc -l"
-
-HEALTHCHECK --interval=5s CMD [ -e /tmp/.lock ] || exit 1
-CMD ["fwatchdog"]
-`), 0600)
-	}
+	builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
 
 	stack := `provider:
   name: faas
