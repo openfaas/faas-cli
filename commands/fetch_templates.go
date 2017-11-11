@@ -5,7 +5,6 @@ package commands
 
 import (
 	"archive/zip"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -105,7 +104,7 @@ func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string,
 		case SkipWritingData:
 			expandFromZip = false
 		default:
-			return nil, nil, errors.New(fmt.Sprintf("Don't know what to do when extracting zip: %s", archive))
+			return nil, nil, fmt.Errorf(fmt.Sprintf("don't know what to do when extracting zip: %s", archive))
 
 		}
 
@@ -139,7 +138,7 @@ func canExpandTemplateData(availableLanguages map[string]bool, relativePath stri
 		language := pathSplit[1]
 
 		// We know that this path is a directory if the last character is a "/"
-		isDirectory := relativePath[len(relativePath)-1:] == "/"
+		isDirectory := strings.HasSuffix(relativePath, "/")
 
 		// Check if this is the root directory for a language (at ./template/lang)
 		if len(pathSplit) == rootLanguageDirSplitCount && isDirectory {
@@ -147,12 +146,13 @@ func canExpandTemplateData(availableLanguages map[string]bool, relativePath stri
 				return DirectoryAlreadyExists, language, isDirectory
 			}
 			return NewTemplateFound, language, isDirectory
-		} else {
-			if !canWriteLanguage(availableLanguages, language, overwrite) {
-				return SkipWritingData, language, isDirectory
-			}
-			return ShouldExtractData, language, isDirectory
 		}
+
+		if canWriteLanguage(availableLanguages, language, overwrite) == false {
+			return SkipWritingData, language, isDirectory
+		}
+
+		return ShouldExtractData, language, isDirectory
 	}
 	// template/
 	return SkipWritingData, "", true
@@ -161,11 +161,13 @@ func canExpandTemplateData(availableLanguages map[string]bool, relativePath stri
 // removeArchive removes the given file
 func removeArchive(archive string) error {
 	log.Printf("Cleaning up zip file...")
-	if _, err := os.Stat(archive); err == nil {
-		return os.Remove(archive)
-	} else {
-		return err
+	var err error
+
+	if _, err = os.Stat(archive); err == nil {
+		err = os.Remove(archive)
 	}
+
+	return err
 }
 
 // fetchMasterZip downloads a zip file from a repository URL
@@ -192,7 +194,7 @@ func fetchMasterZip(templateURL string) (string, error) {
 			return "", err
 		}
 		if res.StatusCode != http.StatusOK {
-			err := errors.New(fmt.Sprintf("%s is not valid, status code %d", templateURL, res.StatusCode))
+			err := fmt.Errorf(fmt.Sprintf("%s is not valid, status code %d", templateURL, res.StatusCode))
 			log.Println(err.Error())
 			return "", err
 		}

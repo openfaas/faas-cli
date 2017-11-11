@@ -5,7 +5,7 @@ package config
 
 import (
 	"encoding/base64"
-	"errors"
+
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -19,11 +19,11 @@ import (
 )
 
 var (
-	DefaultDir = "~/.openfaas"
-	// using .yml to avoid collision with openfaas-bitbar config
+	DefaultDir  = "~/.openfaas"
 	DefaultFile = "config.yml"
 )
 
+// ConfigFile for OpenFaaS CLI exclusively.
 type ConfigFile struct {
 	AuthConfigs []AuthConfig `yaml:"auths"`
 	FilePath    string       `yaml:"-"`
@@ -38,7 +38,7 @@ type AuthConfig struct {
 // New initializes a config file for the given file path
 func New(filePath string) (*ConfigFile, error) {
 	if filePath == "" {
-		return nil, errors.New("can't create config with empty filePath")
+		return nil, fmt.Errorf("can't create config with empty filePath")
 	}
 	conf := &ConfigFile{
 		AuthConfigs: make([]AuthConfig, 0),
@@ -108,7 +108,7 @@ func (configFile *ConfigFile) load() error {
 	conf := &ConfigFile{}
 
 	if _, err := os.Stat(configFile.FilePath); os.IsNotExist(err) {
-		return errors.New("can't load config from non existent filePath")
+		return fmt.Errorf("can't load config from non existent filePath")
 	}
 
 	data, err := ioutil.ReadFile(configFile.FilePath)
@@ -143,7 +143,7 @@ func DecodeAuth(input string) (string, string, error) {
 	}
 	arr := strings.SplitN(string(decoded), ":", 2)
 	if len(arr) != 2 {
-		return "", "", errors.New("invalid auth config file")
+		return "", "", fmt.Errorf("invalid auth config file")
 	}
 	return arr[0], arr[1], nil
 }
@@ -152,15 +152,15 @@ func DecodeAuth(input string) (string, string, error) {
 func UpdateAuthConfig(gateway string, username string, password string) error {
 	_, err := url.ParseRequestURI(gateway)
 	if err != nil || len(gateway) < 1 {
-		return errors.New("invalid gateway URL")
+		return fmt.Errorf("invalid gateway URL")
 	}
 
 	if len(username) < 1 {
-		return errors.New("username can't be an empty string")
+		return fmt.Errorf("username can't be an empty string")
 	}
 
 	if len(password) < 1 {
-		return errors.New("password can't be an empty string")
+		return fmt.Errorf("password can't be an empty string")
 	}
 
 	configPath, err := EnsureFile()
@@ -207,7 +207,7 @@ func UpdateAuthConfig(gateway string, username string, password string) error {
 // LookupAuthConfig returns the username and password for a given gateway
 func LookupAuthConfig(gateway string) (string, string, error) {
 	if !fileExists() {
-		return "", "", errors.New("config file not found")
+		return "", "", fmt.Errorf("config file not found")
 	}
 
 	configPath, err := EnsureFile()
@@ -240,7 +240,7 @@ func LookupAuthConfig(gateway string) (string, string, error) {
 // RemoveAuthConfig deletes the username and password for a given gateway
 func RemoveAuthConfig(gateway string) error {
 	if !fileExists() {
-		return errors.New("config file not found")
+		return fmt.Errorf("config file not found")
 	}
 
 	configPath, err := EnsureFile()
