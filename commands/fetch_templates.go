@@ -24,13 +24,13 @@ const (
 	rootLanguageDirSplitCount = 3
 )
 
-type ExtractAction int
+type extractAction int
 
 const (
-	ShouldExtractData ExtractAction = iota
-	NewTemplateFound
-	DirectoryAlreadyExists
-	SkipWritingData
+	shouldExtractData extractAction = iota
+	newTemplateFound
+	directoryAlreadyExists
+	skipWritingData
 )
 
 // fetchTemplates fetch code templates from GitHub master zip file.
@@ -64,19 +64,20 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 	return err
 }
 
-// expandTemplatesFromZip() takes a path to an archive, and whether or not
-// we are allowed to overwrite pre-existing language templates. It returns
-// a list of languages that already exist (could not be overwritten), and
-// a list of languages that are newly downloaded.
-func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string, error) {
+// expandTemplatesFromZip builds a list of languages that: already exist and
+// could not be overwritten and // a list of languages that are newly downloaded.
+func expandTemplatesFromZip(archivePath string, overwrite bool) ([]string, []string, error) {
 	var existingLanguages []string
 	var fetchedLanguages []string
+
 	availableLanguages := make(map[string]bool)
 
-	zipFile, err := zip.OpenReader(archive)
+	zipFile, err := zip.OpenReader(archivePath)
+
 	if err != nil {
 		return nil, nil, err
 	}
+	defer zipFile.Close()
 
 	for _, z := range zipFile.File {
 		var rc io.ReadCloser
@@ -93,19 +94,18 @@ func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string,
 
 		switch action {
 
-		case ShouldExtractData:
+		case shouldExtractData:
 			expandFromZip = true
-		case NewTemplateFound:
+		case newTemplateFound:
 			expandFromZip = true
 			fetchedLanguages = append(fetchedLanguages, language)
-		case DirectoryAlreadyExists:
+		case directoryAlreadyExists:
 			expandFromZip = false
 			existingLanguages = append(existingLanguages, language)
-		case SkipWritingData:
+		case skipWritingData:
 			expandFromZip = false
 		default:
-			return nil, nil, fmt.Errorf(fmt.Sprintf("don't know what to do when extracting zip: %s", archive))
-
+			return nil, nil, fmt.Errorf(fmt.Sprintf("don't know what to do when extracting zip: %s", archivePath))
 		}
 
 		if expandFromZip {
@@ -126,14 +126,12 @@ func expandTemplatesFromZip(archive string, overwrite bool) ([]string, []string,
 		}
 	}
 
-	zipFile.Close()
 	return existingLanguages, fetchedLanguages, nil
 }
 
-// canExpandTemplateData() takes the map of available languages, and the
-// path to a file in the zip archive. Returns what we should do with the file
-// in form of ExtractAction enum, the language name, and whether it is a directory
-func canExpandTemplateData(availableLanguages map[string]bool, relativePath string) (ExtractAction, string, bool) {
+// canExpandTemplateData returns what we should do with the file in form of ExtractAction enum
+// with the language name and whether it is a directory
+func canExpandTemplateData(availableLanguages map[string]bool, relativePath string) (extractAction, string, bool) {
 	if pathSplit := strings.Split(relativePath, "/"); len(pathSplit) > 2 {
 		language := pathSplit[1]
 
@@ -143,19 +141,19 @@ func canExpandTemplateData(availableLanguages map[string]bool, relativePath stri
 		// Check if this is the root directory for a language (at ./template/lang)
 		if len(pathSplit) == rootLanguageDirSplitCount && isDirectory {
 			if !canWriteLanguage(availableLanguages, language, overwrite) {
-				return DirectoryAlreadyExists, language, isDirectory
+				return directoryAlreadyExists, language, isDirectory
 			}
-			return NewTemplateFound, language, isDirectory
+			return newTemplateFound, language, isDirectory
 		}
 
 		if canWriteLanguage(availableLanguages, language, overwrite) == false {
-			return SkipWritingData, language, isDirectory
+			return skipWritingData, language, isDirectory
 		}
 
-		return ShouldExtractData, language, isDirectory
+		return shouldExtractData, language, isDirectory
 	}
 	// template/
-	return SkipWritingData, "", true
+	return skipWritingData, "", true
 }
 
 // removeArchive removes the given file
@@ -238,7 +236,7 @@ func createPath(relativePath string, perms os.FileMode) error {
 	return err
 }
 
-// canWriteLanguage() tells whether the language can be expanded from the zip or not.
+// canWriteLanguage tells whether the language can be expanded from the zip or not.
 // availableLanguages map keeps track of which languages we know to be okay to copy.
 // overwrite flag will allow to force copy the language template
 func canWriteLanguage(availableLanguages map[string]bool, language string, overwrite bool) bool {
