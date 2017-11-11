@@ -4,7 +4,6 @@
 package stack
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -56,7 +55,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	}
 
 	if regexExists && filterExists {
-		return nil, errors.New("Pass in a regex or a filter, not both.")
+		return nil, fmt.Errorf("Pass in a regex or a filter, not both.")
 	}
 
 	if regexExists || filterExists {
@@ -80,7 +79,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 		}
 
 		if len(services.Functions) == 0 {
-			return nil, errors.New("No functions matching --filter/--regex were found in the YAML file")
+			return nil, fmt.Errorf("No functions matching --filter/--regex were found in the YAML file")
 		}
 
 	}

@@ -3,18 +3,12 @@
 package commands
 
 import (
-	"errors"
-
 	"fmt"
-
 	"os"
-
 	"regexp"
 
 	"github.com/spf13/cobra"
 )
-
-// Args and Flags that are to be added to commands
 
 const (
 	repositoryRegexpMockedServer = `^http://127.0.0.1:\d+/([a-z0-9-]+)/([a-z0-9-]+)$`
@@ -42,18 +36,18 @@ var templatePullCmd = &cobra.Command{
 Currently supported verbs: %v`, supportedVerbs)
 
 		if len(args) == 0 {
-			return errors.New(msg)
+			return fmt.Errorf(msg)
 		}
 
 		if args[0] != "pull" {
-			return errors.New(msg)
+			return fmt.Errorf(msg)
 		}
 
 		if len(args) > 1 {
 			var validURL = regexp.MustCompile(repositoryRegexpGithub + "|" + repositoryRegexpMockedServer)
 
 			if !validURL.MatchString(args[1]) {
-				return errors.New("The repository URL must be in the format https://github.com/<owner>/<repository>")
+				return fmt.Errorf("The repository URL must be in the format https://github.com/<owner>/<repository>")
 			}
 		}
 		return nil
