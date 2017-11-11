@@ -166,7 +166,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			}
 
 			// Get FProcess to use from the ./template/template.yml, if a template is being used
-			if function.Language != "" && strings.ToLower(function.Language) != "dockerfile" {
+			if languageExistsNotDockerfile(function.Language) {
 				var fprocessErr error
 				function.FProcess, fprocessErr = deriveFprocess(function)
 				if fprocessErr != nil {
@@ -293,7 +293,6 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 	return mergeMap(functionAndStack, envvarArguments), nil
 }
 
-<<<<<<< HEAD
 func deriveFprocess(function stack.Function) (string, error) {
 	var fprocess string
 
@@ -316,8 +315,8 @@ func deriveFprocess(function stack.Function) (string, error) {
 	}
 
 	return fprocess, nil
-=======
+}
+
 func languageExistsNotDockerfile(language string) bool {
 	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
->>>>>>> template pull - address issues from thread #201
 }
