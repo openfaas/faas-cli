@@ -127,14 +127,19 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		}
 
 		for k, function := range services.Functions {
+
 			function.Name = k
 			if update {
 				fmt.Printf("Updating: %s.\n", function.Name)
 			} else {
 				fmt.Printf("Deploying: %s.\n", function.Name)
 			}
+
+			var functionConstraints []string
 			if function.Constraints != nil {
-				constraints = *function.Constraints
+				functionConstraints = *function.Constraints
+			} else if len(constraints) > 0 {
+				functionConstraints = constraints
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -160,7 +165,7 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				log.Fatalln(envErr)
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels)
 		}
 	} else {
 		if len(image) == 0 {
