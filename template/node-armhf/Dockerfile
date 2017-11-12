@@ -1,6 +1,6 @@
 FROM arm32v6/alpine:3.6
 
-RUN addgroup -D app && adduser -S -g app app
+RUN addgroup -S app && adduser -S -g app app
 
 RUN apk add --no-cache nodejs nodejs-npm ca-certificates
 RUN apk --no-cache add curl \
