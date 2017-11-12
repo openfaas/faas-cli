@@ -45,7 +45,7 @@ func NewSession(language string) (*UserSession, error) {
 		Type:               "event",
 		TrackingID:         trackingID,
 		ApplicationName:    applicationName,
-		ApplicationVersion: version.GitTag(),
+		ApplicationVersion: version.BuildVersion(),
 		AnonymizeIP:        1,
 		Language:           language,
 		OS:                 runtime.GOOS,
