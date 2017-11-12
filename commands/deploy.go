@@ -175,7 +175,12 @@ func runDeploy(cmd *cobra.Command, args []string) {
 				}
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels)
+			functionResourceRequest1 := proxy.FunctionResourceRequest{
+				Limits:   function.Limits,
+				Requests: function.Requests,
+			}
+
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels, functionResourceRequest1)
 		}
 	} else {
 		if len(image) == 0 {
@@ -198,8 +203,8 @@ func runDeploy(cmd *cobra.Command, args []string) {
 			fmt.Printf("Error parsing labels: %v\n", labelErr)
 			os.Exit(1)
 		}
-
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
+		functionResourceRequest1 := proxy.FunctionResourceRequest{}
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
 	}
 }
 
