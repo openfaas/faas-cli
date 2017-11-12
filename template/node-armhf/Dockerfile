@@ -9,8 +9,6 @@ RUN apk --no-cache add curl \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
 
-WORKDIR /root/
-
 ENV NPM_CONFIG_LOGLEVEL warn
 
 RUN mkdir -p /home/app
