@@ -36,6 +36,7 @@ func Test_DeployFunction(t *testing.T) {
 			false,
 			[]string{},
 			map[string]string{},
+			FunctionResourceRequest{},
 		)
 	})
 
@@ -67,6 +68,7 @@ func Test_DeployFunction_Not2xx(t *testing.T) {
 			false,
 			[]string{},
 			map[string]string{},
+			FunctionResourceRequest{},
 		)
 	})
 
@@ -93,6 +95,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 			false,
 			[]string{},
 			map[string]string{},
+			FunctionResourceRequest{},
 		)
 	})
 

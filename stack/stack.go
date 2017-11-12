@@ -6,12 +6,12 @@ package stack
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/ryanuber/go-glob"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -87,6 +87,28 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	return &services, nil
 }
 
+func makeHTTPClient(timeout *time.Duration) http.Client {
+	if timeout != nil {
+		return http.Client{
+			Timeout: *timeout,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout: *timeout,
+					// KeepAlive: 0,
+				}).DialContext,
+				// MaxIdleConns:          1,
+				// DisableKeepAlives:     true,
+				IdleConnTimeout:       120 * time.Millisecond,
+				ExpectContinueTimeout: 1500 * time.Millisecond,
+			},
+		}
+	}
+
+	// This should be used for faas-cli invoke etc.
+	return http.Client{}
+}
+
 // fetchYAML pulls in file from remote location such as GitHub raw file-view
 func fetchYAML(address *url.URL) ([]byte, error) {
 	req, err := http.NewRequest(http.MethodGet, address.String(), nil)
@@ -95,7 +117,7 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	}
 
 	timeout := 120 * time.Second
-	client := proxy.MakeHTTPClient(&timeout)
+	client := makeHTTPClient(&timeout)
 
 	res, err := client.Do(req)
 	if err != nil {

@@ -34,6 +34,18 @@ type CreateFunctionRequest struct {
 	// Labels are metadata for functions which may be used by the
 	// back-end for making scheduling or routing decisions
 	Labels *map[string]string `json:"labels"`
+
+	// Limits for function
+	Limits *FunctionResources `json:"limits"`
+
+	// Requests of resources requested by function
+	Requests *FunctionResources `json:"requests"`
+}
+
+// FunctionResources Memory and CPU
+type FunctionResources struct {
+	Memory string `json:"memory"`
+	CPU    string `json:"cpu"`
 }
 
 // DeleteFunctionRequest delete a deployed function
