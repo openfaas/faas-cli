@@ -1,4 +1,4 @@
-## OpenFaaS - Functions as a Service
+## OpenFaaS - Serverless Functions Made Simple
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/faas)](https://goreportcard.com/report/github.com/openfaas/faas) [![Build
 Status](https://travis-ci.org/openfaas/faas.svg?branch=master)](https://travis-ci.org/openfaas/faas) [![GoDoc](https://godoc.org/github.com/openfaas/faas?status.svg)](https://godoc.org/github.com/openfaas/faas)
@@ -17,6 +17,10 @@ OpenFaaS (Functions as a Service) is a framework for building serverless functio
 * Portable - runs on existing hardware or public/private cloud - [Kubernetes](https://github.com/openfaas/faas-netes) and Docker Swarm native
 * [CLI](http://github.com/openfaas/faas-cli) available with YAML format for templating and defining functions
 * Auto-scales as demand increases
+
+## Press-kit/media/swag
+
+For stickers, swag, media or press-kit information head over to: [openfaas/media](https://github.com/openfaas/media/blob/master/README.md)
 
 ## Governance
 
@@ -41,7 +45,9 @@ OpenFaaS is an independent project created by [Alex Ellis](https://www.alexellis
 
 ### CLI
 
-Any container or process in a Docker container can be a serverless function in FaaS. Using the [FaaS CLI](http://github.com/openfaas/faas-cli) you can deploy your functions or quickly create new functions from templates such as Node.js or Python.
+Any container or process in a Docker container can be a serverless function in FaaS. Using the [FaaS CLI](http://github.com/openfaas/faas-cli) you can deploy your functions quickly.
+
+Create new functions from templates for Node.js, Python, [Go](https://blog.alexellis.io/serverless-golang-with-openfaas/) and many more. If you can't find a suitable template you can also use a Dockerfile.
 
 > The CLI is effectively a RESTful client for the API Gateway.
 
@@ -89,11 +95,13 @@ The deployment guide for Docker Swarm contains a simple one-line command to get 
 
 OpenFaaS is Kubernetes-native - you can follow the [deployment guide here](https://github.com/openfaas/faas/blob/master/guide/deployment_k8s.md).
 
+<!-- The new login feature breaks the one-click deployment to PWD. 
 **Docker Playground**
 
 You can quickly start OpenFaaS on Docker Swarm online using the community-run Docker playground: play-with-docker.com (PWD) by clicking the button below:
 
 [![Try in PWD](https://cdn.rawgit.com/play-with-docker/stacks/cff22438/assets/images/button.png)](http://play-with-docker.com?stack=https://raw.githubusercontent.com/openfaas/faas/master/docker-compose.yml&stack_name=func)
+-->
 
 #### Begin the TestDrive
 
@@ -153,7 +161,7 @@ Highlights:
 
 ### How do I become a contributor?
 
-Anyone is invited to contribute to the project in-line with the [contribution guide](https://github.com/openfaas/faas/blob/master/CONTRIBUTING.md) - you can also read the guide for ideas on how to get involved. We invite new contributors to join our Slack community. We would also ask you to propose any changes or contributions ahead of time, especially when there is no issue or proposal alredy tracking it.
+Anyone is invited to contribute to the project in-line with the [contribution guide](https://github.com/openfaas/faas/blob/master/CONTRIBUTING.md) - you can also read the guide for ideas on how to get involved. We invite new contributors to join our Slack community. We would also ask you to propose any changes or contributions ahead of time, especially when there is no issue or proposal already tracking it.
 
 ### Other
 
