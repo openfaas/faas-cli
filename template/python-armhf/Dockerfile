@@ -20,7 +20,7 @@ COPY index.py           .
 
 
 WORKDIR /home/app/function
-RUN touch ./function/__init__.py
+RUN touch __init__.py
 COPY function/requirements.txt	.
 RUN pip install -r requirements.txt
 
