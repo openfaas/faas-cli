@@ -1,4 +1,4 @@
-FROM arm64v8/node:6.11.2
+FROM arm64v8/node:8.9.1
 
 RUN apt-get update -qy \
     && apt-get install -qy curl ca-certificates --no-install-recommends \ 
