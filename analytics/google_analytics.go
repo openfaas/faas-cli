@@ -70,7 +70,7 @@ func NewSession(language string) (*UserSession, error) {
 func (u UserSession) PostEvent(ch chan int) {
 	v, _ := query.Values(u)
 	req := &http.Request{
-		Method: "POST",
+		Method: http.MethodPost,
 		Host:   gaHost,
 		URL: &url.URL{
 			Host:     gaHost,
