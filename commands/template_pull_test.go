@@ -86,10 +86,10 @@ func Test_templatePull_error_not_valid_url(t *testing.T) {
 
 	faasCmd.SetArgs([]string{"template", "pull", "git@github.com:openfaas/faas-cli.git"})
 	faasCmd.SetOutput(&buf)
-	faasCmd.Execute()
+	err := faasCmd.Execute()
 
-	if !strings.Contains(buf.String(), "Error: The repository URL must be in the format https://github.com/<owner>/<repository>") {
-		t.Fatal("Output does not contain the required string", buf.String())
+	if !strings.Contains(err.Error(), "The repository URL must be in the format https://github.com/<owner>/<repository>") {
+		t.Fatal("Output does not contain the required string", err.Error())
 	}
 }
 

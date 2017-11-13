@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -30,7 +31,7 @@ const ListOptionOutput = `Languages available as templates:
 - python3
 - ruby`
 
-const LangNotExistsOutput = `(?m:is unavailable or not supported.)`
+const LangNotExistsOutput = `(?m:is unavailable or not supported)`
 
 type NewFunctionTest struct {
 	title       string
@@ -79,15 +80,15 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		"--gateway=" + defaultGateway,
 	}
 
-	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs(cmdParameters)
-		faasCmd.Execute()
-	})
+	/*
+		stdOut := test.CaptureStdout(func() {
+			faasCmd.SetArgs(cmdParameters)
+			faasCmd.Execute()
+		}) */
 
-	// Validate new function output
-	if found, err := regexp.MatchString(nft.expectedMsg, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected: %s\n", stdOut)
-	}
+	faasCmd.SetArgs(cmdParameters)
+	fmt.Println("Executing command")
+	stdOut := faasCmd.Execute()
 
 	if nft.expectedMsg == SuccessMsg {
 
@@ -117,6 +118,11 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		testServices.Functions[funcName] = stack.Function{Language: funcLang, Image: funcName, Handler: "./" + funcName}
 		if !reflect.DeepEqual(services.Functions[funcName], testServices.Functions[funcName]) {
 			t.Fatalf("YAML `functions` section was not created correctly for file %s, got %v", funcYAML, services.Functions[funcName])
+		}
+	} else {
+		// Validate new function output
+		if found, err := regexp.MatchString(nft.expectedMsg, stdOut.Error()); err != nil || !found {
+			t.Fatalf("Output is not as expected: %s\n", stdOut)
 		}
 	}
 
@@ -183,10 +189,8 @@ func Test_languageNotExists(t *testing.T) {
 		"--list=false",
 	}
 
-	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs(cmdParameters)
-		faasCmd.Execute()
-	})
+	faasCmd.SetArgs(cmdParameters)
+	stdOut := faasCmd.Execute().Error()
 
 	// Validate new function output
 	if found, err := regexp.MatchString(LangNotExistsOutput, stdOut); err != nil || !found {
