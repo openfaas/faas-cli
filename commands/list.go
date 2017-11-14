@@ -52,11 +52,9 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
 
-	// fmt.Println(gatewayAddress)
 	functions, err := proxy.ListFunctions(gatewayAddress)
 	if err != nil {
-		// ListFunctions prints out its own error messages
-		return fmt.Errorf("")
+		return err
 	}
 
 	if verboseList {

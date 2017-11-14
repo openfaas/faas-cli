@@ -80,12 +80,6 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		"--gateway=" + defaultGateway,
 	}
 
-	/*
-		stdOut := test.CaptureStdout(func() {
-			faasCmd.SetArgs(cmdParameters)
-			faasCmd.Execute()
-		}) */
-
 	faasCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")
 	stdOut := faasCmd.Execute()
