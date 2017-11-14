@@ -27,15 +27,11 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
 	SetAuth(getRequest, gateway)
 	if err != nil {
-		fmt.Println()
-		fmt.Println(err)
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
 	res, err := client.Do(getRequest)
 	if err != nil {
-		fmt.Println()
-		fmt.Println(err)
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
@@ -59,7 +55,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			return nil, fmt.Errorf("Server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
 	}
 	return results, nil

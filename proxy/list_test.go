@@ -44,7 +44,7 @@ func Test_ListFunctions_Not200(t *testing.T) {
 		t.Fatalf("Error was not returned")
 	}
 
-	r := regexp.MustCompile(`(?m:Server returned unexpected status code)`)
+	r := regexp.MustCompile(`(?m:server returned unexpected status code)`)
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Error not matched: %s", err)
 	}
