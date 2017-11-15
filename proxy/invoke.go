@@ -5,7 +5,7 @@ package proxy
 
 import (
 	"bytes"
-	"errors"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -61,7 +61,7 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, readErr)
 		}
 	case http.StatusUnauthorized:
-		return nil, errors.New("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

@@ -12,28 +12,24 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas/gateway/requests"
 )
+
+type FunctionResourceRequest struct {
+	Limits   *stack.FunctionResources
+	Requests *stack.FunctionResources
+}
 
 // DeployFunction call FaaS server to deploy a new function
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	language string, replace bool, envVars map[string]string, network string,
-	constraints []string, update bool, secrets []string, labels map[string]string) {
+	constraints []string, update bool, secrets []string, labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
 
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
 	if len(fprocess) > 0 {
 		fprocessTemplate = fprocess
-	} else if language == "python" {
-		fprocessTemplate = "python index.py"
-	} else if language == "node" {
-		fprocessTemplate = "node index.js"
-	} else if language == "ruby" {
-		fprocessTemplate = "ruby index.rb"
-	} else if language == "csharp" {
-		fprocessTemplate = "dotnet ./root.dll"
-	} else if language == "python3" {
-		fprocessTemplate = "python3 index.py"
 	}
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -51,6 +47,18 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		Constraints: constraints,
 		Secrets:     secrets, // TODO: allow registry auth to be specified or read from local Docker credentials store
 		Labels:      &labels,
+	}
+
+	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
+		req.Limits = &requests.FunctionResources{
+			Memory: functionResourceRequest1.Limits.Memory,
+		}
+	}
+
+	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
+		req.Requests = &requests.FunctionResources{
+			Memory: functionResourceRequest1.Requests.Memory,
+		}
 	}
 
 	reqBytes, _ := json.Marshal(&req)

@@ -35,6 +35,18 @@ type Function struct {
 	EnvironmentFile []string `yaml:"environment_file"`
 
 	Labels *map[string]string `yaml:"labels"`
+
+	// Limits for function
+	Limits *FunctionResources `json:"limits"`
+
+	// Requests of resources requested by function
+	Requests *FunctionResources `json:"requests"`
+}
+
+// FunctionResources Memory and CPU
+type FunctionResources struct {
+	Memory string `json:"memory"`
+	CPU    string `json:"cpu"`
 }
 
 // EnvironmentFile represents external file for environment data
@@ -46,4 +58,10 @@ type EnvironmentFile struct {
 type Services struct {
 	Functions map[string]Function `yaml:"functions,omitempty"`
 	Provider  Provider            `yaml:"provider,omitempty"`
+}
+
+// LanguageTemplate read from template.yml within root of a language template folder
+type LanguageTemplate struct {
+	Language string `yaml:"language"`
+	FProcess string `yaml:"fprocess"`
 }

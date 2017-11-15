@@ -4,7 +4,6 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -28,7 +27,7 @@ var logoutCmd = &cobra.Command{
 
 func runLogout(cmd *cobra.Command, args []string) error {
 	if len(gateway) == 0 {
-		return errors.New("gateway cannot be an empty string")
+		return fmt.Errorf("gateway cannot be an empty string")
 	}
 
 	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")

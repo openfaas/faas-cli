@@ -4,15 +4,14 @@
 package stack
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/ryanuber/go-glob"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -56,7 +55,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	}
 
 	if regexExists && filterExists {
-		return nil, errors.New("Pass in a regex or a filter, not both.")
+		return nil, fmt.Errorf("Pass in a regex or a filter, not both.")
 	}
 
 	if regexExists || filterExists {
@@ -80,12 +79,34 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 		}
 
 		if len(services.Functions) == 0 {
-			return nil, errors.New("No functions matching --filter/--regex were found in the YAML file")
+			return nil, fmt.Errorf("No functions matching --filter/--regex were found in the YAML file")
 		}
 
 	}
 
 	return &services, nil
+}
+
+func makeHTTPClient(timeout *time.Duration) http.Client {
+	if timeout != nil {
+		return http.Client{
+			Timeout: *timeout,
+			Transport: &http.Transport{
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout: *timeout,
+					// KeepAlive: 0,
+				}).DialContext,
+				// MaxIdleConns:          1,
+				// DisableKeepAlives:     true,
+				IdleConnTimeout:       120 * time.Millisecond,
+				ExpectContinueTimeout: 1500 * time.Millisecond,
+			},
+		}
+	}
+
+	// This should be used for faas-cli invoke etc.
+	return http.Client{}
 }
 
 // fetchYAML pulls in file from remote location such as GitHub raw file-view
@@ -96,7 +117,7 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	}
 
 	timeout := 120 * time.Second
-	client := proxy.MakeHTTPClient(&timeout)
+	client := makeHTTPClient(&timeout)
 
 	res, err := client.Do(req)
 	if err != nil {

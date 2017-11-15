@@ -31,7 +31,21 @@ type CreateFunctionRequest struct {
 	// Secrets list of secrets to be made available to function
 	Secrets []string `json:"secrets"`
 
-	Labels *map[string]string `yaml:"labels"`
+	// Labels are metadata for functions which may be used by the
+	// back-end for making scheduling or routing decisions
+	Labels *map[string]string `json:"labels"`
+
+	// Limits for function
+	Limits *FunctionResources `json:"limits"`
+
+	// Requests of resources requested by function
+	Requests *FunctionResources `json:"requests"`
+}
+
+// FunctionResources Memory and CPU
+type FunctionResources struct {
+	Memory string `json:"memory"`
+	CPU    string `json:"cpu"`
 }
 
 // DeleteFunctionRequest delete a deployed function
@@ -65,6 +79,10 @@ type Function struct {
 	InvocationCount float64 `json:"invocationCount"` // TODO: shouldn't this be int64?
 	Replicas        uint64  `json:"replicas"`
 	EnvProcess      string  `json:"envProcess"`
+
+	// Labels are metadata for functions which may be used by the
+	// back-end for making scheduling or routing decisions
+	Labels *map[string]string `json:"labels"`
 }
 
 // AsyncReport is the report from a function executed on a queue worker.

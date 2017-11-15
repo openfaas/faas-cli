@@ -5,7 +5,7 @@ package proxy
 
 import (
 	"encoding/json"
-	"errors"
+
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -27,15 +27,11 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
 	SetAuth(getRequest, gateway)
 	if err != nil {
-		fmt.Println()
-		fmt.Println(err)
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
 	res, err := client.Do(getRequest)
 	if err != nil {
-		fmt.Println()
-		fmt.Println(err)
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
@@ -55,11 +51,11 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
 		}
 	case http.StatusUnauthorized:
-		return nil, errors.New("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			return nil, fmt.Errorf("Server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
 	}
 	return results, nil

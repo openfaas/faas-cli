@@ -162,6 +162,38 @@ commit automatically with `git commit -s`.
 
 * Please sign your commits with `git commit -s` so that commits are traceable.
 
+## Making a new release of the CLI
+
+### Create a GitHub release
+
+* 1. Through GitHub releases page create a new release and increment the version number.
+* 2. Mark the release as pre-release to prevent the download script picking up the version
+* 3. Wait until the Travis build is completed (which will add binaries to the page if successful)
+
+Finally if the binaries were added successfully you should un-mark the "pre-release" checkbox, the CLI will now be available from our download utility script.
+
+See above for notes on Brew. At present the brew team are auto-releasing PRs to their database when we make releases.
+
+Community packages:
+
+* Arch Linux PKGBUILD (see [rawkode](https://github.com/rawkode))
+* Chocolately (see [pkeuter](https://github.com/pkeuter) via [au-packages](https://github.com/openfaas-incubator/au-packages))
+
+### Update CHANGELOG
+
+Get the changelog tool (requires Ruby)
+
+```
+$ sudo gem install github_changelog_generator
+```
+
+Generate a personal access token in GitHub and use it to update the CHANGELOG.md file:
+
+```
+$ export CHANGELOG_GITHUB_TOKEN=TOKEN_VALUE
+$ github_changelog_generator
+```
+
 ## Misc
 
 **Bash Auto-completion [experimental]**

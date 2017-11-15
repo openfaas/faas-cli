@@ -1,0 +1,2 @@
+language: python
+fprocess: python index.py

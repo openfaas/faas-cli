@@ -5,7 +5,6 @@ package commands
 
 import (
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -44,23 +43,23 @@ var loginCmd = &cobra.Command{
 func runLogin(cmd *cobra.Command, args []string) error {
 
 	if len(username) == 0 {
-		return errors.New("must provide --username or -u")
+		return fmt.Errorf("must provide --username or -u")
 	}
 
 	if len(password) > 0 {
 		fmt.Println("WARNING! Using --password is insecure, consider using: cat ~/faas_pass.txt | faas-cli login -u user --password-stdin")
 		if passwordStdin {
-			return errors.New("--password and --password-stdin are mutually exclusive")
+			return fmt.Errorf("--password and --password-stdin are mutually exclusive")
 		}
 
 		if len(username) == 0 {
-			return errors.New("must provide --username with --password")
+			return fmt.Errorf("must provide --username with --password")
 		}
 	}
 
 	if passwordStdin {
 		if len(username) == 0 {
-			return errors.New("must provide --username with --password-stdin")
+			return fmt.Errorf("must provide --username with --password-stdin")
 		}
 
 		passwordStdin, err := ioutil.ReadAll(os.Stdin)
@@ -73,7 +72,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	password = strings.TrimSpace(password)
 	if len(password) == 0 {
-		return errors.New("must provide a non-empty password via --password or --password-stdin")
+		return fmt.Errorf("must provide a non-empty password via --password or --password-stdin")
 	}
 
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
@@ -113,7 +112,6 @@ func validateLogin(url string, user string, pass string) error {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gatewayUrl)
 	}
 
@@ -129,7 +127,7 @@ func validateLogin(url string, user string, pass string) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusUnauthorized:
-		return errors.New("unable to login, either username or password is incorrect")
+		return fmt.Errorf("unable to login, either username or password is incorrect")
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

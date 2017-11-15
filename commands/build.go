@@ -89,13 +89,13 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		build(&services, parallel, shrinkwrap)
 	} else {
 		if len(image) == 0 {
-			return fmt.Errorf("please provide a valid -image name for your Docker image")
+			return fmt.Errorf("please provide a valid --image name for your Docker image")
 		}
 		if len(handler) == 0 {
 			return fmt.Errorf("please provide the full path to your function's handler")
 		}
 		if len(functionName) == 0 {
-			return fmt.Errorf("please provide the deployed -name of your function")
+			return fmt.Errorf("please provide the deployed --name of your function")
 		}
 		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 	}
@@ -115,7 +115,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			for function := range workChannel {
 				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid -lang or 'Dockerfile' for your function.")
+					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
 
 				} else {
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
@@ -149,7 +149,7 @@ func PullTemplates(templateUrl string) error {
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates(templateUrl)
+		err = fetchTemplates(templateUrl, false)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err

@@ -8,11 +8,19 @@ functions:
     lang: python
     handler: ./sample/url-ping
     image: alexellis/faas-url-ping
+    limits:
+      memory: 10m
+    requests:
+      memory: 10m
 
   nodejs-echo:
     lang: node
     handler: ./sample/nodejs-echo
     image: alexellis/faas-nodejs-echo
+    limits:
+      memory: 30m
+    requests:
+      memory: 30m
 
   # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
@@ -20,8 +28,16 @@ functions:
     handler: ./sample/imagemagick
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"
+    limits:
+      memory: 20m
+    requests:
+      memory: 20m
 
   ruby-echo:
     lang: ruby
     handler: ./sample/ruby-echo
     image: alexellis/ruby-echo
+    limits:
+      memory: 10m
+    requests:
+      memory: 10m

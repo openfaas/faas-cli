@@ -23,18 +23,18 @@ var bashcompletionCmd = &cobra.Command{
 This currently only works on Bash version 4, and is hidden
 pending a merge of https://github.com/spf13/cobra/pull/520.`,
 	Hidden: true,
-	Run:    runBashcompletion,
+	RunE:   runBashcompletion,
 }
 
-func runBashcompletion(cmd *cobra.Command, args []string) {
+func runBashcompletion(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		fmt.Println("Please provide filename for bash completion")
-		return
+		return fmt.Errorf("please provide filename for bash completion")
 	}
 	fileName := args[0]
 	err := faasCmd.GenBashCompletionFile(fileName)
 	if err != nil {
-		fmt.Println("Unable to create bash completion file")
-		return
+		return fmt.Errorf("unable to create bash completion file")
 	}
+
+	return nil
 }

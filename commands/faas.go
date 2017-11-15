@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -60,8 +61,11 @@ func Execute(customArgs []string) {
 	checkAndSetDefaultYaml()
 
 	faasCmd.SilenceUsage = true
+	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
 	if err := faasCmd.Execute(); err != nil {
+		e := err.Error()
+		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
 		os.Exit(1)
 	}
 }

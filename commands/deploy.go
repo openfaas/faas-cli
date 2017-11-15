@@ -6,7 +6,6 @@ package commands
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 
@@ -66,7 +65,7 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]				  
+                  [--label LABEL=VALUE ...]
 				  [--replace=false]
 				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
@@ -89,24 +88,23 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
                   --env=MYVAR=myval`,
-	Run: runDeploy,
+	RunE: runDeploy,
 }
 
-func runDeploy(cmd *cobra.Command, args []string) {
+func runDeploy(cmd *cobra.Command, args []string) error {
 
 	if update && replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
-		return
+		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
-			log.Fatalln(err.Error())
-			return
+			return err
 		}
 
 		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL)
@@ -127,19 +125,24 @@ func runDeploy(cmd *cobra.Command, args []string) {
 		}
 
 		for k, function := range services.Functions {
+
 			function.Name = k
 			if update {
 				fmt.Printf("Updating: %s.\n", function.Name)
 			} else {
 				fmt.Printf("Deploying: %s.\n", function.Name)
 			}
+
+			var functionConstraints []string
 			if function.Constraints != nil {
-				constraints = *function.Constraints
+				functionConstraints = *function.Constraints
+			} else if len(constraints) > 0 {
+				functionConstraints = constraints
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
-				log.Fatalln(err)
+				return err
 			}
 
 			labelMap := map[string]string{}
@@ -149,43 +152,54 @@ func runDeploy(cmd *cobra.Command, args []string) {
 
 			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
 			if labelErr != nil {
-				fmt.Printf("Error parsing labels: %v\n", labelErr)
-				os.Exit(1)
+				return fmt.Errorf("error parsing labels: %v", labelErr)
 			}
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
 			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
-				log.Fatalln(envErr)
+				return envErr
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, constraints, update, secrets, allLabels)
+			// Get FProcess to use from the ./template/template.yml, if a template is being used
+			if languageExistsNotDockerfile(function.Language) {
+				var fprocessErr error
+				function.FProcess, fprocessErr = deriveFprocess(function)
+				if fprocessErr != nil {
+					return fprocessErr
+				}
+			}
+
+			functionResourceRequest1 := proxy.FunctionResourceRequest{
+				Limits:   function.Limits,
+				Requests: function.Requests,
+			}
+
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels, functionResourceRequest1)
 		}
 	} else {
 		if len(image) == 0 {
-			fmt.Println("Please provide a --image to be deployed.")
-			return
+			return fmt.Errorf("please provide a --image to be deployed")
 		}
 		if len(functionName) == 0 {
-			fmt.Println("Please provide a --name for your function as it will be deployed on FaaS")
-			return
+			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
 		envvars, err := parseMap(envvarOpts, "env")
 		if err != nil {
-			fmt.Printf("Error parsing envvars: %v\n", err)
-			os.Exit(1)
+			return fmt.Errorf("error parsing envvars: %v", err)
 		}
 
 		labelMap, labelErr := parseMap(labelOpts, "label")
 		if labelErr != nil {
-			fmt.Printf("Error parsing labels: %v\n", labelErr)
-			os.Exit(1)
+			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
-
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap)
+		functionResourceRequest1 := proxy.FunctionResourceRequest{}
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
 	}
+
+	return nil
 }
 
 func buildLabelMap(labelOpts []string) map[string]string {
@@ -227,6 +241,9 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	result := make(map[string]string)
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
+		if len(s) != 2 {
+			return nil, fmt.Errorf("label format is not correct, needs key=value")
+		}
 		envvarName := s[0]
 		envvarValue := s[1]
 
@@ -276,4 +293,32 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 
 	functionAndStack := mergeMap(yamlEnvironment, fileEnvironment)
 	return mergeMap(functionAndStack, envvarArguments), nil
+}
+
+func deriveFprocess(function stack.Function) (string, error) {
+	var fprocess string
+
+	pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
+	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+		return "", err
+	}
+
+	var langTemplate stack.LanguageTemplate
+	parsedLangTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
+
+	if err != nil {
+		return "", err
+
+	}
+
+	if parsedLangTemplate != nil {
+		langTemplate = *parsedLangTemplate
+		fprocess = langTemplate.FProcess
+	}
+
+	return fprocess, nil
+}
+
+func languageExistsNotDockerfile(language string) bool {
+	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
 }
