@@ -39,6 +39,13 @@ var stat = func(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
 }
 
+// TODO: remove this workaround once these vars are no longer global
+func resetForTest() {
+	yamlFile = ""
+	regex = ""
+	filter = ""
+}
+
 func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
