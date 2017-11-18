@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"sort"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/morikuni/aec"
@@ -95,8 +95,7 @@ the "Dockerfile" lang type in your YAML file.
 		// YAML file was passed in, so parse to see if it is valid
 		parsedServices, err := stack.ParseYAMLFile(stackFileName, "", "")
 		if err != nil || parsedServices == nil {
-			fmt.Printf("Specified file (" + stackFileName + ") is not valid YAML\n")
-			return
+			return fmt.Errorf("Specified file (" + stackFileName + ") is not valid YAML\n")
 		}
 		//TODO: Verify that services is good
 	}
@@ -141,8 +140,7 @@ the "Dockerfile" lang type in your YAML file.
 	} else {
 		existingYAMLText, err := readFileToString(stackFileName)
 		if err != nil {
-			fmt.Printf("Could not read stack file: %s\n", stackFileName)
-			return
+			return fmt.Errorf("Could not read stack file: %s\n", stackFileName)
 		}
 
 		stackFileText = insertFunctionIntoYAML(existingYAMLText, functionYAMLData)
