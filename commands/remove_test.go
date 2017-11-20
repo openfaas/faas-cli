@@ -20,6 +20,8 @@ func Test_remove(t *testing.T) {
 	})
 	defer s.Close()
 
+	resetForTest()
+
 	faasCmd.SetArgs([]string{
 		"remove",
 		"--gateway=" + s.URL,
