@@ -18,12 +18,12 @@ COPY .  .
 RUN dotnet publish -c release -o published
 
 FROM microsoft/dotnet:2.0-runtime
-RUN useradd app
+RUN addgroup -S app && adduser -S -g app app
 
 RUN apt-get update -qy \
     && apt-get install -qy curl ca-certificates --no-install-recommends \ 
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.6.12/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && apt-get -qy remove curl \
     && apt-get clean \
@@ -32,7 +32,10 @@ RUN apt-get update -qy \
 WORKDIR /home/app/
 COPY --from=builder /home/app/src/published .
 
-RUN chown -R app ./
+# chmod for tmp is for a buildkit issue (@alexellis)
+RUN chown app:app -R /home/app \
+    && chmod 777 /tmp
+
 USER app
 
 ENV fprocess="dotnet ./root.dll"
