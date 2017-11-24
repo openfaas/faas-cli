@@ -14,7 +14,7 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 # ldflags -X injects commit version into binary
 
 RUN license-check -path ./ --verbose=false \
- && go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/) -cover \
+ && OPEN_FAAS_TELEMETRY=0 go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/) -cover \
  && VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
  && GIT_COMMIT=$(git rev-list -1 HEAD) \
  && echo "Building linux..." \
