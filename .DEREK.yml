@@ -1,0 +1,12 @@
+maintainers:
+ - alexellis
+ - johnmccabe
+ - rgee0
+ - ericstoekl
+ - austinfrey
+ - itscaro
+ - rorpage
+ - kenfdev
+features:
+ - dco_check
+ - comments
