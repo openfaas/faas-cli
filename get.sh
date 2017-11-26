@@ -57,6 +57,11 @@ getPackage() {
         if [ "$?" = "0" ]; then
             echo "New version of faas-cli installed to /usr/local/bin"
         fi
+        if [ ! -L /usr/local/bin/faas ]; then
+	    ln -s /usr/local/bin/{faas-cli,faas}
+	    echo "Creating alias 'faas' for 'faas-cli'."
+	fi
+
     fi
 }
 
