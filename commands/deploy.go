@@ -140,6 +140,10 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				functionConstraints = constraints
 			}
 
+			if len(function.Secrets) > 0 {
+				secrets = function.Secrets
+			}
+
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
 				return err

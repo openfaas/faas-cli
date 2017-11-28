@@ -26,6 +26,9 @@ type Function struct {
 
 	Environment map[string]string `yaml:"environment"`
 
+	// Secrets list of secrets to be made available to function
+	Secrets []string `json:"secrets"`
+
 	SkipBuild bool `yaml:"skip_build"`
 
 	Constraints *[]string `yaml:"constraints"`
