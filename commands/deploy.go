@@ -140,9 +140,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				functionConstraints = constraints
 			}
 
-			if len(function.Secrets) > 0 {
-				secrets = function.Secrets
-			}
+			functionSecrets := compileSecrets(function.Secrets, secrets)
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
@@ -180,7 +178,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 				Requests: function.Requests,
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels, functionResourceRequest1)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, functionSecrets, allLabels, functionResourceRequest1)
 		}
 	} else {
 		if len(image) == 0 {
@@ -325,4 +323,26 @@ func deriveFprocess(function stack.Function) (string, error) {
 
 func languageExistsNotDockerfile(language string) bool {
 	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
+}
+
+func compileSecrets(yamlSecrets []string, cmdLineSecrets []string) []string {
+	yamlSecretsMap := make(map[string]string)
+	cmdLineSecretsMap := make(map[string]string)
+	for _, y := range yamlSecrets {
+		yamlSecretsMap[y] = ""
+	}
+	for _, c := range cmdLineSecrets {
+		cmdLineSecretsMap[c] = ""
+	}
+
+	combinedMap := mergeMap(yamlSecretsMap, cmdLineSecretsMap)
+	return stringArrayFromMapKeys(combinedMap)
+}
+
+func stringArrayFromMapKeys(inputMap map[string]string) []string {
+	var merged []string
+	for i, _ := range inputMap {
+		merged = append(merged, i)
+	}
+	return merged
 }
