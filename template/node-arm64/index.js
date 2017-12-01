@@ -3,9 +3,9 @@
 
 "use strict"
 
-let getStdin = require('get-stdin');
+const getStdin = require('get-stdin');
 
-let handler = require('./function/handler');
+const handler = require('./function/handler');
 
 getStdin().then(val => {
     handler(val, (err, res) => {
@@ -22,10 +22,10 @@ getStdin().then(val => {
     console.error(e.stack);
 });
 
-let isArray = (a) => {
+const isArray = (a) => {
     return (!!a) && (a.constructor === Array);
 };
 
-let isObject = (a) => {
+const isObject = (a) => {
     return (!!a) && (a.constructor === Object);
 };
