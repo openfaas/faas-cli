@@ -141,7 +141,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 			}
 
 			if len(function.Secrets) > 0 {
-				secrets = function.Secrets
+				secrets = mergeSlice(function.Secrets, secrets)
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -204,6 +204,23 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func mergeSlice(values []string, overlay []string) []string {
+	results := []string{}
+	added := make(map[string]bool)
+	for _, value := range overlay {
+		results = append(results, value)
+		added[value] = true
+	}
+
+	for _, value := range values {
+		if exists := added[value]; exists == false {
+			results = append(results, value)
+		}
+	}
+
+	return results
 }
 
 func buildLabelMap(labelOpts []string) map[string]string {
