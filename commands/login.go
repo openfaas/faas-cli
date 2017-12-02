@@ -97,7 +97,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 func validateLogin(url string, user string, pass string) error {
 	// TODO: provide --insecure flag for this
 	tr := &http.Transport{
-		DisableKeepAlives: true,
+		DisableKeepAlives: false,
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
 	}
 	client := &http.Client{
