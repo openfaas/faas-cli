@@ -16,6 +16,7 @@ import (
 	"github.com/openfaas/faas/gateway/requests"
 )
 
+// FunctionResourceRequest defines a request to set function resources
 type FunctionResourceRequest struct {
 	Limits   *stack.FunctionResources
 	Requests *stack.FunctionResources
@@ -49,16 +50,23 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		Labels:      &labels,
 	}
 
+	req.Limits = &requests.FunctionResources{}
+	req.Requests = &requests.FunctionResources{}
+
 	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
-		req.Limits = &requests.FunctionResources{
-			Memory: functionResourceRequest1.Limits.Memory,
-		}
+		req.Limits.Memory = functionResourceRequest1.Limits.Memory
 	}
 
 	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
-		req.Requests = &requests.FunctionResources{
-			Memory: functionResourceRequest1.Requests.Memory,
-		}
+		req.Requests.Memory = functionResourceRequest1.Requests.Memory
+	}
+
+	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.CPU) > 0 {
+		req.Limits.CPU = functionResourceRequest1.Limits.CPU
+	}
+
+	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.CPU) > 0 {
+		req.Requests.CPU = functionResourceRequest1.Requests.CPU
 	}
 
 	reqBytes, _ := json.Marshal(&req)

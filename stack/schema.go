@@ -40,16 +40,16 @@ type Function struct {
 	Labels *map[string]string `yaml:"labels"`
 
 	// Limits for function
-	Limits *FunctionResources `json:"limits"`
+	Limits *FunctionResources `yaml:"limits",json:"limits"`
 
 	// Requests of resources requested by function
-	Requests *FunctionResources `json:"requests"`
+	Requests *FunctionResources `yaml:"requests",json:"requests"`
 }
 
 // FunctionResources Memory and CPU
 type FunctionResources struct {
-	Memory string `json:"memory"`
-	CPU    string `json:"cpu"`
+	Memory string `yaml:"memory",json:"memory"`
+	CPU    string `yaml:"cpu",json:"cpu"`
 }
 
 // EnvironmentFile represents external file for environment data
