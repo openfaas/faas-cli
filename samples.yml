@@ -13,6 +13,15 @@ functions:
     requests:
       memory: 10m
 
+  stronghash:
+    skip_build: true
+    image: functions/alpine
+    fprocess: "sha512sum"
+    limits:
+      memory: 10m
+    requests:
+      memory: 10m
+
   nodejs-echo:
     lang: node
     handler: ./sample/nodejs-echo
