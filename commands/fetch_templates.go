@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	defaultTemplateRepository = "https://github.com/openfaas/faas-cli"
+	defaultTemplateRepository = "https://github.com/openfaas/templates"
 	templateDirectory         = "./template/"
 	rootLanguageDirSplitCount = 3
 )
