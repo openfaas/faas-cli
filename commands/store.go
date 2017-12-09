@@ -78,7 +78,6 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
-	fmt.Fprintln(w, "--------\t-----------")
 
 	for _, item := range items {
 		fmt.Fprintf(w, "%s\t%s\n", item.Title, item.Description)
