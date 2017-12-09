@@ -43,22 +43,23 @@ func init() {
 }
 
 var storeCmd = &cobra.Command{
-	Use:   `store [--store STORE_URL]`,
+	Use:   `store`,
 	Short: "OpenFaaS store commands",
+	Long:  "Allows browsing and deploying OpenFaaS store functions"
 }
 
 var storeListCmd = &cobra.Command{
-	Use:     `list`,
+	Use:     `list [--store STORE_URL]`,
 	Short:   "List OpenFaaS store items",
-	Long:    `Lists the available items in OpenFaas store`,
+	Long:    "Lists the available items in OpenFaas store",
 	Example: `  faas-cli store list --store https://domain:port`,
 	RunE:    runStoreList,
 }
 
 var storeInspectCmd = &cobra.Command{
-	Use:     `inspect FUNCTION_NAME`,
+	Use:     `inspect FUNCTION_NAME [--store STORE_URL]`,
 	Short:   "Show OpenFaaS store function details",
-	Long:    `Prints the detailed informations of the specified OpenFaaS function`,
+	Long:    "Prints the detailed informations of the specified OpenFaaS function",
 	Example: `  faas-cli store inspect NodeInfo --store https://domain:port`,
 	RunE:    runStoreInspect,
 }

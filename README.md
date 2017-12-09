@@ -45,6 +45,7 @@ The main commands supported by the CLI are:
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
 * `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
 * `faas-cli logout` - removes basic auth credentials for a given gateway
+* `faas-cli store` - allows browsing and deploying OpenFaaS store functions
 
 Advanced commands:
 
