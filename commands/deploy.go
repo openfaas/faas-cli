@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -92,6 +92,16 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
+	return RunDeploy(cmd, args, image, fprocess, envvarOpts)
+}
+
+func RunDeploy(
+	cmd *cobra.Command,
+	args []string,
+	image string,
+	fprocess string,
+	envvarOpts []string,
+) error {
 
 	if update && replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
