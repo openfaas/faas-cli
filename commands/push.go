@@ -52,7 +52,7 @@ func runPush(cmd *cobra.Command, args []string) error {
 	if len(services.Functions) > 0 {
 		pushStack(&services, parallel)
 	} else {
-		return fmt.Errorf("you must supply a valid YAML file")
+		return ErrorInvalidYamlFile
 	}
 	return nil
 }

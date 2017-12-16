@@ -61,7 +61,7 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, readErr)
 		}
 	case http.StatusUnauthorized:
-		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		return nil, ErrorUnauthorizedGateway
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
@@ -80,10 +80,10 @@ func buildQueryString(query []string) (string, error) {
 		for _, queryValue := range query {
 			qs = qs + queryValue + "&"
 			if strings.Contains(queryValue, "=") == false {
-				return "", fmt.Errorf("the --query flags must take the form of key=value (= not found)")
+				return "", ErrorQueryFlag
 			}
 			if strings.HasSuffix(queryValue, "=") {
-				return "", fmt.Errorf("the --query flag must take the form of: key=value (empty value given, or value ends in =)")
+				return "", ErrorEmptyQueryFlag
 			}
 		}
 		qs = strings.TrimRight(qs, "&")

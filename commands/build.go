@@ -89,13 +89,13 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		build(&services, parallel, shrinkwrap)
 	} else {
 		if len(image) == 0 {
-			return fmt.Errorf("please provide a valid --image name for your Docker image")
+			return ErrorInvalidImageFlag
 		}
 		if len(handler) == 0 {
-			return fmt.Errorf("please provide the full path to your function's handler")
+			return ErrorFunctionPath
 		}
 		if len(functionName) == 0 {
-			return fmt.Errorf("please provide the deployed --name of your function")
+			return ErrorMissingFunctionNameFlag
 		}
 		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 	}

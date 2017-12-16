@@ -50,7 +50,6 @@ const TestData_2 string = `provider:
 
 `
 
-const noMatchesErrorMsg string = "no functions matching --filter/--regex were found in the YAML file"
 const invalidRegexErrorMsg string = "error parsing regexp"
 
 var ParseYAMLTests_Regex = []struct {
@@ -93,7 +92,7 @@ var ParseYAMLTests_Regex = []struct {
 		searchTerm:    "----",
 		functions:     []string{},
 		file:          TestData_1,
-		expectedError: noMatchesErrorMsg,
+		expectedError: ErrorMissingFilterOrRegexFlag.Error(),
 	},
 	{
 		title:         "Regex search for functions without dashes: '^[^-]+$'",
@@ -149,7 +148,7 @@ var ParseYAMLTests_Regex = []struct {
 		searchTerm:    "RANDOMREGEX",
 		functions:     []string{},
 		file:          TestData_1,
-		expectedError: noMatchesErrorMsg,
+		expectedError: ErrorMissingFilterOrRegexFlag.Error(),
 	},
 	{
 		title:         "Regex empty search term in empty YAML file: ",
@@ -214,7 +213,7 @@ var ParseYAMLTests_Filter = []struct {
 		searchTerm:    "RANDOMTEXT",
 		functions:     []string{},
 		file:          TestData_1,
-		expectedError: noMatchesErrorMsg,
+		expectedError: ErrorMissingFilterOrRegexFlag.Error(),
 	},
 	{
 		title:         "Wildcard empty search term in empty YAML file: ''",

@@ -21,13 +21,13 @@ var logoutCmd = &cobra.Command{
 	Use:     `logout [--gateway GATEWAY_URL]`,
 	Short:   "Log out from OpenFaaS gateway",
 	Long:    "Log out from OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
-	Example: `  faas-cli logout --gateway https://openfaas.mydomain.com`,
+	Example: `  faas-cli logout --gateway ` + defaultGateway,
 	RunE:    runLogout,
 }
 
 func runLogout(cmd *cobra.Command, args []string) error {
 	if len(gateway) == 0 {
-		return fmt.Errorf("gateway cannot be an empty string")
+		return ErrorMissingGateway
 	}
 
 	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")

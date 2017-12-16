@@ -47,7 +47,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	err := yaml.Unmarshal(fileData, &services)
 	if err != nil {
 		fmt.Printf("Error with YAML file\n")
-		return nil, err
+		return nil, ErrorMissingFilterOrRegexFlag
 	}
 
 	if services.Provider.Name != providerName {
@@ -55,7 +55,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	}
 
 	if regexExists && filterExists {
-		return nil, fmt.Errorf("pass in a regex or a filter, not both")
+		return nil, ErrorExclusiveFilterRegexFlag
 	}
 
 	if regexExists || filterExists {
@@ -79,7 +79,7 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 		}
 
 		if len(services.Functions) == 0 {
-			return nil, fmt.Errorf("no functions matching --filter/--regex were found in the YAML file")
+			return nil, ErrorMissingFilterOrRegexFlag
 		}
 
 	}

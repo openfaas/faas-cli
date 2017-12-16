@@ -43,7 +43,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 
 	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
+		return ErrorMissingFunctionName
 	}
 	var yamlGateway string
 	functionName = args[0]

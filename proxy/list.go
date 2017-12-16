@@ -51,7 +51,7 @@ func ListFunctions(gateway string) ([]requests.Function, error) {
 			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
 		}
 	case http.StatusUnauthorized:
-		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		return nil, ErrorUnauthorizedGateway
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

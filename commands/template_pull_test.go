@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"regexp"
-	"strings"
 	"testing"
 )
 
@@ -69,8 +68,8 @@ func Test_templatePull(t *testing.T) {
 		faasCmd.SetOutput(&buf)
 		err := faasCmd.Execute()
 
-		if !strings.Contains(err.Error(), "The repository URL must be a valid git repo uri") {
-			t.Fatal("Output does not contain the required string", err.Error())
+		if err != ErrorInvalidRepositoryURL {
+			t.Fatalf("Output does not contain the required string: '%s'", err.Error())
 		}
 	})
 }
