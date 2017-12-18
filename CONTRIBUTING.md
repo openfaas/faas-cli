@@ -28,7 +28,7 @@ This CLI can build and deploy templated functions, so it's best if you have FaaS
 
 > Here's how to install Go in 60 seconds.
 
-* Grab Go 1.7.x or 1.8.3 from https://golang.org/dl/
+* Grab Go 1.7.x, 1.8.3 or 1.9.x from https://golang.org/dl/
 
 Then after installing run this command or place it in your `$HOME/.bash_profile`
 
@@ -69,33 +69,10 @@ Use the tool if you add new dependencies or want to update the existing ones.
 > See also: [vndr docs](https://github.com/LK4D4/vndr)
 
 ### How to update the `brew` formula
+[Update brew formula](guide/homebrew.md)
 
-The `brew` formula for the faas-cli is part of the official [homebrew-core](https://github.com/Homebrew/homebrew-core/blob/master/Formula/faas-cli.rb) repo on Github. It needs to be updated for each subsequent release.
-
-#### Simple version bumps
-
-If the only change required is a version bump, ie no new tests, or changes to existing tested functionality or build steps, the `brew bump-formula-pr` command can be used to do everything (i.e. forking, committing, pushing) required to bump the version.
-
-For example (supplying both the new version tag and its associated Git sha-256).
-
-```
-brew bump-formula-pr --strict faas-cli --tag=<version> --revision=<sha-256>
-```
-
-#### Changes requiring new/update tests/build steps
-
-If a new release alters behaviour tested in the Brew Formula, adds new testable behaviors or alters the build steps then you will need to manually raise a PR with an updated Formula, the guidelines for updating brew describe the process in more detail:
-
-https://github.com/Homebrew/homebrew-core/blob/master/CONTRIBUTING.md
-
-After `brew edit` run the build and test the results:
-
-```
-$ brew uninstall --force faas-cli ; \
-  brew install --build-from-source faas-cli ; \
-  brew test faas-cli ; \
-  brew audit --strict faas-cli
-```
+### How to update the `scoop` manifest
+[Update scoop manifest](guide/scoop.md)
 
 ## Update the utility-script
 
@@ -166,9 +143,9 @@ commit automatically with `git commit -s`.
 
 ### Create a GitHub release
 
-* 1. Through GitHub releases page create a new release and increment the version number.
-* 2. Mark the release as pre-release to prevent the download script picking up the version
-* 3. Wait until the Travis build is completed (which will add binaries to the page if successful)
+1. Through GitHub releases page create a new release and increment the version number.
+2. Mark the release as pre-release to prevent the download script picking up the version
+3. Wait until the Travis build is completed (which will add binaries to the page if successful)
 
 Finally if the binaries were added successfully you should un-mark the "pre-release" checkbox, the CLI will now be available from our download utility script.
 
