@@ -42,8 +42,8 @@ func init() {
 
 	deployCmd.Flags().StringArrayVarP(&labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
 
-	deployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
-	deployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
+	deployCmd.Flags().BoolVar(&replace, "replace", false, "Replace any existing function")
+	deployCmd.Flags().BoolVar(&update, "update", true, "Update existing functions")
 
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
