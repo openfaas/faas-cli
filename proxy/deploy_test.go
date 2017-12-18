@@ -14,11 +14,42 @@ import (
 	"github.com/openfaas/faas-cli/test"
 )
 
-func Test_DeployFunction(t *testing.T) {
+type DeployProxyTest struct {
+	title               string
+	mockServerResponses []int
+	replace             bool
+	update              bool
+	expectedOutput      string
+}
+
+var DeployProxyTests = []DeployProxyTest{
+	{
+		title:               "200_Deploy",
+		mockServerResponses: []int{http.StatusOK, http.StatusOK},
+		replace:             true,
+		update:              false,
+		expectedOutput:      `(?m:Deployed.)`,
+	},
+	{
+		title:               "404_Deploy",
+		mockServerResponses: []int{http.StatusOK, http.StatusNotFound},
+		replace:             true,
+		update:              false,
+		expectedOutput:      `(?m:Unexpected status: 404)`,
+	},
+	{
+		title:               "UpdateFailedDeployed",
+		mockServerResponses: []int{http.StatusNotFound, http.StatusOK},
+		replace:             false,
+		update:              true,
+		expectedOutput:      `(?m:Deployed.)`,
+	},
+}
+
+func runDeployProxyTest(t *testing.T, dpt DeployProxyTest) {
 	s := test.MockHttpServerStatus(
 		t,
-		http.StatusOK, // DeleteFunction
-		http.StatusOK, // DeployFunction
+		dpt.mockServerResponses...,
 	)
 	defer s.Close()
 
@@ -29,52 +60,28 @@ func Test_DeployFunction(t *testing.T) {
 			"function",
 			"image",
 			"language",
-			true,
+			dpt.replace,
 			nil,
 			"network",
 			[]string{},
-			false,
+			dpt.update,
 			[]string{},
 			map[string]string{},
 			FunctionResourceRequest{},
 		)
 	})
 
-	r := regexp.MustCompile(`(?m:Deployed.)`)
+	r := regexp.MustCompile(dpt.expectedOutput)
 	if !r.MatchString(stdout) {
 		t.Fatalf("Output not matched: %s", stdout)
 	}
 }
 
-func Test_DeployFunction_Not2xx(t *testing.T) {
-	s := test.MockHttpServerStatus(
-		t,
-		http.StatusOK,       // DeleteFunction
-		http.StatusNotFound, // DeployFunction
-	)
-	defer s.Close()
-
-	stdout := test.CaptureStdout(func() {
-		DeployFunction(
-			"fproces",
-			s.URL,
-			"function",
-			"image",
-			"language",
-			true,
-			nil,
-			"network",
-			[]string{},
-			false,
-			[]string{},
-			map[string]string{},
-			FunctionResourceRequest{},
-		)
-	})
-
-	r := regexp.MustCompile(`(?m:Unexpected status: 404)`)
-	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+func Test_RunDeployProxyTests(t *testing.T) {
+	for _, tst := range DeployProxyTests {
+		t.Run(tst.title, func(t *testing.T) {
+			runDeployProxyTest(t, tst)
+		})
 	}
 }
 
