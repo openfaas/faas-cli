@@ -57,7 +57,7 @@ The main commands supported by the CLI are:
 
 Advanced commands:
 
-* `faas-cli template pull` - pull in templates from a remote GitHub repository
+* `faas-cli template pull` - pull in templates from a remote GitHub repository [Detailed Documentation](guide/TEMPLATE.md)
 
 Help for all of the commands supported by the CLI can be found by running:
 
