@@ -140,7 +140,13 @@ func cp(src string, destination string) error {
 	if readErr != nil {
 		return fmt.Errorf("Error reading source file: %s\n" + readErr.Error())
 	}
-	writeErr := ioutil.WriteFile(destination, memoryBuffer, 0660)
+
+	srcInfo, infoErr := os.Stat(src)
+	if infoErr != nil {
+		return fmt.Errorf("Error reading source file mode: %s\n" + infoErr.Error())
+	}
+
+	writeErr := ioutil.WriteFile(destination, memoryBuffer, srcInfo.Mode())
 	if writeErr != nil {
 		return fmt.Errorf("Error writing file: %s\n" + writeErr.Error())
 	}
