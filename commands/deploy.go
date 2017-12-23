@@ -92,14 +92,14 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return RunDeploy(cmd, args, image, fprocess, envvarOpts)
+	return RunDeploy(args, image, fprocess, functionName, envvarOpts)
 }
 
 func RunDeploy(
-	cmd *cobra.Command,
 	args []string,
 	image string,
 	fprocess string,
+	functionName string,
 	envvarOpts []string,
 ) error {
 
@@ -210,6 +210,7 @@ func RunDeploy(
 			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
 		functionResourceRequest1 := proxy.FunctionResourceRequest{}
+
 		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
 	}
 

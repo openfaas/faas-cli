@@ -73,7 +73,7 @@ var storeListCmd = &cobra.Command{
 }
 
 var storeInspectCmd = &cobra.Command{
-	Use:     `inspect FUNCTION_NAME [--store STORE_URL]`,
+	Use:     `inspect (FUNCTION_NAME|FUNCTION_TITLE) [--store STORE_URL]`,
 	Short:   "Show OpenFaaS store function details",
 	Long:    "Prints the detailed informations of the specified OpenFaaS function",
 	Example: `  faas-cli store inspect NodeInfo --store https://domain:port`,
@@ -81,7 +81,7 @@ var storeInspectCmd = &cobra.Command{
 }
 
 var storeDeployCmd = &cobra.Command{
-	Use: `deploy FUNCTION_NAME
+	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
 							[--lang <ruby|python|node|csharp>]
 							[--gateway GATEWAY_URL]
 							[--handler HANDLER_DIR]
@@ -97,13 +97,7 @@ var storeDeployCmd = &cobra.Command{
 	Short: "Deploy OpenFaaS functions from the store",
 	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
-  faas-cli store deploy figlet --label canary=true
-  faas-cli store deploy figlet --filter "*gif*" --secret dockerhuborg
-  faas-cli store deploy figlet --regex "fn[0-9]_.*"
-  faas-cli store deploy figlet --replace=false
-  faas-cli store deploy figlet --update=true
-  faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
-  faas-cli store deploy figlet --handler=/path/to/fn/
+  						faas-cli store deploy figlet
                   --gateway=http://remote-site.com:8080 --lang=python
                   --env=MYVAR=myval`,
 	RunE: runStoreDeploy,
@@ -177,14 +171,13 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	RunDeploy(
-		cmd,
+	return RunDeploy(
 		args,
 		item.Image,
 		item.Fprocess,
+		item.Name,
 		envvarOpts,
 	)
-	return nil
 }
 
 func storeList(store string) ([]storeItem, error) {
@@ -238,7 +231,7 @@ func findFunction(functionName string) (storeItem, error) {
 	}
 
 	for _, item = range items {
-		if item.Name == functionName {
+		if item.Name == functionName || item.Title == functionName {
 			return item, nil
 		}
 	}
