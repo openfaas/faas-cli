@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -15,6 +14,7 @@ import (
 
 	"text/tabwriter"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -186,7 +186,7 @@ func storeList(store string) ([]storeItem, error) {
 	store = strings.TrimRight(store, "/")
 
 	timeout := 60 * time.Second
-	client := makeHTTPClient(&timeout)
+	client := proxy.MakeHTTPClient(&timeout)
 
 	getRequest, err := http.NewRequest(http.MethodGet, store, nil)
 	if err != nil {
@@ -237,26 +237,4 @@ func findFunction(functionName string) (storeItem, error) {
 	}
 
 	return item, fmt.Errorf("function '%s' not found", functionName)
-}
-
-func makeHTTPClient(timeout *time.Duration) http.Client {
-	if timeout != nil {
-		return http.Client{
-			Timeout: *timeout,
-			Transport: &http.Transport{
-				Proxy: http.ProxyFromEnvironment,
-				DialContext: (&net.Dialer{
-					Timeout: *timeout,
-					// KeepAlive: 0,
-				}).DialContext,
-				// MaxIdleConns:          1,
-				// DisableKeepAlives:     true,
-				IdleConnTimeout:       120 * time.Millisecond,
-				ExpectContinueTimeout: 1500 * time.Millisecond,
-			},
-		}
-	}
-
-	// This should be used for faas-cli invoke etc.
-	return http.Client{}
 }
