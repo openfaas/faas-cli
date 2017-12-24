@@ -97,9 +97,9 @@ var storeDeployCmd = &cobra.Command{
 	Short: "Deploy OpenFaaS functions from the store",
 	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
-  						faas-cli store deploy figlet
-                  --gateway=http://remote-site.com:8080 --lang=python
-                  --env=MYVAR=myval`,
+							faas-cli store deploy figlet
+									--gateway=http://remote-site.com:8080 --lang=python
+									--env=MYVAR=myval`,
 	RunE: runStoreDeploy,
 }
 
