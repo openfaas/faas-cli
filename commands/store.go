@@ -133,9 +133,14 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	item, err := findFunction(args[0])
+	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
+	}
+
+	item := findFunction(args[0], storeItems)
+	if item == nil {
+		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
@@ -159,9 +164,14 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	item, err := findFunction(args[0])
+	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
+	}
+
+	item := findFunction(args[0], storeItems)
+	if item == nil {
+		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
 	// Add the store environement variables to the provided ones from cmd
@@ -222,19 +232,14 @@ func storeList(store string) ([]storeItem, error) {
 	return results, nil
 }
 
-func findFunction(functionName string) (storeItem, error) {
+func findFunction(functionName string, storeItems []storeItem) *storeItem {
 	var item storeItem
 
-	items, err := storeList(storeAddress)
-	if err != nil {
-		return item, err
-	}
-
-	for _, item = range items {
+	for _, item = range storeItems {
 		if item.Name == functionName || item.Title == functionName {
-			return item, nil
+			return &item
 		}
 	}
 
-	return item, fmt.Errorf("function '%s' not found", functionName)
+	return &item
 }
