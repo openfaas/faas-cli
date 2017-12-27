@@ -38,6 +38,8 @@ explicitly specifying a function name.`,
 
 func runDelete(cmd *cobra.Command, args []string) error {
 	var services stack.Services
+	var gatewayAddress string
+	var yamlGateway string
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
@@ -46,8 +48,11 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		if parsedServices != nil {
 			services = *parsedServices
+			yamlGateway = services.Provider.GatewayURL
 		}
 	}
+
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
 
 	if len(services.Functions) > 0 {
 		if len(services.Provider.Network) == 0 {
@@ -58,7 +63,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 			function.Name = k
 			fmt.Printf("Deleting: %s.\n", function.Name)
 
-			proxy.DeleteFunction(services.Provider.GatewayURL, function.Name)
+			proxy.DeleteFunction(gatewayAddress, function.Name)
 		}
 	} else {
 		if len(args) < 1 {
