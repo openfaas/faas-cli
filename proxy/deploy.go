@@ -50,23 +50,33 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		Labels:      &labels,
 	}
 
+	hasLimits := false
 	req.Limits = &requests.FunctionResources{}
-	req.Requests = &requests.FunctionResources{}
-
 	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
+		hasLimits = true
 		req.Limits.Memory = functionResourceRequest1.Limits.Memory
 	}
-
-	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
-		req.Requests.Memory = functionResourceRequest1.Requests.Memory
-	}
-
 	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.CPU) > 0 {
+		hasLimits = true
 		req.Limits.CPU = functionResourceRequest1.Limits.CPU
 	}
+	if !hasLimits {
+		req.Limits = nil
+	}
 
+	hasRequests := false
+	req.Requests = &requests.FunctionResources{}
+	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
+		hasRequests = true
+		req.Requests.Memory = functionResourceRequest1.Requests.Memory
+	}
 	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.CPU) > 0 {
+		hasRequests = true
 		req.Requests.CPU = functionResourceRequest1.Requests.CPU
+	}
+
+	if !hasRequests {
+		req.Requests = nil
 	}
 
 	reqBytes, _ := json.Marshal(&req)
