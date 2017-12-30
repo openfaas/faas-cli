@@ -82,8 +82,8 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./samples.yml --label canary=true
   faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
   faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli deploy -f ./samples.yml --replace=false
-  faas-cli deploy -f ./samples.yml --update=true
+  faas-cli deploy -f ./samples.yml --replace=false --update=true
+  faas-cli deploy -f ./samples.yml --replace=true --update=false
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
