@@ -31,12 +31,10 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
-		update = false
-		Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
+		Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
 	}
 }
 
-// Call FaaS server to deploy a new function
 func Deploy(fprocess string, gateway string, functionName string, image string,
 	language string, replace bool, envVars map[string]string, network string,
 	constraints []string, update bool, secrets []string, labels map[string]string,

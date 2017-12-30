@@ -46,10 +46,10 @@ var DeployProxyTests = []DeployProxyTest{
 	},
 }
 
-func runDeployProxyTest(t *testing.T, dpt DeployProxyTest) {
+func runDeployProxyTest(t *testing.T, deployTest DeployProxyTest) {
 	s := test.MockHttpServerStatus(
 		t,
-		dpt.mockServerResponses...,
+		deployTest.mockServerResponses...,
 	)
 	defer s.Close()
 
@@ -60,18 +60,18 @@ func runDeployProxyTest(t *testing.T, dpt DeployProxyTest) {
 			"function",
 			"image",
 			"language",
-			dpt.replace,
+			deployTest.replace,
 			nil,
 			"network",
 			[]string{},
-			dpt.update,
+			deployTest.update,
 			[]string{},
 			map[string]string{},
 			FunctionResourceRequest{},
 		)
 	})
 
-	r := regexp.MustCompile(dpt.expectedOutput)
+	r := regexp.MustCompile(deployTest.expectedOutput)
 	if !r.MatchString(stdout) {
 		t.Fatalf("Output not matched: %s", stdout)
 	}
