@@ -14,7 +14,7 @@ import (
 	"github.com/openfaas/faas-cli/test"
 )
 
-type DeployProxyTest struct {
+type deployProxyTest struct {
 	title               string
 	mockServerResponses []int
 	replace             bool
@@ -22,31 +22,7 @@ type DeployProxyTest struct {
 	expectedOutput      string
 }
 
-var DeployProxyTests = []DeployProxyTest{
-	{
-		title:               "200_Deploy",
-		mockServerResponses: []int{http.StatusOK, http.StatusOK},
-		replace:             true,
-		update:              false,
-		expectedOutput:      `(?m:Deployed.)`,
-	},
-	{
-		title:               "404_Deploy",
-		mockServerResponses: []int{http.StatusOK, http.StatusNotFound},
-		replace:             true,
-		update:              false,
-		expectedOutput:      `(?m:Unexpected status: 404)`,
-	},
-	{
-		title:               "UpdateFailedDeployed",
-		mockServerResponses: []int{http.StatusNotFound, http.StatusOK},
-		replace:             false,
-		update:              true,
-		expectedOutput:      `(?m:Deployed.)`,
-	},
-}
-
-func runDeployProxyTest(t *testing.T, deployTest DeployProxyTest) {
+func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	s := test.MockHttpServerStatus(
 		t,
 		deployTest.mockServerResponses...,
@@ -78,7 +54,30 @@ func runDeployProxyTest(t *testing.T, deployTest DeployProxyTest) {
 }
 
 func Test_RunDeployProxyTests(t *testing.T) {
-	for _, tst := range DeployProxyTests {
+	var deployProxyTests = []deployProxyTest{
+		{
+			title:               "200_Deploy",
+			mockServerResponses: []int{http.StatusOK, http.StatusOK},
+			replace:             true,
+			update:              false,
+			expectedOutput:      `(?m:Deployed.)`,
+		},
+		{
+			title:               "404_Deploy",
+			mockServerResponses: []int{http.StatusOK, http.StatusNotFound},
+			replace:             true,
+			update:              false,
+			expectedOutput:      `(?m:Unexpected status: 404)`,
+		},
+		{
+			title:               "UpdateFailedDeployed",
+			mockServerResponses: []int{http.StatusNotFound, http.StatusOK},
+			replace:             false,
+			update:              true,
+			expectedOutput:      `(?m:Deployed.)`,
+		},
+	}
+	for _, tst := range deployProxyTests {
 		t.Run(tst.title, func(t *testing.T) {
 			runDeployProxyTest(t, tst)
 		})
