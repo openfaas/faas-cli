@@ -15,23 +15,13 @@ import (
 	"text/tabwriter"
 
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
 
 var storeAddress string
 
 const defaultStore = "https://cdn.rawgit.com/openfaas/store/master/store.json"
-
-type storeItem struct {
-	Title       string            `json:"title"`
-	Description string            `json:"description"`
-	Image       string            `json:"image"`
-	Name        string            `json:"name"`
-	Fprocess    string            `json:"fprocess"`
-	Network     string            `json:"network"`
-	RepoURL     string            `json:"repo_url"`
-	Environment map[string]string `json:"environment"`
-}
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
@@ -190,8 +180,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	)
 }
 
-func storeList(store string) ([]storeItem, error) {
-	var results []storeItem
+func storeList(store string) ([]schema.StoreItem, error) {
+	var results []schema.StoreItem
 
 	store = strings.TrimRight(store, "/")
 
@@ -232,8 +222,8 @@ func storeList(store string) ([]storeItem, error) {
 	return results, nil
 }
 
-func findFunction(functionName string, storeItems []storeItem) *storeItem {
-	var item storeItem
+func findFunction(functionName string, storeItems []schema.StoreItem) *schema.StoreItem {
+	var item schema.StoreItem
 
 	for _, item = range storeItems {
 		if item.Name == functionName || item.Title == functionName {
