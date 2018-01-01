@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -104,7 +105,8 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	var b bytes.Buffer
+	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
 
@@ -114,6 +116,7 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(w)
 	w.Flush()
+	b.WriteTo(os.Stdout)
 
 	return nil
 }
@@ -133,7 +136,8 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', 0)
+	var b bytes.Buffer
+	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tFUNCTION PROCESS\tREPO")
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
@@ -146,6 +150,7 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(w)
 	w.Flush()
+	b.WriteTo(os.Stdout)
 	return nil
 }
 
