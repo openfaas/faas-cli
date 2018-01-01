@@ -90,7 +90,7 @@ func Test_deploy(t *testing.T) {
 		faasCmd.Execute()
 	})
 
-	if found, err := regexp.MatchString(`(?m:Updated)`, stdOut); err != nil || !found {
+	if found, err := regexp.MatchString(`(?m:Deployed)`, stdOut); err != nil || !found {
 		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 

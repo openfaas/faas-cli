@@ -27,9 +27,14 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	constraints []string, update bool, secrets []string, labels map[string]string,
 	functionResourceRequest1 FunctionResourceRequest) {
 
+	if update {
+		fmt.Printf("Attempting to update function: %s\n", functionName)
+	}
+
 	statusCode := Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
 
 	if update == true && statusCode == http.StatusNotFound {
+		fmt.Println("\nFunction not found, attempting deployment.")
 		// Re-run the function with update=false
 		Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
 	}
@@ -127,9 +132,9 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		if update {
-			fmt.Println("Updated.")
+			fmt.Println("Deployed (updated)")
 		} else {
-			fmt.Println("Deployed.")
+			fmt.Println("Deployed")
 		}
 
 		deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)

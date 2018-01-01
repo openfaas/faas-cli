@@ -60,7 +60,7 @@ func Test_RunDeployProxyTests(t *testing.T) {
 			mockServerResponses: []int{http.StatusOK, http.StatusOK},
 			replace:             true,
 			update:              false,
-			expectedOutput:      `(?m:Deployed.)`,
+			expectedOutput:      `(?m:Deployed)`,
 		},
 		{
 			title:               "404_Deploy",
@@ -74,7 +74,7 @@ func Test_RunDeployProxyTests(t *testing.T) {
 			mockServerResponses: []int{http.StatusNotFound, http.StatusOK},
 			replace:             false,
 			update:              true,
-			expectedOutput:      `(?m:Deployed.)`,
+			expectedOutput:      `(?m:Deployed)`,
 		},
 	}
 	for _, tst := range deployProxyTests {
