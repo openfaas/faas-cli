@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -33,6 +34,9 @@ explicitly specifying a function name.`,
   faas-cli remove -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli remove url-ping
   faas-cli remove img2ansi --gateway==http://remote-site.com:8080`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("remove", "", analyticsCh)
+	},
 	RunE: runDelete,
 }
 

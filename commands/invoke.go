@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -36,6 +37,9 @@ var invokeCmd = &cobra.Command{
 	Example: `  faas-cli invoke echo --gateway https://domain:port
   faas-cli invoke echo --gateway https://domain:port --content-type application/json
   faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("invoke", "", analyticsCh)
+	},
 	RunE: runInvoke,
 }
 

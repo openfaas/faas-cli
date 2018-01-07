@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -31,6 +32,9 @@ var listCmd = &cobra.Command{
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
 	Example: `  faas-cli list
   faas-cli list --gateway https://localhost:8080 --verbose`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("list", "", analyticsCh)
+	},
 	RunE: runList,
 }
 

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/config"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +23,10 @@ var logoutCmd = &cobra.Command{
 	Short:   "Log out from OpenFaaS gateway",
 	Long:    "Log out from OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
 	Example: `  faas-cli logout --gateway https://openfaas.mydomain.com`,
-	RunE:    runLogout,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("logout", "", analyticsCh)
+	},
+	RunE: runLogout,
 }
 
 func runLogout(cmd *cobra.Command, args []string) error {

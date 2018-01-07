@@ -8,6 +8,7 @@ import (
 	"runtime"
 
 	"github.com/morikuni/aec"
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
@@ -33,6 +34,9 @@ This currently consists of the GitSHA from which the client was built.
 - https://github.com/openfaas/faas-cli/tree/%s`, version.GitCommit),
 	Example: `  faas-cli version
   faas-cli version --short-version`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("version", "", analyticsCh)
+	},
 	Run: runVersion,
 }
 

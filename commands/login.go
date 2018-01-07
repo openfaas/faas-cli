@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/config"
 	"github.com/spf13/cobra"
 )
@@ -37,6 +38,9 @@ var loginCmd = &cobra.Command{
 	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
 	Example: `  faas-cli login -u user -p password --gateway http://localhost:8080
   cat ~/faas_pass.txt | faas-cli login -u user --password-stdin --gateway https://openfaas.mydomain.com`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("login", "", analyticsCh)
+	},
 	RunE: runLogin,
 }
 

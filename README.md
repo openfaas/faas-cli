@@ -262,6 +262,9 @@ $ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
+## Analytics
+
+The `faas-cli` now gathers anonymous aggregate analytics on its use, for details on what and how data is gathered, along with how to opt-out read [analytics.md](analytics.md)
 
 ### FaaS-CLI Developers / Contributors
 

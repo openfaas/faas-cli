@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/spf13/cobra"
 )
 
@@ -56,7 +57,10 @@ Currently supported verbs: %v`, supportedVerbs)
 	Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
 	directory from the root of the repo, if it exists.`,
 	Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
-	Run:     runTemplatePull,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("template pull", "", analyticsCh)
+	},
+	Run: runTemplatePull,
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) {

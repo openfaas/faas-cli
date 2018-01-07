@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/openfaas/faas-cli/analytics"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -32,6 +33,9 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./samples.yml --parallel 4
   faas-cli push -f ./samples.yml --filter "*gif*"
   faas-cli push -f ./samples.yml --regex "fn[0-9]_.*"`,
+	PreRun: func(cmd *cobra.Command, args []string) {
+		analytics.Event("push", "", analyticsCh)
+	},
 	RunE: runPush,
 }
 
