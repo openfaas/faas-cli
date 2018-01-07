@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -105,6 +104,13 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
+	content := renderStoreItems(items)
+	fmt.Print(content)
+
+	return nil
+}
+
+func renderStoreItems(items []schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
@@ -116,9 +122,7 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(w)
 	w.Flush()
-	b.WriteTo(os.Stdout)
-
-	return nil
+	return b.String()
 }
 
 func runStoreInspect(cmd *cobra.Command, args []string) error {
@@ -136,6 +140,13 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
+	content := renderStoreItem(item)
+	fmt.Print(content)
+
+	return nil
+}
+
+func renderStoreItem(item *schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
@@ -150,8 +161,7 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 
 	fmt.Fprintln(w)
 	w.Flush()
-	b.WriteTo(os.Stdout)
-	return nil
+	return b.String()
 }
 
 func runStoreDeploy(cmd *cobra.Command, args []string) error {
