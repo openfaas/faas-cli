@@ -40,13 +40,13 @@ template
 In order to build functions using 3rd party templates, you need to add 3rd templates before the build step, with the following command:
 
 ```bash
-./faas-cli template pull https://github.com/itscaro/openfaas-template-php
+./faas-cli template pull https://github.com/itscaro/openfaas-template-php.git
 ```
 
 If you need to update the downloaded repository, just add the flag `--overwrite` to the download command:
 
 ```bash
-./faas-cli template pull https://github.com/itscaro/openfaas-template-php --override
+./faas-cli template pull https://github.com/itscaro/openfaas-template-php.git --override
 ```
 
 ## List locally available languages

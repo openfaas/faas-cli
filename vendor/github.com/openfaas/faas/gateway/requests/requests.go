@@ -5,6 +5,7 @@ package requests
 
 // CreateFunctionRequest create a function in the swarm.
 type CreateFunctionRequest struct {
+
 	// Service corresponds to a Docker Service
 	Service string `json:"service"`
 
@@ -48,30 +49,6 @@ type FunctionResources struct {
 	CPU    string `json:"cpu"`
 }
 
-// DeleteFunctionRequest delete a deployed function
-type DeleteFunctionRequest struct {
-	FunctionName string `json:"functionName"`
-}
-
-// PrometheusInnerAlertLabel PrometheusInnerAlertLabel
-type PrometheusInnerAlertLabel struct {
-	AlertName    string `json:"alertname"`
-	FunctionName string `json:"function_name"`
-}
-
-// PrometheusInnerAlert PrometheusInnerAlert
-type PrometheusInnerAlert struct {
-	Status string                    `json:"status"`
-	Labels PrometheusInnerAlertLabel `json:"labels"`
-}
-
-// PrometheusAlert as produced by AlertManager
-type PrometheusAlert struct {
-	Status   string                 `json:"status"`
-	Receiver string                 `json:"receiver"`
-	Alerts   []PrometheusInnerAlert `json:"alerts"`
-}
-
 // Function exported for system/functions endpoint
 type Function struct {
 	Name            string  `json:"name"`
@@ -90,4 +67,9 @@ type AsyncReport struct {
 	FunctionName string  `json:"name"`
 	StatusCode   int     `json:"statusCode"`
 	TimeTaken    float64 `json:"timeTaken"`
+}
+
+// DeleteFunctionRequest delete a deployed function
+type DeleteFunctionRequest struct {
+	FunctionName string `json:"functionName"`
 }

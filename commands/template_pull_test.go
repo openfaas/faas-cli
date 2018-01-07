@@ -4,10 +4,8 @@ package commands
 
 import (
 	"bytes"
-	"io/ioutil"
+	"fmt"
 	"log"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"regexp"
 	"strings"
@@ -15,130 +13,114 @@ import (
 )
 
 func Test_templatePull(t *testing.T) {
-	defer tearDown_fetch_templates(t)
+	localTemplateRepository := setupLocalTemplateRepo(t)
+	defer os.RemoveAll(localTemplateRepository)
 
-	ts := httpTestServer(t)
-	defer ts.Close()
+	t.Run("ValidRepo", func(t *testing.T) {
+		defer tearDownFetchTemplates(t)
 
-	repository = ts.URL + "/owner/repo"
-	faasCmd.SetArgs([]string{"template", "pull", repository})
-	faasCmd.Execute()
+		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
+		faasCmd.Execute()
 
-	// Verify created directories
-	if _, err := os.Stat("template"); err != nil {
-		t.Fatalf("The directory %s was not created", "template")
-	}
-}
+		// Verify created directories
+		if _, err := os.Stat("template"); err != nil {
+			t.Fatalf("The directory %s was not created", "template")
+		}
+	})
 
-func Test_templatePull_with_overwriting(t *testing.T) {
-	defer tearDown_fetch_templates(t)
+	t.Run("WithOverwriting", func(t *testing.T) {
+		defer tearDownFetchTemplates(t)
 
-	ts := httpTestServer(t)
-	defer ts.Close()
+		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
+		faasCmd.Execute()
 
-	repository = ts.URL + "/owner/repo"
-	faasCmd.SetArgs([]string{"template", "pull", repository})
-	faasCmd.Execute()
+		var buf bytes.Buffer
+		log.SetOutput(&buf)
 
-	var buf bytes.Buffer
-	log.SetOutput(&buf)
+		r := regexp.MustCompile(`(?m:Cannot overwrite the following \d+ template\(s\):)`)
 
-	r := regexp.MustCompile(`(?m:Cannot overwrite the following \d+ directories:)`)
+		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
+		faasCmd.Execute()
 
-	faasCmd.SetArgs([]string{"template", "pull", repository})
-	faasCmd.Execute()
-
-	if !r.MatchString(buf.String()) {
-		t.Fatal(buf.String())
-	}
-
-	buf.Reset()
-
-	faasCmd.SetArgs([]string{"template", "pull", repository, "--overwrite"})
-	faasCmd.Execute()
-
-	str := buf.String()
-	if r.MatchString(str) {
-		t.Fatal()
-	}
-
-	// Verify created directories
-	if _, err := os.Stat("template"); err != nil {
-		t.Fatalf("The directory %s was not created", "template")
-	}
-}
-
-func Test_templatePull_no_arg(t *testing.T) {
-	defer tearDown_fetch_templates(t)
-	var buf bytes.Buffer
-
-	faasCmd.SetArgs([]string{"template", "pull"})
-	faasCmd.SetOutput(&buf)
-	faasCmd.Execute()
-
-	if strings.Contains(buf.String(), "Error: A repository URL must be specified") {
-		t.Fatal("Output does not contain the required string")
-	}
-}
-
-func Test_templatePull_error_not_valid_url(t *testing.T) {
-	var buf bytes.Buffer
-
-	faasCmd.SetArgs([]string{"template", "pull", "git@github.com:openfaas/faas-cli.git"})
-	faasCmd.SetOutput(&buf)
-	err := faasCmd.Execute()
-
-	if !strings.Contains(err.Error(), "the repository URL must be in the format https://github.com/<owner>/<repository>") {
-		t.Fatalf("Output does not contain the required string '%s'", err.Error())
-	}
-}
-
-// httpTestServer returns a testing http server
-func httpTestServer(t *testing.T) *httptest.Server {
-	const sampleMasterZipPath string = "testdata/master_test.zip"
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
-		if _, err := os.Stat(sampleMasterZipPath); os.IsNotExist(err) {
-			t.Error(err)
+		if !r.MatchString(buf.String()) {
+			t.Fatal(buf.String())
 		}
 
-		fileData, err := ioutil.ReadFile(sampleMasterZipPath)
-		if err != nil {
-			t.Error(err)
+		buf.Reset()
+
+		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository, "--overwrite"})
+		faasCmd.Execute()
+
+		str := buf.String()
+		if r.MatchString(str) {
+			t.Fatal()
 		}
 
-		w.Write(fileData)
-	}))
+		// Verify created directories
+		if _, err := os.Stat("template"); err != nil {
+			t.Fatalf("The directory %s was not created", "template")
+		}
+	})
 
-	return ts
+	t.Run("InvalidUrlError", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		faasCmd.SetArgs([]string{"template", "pull", "user@host.xz:openfaas/faas-cli.git"})
+		faasCmd.SetOutput(&buf)
+		err := faasCmd.Execute()
+
+		if !strings.Contains(err.Error(), "The repository URL must be a valid git repo uri") {
+			t.Fatal("Output does not contain the required string", err.Error())
+		}
+	})
 }
 
-func Test_repositoryUrlRegExp(t *testing.T) {
-	var url string
-	r := regexp.MustCompile(repositoryRegexpGithub)
+func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 
-	url = "http://github.com/owner/repo"
-	if r.MatchString(url) {
-		t.Errorf("Url %s must start with https", url)
+	r := regexp.MustCompile(gitRemoteRepoRegex)
+	validURLs := []string{
+		"git://github.com/openfaas/faas.git#ff78lf9h",
+		"git://github.com/openfaas/faas.git#gh-pages",
+		"git://github.com/openfaas/faas.git#master",
+		"git://github.com/openfaas/faas.git#quick_fix",
+		"git://github.com/openfaas/faas.git#v0.1.0",
+		"git://host.xz/path/to/repo.git/",
+		"git@192.168.101.127:user/project.git",
+		"git@github.com:user/project.git",
+		"http://192.168.101.127/user/project.git",
+		"http://github.com/user/project.git",
+		"http://host.xz/path/to/repo.git/",
+		"https://192.168.101.127/user/project.git",
+		"https://github.com/user/project.git",
+		"https://host.xz/path/to/repo.git/",
+		"https://username:password@github.com/username/repository.git",
+		"ssh://user@host.xz/path/to/repo.git/",
+		"ssh://user@host.xz:port/path/to/repo.git/",
 	}
 
-	url = "https://github.com/owner/repo.git"
-	if r.MatchString(url) {
-		t.Errorf("Url %s must not end with .git or must start with https", url)
+	for _, url := range validURLs {
+		t.Run(fmt.Sprintf("%s is a valid remote git url", url), func(t *testing.T) {
+			if !r.MatchString(url) {
+				t.Errorf("Url %s should pass the regex match", url)
+			}
+
+		})
 	}
 
-	url = "https://github.com/owner/repo//"
-	if r.MatchString(url) {
-		t.Errorf("Url %s must end with no or one slash", url)
+	invalidURLs := []string{
+		"file:///path/to/repo.git/",
+		"host.xz:/path/to/repo.git",
+		"host.xz:path/to/repo.git",
+		"user@host.xz:path/to/repo.git",
+		"path/to/repo.git/",
+		"~/path/to/repo.git",
 	}
+	for _, url := range invalidURLs {
+		t.Run(fmt.Sprintf("%s is not a valid remote git url", url), func(t *testing.T) {
+			if r.MatchString(url) {
+				t.Errorf("Url %s should fail the regex match", url)
+			}
 
-	url = "https://github.com/owner/repo"
-	if !r.MatchString(url) {
-		t.Errorf("Url %s must be valid", url)
-	}
-
-	url = "https://github.com/owner/repo/"
-	if !r.MatchString(url) {
-		t.Errorf("Url %s must be valid", url)
+		})
 	}
 }

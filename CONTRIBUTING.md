@@ -61,7 +61,7 @@ This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM
 * Get the vendoring tool called `vndr`
 
 ```
-$ go install github.com/LK4D4/vndr
+$ go get github.com/LK4D4/vndr
 ```
 
 Use the tool if you add new dependencies or want to update the existing ones.
