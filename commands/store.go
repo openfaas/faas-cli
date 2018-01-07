@@ -19,17 +19,27 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var storeAddress string
+var (
+	storeAddress       string
+	verboseDescription bool
+)
 
-const defaultStore = "https://cdn.rawgit.com/openfaas/store/master/store.json"
+const (
+	defaultStore      = "https://cdn.rawgit.com/openfaas/store/master/store.json"
+	maxDescriptionLen = 40
+)
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	storeListCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
-	storeInspectCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
 	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	storeDeployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	storeDeployCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
+
+	// Setup flags used by store command
+	storeListCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
+	storeInspectCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
+	storeListCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
+	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
 
 	// Setup flags that are used only by deploy command (variables defined above)
 	storeDeployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
@@ -117,12 +127,20 @@ func renderStoreItems(items []schema.StoreItem) string {
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
 
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\n", item.Title, item.Description)
+		fmt.Fprintf(w, "%s\t%s\n", item.Title, renderDescription(item.Description))
 	}
 
 	fmt.Fprintln(w)
 	w.Flush()
 	return b.String()
+}
+
+func renderDescription(descr string) string {
+	if !verboseDescription && len(descr) > maxDescriptionLen {
+		return descr[0:maxDescriptionLen-3] + "..."
+	}
+
+	return descr
 }
 
 func runStoreInspect(cmd *cobra.Command, args []string) error {
@@ -150,10 +168,10 @@ func renderStoreItem(item *schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tFUNCTION PROCESS\tREPO")
+	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tPROCESS\tREPO")
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 		item.Title,
-		item.Description,
+		renderDescription(item.Description),
 		item.Image,
 		item.Fprocess,
 		item.RepoURL,
