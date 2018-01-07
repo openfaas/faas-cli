@@ -11,8 +11,7 @@ import (
 )
 
 const (
-	repositoryRegexpMockedServer = `^http://127.0.0.1:\d+/([a-z0-9-]+)/([a-z0-9-]+)$`
-	repositoryRegexpGithub       = `^https://github.com/([a-z0-9-]+)/([a-z0-9-]+)/?$`
+	gitRemoteRepoRegex = `(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)(\/?|\#[-\d\w._]+?)$`
 )
 
 var (
@@ -44,10 +43,15 @@ Currently supported verbs: %v`, supportedVerbs)
 		}
 
 		if len(args) > 1 {
-			var validURL = regexp.MustCompile(repositoryRegexpGithub + "|" + repositoryRegexpMockedServer)
 
+			// assume it is a local repo
+			if _, err := os.Stat(args[1]); err == nil {
+				return nil
+			}
+
+			var validURL = regexp.MustCompile(gitRemoteRepoRegex)
 			if !validURL.MatchString(args[1]) {
-				return fmt.Errorf("the repository URL must be in the format https://github.com/<owner>/<repository>")
+				return fmt.Errorf("The repository URL must be a valid git repo uri")
 			}
 		}
 		return nil

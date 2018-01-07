@@ -3,58 +3,53 @@
 package commands
 
 import (
-	"net/http"
-	"net/http/httptest"
+	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/openfaas/faas-cli/vcs"
 )
 
 func Test_PullTemplates(t *testing.T) {
-	defer tearDown_fetch_templates(t)
+	localTemplateRepository := setupLocalTemplateRepo(t)
+	defer os.RemoveAll(localTemplateRepository)
+	defer tearDownFetchTemplates(t)
 
-	// Create fake server for testing.
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "testdata/master_test.zip")
-	}))
-	defer ts.Close()
-
-	err := PullTemplates(ts.URL)
-	if err != nil {
-		t.Error(err)
-	}
-
-	tearDown_fetch_templates(t)
-}
-
-func Test_fetchTemplates(t *testing.T) {
-	defer tearDown_fetch_templates(t)
-
-	// Create fake server for testing.
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "testdata/master_test.zip")
-	}))
-	defer ts.Close()
-
-	err := fetchTemplates(ts.URL+"/owner/repo", false)
-	if err != nil {
-		t.Error(err)
-	}
-
-	tearDown_fetch_templates(t)
-}
-
-// tearDown_fetch_templates_test cleans all files and directories created by the test
-func tearDown_fetch_templates(t *testing.T) {
-
-	// Remove existing archive file if it exists
-	if _, err := os.Stat("template-owner-repo.zip"); err == nil {
-		t.Log("The archive was not deleted")
-
-		err := os.Remove("template-owner-repo.zip")
-		if err != nil {
-			t.Log(err)
+	t.Run("simplePull", func(t *testing.T) {
+		defer tearDownFetchTemplates(t)
+		if err := PullTemplates(localTemplateRepository); err != nil {
+			t.Error(err)
 		}
+	})
+
+	t.Run("fetchTemplates", func(t *testing.T) {
+		defer tearDownFetchTemplates(t)
+
+		err := fetchTemplates(localTemplateRepository, false)
+		if err != nil {
+			t.Error(err)
+		}
+
+	})
+}
+
+// setupLocalTemplateRepo will create a local copy of the core OpenFaaS templates, this
+// can be refered to as a local git repository.
+func setupLocalTemplateRepo(t *testing.T) string {
+	dir, err := ioutil.TempDir("", "openFaasTestTemplates")
+	if err != nil {
+		t.Error(err)
 	}
+
+	if err := vcs.Git.Create(dir, defaultTemplateRepository); err != nil {
+		t.Error(err)
+	}
+
+	return dir
+}
+
+// tearDownFetchTemplates cleans all files and directories created by the test
+func tearDownFetchTemplates(t *testing.T) {
 
 	// Remove existing templates folder, if it exist
 	if _, err := os.Stat("template/"); err == nil {
@@ -66,11 +61,5 @@ func tearDown_fetch_templates(t *testing.T) {
 		}
 	} else {
 		t.Logf("Directory template was not created: %s", err)
-	}
-
-	// Verify the downloaded archive
-	archive := "template-owner-repo.zip"
-	if _, err := os.Stat(archive); err == nil {
-		t.Fatalf("The archive %s was not deleted", archive)
 	}
 }

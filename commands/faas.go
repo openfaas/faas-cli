@@ -33,6 +33,7 @@ var (
 	handler      string
 	image        string
 	language     string
+	debug        bool
 )
 
 var stat = func(filename string) (os.FileInfo, error) {
@@ -50,6 +51,7 @@ func init() {
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
 	faasCmd.PersistentFlags().StringVarP(&filter, "filter", "", "", "Wildcard to match with function names in YAML file")
+	faasCmd.PersistentFlags().BoolVar(&debug, "debug", false, "Enable debug output")
 
 	// Set Bash completion options
 	validYAMLFilenames := []string{"yaml", "yml"}
@@ -91,4 +93,10 @@ Manage your OpenFaaS functions from the command line`,
 func runFaas(cmd *cobra.Command, args []string) {
 	fmt.Printf(figletStr)
 	cmd.Help()
+}
+
+func debugPrint(message string) {
+	if debug {
+		fmt.Println(message)
+	}
 }
