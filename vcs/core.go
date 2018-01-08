@@ -142,13 +142,12 @@ func envForDir(dir string, base []string) []string {
 func mergeEnvLists(in, out []string) []string {
 	out = append([]string(nil), out...)
 
-NextVar:
 	for _, inkv := range in {
 		k := strings.SplitAfterN(inkv, "=", 2)[0]
 		for i, outkv := range out {
 			if strings.HasPrefix(outkv, k) {
 				out[i] = inkv
-				continue NextVar
+				continue
 			}
 		}
 		out = append(out, inkv)

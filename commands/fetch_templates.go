@@ -94,10 +94,9 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 		return nil, nil, fmt.Errorf("can't find templates in: %s", repoPath)
 	}
 
-TEMPLATES:
 	for _, file := range templates {
 		if !file.IsDir() {
-			continue TEMPLATES
+			continue
 		}
 		language := file.Name()
 
@@ -110,7 +109,7 @@ TEMPLATES:
 			copy(languageSrc, languageDest, file)
 		} else {
 			existingLanguages = append(existingLanguages, language)
-			continue TEMPLATES
+			continue
 		}
 	}
 
