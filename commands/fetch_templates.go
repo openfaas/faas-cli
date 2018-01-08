@@ -29,12 +29,12 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if !debug {
+	if !pullDebug {
 		defer os.RemoveAll(dir) // clean up
 	}
 
 	log.Printf("Attempting to expand templates from %s\n", templateURL)
-	debugPrint(fmt.Sprintf("Temp files in %s", dir))
+	pullDebugPrint(fmt.Sprintf("Temp files in %s", dir))
 	if err := vcs.Git.Create(dir, templateURL); err != nil {
 		return err
 	}

@@ -17,12 +17,14 @@ const (
 var (
 	repository string
 	overwrite  bool
+	pullDebug  bool
 )
 
 var supportedVerbs = [...]string{"pull"}
 
 func init() {
 	templatePullCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
+	templatePullCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
 
 	faasCmd.AddCommand(templatePullCmd)
 }
@@ -74,5 +76,11 @@ func runTemplatePull(cmd *cobra.Command, args []string) {
 		fmt.Println(err)
 
 		os.Exit(1)
+	}
+}
+
+func pullDebugPrint(message string) {
+	if pullDebug {
+		fmt.Println(message)
 	}
 }
