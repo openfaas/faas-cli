@@ -27,7 +27,7 @@ type Function struct {
 	Environment map[string]string `yaml:"environment"`
 
 	// Secrets list of secrets to be made available to function
-	Secrets []string `json:"secrets"`
+	Secrets []string `yaml:"secrets"`
 
 	SkipBuild bool `yaml:"skip_build"`
 
@@ -40,16 +40,16 @@ type Function struct {
 	Labels *map[string]string `yaml:"labels"`
 
 	// Limits for function
-	Limits *FunctionResources `json:"limits"`
+	Limits *FunctionResources `yaml:"limits"`
 
 	// Requests of resources requested by function
-	Requests *FunctionResources `json:"requests"`
+	Requests *FunctionResources `yaml:"requests"`
 }
 
 // FunctionResources Memory and CPU
 type FunctionResources struct {
-	Memory string `json:"memory"`
-	CPU    string `json:"cpu"`
+	Memory string `yaml:"memory"`
+	CPU    string `yaml:"cpu"`
 }
 
 // EnvironmentFile represents external file for environment data

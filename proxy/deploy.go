@@ -16,16 +16,36 @@ import (
 	"github.com/openfaas/faas/gateway/requests"
 )
 
+// FunctionResourceRequest defines a request to set function resources
 type FunctionResourceRequest struct {
 	Limits   *stack.FunctionResources
 	Requests *stack.FunctionResources
 }
 
-// DeployFunction call FaaS server to deploy a new function
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	language string, replace bool, envVars map[string]string, network string,
-	constraints []string, update bool, secrets []string, labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
+	constraints []string, update bool, secrets []string, labels map[string]string,
+	functionResourceRequest1 FunctionResourceRequest) {
 
+	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
+	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
+
+	if update == true && statusCode == http.StatusNotFound {
+		// Re-run the function with update=false
+		_, deployOutput = Deploy(fprocess, gateway, functionName, image, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
+	} else if statusCode == http.StatusOK {
+		fmt.Println(rollingUpdateInfo)
+	}
+	fmt.Println()
+	fmt.Println(deployOutput)
+}
+
+func Deploy(fprocess string, gateway string, functionName string, image string,
+	language string, replace bool, envVars map[string]string, network string,
+	constraints []string, update bool, secrets []string, labels map[string]string,
+	functionResourceRequest1 FunctionResourceRequest) (int, string) {
+
+	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
 	if len(fprocess) > 0 {
@@ -49,16 +69,33 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 		Labels:      &labels,
 	}
 
+	hasLimits := false
+	req.Limits = &requests.FunctionResources{}
 	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
-		req.Limits = &requests.FunctionResources{
-			Memory: functionResourceRequest1.Limits.Memory,
-		}
+		hasLimits = true
+		req.Limits.Memory = functionResourceRequest1.Limits.Memory
+	}
+	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.CPU) > 0 {
+		hasLimits = true
+		req.Limits.CPU = functionResourceRequest1.Limits.CPU
+	}
+	if !hasLimits {
+		req.Limits = nil
 	}
 
+	hasRequests := false
+	req.Requests = &requests.FunctionResources{}
 	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
-		req.Requests = &requests.FunctionResources{
-			Memory: functionResourceRequest1.Requests.Memory,
-		}
+		hasRequests = true
+		req.Requests.Memory = functionResourceRequest1.Requests.Memory
+	}
+	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.CPU) > 0 {
+		hasRequests = true
+		req.Requests.CPU = functionResourceRequest1.Requests.CPU
+	}
+
+	if !hasRequests {
+		req.Requests = nil
 	}
 
 	reqBytes, _ := json.Marshal(&req)
@@ -78,15 +115,15 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	request, err = http.NewRequest(method, gateway+"/system/functions", reader)
 	SetAuth(request, gateway)
 	if err != nil {
-		fmt.Println(err)
-		return
+		deployOutput += fmt.Sprintln(err)
+		return http.StatusInternalServerError, deployOutput
 	}
 
 	res, err := client.Do(request)
 	if err != nil {
-		fmt.Println("Is FaaS deployed? Do you need to specify the --gateway flag?")
-		fmt.Println(err)
-		return
+		deployOutput += fmt.Sprintln("Is FaaS deployed? Do you need to specify the --gateway flag?")
+		deployOutput += fmt.Sprintln(err)
+		return http.StatusInternalServerError, deployOutput
 	}
 
 	if res.Body != nil {
@@ -95,22 +132,24 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
-		if update {
-			fmt.Println("Updated.")
-		} else {
-			fmt.Println("Deployed.")
-		}
+		deployOutput += fmt.Sprintf("Deployed. %s.\n", res.Status)
 
-		deployedURL := fmt.Sprintf("URL: %s/function/%s\n", gateway, functionName)
-		fmt.Println(deployedURL)
+		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, functionName)
+		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
-		fmt.Println("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		/*
+			case http.StatusNotFound:
+				if replace && !update {
+					deployOutput += fmt.Sprintln("Could not delete-and-replace function because it is not found (404)")
+				}
+		*/
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			fmt.Printf("Unexpected status: %d, message: %s\n", res.StatusCode, string(bytesOut))
+			deployOutput += fmt.Sprintf("Unexpected status: %d, message: %s\n", res.StatusCode, string(bytesOut))
 		}
 	}
 
-	fmt.Println(res.Status)
+	return res.StatusCode, deployOutput
 }

@@ -42,8 +42,8 @@ func init() {
 
 	deployCmd.Flags().StringArrayVarP(&labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
 
-	deployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
-	deployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
+	deployCmd.Flags().BoolVar(&replace, "replace", false, "Replace any existing function")
+	deployCmd.Flags().BoolVar(&update, "update", true, "Update existing functions")
 
 	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
@@ -82,8 +82,8 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./samples.yml --label canary=true
   faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
   faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli deploy -f ./samples.yml --replace=false
-  faas-cli deploy -f ./samples.yml --update=true
+  faas-cli deploy -f ./samples.yml --replace=false --update=true
+  faas-cli deploy -f ./samples.yml --replace=true --update=false
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -137,11 +137,7 @@ func RunDeploy(
 		for k, function := range services.Functions {
 
 			function.Name = k
-			if update {
-				fmt.Printf("Updating: %s.\n", function.Name)
-			} else {
-				fmt.Printf("Deploying: %s.\n", function.Name)
-			}
+			fmt.Printf("Deploying: %s.\n", function.Name)
 
 			var functionConstraints []string
 			if function.Constraints != nil {

@@ -17,13 +17,21 @@ Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
 ### Get started: Install the CLI
 
-The easiest way to install the faas-cli is through a curl script or `brew`:
+You can install the CLI with a `curl` utility script, `brew` or by downloading the binary from the releases page. Once installed you'll get the `faas-cli` command and `faas` alias.
+
+Utility script with `curl`:
 
 ```
 $ curl -sSL https://cli.openfaas.com | sudo sh
 ```
 
-or
+Non-root with curl (requires further actions as advised after downloading):
+
+```
+$ curl -sSL https://cli.openfaas.com | sh
+```
+
+Via brew:
 
 ```
 $ brew install faas-cli

@@ -73,12 +73,7 @@ func Test_getGatewayURL(t *testing.T) {
 func Test_deploy(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
 		{
-			Method:             http.MethodDelete,
-			Uri:                "/system/functions",
-			ResponseStatusCode: http.StatusOK,
-		},
-		{
-			Method:             http.MethodPost,
+			Method:             http.MethodPut,
 			Uri:                "/system/functions",
 			ResponseStatusCode: http.StatusOK,
 		},
