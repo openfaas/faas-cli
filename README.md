@@ -53,6 +53,7 @@ The easiest way to install the faas-cli is through `scoop`:
 ```
 scoop install faas-cli
 ```
+
 Note: The `scoop` release may not run the latest minor release but is updated regularly.
 
 #### Build from source
