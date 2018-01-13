@@ -5,7 +5,6 @@ package builder
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -77,81 +76,12 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	}
 
 	// Drop in directory tree from template
-	CopyFiles("./template/"+language, tempPath, true)
+	CopyFiles("./template/"+language, tempPath)
 
 	// Overlay in user-function
-	CopyFiles(handler, tempPath+"function/", true)
+	CopyFiles(handler, tempPath+"function/")
 
 	return tempPath
-}
-
-// CopyFiles copies files from src to destination, optionally recursively.
-func CopyFiles(src string, destination string, recursive bool) {
-
-	files, err := ioutil.ReadDir(src)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, file := range files {
-
-		if file.IsDir() == false {
-
-			cp(src+"/"+file.Name(), destination+file.Name())
-
-		} else {
-			//make new destination dir
-			newDir := destination + file.Name() + "/"
-
-			if !pathExists(newDir) {
-
-				debugPrint(fmt.Sprintf("Creating directory: %s at %s", file.Name(), newDir))
-				newDirErr := os.Mkdir(newDir, 0700)
-
-				if newDirErr != nil {
-					fmt.Printf("Error creating path %s - %s.\n", newDir, newDirErr.Error())
-				}
-			}
-
-			//did the call ask to recurse into sub directories?
-			if recursive == true {
-				//call CopyFiles to copy the contents
-				CopyFiles(src+"/"+file.Name(), newDir, true)
-			}
-		}
-	}
-}
-
-func pathExists(path string) bool {
-	exists := true
-
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		exists = false
-	}
-
-	return exists
-}
-
-func cp(src string, destination string) error {
-
-	debugPrint(fmt.Sprintf("cp - %s %s", src, destination))
-
-	memoryBuffer, readErr := ioutil.ReadFile(src)
-	if readErr != nil {
-		return fmt.Errorf("Error reading source file: %s\n" + readErr.Error())
-	}
-
-	srcInfo, infoErr := os.Stat(src)
-	if infoErr != nil {
-		return fmt.Errorf("Error reading source file mode: %s\n" + infoErr.Error())
-	}
-
-	writeErr := ioutil.WriteFile(destination, memoryBuffer, srcInfo.Mode())
-	if writeErr != nil {
-		return fmt.Errorf("Error writing file: %s\n" + writeErr.Error())
-	}
-
-	return nil
 }
 
 func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy string) string {
@@ -174,11 +104,4 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 	}
 
 	return buildFlags
-}
-
-func debugPrint(message string) {
-
-	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
-		fmt.Println(message)
-	}
 }

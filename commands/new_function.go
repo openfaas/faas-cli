@@ -101,7 +101,7 @@ the "Dockerfile" lang type in your YAML file.
 
 	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
 	if strings.ToLower(lang) != "dockerfile" {
-		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/", true)
+		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/")
 	} else {
 		ioutil.WriteFile("./"+functionName+"/Dockerfile", []byte(`FROM alpine:3.6
 # Use any image as your base image, or "scratch"

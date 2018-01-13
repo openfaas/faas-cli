@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openfaas/faas-cli/vcs"
+	"github.com/openfaas/faas-cli/versioncontrol"
 )
 
 func Test_PullTemplates(t *testing.T) {
@@ -41,7 +41,11 @@ func setupLocalTemplateRepo(t *testing.T) string {
 		t.Error(err)
 	}
 
-	if err := vcs.Git.Create(dir, defaultTemplateRepository); err != nil {
+	args := map[string]string{
+		"dir":  dir,
+		"repo": defaultTemplateRepository,
+	}
+	if err := versioncontrol.GitClone.Invoke(args); err != nil {
 		t.Error(err)
 	}
 

@@ -1,6 +1,3 @@
-// Copyright (c) OpenFaaS Project 2017. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
 package builder
 
 import (
@@ -31,7 +28,7 @@ func Test_CopyFiles(t *testing.T) {
 		}
 		defer os.RemoveAll(destDir)
 
-		CopyFiles(srcDir, destDir+"/", true)
+		CopyFiles(srcDir, destDir+"/")
 		err := checkDestinationFiles(destDir, 2, mode)
 		if err != nil {
 			t.Fatalf("Destination file mode differs from source file mode\n%v", err)
