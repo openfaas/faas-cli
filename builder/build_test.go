@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -53,11 +54,11 @@ func compareDirs(srcDir string, destDir string, t *testing.T) {
 	} else {
 		// Verify if all files from src are copied to dest
 		for _, sF := range srcFiles {
-			if dF, err := os.Stat(destDir + "/" + sF.Name()); err != nil {
+			if dF, err := os.Stat(filepath.Join(destDir, sF.Name())); err != nil {
 				t.Error(err)
 			} else {
 				if sF.IsDir() {
-					compareDirs(srcDir+"/"+sF.Name(), destDir+"/"+sF.Name(), t)
+					compareDirs(filepath.Join(srcDir, sF.Name()), filepath.Join(destDir, sF.Name()), t)
 				} else if !sF.IsDir() && !dF.IsDir() && sF.Size() != dF.Size() {
 					t.Errorf("Size of %s (source) does not match %s's (destination)", sF.Name(), dF.Name())
 				}
@@ -68,10 +69,7 @@ func compareDirs(srcDir string, destDir string, t *testing.T) {
 
 func setupSourceFolder(tmpDir string, numberOfFiles int, subdirLevel int) (string, error) {
 	aModes := []int{
-		0600,
-		0640,
 		0644,
-		0700,
 		0755,
 	}
 	data := []byte("open faas")
@@ -84,7 +82,7 @@ func setupSourceFolder(tmpDir string, numberOfFiles int, subdirLevel int) (strin
 
 	// create n files inside the created folder
 	for i := 1; i <= numberOfFiles; i++ {
-		srcFile := fmt.Sprintf("%s/test-file-%d", srcDir, i)
+		srcFile := filepath.Join(srcDir, fmt.Sprintf("test-file-%d", i))
 		// create files in different modes
 		fileErr := ioutil.WriteFile(srcFile, data, os.FileMode(aModes[i%len(aModes)]))
 		if fileErr != nil {

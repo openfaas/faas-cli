@@ -9,15 +9,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
 func Test_cp(t *testing.T) {
 	aModes := []int{
-		0600,
-		0640,
 		0644,
-		0700,
 		0755,
 	}
 
@@ -38,8 +36,8 @@ func Test_cp(t *testing.T) {
 			defer os.RemoveAll(destDir)
 
 			fileName := fmt.Sprintf("mode_%s", os.FileMode(m).String())
-			srcFilePath := srcDir + "/" + fileName
-			destFilePath := destDir + "/" + fileName
+			srcFilePath := filepath.Join(srcDir, fileName)
+			destFilePath := filepath.Join(destDir, fileName)
 
 			if fileErr := ioutil.WriteFile(srcFilePath, data, os.FileMode(m)); fileErr != nil {
 				t.Errorf("Cannot create file: %s", fileErr)
