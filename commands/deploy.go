@@ -17,15 +17,16 @@ import (
 )
 
 // Flags that are to be added to commands.
-
-var (
+type DeployFlags struct {
 	envvarOpts  []string
 	replace     bool
 	update      bool
 	constraints []string
 	secrets     []string
 	labelOpts   []string
-)
+}
+
+var deployFlags DeployFlags
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
@@ -38,15 +39,15 @@ func init() {
 	deployCmd.Flags().StringVar(&network, "network", defaultNetwork, "Name of the network")
 
 	// Setup flags that are used only by this command (variables defined above)
-	deployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
+	deployCmd.Flags().StringArrayVarP(&deployFlags.envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
 
-	deployCmd.Flags().StringArrayVarP(&labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
+	deployCmd.Flags().StringArrayVarP(&deployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
 
-	deployCmd.Flags().BoolVar(&replace, "replace", false, "Replace any existing function")
-	deployCmd.Flags().BoolVar(&update, "update", true, "Update existing functions")
+	deployCmd.Flags().BoolVar(&deployFlags.replace, "replace", false, "Replace any existing function")
+	deployCmd.Flags().BoolVar(&deployFlags.update, "update", true, "Update existing functions")
 
-	deployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
-	deployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
+	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
+	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -92,7 +93,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return RunDeploy(args, image, fprocess, functionName, envvarOpts)
+	return RunDeploy(args, image, fprocess, functionName, deployFlags)
 }
 
 func RunDeploy(
@@ -100,10 +101,10 @@ func RunDeploy(
 	image string,
 	fprocess string,
 	functionName string,
-	envvarOpts []string,
+	deployFlags DeployFlags,
 ) error {
 
-	if update && replace {
+	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
@@ -142,12 +143,12 @@ func RunDeploy(
 			var functionConstraints []string
 			if function.Constraints != nil {
 				functionConstraints = *function.Constraints
-			} else if len(constraints) > 0 {
-				functionConstraints = constraints
+			} else if len(deployFlags.constraints) > 0 {
+				functionConstraints = deployFlags.constraints
 			}
 
 			if len(function.Secrets) > 0 {
-				secrets = mergeSlice(function.Secrets, secrets)
+				deployFlags.secrets = mergeSlice(function.Secrets, deployFlags.secrets)
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -160,14 +161,14 @@ func RunDeploy(
 				labelMap = *function.Labels
 			}
 
-			labelArgumentMap, labelErr := parseMap(labelOpts, "label")
+			labelArgumentMap, labelErr := parseMap(deployFlags.labelOpts, "label")
 			if labelErr != nil {
 				return fmt.Errorf("error parsing labels: %v", labelErr)
 			}
 
 			allLabels := mergeMap(labelMap, labelArgumentMap)
 
-			allEnvironment, envErr := compileEnvironment(envvarOpts, function.Environment, fileEnvironment)
+			allEnvironment, envErr := compileEnvironment(deployFlags.envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
 				return envErr
 			}
@@ -186,7 +187,7 @@ func RunDeploy(
 				Requests: function.Requests,
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, replace, allEnvironment, services.Provider.Network, functionConstraints, update, secrets, allLabels, functionResourceRequest1)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
 		}
 	} else {
 		if len(image) == 0 {
@@ -196,18 +197,17 @@ func RunDeploy(
 			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
-		envvars, err := parseMap(envvarOpts, "env")
+		envvars, err := parseMap(deployFlags.envvarOpts, "env")
 		if err != nil {
 			return fmt.Errorf("error parsing envvars: %v", err)
 		}
 
-		labelMap, labelErr := parseMap(labelOpts, "label")
+		labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
 		if labelErr != nil {
 			return fmt.Errorf("error parsing labels: %v", labelErr)
 		}
 		functionResourceRequest1 := proxy.FunctionResourceRequest{}
-
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, replace, envvars, network, constraints, update, secrets, labelMap, functionResourceRequest1)
+		proxy.DeployFunction(fprocess, gateway, functionName, image, language, deployFlags.replace, envvars, network, deployFlags.constraints, deployFlags.update, deployFlags.secrets, labelMap, functionResourceRequest1)
 	}
 
 	return nil
