@@ -22,6 +22,7 @@ import (
 var (
 	storeAddress       string
 	verboseDescription bool
+	storeDeployFlags   DeployFlags
 )
 
 const (
@@ -31,9 +32,8 @@ const (
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	storeDeployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
-	storeDeployCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
+	storeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	storeCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 
 	// Setup flags used by store command
 	storeListCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
@@ -42,12 +42,12 @@ func init() {
 	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
 
 	// Setup flags that are used only by deploy command (variables defined above)
-	storeDeployCmd.Flags().StringArrayVarP(&envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
-	storeDeployCmd.Flags().StringArrayVarP(&labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
-	storeDeployCmd.Flags().BoolVar(&replace, "replace", true, "Replace any existing function")
-	storeDeployCmd.Flags().BoolVar(&update, "update", false, "Update existing functions")
-	storeDeployCmd.Flags().StringArrayVar(&constraints, "constraint", []string{}, "Apply a constraint to the function")
-	storeDeployCmd.Flags().StringArrayVar(&secrets, "secret", []string{}, "Give the function access to a secure secret")
+	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.envvarOpts, "env", "e", []string{}, "Adds one or more environment variables to the defined ones by store (ENVVAR=VALUE)")
+	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
+	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.replace, "replace", false, "Replace any existing function")
+	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.update, "update", true, "Update existing functions")
+	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
+	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -82,13 +82,12 @@ var storeInspectCmd = &cobra.Command{
 
 var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
-							[--lang <ruby|python|node|csharp>]
 							[--gateway GATEWAY_URL]
 							[--handler HANDLER_DIR]
 							[--env ENVVAR=VALUE ...]
 							[--label LABEL=VALUE ...]
 							[--replace=false]
-							[--update=false]
+							[--update=true]
 							[--constraint PLACEMENT_CONSTRAINT ...]
 							[--regex "REGEX"]
 							[--filter "WILDCARD"]
@@ -200,7 +199,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	// Add the store environement variables to the provided ones from cmd
 	if item.Environment != nil {
 		for _, env := range item.Environment {
-			envvarOpts = append(envvarOpts, env)
+			storeDeployFlags.envvarOpts = append(storeDeployFlags.envvarOpts, env)
 		}
 	}
 
@@ -209,7 +208,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		item.Image,
 		item.Fprocess,
 		item.Name,
-		envvarOpts,
+		storeDeployFlags,
 	)
 }
 
