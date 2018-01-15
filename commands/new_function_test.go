@@ -21,6 +21,7 @@ const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
 const ListOptionOutput = `Languages available as templates:
 - csharp
+- fsharp
 - go
 - go-armhf
 - node

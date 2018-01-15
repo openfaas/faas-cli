@@ -49,7 +49,7 @@ var buildCmd = &cobra.Command{
   faas-cli build --image IMAGE_NAME
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
-                 [--lang <ruby|python|python3|node|csharp|Dockerfile>]
+                 [--lang <ruby|python|python3|node|csharp|fsharp|Dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
 				 [--filter "WILDCARD"]
@@ -62,7 +62,7 @@ via flags.`,
   faas-cli build -f ./samples.yml --no-cache
   faas-cli build -f ./samples.yml --filter "*gif*"
   faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
+  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
                  --name=my_fn --squash`,
 	RunE: runBuild,
 }
