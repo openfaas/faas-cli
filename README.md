@@ -7,7 +7,7 @@ This is a CLI for use with [OpenFaaS](https://github.com/openfaas/faas) - a serv
 
 > Before using this tool please setup OpenFaaS by following instructions over on the main repo.
 
-The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/openfaas/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
+The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/openfaas/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp, FSharp, and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
 Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
@@ -68,7 +68,7 @@ You can chose between using a [programming language template](https://github.com
 
 Command: `faas-cli new FUNCTION_NAME --lang python/node/go/ruby/Dockerfile/etc`
 
-In your YAML you can also specify `lang: node/python/go/csharp/ruby`
+In your YAML you can also specify `lang: node/python/go/csharp/fsharp/ruby`
 
 * Supports common languages
 * Quick and easy - just write one file

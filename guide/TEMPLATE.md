@@ -12,6 +12,9 @@ template
 ├── csharp
 │   ├── Dockerfile
 │   └── template.yml
+├── fsharp
+│   ├── Dockerfile
+│   └── template.yml
 ├── node
 │   ├── Dockerfile
 │   └── template.yml

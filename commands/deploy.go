@@ -59,7 +59,7 @@ var deployCmd = &cobra.Command{
 	Use: `deploy -f YAML_FILE [--replace=false]
   faas-cli deploy --image IMAGE_NAME
                   --name FUNCTION_NAME
-                  [--lang <ruby|python|node|csharp>]
+                  [--lang <ruby|python|node|csharp|fsharp>]
                   [--gateway GATEWAY_URL]
                   [--network NETWORK_NAME]
                   [--handler HANDLER_DIR]
