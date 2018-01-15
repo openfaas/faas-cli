@@ -69,7 +69,7 @@ func checkDestinationFiles(dir string, numberOfFiles, mode int) error {
 			return err
 		}
 		if fileStat.Mode() != os.FileMode(mode) {
-			return errors.New("Expected mode did not match")
+			return errors.New("expected mode did not match")
 		}
 	}
 

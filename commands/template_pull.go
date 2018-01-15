@@ -47,7 +47,7 @@ Currently supported verbs: %v`, supportedVerbs)
 			var validURL = regexp.MustCompile(repositoryRegexpGithub + "|" + repositoryRegexpMockedServer)
 
 			if !validURL.MatchString(args[1]) {
-				return fmt.Errorf("The repository URL must be in the format https://github.com/<owner>/<repository>")
+				return fmt.Errorf("the repository URL must be in the format https://github.com/<owner>/<repository>")
 			}
 		}
 		return nil

@@ -45,27 +45,27 @@ func translateLegacyOpts(args []string) ([]string, error) {
 		}
 		if opt == "-action" {
 			if len(optsCache) == idx+1 {
-				return []string{""}, fmt.Errorf("No action supplied after deprecated -action flag")
+				return []string{""}, fmt.Errorf("no action supplied after deprecated -action flag")
 			}
 			if translated, ok := validActions[optsCache[idx+1]]; ok {
 				translatedArgs = append(translatedArgs, translated)
 				optsCache = append(optsCache[:idx], optsCache[idx+2:]...)
 				action = translated
 			} else {
-				return []string{""}, fmt.Errorf("Unknown action supplied to deprecated -action flag: %s", optsCache[idx+1])
+				return []string{""}, fmt.Errorf("unknown action supplied to deprecated -action flag: %s", optsCache[idx+1])
 			}
 		}
 		if strings.HasPrefix(opt, "-action"+"=") {
 			s := strings.SplitN(opt, "=", 2)
 			if len(s[1]) == 0 {
-				return []string{""}, fmt.Errorf("No action supplied after deprecated -action= flag")
+				return []string{""}, fmt.Errorf("no action supplied after deprecated -action= flag")
 			}
 			if translated, ok := validActions[s[1]]; ok {
 				translatedArgs = append(translatedArgs, translated)
 				optsCache = append(optsCache[:idx], optsCache[idx+1:]...)
 				action = translated
 			} else {
-				return []string{""}, fmt.Errorf("Unknown action supplied to deprecated -action= flag: %s", s[1])
+				return []string{""}, fmt.Errorf("unknown action supplied to deprecated -action= flag: %s", s[1])
 			}
 		}
 	}
