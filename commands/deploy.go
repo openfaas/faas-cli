@@ -269,10 +269,10 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 		envvarValue := s[1]
 
 		if !(len(envvarName) > 0) {
-			return nil, fmt.Errorf("Empty %s name: [%s]", keyName, envvar)
+			return nil, fmt.Errorf("empty %s name: [%s]", keyName, envvar)
 		}
 		if !(len(envvarValue) > 0) {
-			return nil, fmt.Errorf("Empty %s value: [%s]", keyName, envvar)
+			return nil, fmt.Errorf("empty %s value: [%s]", keyName, envvar)
 		}
 
 		result[envvarName] = envvarValue

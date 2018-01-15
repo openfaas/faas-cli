@@ -65,7 +65,7 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			return nil, fmt.Errorf("Server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
 	}
 
@@ -80,10 +80,10 @@ func buildQueryString(query []string) (string, error) {
 		for _, queryValue := range query {
 			qs = qs + queryValue + "&"
 			if strings.Contains(queryValue, "=") == false {
-				return "", fmt.Errorf("The --query flags must take the form of key=value (= not found)")
+				return "", fmt.Errorf("the --query flags must take the form of key=value (= not found)")
 			}
 			if strings.HasSuffix(queryValue, "=") {
-				return "", fmt.Errorf("The --query flag must take the form of: key=value (empty value given, or value ends in =)")
+				return "", fmt.Errorf("the --query flag must take the form of: key=value (empty value given, or value ends in =)")
 			}
 		}
 		qs = strings.TrimRight(qs, "&")

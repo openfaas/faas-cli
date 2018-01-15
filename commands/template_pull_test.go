@@ -88,8 +88,8 @@ func Test_templatePull_error_not_valid_url(t *testing.T) {
 	faasCmd.SetOutput(&buf)
 	err := faasCmd.Execute()
 
-	if !strings.Contains(err.Error(), "The repository URL must be in the format https://github.com/<owner>/<repository>") {
-		t.Fatal("Output does not contain the required string", err.Error())
+	if !strings.Contains(err.Error(), "the repository URL must be in the format https://github.com/<owner>/<repository>") {
+		t.Fatalf("Output does not contain the required string '%s'", err.Error())
 	}
 }
 

@@ -50,7 +50,7 @@ const TestData_2 string = `provider:
 
 `
 
-const noMatchesErrorMsg string = "No functions matching --filter/--regex were found in the YAML file"
+const noMatchesErrorMsg string = "no functions matching --filter/--regex were found in the YAML file"
 const invalidRegexErrorMsg string = "error parsing regexp"
 
 var ParseYAMLTests_Regex = []struct {
