@@ -20,8 +20,8 @@
 [[projects]]
   name = "github.com/openfaas/faas"
   packages = ["gateway/requests"]
-  revision = "9a70a1b9915d7420e71dda445349d68f3f3928d8"
-  version = "0.5.6b-alpha"
+  revision = "262b0afda7a0161d3ee4b3dafdcc085128b215df"
+  version = "0.6.16"
 
 [[projects]]
   name = "github.com/ryanuber/go-glob"
@@ -47,6 +47,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "70dbf988d6915b805c4e4b02f8bc55ec82bf24c1c8f0f406502037f844ac9e6a"
+  inputs-digest = "0371c7eb8d0b66e31a183ec61c965d26a008bdd62854a2df07e5ec99dc679000"
   solver-name = "gps-cdcl"
   solver-version = 1
