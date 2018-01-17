@@ -99,7 +99,7 @@ func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 	for _, scenario := range validURLs {
 		t.Run(fmt.Sprintf("%s is a valid remote git url", scenario.name), func(t *testing.T) {
 			if !r.MatchString(scenario.url) {
-				t.Errorf("Url %s should pass the regex match", scenario.url)
+				t.Errorf("Url %s should pass the regex %s", scenario.url, gitRemoteRepoRegex)
 			}
 
 		})
@@ -118,7 +118,7 @@ func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 	for _, scenario := range invalidURLs {
 		t.Run(fmt.Sprintf("%s is not a valid remote git url", scenario.name), func(t *testing.T) {
 			if r.MatchString(scenario.url) {
-				t.Errorf("Url %s should fail the regex match", scenario.url)
+				t.Errorf("Url %s should fail the regex %s", scenario.url, gitRemoteRepoRegex)
 			}
 
 		})
