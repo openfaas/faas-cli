@@ -76,7 +76,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
-	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")
+	gateway = getGatewayURL(gateway, "", "")
 	if err := validateLogin(gateway, username, password); err != nil {
 		return err
 	}
@@ -94,8 +94,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func validateLogin(url string, user string, pass string) error {
-	// TODO: provide --insecure flag for this
+func validateLogin(gatewayURL string, user string, pass string) error {
 	tr := &http.Transport{
 		DisableKeepAlives: false,
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
@@ -105,14 +104,15 @@ func validateLogin(url string, user string, pass string) error {
 		Timeout:   time.Duration(5 * time.Second),
 	}
 
-	// TODO: implement ping in the gateway API and call that
-	gatewayUrl := strings.TrimRight(url, "/")
-	req, _ := http.NewRequest("GET", gateway+"/system/functions", nil)
-	req.SetBasicAuth(user, pass)
+	req, err := http.NewRequest("GET", gatewayURL+"/system/functions", nil)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %s", gatewayURL)
+	}
 
+	req.SetBasicAuth(user, pass)
 	res, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gatewayUrl)
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gatewayURL)
 	}
 
 	if res.Body != nil {

@@ -299,6 +299,11 @@ func getGatewayURL(argumentURL string, defaultURL string, yamlURL string) string
 		gatewayURL = defaultURL
 	}
 
+	gatewayURL = strings.ToLower(strings.TrimRight(gatewayURL, "/"))
+	if !strings.HasPrefix(gatewayURL, "http") {
+		gatewayURL = fmt.Sprintf("http://%s", gatewayURL)
+	}
+
 	return gatewayURL
 }
 
