@@ -1,0 +1,23 @@
+[[constraint]]
+  name = "github.com/mitchellh/go-homedir"
+  revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
+
+[[constraint]]
+  name = "github.com/morikuni/aec"
+  revision = "39771216ff4c63d11f5e604076f9c45e8be1067b"
+
+[[constraint]]
+  name = "github.com/openfaas/faas"
+  version = "0.5.6b-alpha"
+
+[[constraint]]
+  name = "github.com/spf13/cobra"
+  version = "0.0.1"
+
+[[constraint]]
+  name = "github.com/ryanuber/go-glob"
+  revision = "256dc444b735e061061cf46c809487313d5b0065"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  revision = "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b"
