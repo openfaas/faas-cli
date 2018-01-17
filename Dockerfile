@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.9.2
+FROM golang:1.9.2 as builder
 
 RUN curl -sL \
      https://github.com/alexellis/license-check/releases/download/0.1/license-check > \
@@ -31,6 +31,6 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-COPY --from=0 /go/src/github.com/openfaas/faas-cli/faas-cli               .
+COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               .
 
 CMD ["./faas"]
