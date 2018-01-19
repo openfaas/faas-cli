@@ -50,13 +50,17 @@ func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error
 
 func IsValidTemplate(lang string) bool {
 	var found bool
+
+	// TODO harmonise to lowercase when fetching template & parsing yaml
+	// Ensure that `lang` is lowercase in case of Dockerfile
 	if strings.ToLower(lang) == "dockerfile" {
-		found = true
-	} else if _, err := os.Stat("./template/" + lang); err == nil {
+		lang = strings.ToLower(lang)
+	}
+
+	if _, err := os.Stat("./template/" + lang); err == nil {
 		templateYAMLPath := "./template/" + lang + "/template.yml"
 
-		_, err := ParseYAMLForLanguageTemplate(templateYAMLPath)
-		if err == nil {
+		if _, err := ParseYAMLForLanguageTemplate(templateYAMLPath); err == nil {
 			found = true
 		}
 	}

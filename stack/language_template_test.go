@@ -59,10 +59,6 @@ fprocess: python index.py
 }
 
 func Test_IsValidTemplate(t *testing.T) {
-	if !IsValidTemplate("Dockerfile") || !IsValidTemplate("dockerfile") {
-		t.Fatalf("Dockerfile and dockerfile must be valid")
-	}
-
 	if IsValidTemplate("unknown-language") {
 		t.Fatalf("unknown-language must be invalid")
 	}

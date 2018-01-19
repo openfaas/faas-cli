@@ -36,7 +36,7 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 	log.Printf("Attempting to expand templates from %s\n", templateURL)
 	pullDebugPrint(fmt.Sprintf("Temp files in %s", dir))
 	args := map[string]string{"dir": dir, "repo": templateURL}
-	if err := versioncontrol.GitClone.Invoke(args); err != nil {
+	if err := versioncontrol.GitClone.Invoke(".", args); err != nil {
 		return err
 	}
 
