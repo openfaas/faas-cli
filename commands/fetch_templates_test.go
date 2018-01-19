@@ -5,8 +5,10 @@ package commands
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/versioncontrol"
 )
 
@@ -41,12 +43,13 @@ func setupLocalTemplateRepo(t *testing.T) string {
 		t.Error(err)
 	}
 
-	args := map[string]string{
-		"dir":  dir,
-		"repo": defaultTemplateRepository,
-	}
-	if err := versioncontrol.GitClone.Invoke(args); err != nil {
-		t.Error(err)
+	// Copy the submodule to temp directory to avoid altering it during tests
+	testRepoGit := filepath.Join("testdata", "templates")
+	builder.CopyFiles(testRepoGit, dir)
+	// Remove submodule .git file
+	os.Remove(filepath.Join(dir, ".git"))
+	if err := versioncontrol.GitInitRepo.Invoke(dir, map[string]string{"dir": "."}); err != nil {
+		t.Fatal(err)
 	}
 
 	return dir

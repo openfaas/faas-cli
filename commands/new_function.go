@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"sort"
-	"strings"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
@@ -21,7 +21,6 @@ var (
 	list bool
 )
 
-// Implement interface for sorting array of strings
 type StrSort []string
 
 func (a StrSort) Len() int           { return len(a) }
@@ -63,12 +62,8 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		fmt.Printf(`Languages available as templates:
-` + printAvailableTemplates(availableTemplates) + `
+		fmt.Printf("Languages available as templates:\n%s\n", printAvailableTemplates(availableTemplates))
 
-Or alternatively create a folder containing a Dockerfile, then pick
-the "Dockerfile" lang type in your YAML file.
-`)
 		return nil
 	}
 
@@ -91,36 +86,19 @@ the "Dockerfile" lang type in your YAML file.
 		return fmt.Errorf("folder: %s already exists", functionName)
 	}
 
-	if err := os.Mkdir("./"+functionName, 0700); err == nil {
+	if err := os.Mkdir(functionName, 0700); err == nil {
 		fmt.Printf("Folder: %s created.\n", functionName)
+	} else {
+		return fmt.Errorf("folder: could not create %s : %s", functionName, err)
 	}
 
 	if err := updateGitignore(); err != nil {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
-	// Only "template" language templates - Dockerfile must be custom, so start with empty directory.
-	if strings.ToLower(lang) != "dockerfile" {
-		builder.CopyFiles("./template/"+lang+"/function/", "./"+functionName+"/")
-	} else {
-		ioutil.WriteFile("./"+functionName+"/Dockerfile", []byte(`FROM alpine:3.6
-# Use any image as your base image, or "scratch"
-# Add fwatchdog binary via https://github.com/openfaas/faas/releases/
-# Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
+	builder.CopyFiles(filepath.Join("template", lang, "function"), functionName)
 
-ADD https://github.com/openfaas/faas/releases/download/0.6.9/fwatchdog /usr/bin
-# COPY ./fwatchdog /usr/bin/
-RUN chmod +x /usr/bin/fwatchdog
-
-# Populate example here - i.e. "cat", "sha512sum" or "node index.js"
-ENV fprocess="wc -l"
-
-HEALTHCHECK --interval=5s CMD [ -e /tmp/.lock ] || exit 1
-CMD ["fwatchdog"]
-`), 0600)
-	}
-
-	stack := `provider:
+	stackYaml := `provider:
   name: faas
   gateway: ` + gateway + `
 
@@ -135,7 +113,7 @@ functions:
 	fmt.Println()
 	fmt.Printf("Function created in folder: %s\n", functionName)
 
-	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stack), 0600)
+	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stackYaml), 0600)
 	if stackWriteErr != nil {
 		return fmt.Errorf("error writing stack file %s", stackWriteErr)
 	}
@@ -149,7 +127,6 @@ func printAvailableTemplates(availableTemplates []string) string {
 	sort.Sort(StrSort(availableTemplates))
 	for _, template := range availableTemplates {
 		result += fmt.Sprintf("- %s\n", template)
-
 	}
 	return result
 }

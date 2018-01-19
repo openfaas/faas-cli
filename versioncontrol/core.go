@@ -25,10 +25,9 @@ type vcsCmd struct {
 
 // Invoke executes the vcsCmd replacing varibables in the cmds with the keyval
 // variables passed.
-func (v *vcsCmd) Invoke(args map[string]string) error {
-
+func (v *vcsCmd) Invoke(dir string, args map[string]string) error {
 	for _, cmd := range v.cmds {
-		if _, err := v.run(".", cmd, args, true); err != nil {
+		if _, err := v.run(dir, cmd, args, true); err != nil {
 			return err
 		}
 	}

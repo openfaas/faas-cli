@@ -124,3 +124,12 @@ func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 		})
 	}
 }
+
+// templatePullLocalTemplateRepo executes `template pull` on a local repository to get templates
+func templatePullLocalTemplateRepo(t *testing.T) {
+	localTemplateRepository := setupLocalTemplateRepo(t)
+	defer os.RemoveAll(localTemplateRepository)
+
+	faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
+	faasCmd.Execute()
+}

@@ -1,2 +1,0 @@
-language: python-armhf
-fprocess: python index.py

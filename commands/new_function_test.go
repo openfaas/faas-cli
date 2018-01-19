@@ -6,7 +6,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -21,6 +20,7 @@ const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
 const ListOptionOutput = `Languages available as templates:
 - csharp
+- dockerfile
 - go
 - go-armhf
 - node
@@ -123,29 +123,23 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 }
 
 func Test_newFunctionTests(t *testing.T) {
+	// Download templates
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+	defer tearDownNewFunction(t)
 
-	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
-		t.Fatalf("Error on cd to testdata dir: %v", err)
-	}
-
-	for _, test := range NewFunctionTests {
-		t.Run(test.title, func(t *testing.T) {
-			runNewFunctionTest(t, test)
+	for _, testcase := range NewFunctionTests {
+		t.Run(testcase.title, func(t *testing.T) {
+			runNewFunctionTest(t, testcase)
 		})
-	}
-
-	if err := os.Chdir(homeDir); err != nil {
-		t.Fatalf("Error on cd back to commands/ directory: %v", err)
 	}
 }
 
 func Test_newFunctionListCmds(t *testing.T) {
-
-	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
-		t.Fatalf("Error on cd to testdata dir: %v", err)
-	}
+	// Download templates
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+	defer tearDownNewFunction(t)
 
 	cmdParameters := []string{
 		"new",
@@ -161,18 +155,13 @@ func Test_newFunctionListCmds(t *testing.T) {
 	if !strings.HasPrefix(stdOut, ListOptionOutput) {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
-
-	if err := os.Chdir(homeDir); err != nil {
-		t.Fatalf("Error on cd back to commands/ directory: %v", err)
-	}
 }
 
 func Test_languageNotExists(t *testing.T) {
-
-	homeDir, _ := filepath.Abs(".")
-	if err := os.Chdir("testdata/new_function"); err != nil {
-		t.Fatalf("Error on cd to testdata dir: %v", err)
-	}
+	// Download templates
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+	defer tearDownNewFunction(t)
 
 	// Attempt to create a function with a non-existing language
 	cmdParameters := []string{
@@ -190,8 +179,14 @@ func Test_languageNotExists(t *testing.T) {
 	if found, err := regexp.MatchString(LangNotExistsOutput, stdOut); err != nil || !found {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
+}
 
-	if err := os.Chdir(homeDir); err != nil {
-		t.Fatalf("Error on cd back to commands/ directory: %v", err)
+func tearDownNewFunction(t *testing.T) {
+	// Remove existing archive file if it exists
+	if _, err := os.Stat(".gitignore"); err == nil {
+		err := os.Remove(".gitignore")
+		if err != nil {
+			t.Log(err)
+		}
 	}
 }
