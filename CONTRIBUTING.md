@@ -58,15 +58,15 @@ To build the release binaries type in:
 
 This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
 
-* Get the vendoring tool called `vndr`
+* Get the vendoring tool called `dep`
 
 ```
-$ go install github.com/LK4D4/vndr
+$ go get -u github.com/golang/dep/cmd/dep
 ```
 
 Use the tool if you add new dependencies or want to update the existing ones.
 
-> See also: [vndr docs](https://github.com/LK4D4/vndr)
+> See also: [dep docs](https://github.com/golang/dep)
 
 ### How to update the `brew` formula
 
