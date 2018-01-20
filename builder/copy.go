@@ -7,6 +7,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/openfaas/faas-cli/util"
 )
 
 // CopyFiles copies files from src to destination.
@@ -84,8 +86,5 @@ func copyFile(src, dest string) error {
 }
 
 func debugPrint(message string) {
-
-	if val, exists := os.LookupEnv("debug"); exists && (val == "1" || val == "true") {
-		fmt.Println(message)
-	}
+	util.DebugPrint(message + "\n")
 }
