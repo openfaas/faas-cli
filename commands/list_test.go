@@ -36,7 +36,10 @@ func Test_list(t *testing.T) {
 			ResponseBody:       expected_list_response,
 		},
 	})
-	defer s.Close()
+	defer func() {
+		gateway = defaultGateway
+		s.Close()
+	}()
 
 	resetForTest()
 

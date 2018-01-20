@@ -78,7 +78,12 @@ func Test_deploy(t *testing.T) {
 			ResponseStatusCode: http.StatusOK,
 		},
 	})
-	defer s.Close()
+
+	defer func() {
+		gateway = defaultGateway
+		image = ""
+		s.Close()
+	}()
 
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{
