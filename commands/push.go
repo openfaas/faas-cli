@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -67,19 +68,19 @@ func pushStack(services *stack.Services, queueDepth int) {
 	workChannel := make(chan stack.Function)
 
 	for i := 0; i < queueDepth; i++ {
-
 		go func(index int) {
 			wg.Add(1)
 			for function := range workChannel {
-				fmt.Printf("[%d] > Pushing: %s.\n", index, function.Name)
+				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s.\n"), index, function.Name)
 				if len(function.Image) == 0 {
 					fmt.Println("Please provide a valid Image value in the YAML file.")
 				} else {
 					pushImage(function.Image)
 				}
+				fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
 			}
 
-			fmt.Printf("[%d] < Pushing done.\n", index)
+			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
 			wg.Done()
 		}(i)
 	}

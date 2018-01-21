@@ -9,6 +9,7 @@ import (
 	"os"
 	"sync"
 
+	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -109,20 +110,19 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	workChannel := make(chan stack.Function)
 
 	for i := 0; i < queueDepth; i++ {
-
 		go func(index int) {
 			wg.Add(1)
 			for function := range workChannel {
-				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
+				fmt.Printf(aec.YellowF.Apply("[%d] > Building %s.\n"), index, function.Name)
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
-
 				} else {
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
 				}
+				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}
 
-			fmt.Printf("[%d] < Builder done.\n", index)
+			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
 			wg.Done()
 		}(i)
 	}
