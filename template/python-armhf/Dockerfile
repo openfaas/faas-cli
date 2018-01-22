@@ -12,8 +12,7 @@ COPY index.py           .
 COPY requirements.txt   .
 RUN pip install -r requirements.txt
 
-COPY function           function
-
+RUN mkdir -p function
 RUN touch ./function/__init__.py
 
 WORKDIR /root/function/
@@ -21,6 +20,8 @@ COPY function/requirements.txt	.
 RUN pip install -r requirements.txt
 
 WORKDIR /root/
+COPY function           function
+
 
 ENV fprocess="python index.py"
 
