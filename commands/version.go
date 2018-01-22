@@ -40,14 +40,18 @@ func runVersion(cmd *cobra.Command, args []string) {
 	if shortVersion {
 		fmt.Println(version.BuildVersion())
 	} else {
-		figletColoured := aec.BlueF.Apply(figletStr)
-		if runtime.GOOS == "windows" {
-			figletColoured = aec.GreenF.Apply(figletStr)
-		}
-		fmt.Printf(figletColoured)
+		printFiglet()
 		fmt.Printf("Commit: %s\n", version.GitCommit)
 		fmt.Printf("Version: %s\n", version.BuildVersion())
 	}
+}
+
+func printFiglet() {
+	figletColoured := aec.BlueF.Apply(figletStr)
+	if runtime.GOOS == "windows" {
+		figletColoured = aec.GreenF.Apply(figletStr)
+	}
+	fmt.Printf(figletColoured)
 }
 
 const figletStr = `  ___                   _____           ____

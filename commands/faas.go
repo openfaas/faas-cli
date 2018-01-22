@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/docker/docker/pkg/term"
 	"github.com/spf13/cobra"
 )
 
@@ -47,6 +48,9 @@ func resetForTest() {
 }
 
 func init() {
+	// Setup terminal std
+	term.StdStreams()
+
 	faasCmd.PersistentFlags().StringVarP(&yamlFile, "yaml", "f", "", "Path to YAML file describing function(s)")
 	faasCmd.PersistentFlags().StringVarP(&regex, "regex", "", "", "Regex to match with function names in YAML file")
 	faasCmd.PersistentFlags().StringVarP(&filter, "filter", "", "", "Wildcard to match with function names in YAML file")
@@ -89,6 +93,6 @@ Manage your OpenFaaS functions from the command line`,
 
 // runFaas TODO
 func runFaas(cmd *cobra.Command, args []string) {
-	fmt.Printf(figletStr)
+	printFiglet()
 	cmd.Help()
 }

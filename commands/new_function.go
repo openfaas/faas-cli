@@ -10,7 +10,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -131,7 +130,7 @@ functions:
     image: ` + functionName + `
 `
 
-	fmt.Printf(aec.BlueF.Apply(figletStr))
+	printFiglet()
 	fmt.Println()
 	fmt.Printf("Function created in folder: %s\n", functionName)
 
