@@ -1,3 +1,6 @@
+// Copyright (c) OpenFaaS Project 2017. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 package builder
 
 import (
@@ -6,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -28,7 +32,7 @@ func Test_CopyFiles(t *testing.T) {
 		}
 		defer os.RemoveAll(destDir)
 
-		CopyFiles(srcDir, destDir+"/")
+		CopyFiles(srcDir, destDir)
 		err := checkDestinationFiles(destDir, 2, mode)
 		if err != nil {
 			t.Fatalf("Destination file mode differs from source file mode\n%v", err)
@@ -65,7 +69,10 @@ func checkDestinationFiles(dir string, numberOfFiles, mode int) error {
 		if os.IsNotExist(err) {
 			return err
 		}
-		if fileStat.Mode() != os.FileMode(mode) {
+		if fileStat.IsDir() {
+			return errors.New("expected a file not a directory")
+		}
+		if runtime.GOOS != "windows" && fileStat.Mode() != os.FileMode(mode) {
 			return errors.New("expected mode did not match")
 		}
 	}
