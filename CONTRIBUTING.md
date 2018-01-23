@@ -28,7 +28,7 @@ This CLI can build and deploy templated functions, so it's best if you have FaaS
 
 > Here's how to install Go in 60 seconds.
 
-* Grab Go 1.7.x or 1.8.3 from https://golang.org/dl/
+* Grab Go 1.8.3 or 1.9.x from https://golang.org/dl/
 
 Then after installing run this command or place it in your `$HOME/.bash_profile`
 
@@ -58,15 +58,15 @@ To build the release binaries type in:
 
 This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
 
-* Get the vendoring tool called `vndr`
+* Get the vendoring tool called `dep`
 
 ```
-$ go install github.com/LK4D4/vndr
+$ go get -u github.com/golang/dep/cmd/dep
 ```
 
 Use the tool if you add new dependencies or want to update the existing ones.
 
-> See also: [vndr docs](https://github.com/LK4D4/vndr)
+> See also: [dep docs](https://github.com/golang/dep)
 
 ### How to update the `brew` formula
 
@@ -96,6 +96,25 @@ $ brew uninstall --force faas-cli ; \
   brew test faas-cli ; \
   brew audit --strict faas-cli
 ```
+
+### How to update the `scoop` manifest
+
+The `scoop` manifest for the faas-cli is part of the official [sccop](https://github.com/lukesampson/scoop/blob/master/bucket/faas-cli.json) repo on Github. It needs to be updated for each subsequent release.
+
+#### Simple version bumps
+
+```
+git clone https://github.com/lukesampson/scoop
+cd scoop
+./bin/checkver.ps1 faas-cli -u
+```
+
+Test the updated manifest
+```
+scoop install .\bucket\faas-cli.json
+```
+
+Create a new branch and commit the manifest `faas-cli.json`, then create a PR to update the manifest in Scoop repository
 
 ## Update the utility-script
 
@@ -166,9 +185,9 @@ commit automatically with `git commit -s`.
 
 ### Create a GitHub release
 
-* 1. Through GitHub releases page create a new release and increment the version number.
-* 2. Mark the release as pre-release to prevent the download script picking up the version
-* 3. Wait until the Travis build is completed (which will add binaries to the page if successful)
+1. Through GitHub releases page create a new release and increment the version number.
+2. Mark the release as pre-release to prevent the download script picking up the version
+3. Wait until the Travis build is completed (which will add binaries to the page if successful)
 
 Finally if the binaries were added successfully you should un-mark the "pre-release" checkbox, the CLI will now be available from our download utility script.
 

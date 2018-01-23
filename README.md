@@ -39,7 +39,25 @@ $ brew install faas-cli
 
 Note: The `brew` release may not run the latest minor release but is updated regularly.
 
-> Build from source: the contributing guide has instructions for building from source and for configuring a Golang development environment.
+In PowerShell:
+
+```
+$version = (Invoke-WebRequest "https://api.github.com/repos/openfaas/faas-cli/releases/latest" | ConvertFrom-Json)[0].tag_name
+(New-Object System.Net.WebClient).DownloadFile("https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli.exe", "faas-cli.exe")
+```
+
+#### Windows
+
+The easiest way to install the faas-cli is through `scoop`:
+
+```
+scoop install faas-cli
+```
+
+Note: The `scoop` release may not run the latest minor release but is updated regularly.
+
+#### Build from source
+> the [contributing guide](CONTRIBUTING.md) has instructions for building from source and for configuring a Golang development environment.
 
 ### Run the CLI
 
@@ -57,7 +75,7 @@ The main commands supported by the CLI are:
 
 Advanced commands:
 
-* `faas-cli template pull` - pull in templates from a remote GitHub repository
+* `faas-cli template pull` - pull in templates from a remote GitHub repository [Detailed Documentation](guide/TEMPLATE.md)
 
 Help for all of the commands supported by the CLI can be found by running:
 
