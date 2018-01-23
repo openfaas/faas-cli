@@ -108,7 +108,7 @@ func RunDeploy(
 		fmt.Println(`Cannot specify --update and --replace at the same time.
   --replace    removes an existing deployment before re-creating it
   --update     provides a rolling update to a new function image or configuration`)
-		return fmt.Errorf("cannot specify --update and --replace at the same time")
+		return ErrorExclusiveUpdateReplaceFlag
 	}
 
 	var services stack.Services
@@ -191,10 +191,10 @@ func RunDeploy(
 		}
 	} else {
 		if len(image) == 0 {
-			return fmt.Errorf("please provide a --image to be deployed")
+			return ErrorMissingImageFlag
 		}
 		if len(functionName) == 0 {
-			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
+			return ErrorMissingFunctionNameFlag
 		}
 
 		envvars, err := parseMap(deployFlags.envvarOpts, "env")
@@ -270,7 +270,7 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	for _, envvar := range envvars {
 		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
 		if len(s) != 2 {
-			return nil, fmt.Errorf("label format is not correct, needs key=value")
+			return nil, ErrorInvalidLabel
 		}
 		envvarName := s[0]
 		envvarValue := s[1]

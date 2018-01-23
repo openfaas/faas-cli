@@ -53,7 +53,7 @@ Currently supported verbs: %v`, supportedVerbs)
 
 			var validURL = regexp.MustCompile(gitRemoteRepoRegex)
 			if !validURL.MatchString(args[1]) {
-				return fmt.Errorf("The repository URL must be a valid git repo uri")
+				return ErrorInvalidRepositoryURL
 			}
 		}
 		return nil

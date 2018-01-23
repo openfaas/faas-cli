@@ -54,7 +54,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		var availableTemplates []string
 
 		if templateFolders, err := ioutil.ReadDir(templateDirectory); err != nil {
-			return fmt.Errorf("no language templates were found. Please run 'faas-cli template pull'")
+			return ErrorUnavailableLanguageTemplate
 		} else {
 			for _, file := range templateFolders {
 				if file.IsDir() {
@@ -73,12 +73,12 @@ the "Dockerfile" lang type in your YAML file.
 	}
 
 	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
+		return ErrorMissingFunctionName
 	}
 	functionName = args[0]
 
 	if len(lang) == 0 {
-		return fmt.Errorf("you must supply a function language with the --lang flag")
+		return ErrorMissingLangFlagFile
 	}
 
 	PullTemplates("")

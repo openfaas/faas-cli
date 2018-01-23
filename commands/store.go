@@ -144,7 +144,7 @@ func renderDescription(descr string) string {
 
 func runStoreInspect(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("please provide the function name")
+		return ErrorStoreMissingFunctionName
 	}
 
 	storeItems, err := storeList(storeAddress)
@@ -183,7 +183,7 @@ func renderStoreItem(item *schema.StoreItem) string {
 
 func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
-		return fmt.Errorf("please provide the function name")
+		return ErrorStoreMissingFunctionName
 	}
 
 	storeItems, err := storeList(storeAddress)

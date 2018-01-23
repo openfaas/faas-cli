@@ -137,7 +137,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, functionName)
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
-		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		deployOutput += fmt.Sprintln(ErrorUnauthorizedGateway)
 		/*
 			case http.StatusNotFound:
 				if replace && !update {

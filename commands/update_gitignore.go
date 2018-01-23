@@ -15,7 +15,7 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func updateContent(content string) (updated_content string) {
+func updateContent(content string) (updatedContent string) {
 	// append files to ignore to file content if it is not already ignored
 
 	filesToIgnore := []string{"template", "build"}
@@ -28,9 +28,9 @@ func updateContent(content string) (updated_content string) {
 		}
 	}
 
-	updated_content = strings.Join(lines, "\n")
-	updated_content = strings.Trim(updated_content, "\n")
-	return updated_content
+	updatedContent = strings.Join(lines, "\n")
+	updatedContent = strings.Trim(updatedContent, "\n")
+	return updatedContent
 }
 
 func updateGitignore() (err error) {
@@ -48,10 +48,10 @@ func updateGitignore() (err error) {
 		return err
 	}
 
-	string_content := string(content[:])
-	write_content := updateContent(string_content)
+	stringContent := string(content[:])
+	writeContent := updateContent(stringContent)
 
-	_, err = f.WriteString(write_content + "\n")
+	_, err = f.WriteString(writeContent + "\n")
 	if err != nil {
 		return err
 	}

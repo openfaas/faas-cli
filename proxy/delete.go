@@ -46,7 +46,7 @@ func DeleteFunction(gateway string, functionName string) error {
 	case http.StatusNotFound:
 		fmt.Println("No existing function to remove")
 	case http.StatusUnauthorized:
-		fmt.Println("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		fmt.Println(ErrorUnauthorizedGateway)
 	default:
 		var bodyReadErr error
 		bytesOut, bodyReadErr := ioutil.ReadAll(delRes.Body)

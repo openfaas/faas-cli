@@ -35,7 +35,7 @@ var loginCmd = &cobra.Command{
 	Use:   `login [--username USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL]`,
 	Short: "Log in to OpenFaaS gateway",
 	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
-	Example: `  faas-cli login -u user -p password --gateway http://localhost:8080
+	Example: `  faas-cli login -u user -p password --gateway ` + defaultGateway + `
   cat ~/faas_pass.txt | faas-cli login -u user --password-stdin --gateway https://openfaas.mydomain.com`,
 	RunE: runLogin,
 }
@@ -43,25 +43,17 @@ var loginCmd = &cobra.Command{
 func runLogin(cmd *cobra.Command, args []string) error {
 
 	if len(username) == 0 {
-		return fmt.Errorf("must provide --username or -u")
+		return ErrorMissingUsername
 	}
 
 	if len(password) > 0 {
 		fmt.Println("WARNING! Using --password is insecure, consider using: cat ~/faas_pass.txt | faas-cli login -u user --password-stdin")
 		if passwordStdin {
-			return fmt.Errorf("--password and --password-stdin are mutually exclusive")
-		}
-
-		if len(username) == 0 {
-			return fmt.Errorf("must provide --username with --password")
+			return ErrorPasswordStdinAndPassword
 		}
 	}
 
 	if passwordStdin {
-		if len(username) == 0 {
-			return fmt.Errorf("must provide --username with --password-stdin")
-		}
-
 		passwordStdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
@@ -72,7 +64,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	password = strings.TrimSpace(password)
 	if len(password) == 0 {
-		return fmt.Errorf("must provide a non-empty password via --password or --password-stdin")
+		return ErrorMissingPassword
 	}
 
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
@@ -127,7 +119,7 @@ func validateLogin(gatewayURL string, user string, pass string) error {
 	case http.StatusOK:
 		return nil
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unable to login, either username or password is incorrect")
+		return ErrorGatewayUnsuccessfulLogin
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
