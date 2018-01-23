@@ -29,6 +29,47 @@ type DeployFlags struct {
 var deployFlags DeployFlags
 
 func init() {
+	faasCmd.AddCommand(newDeployCmd())
+}
+
+// newDeployCmd handles deploying OpenFaaS function containers
+func newDeployCmd() *cobra.Command {
+	deployCmd := &cobra.Command{
+		Use: `deploy -f YAML_FILE [--replace=false]
+  faas-cli deploy --image IMAGE_NAME
+                  --name FUNCTION_NAME
+                  [--lang <ruby|python|node|csharp>]
+                  [--gateway GATEWAY_URL]
+                  [--network NETWORK_NAME]
+                  [--handler HANDLER_DIR]
+                  [--fprocess PROCESS]
+                  [--env ENVVAR=VALUE ...]
+                  [--label LABEL=VALUE ...]
+                  [--replace=false]
+                  [--update=false]
+                  [--constraint PLACEMENT_CONSTRAINT ...]
+                  [--regex "REGEX"]
+                  [--filter "WILDCARD"]
+                  [--secret "SECRET_NAME"]`,
+		Short: "Deploy OpenFaaS functions",
+		Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
+the "--yaml" flag (which may contain multiple function definitions), or directly
+via flags. Note: --replace and --update are mutually exclusive.`,
+		Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
+  faas-cli deploy -f ./stack.yml
+  faas-cli deploy -f ./stack.yml --label canary=true
+  faas-cli deploy -f ./stack.yml --filter "*gif*" --secret dockerhuborg
+  faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
+  faas-cli deploy -f ./stack.yml --update=true
+  faas-cli deploy -f ./stack.yml --replace=true
+  faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
+  faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
+                  --gateway=http://remote-site.com:8080 --lang=python
+                  --env=MYVAR=myval`,
+		PreRunE: preRunDeploy,
+		RunE:    runDeploy,
+	}
+
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
 	deployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
@@ -52,73 +93,29 @@ func init() {
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
-	faasCmd.AddCommand(deployCmd)
+	return deployCmd
 }
 
-// deployCmd handles deploying OpenFaaS function containers
-var deployCmd = &cobra.Command{
-	Use: `deploy -f YAML_FILE [--replace=false]
-  faas-cli deploy --image IMAGE_NAME
-                  --name FUNCTION_NAME
-                  [--lang <ruby|python|node|csharp>]
-                  [--gateway GATEWAY_URL]
-                  [--network NETWORK_NAME]
-                  [--handler HANDLER_DIR]
-                  [--fprocess PROCESS]
-                  [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]
-				  [--replace=false]
-				  [--update=false]
-                  [--constraint PLACEMENT_CONSTRAINT ...]
-                  [--regex "REGEX"]
-                  [--filter "WILDCARD"]
-				  [--secret "SECRET_NAME"]`,
-
-	Short: "Deploy OpenFaaS functions",
-	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
-the "--yaml" flag (which may contain multiple function definitions), or directly
-via flags. Note: --replace and --update are mutually exclusive.`,
-	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
-  faas-cli deploy -f ./stack.yml
-  faas-cli deploy -f ./stack.yml --label canary=true
-  faas-cli deploy -f ./stack.yml --filter "*gif*" --secret dockerhuborg
-  faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli deploy -f ./stack.yml --replace=false --update=true
-  faas-cli deploy -f ./stack.yml --replace=true --update=false
-  faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
-  faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
-                  --gateway=http://remote-site.com:8080 --lang=python
-                  --env=MYVAR=myval`,
-	PreRunE: preRunDeploy,
-	RunE:    runDeploy,
-}
-
-// preRunDeploy validates args & flags
+// preRunDeploy validates flags & args
 func preRunDeploy(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
-
+	if err := ensureUpdateReplaceFlags(cmd, &deployFlags); err != nil {
+		return err
+	}
 	return nil
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return RunDeploy(args, image, fprocess, functionName, deployFlags)
+	return deploy(args, image, fprocess, functionName, deployFlags)
 }
 
-func RunDeploy(
+func deploy(
 	args []string,
 	image string,
 	fprocess string,
 	functionName string,
 	deployFlags DeployFlags,
 ) error {
-
-	if deployFlags.update && deployFlags.replace {
-		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
-  --replace    removes an existing deployment before re-creating it
-  --update     performs a rolling update to a new function image or configuration (default true)`)
-		return fmt.Errorf("cannot specify --update and --replace at the same time")
-	}
-
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -348,4 +345,16 @@ func deriveFprocess(function stack.Function) (string, error) {
 
 func languageExistsNotDockerfile(language string) bool {
 	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
+}
+
+// ensureUpdateReplaceFlags ensures the consistency of 'replace' and 'update' flags
+func ensureUpdateReplaceFlags(cmd *cobra.Command, deployFlags *DeployFlags) error {
+	// If replace is changed, reset the value of update to false
+	if cmd.Flag("replace").Changed && !cmd.Flag("update").Changed && deployFlags.replace {
+		deployFlags.update = false
+	} else if cmd.Flag("replace").Changed && cmd.Flag("update").Changed {
+		return ErrorExclusiveFlagsUpdateReplace
+	}
+
+	return nil
 }

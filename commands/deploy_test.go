@@ -4,11 +4,13 @@
 package commands
 
 import (
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
+	"github.com/spf13/cobra"
 )
 
 func Test_getGatewayURL(t *testing.T) {
@@ -81,13 +83,14 @@ func Test_deploy(t *testing.T) {
 	defer s.Close()
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{
+		deployCmd := newDeployCmd()
+		deployCmd.SetArgs([]string{
 			"deploy",
 			"--gateway=" + s.URL,
 			"--image=golang",
 			"--name=test-function",
 		})
-		faasCmd.Execute()
+		deployCmd.Execute()
 	})
 
 	if found, err := regexp.MatchString(`(?m:Deployed)`, stdOut); err != nil || !found {
@@ -97,4 +100,86 @@ func Test_deploy(t *testing.T) {
 	if found, err := regexp.MatchString(`(?m:200 OK)`, stdOut); err != nil || !found {
 		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
+}
+
+func Test_ensureUpdateReplaceFlags(t *testing.T) {
+	t.Run("With both flags --replace and --update", func(t *testing.T) {
+		testCases := [][]string{
+			{
+				"--update",
+				"--replace",
+			},
+		}
+		for _, testCase := range testCases {
+			deployCmd := newDeployCmd()
+			deployCmd.SetOutput(ioutil.Discard)
+			deployCmd.SetArgs(testCase)
+			deployCmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
+			err := deployCmd.Execute()
+
+			if err != ErrorExclusiveFlagsUpdateReplace {
+				t.Errorf("Expected error '%s' does not match actual error '%s'", ErrorExclusiveFlagsUpdateReplace, err)
+			}
+		}
+	})
+
+	t.Run("Deploy with replace", func(t *testing.T) {
+		testCases := [][]string{
+			{
+				"--replace",
+			},
+			{
+				"--replace=true",
+			},
+		}
+		for _, testCase := range testCases {
+			deployCmd := newDeployCmd()
+			deployCmd.SetOutput(ioutil.Discard)
+			deployCmd.SetArgs(testCase)
+			deployCmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
+			err := deployCmd.Execute()
+
+			if err != nil {
+				t.Errorf("error is not nil: %s", err)
+			}
+			if deployFlags.replace != true {
+				t.Errorf("replace is not true as expected")
+			}
+			if deployFlags.update != false {
+				t.Errorf("update is not false as expected")
+			}
+		}
+	})
+
+	t.Run("Deploy with rolling-update", func(t *testing.T) {
+		testCases := [][]string{
+			{},
+			{
+				"--update",
+			},
+			{
+				"--update=true",
+			},
+			{
+				"--replace=false",
+			},
+		}
+		for _, testCase := range testCases {
+			deployCmd := newDeployCmd()
+			deployCmd.SetOutput(ioutil.Discard)
+			deployCmd.SetArgs(testCase)
+			deployCmd.RunE = func(cmd *cobra.Command, args []string) error { return nil }
+			err := deployCmd.Execute()
+
+			if err != nil {
+				t.Errorf("error is not nil: %s", err)
+			}
+			if deployFlags.replace != false {
+				t.Errorf("replace is not false as expected")
+			}
+			if deployFlags.update != true {
+				t.Errorf("update is not true as expected")
+			}
+		}
+	})
 }

@@ -7,6 +7,8 @@ import (
 	"errors"
 )
 
+var ErrorExclusiveFlagsUpdateReplace = errors.New("cannot specify --update and --replace at the same time")
+
 func validateLanguageFlag(language string) (string, error) {
 	var err error = nil
 

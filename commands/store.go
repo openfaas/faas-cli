@@ -100,6 +100,14 @@ var storeDeployCmd = &cobra.Command{
 	RunE: runStoreDeploy,
 }
 
+// preRunStoreDeploy validates flags & args
+func preRunStoreDeploy(cmd *cobra.Command, args []string) error {
+	if err := ensureUpdateReplaceFlags(cmd, &deployFlags); err != nil {
+		return err
+	}
+	return nil
+}
+
 func runStoreList(cmd *cobra.Command, args []string) error {
 	items, err := storeList(storeAddress)
 	if err != nil {
@@ -214,7 +222,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		network = item.Network
 	}
 
-	return RunDeploy(
+	return deploy(
 		args,
 		item.Image,
 		item.Fprocess,
