@@ -1,0 +1,24 @@
+version: "{build}"
+
+# Source Config
+clone_folder: c:\gopath\src\github.com\openfaas\faas-cli
+
+# Build host
+environment:
+  GOPATH: c:\gopath
+  GOVERSION: 1.9.2
+
+init:
+  - git config --global core.autocrlf input
+
+# Build
+install:
+  - ps: go version
+  - ps: go env
+
+build: false
+deploy: false
+
+test_script:
+  - ps: go build github.com/openfaas/faas-cli
+  - ps: go test $(go list ./... | grep -v -e /vendor/ -e /template/ -e /build/) -cover \
