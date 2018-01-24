@@ -43,8 +43,8 @@ func init() {
 
 	deployCmd.Flags().StringArrayVarP(&deployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
 
-	deployCmd.Flags().BoolVar(&deployFlags.replace, "replace", false, "Replace any existing function")
-	deployCmd.Flags().BoolVar(&deployFlags.update, "update", true, "Update existing functions")
+	deployCmd.Flags().BoolVar(&deployFlags.replace, "replace", false, "Remove and re-create existing function(s)")
+	deployCmd.Flags().BoolVar(&deployFlags.update, "update", true, "Perform rolling update on existing function(s)")
 
 	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
@@ -105,9 +105,9 @@ func RunDeploy(
 ) error {
 
 	if deployFlags.update && deployFlags.replace {
-		fmt.Println(`Cannot specify --update and --replace at the same time.
+		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
-  --update     provides a rolling update to a new function image or configuration`)
+  --update     performs a rolling update to a new function image or configuration (default true)`)
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
 
