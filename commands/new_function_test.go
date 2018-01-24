@@ -74,15 +74,15 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	}()
 
 	cmdParameters := []string{
-		"new",
 		funcName,
 		"--lang=" + funcLang,
 		"--gateway=" + defaultGateway,
 	}
 
-	faasCmd.SetArgs(cmdParameters)
+	newFunctionCmd := newNewFunctionCmd()
+	newFunctionCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")
-	stdOut := faasCmd.Execute()
+	stdOut := newFunctionCmd.Execute()
 
 	if nft.expectedMsg == SuccessMsg {
 
@@ -142,13 +142,13 @@ func Test_newFunctionListCmds(t *testing.T) {
 	defer tearDownNewFunction(t)
 
 	cmdParameters := []string{
-		"new",
 		"--list",
 	}
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs(cmdParameters)
-		faasCmd.Execute()
+		newFunctionCmd := newNewFunctionCmd()
+		newFunctionCmd.SetArgs(cmdParameters)
+		newFunctionCmd.Execute()
 	})
 
 	// Validate new function output
@@ -165,15 +165,15 @@ func Test_languageNotExists(t *testing.T) {
 
 	// Attempt to create a function with a non-existing language
 	cmdParameters := []string{
-		"new",
 		"sampleName",
 		"--lang=bash",
 		"--gateway=" + defaultGateway,
 		"--list=false",
 	}
 
-	faasCmd.SetArgs(cmdParameters)
-	stdOut := faasCmd.Execute().Error()
+	newFunctionCmd := newNewFunctionCmd()
+	newFunctionCmd.SetArgs(cmdParameters)
+	stdOut := newFunctionCmd.Execute().Error()
 
 	// Validate new function output
 	if found, err := regexp.MatchString(LangNotExistsOutput, stdOut); err != nil || !found {

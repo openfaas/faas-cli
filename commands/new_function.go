@@ -23,26 +23,30 @@ var (
 )
 
 func init() {
+	faasCmd.AddCommand(newNewFunctionCmd())
+}
+
+// newNewFunctionCmd creates a new 'new' command
+func newNewFunctionCmd() *cobra.Command {
+	newFunctionCmd := &cobra.Command{
+		Use:   "new FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list | --append=STACK_FILE)",
+		Short: "Create a new template in the current folder with the name given as name",
+		Long: `The new command creates a new function based upon hello-world in the given
+language or type in --list for a list of languages available.`,
+		Example: `faas-cli new chatbot --lang node
+  faas-cli new text-parser --lang python --gateway http://mydomain:8080
+  faas-cli new text-reader --lang python --append stack.yml
+  faas-cli new --list`,
+		RunE: runNewFunction,
+	}
+
 	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 	newFunctionCmd.Flags().StringVarP(&appendFile, "append", "a", "", "Append to existing YAML file")
 
-	faasCmd.AddCommand(newFunctionCmd)
-}
-
-// newFunctionCmd displays newFunction information
-var newFunctionCmd = &cobra.Command{
-	Use:   "new FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list | --append=STACK_FILE)",
-	Short: "Create a new template in the current folder with the name given as name",
-	Long: `The new command creates a new function based upon hello-world in the given
-language or type in --list for a list of languages available.`,
-	Example: `faas-cli new chatbot --lang node
-  faas-cli new text-parser --lang python --gateway http://mydomain:8080
-  faas-cli new text-reader --lang python --append stack.yml
-  faas-cli new --list`,
-	RunE: runNewFunction,
+	return newFunctionCmd
 }
 
 func runNewFunction(cmd *cobra.Command, args []string) error {
