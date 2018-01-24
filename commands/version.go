@@ -18,22 +18,26 @@ var (
 )
 
 func init() {
-	versionCmd.Flags().BoolVar(&shortVersion, "short-version", false, "Just print Git SHA")
-
-	faasCmd.AddCommand(versionCmd)
+	faasCmd.AddCommand(newVersionCmd())
 }
 
-// versionCmd displays version information
-var versionCmd = &cobra.Command{
-	Use:   "version [--short-version]",
-	Short: "Display the clients version information",
-	Long: fmt.Sprintf(`The version command returns the current clients version information.
+// newVersionCmd creates a new 'version' command which displays version information
+func newVersionCmd() *cobra.Command {
+	versionCmd := &cobra.Command{
+		Use:   "version [--short-version]",
+		Short: "Display the clients version information",
+		Long: fmt.Sprintf(`The version command returns the current clients version information.
 
 This currently consists of the GitSHA from which the client was built.
 - https://github.com/openfaas/faas-cli/tree/%s`, version.GitCommit),
-	Example: `  faas-cli version
+		Example: `  faas-cli version
   faas-cli version --short-version`,
-	Run: runVersion,
+		Run: runVersion,
+	}
+
+	versionCmd.Flags().BoolVar(&shortVersion, "short-version", false, "Just print Git SHA")
+
+	return versionCmd
 }
 
 func runVersion(cmd *cobra.Command, args []string) {
