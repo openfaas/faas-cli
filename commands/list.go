@@ -16,24 +16,28 @@ var (
 )
 
 func init() {
+	faasCmd.AddCommand(newListCmd())
+}
+
+// newListCmd creates a new 'list' command
+func newListCmd() *cobra.Command {
+	listCmd := &cobra.Command{
+		Use:     `list [--gateway GATEWAY_URL] [--verbose]`,
+		Aliases: []string{"ls"},
+		Short:   "List OpenFaaS functions",
+		Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
+		Example: `  faas-cli list
+  faas-cli list --gateway https://localhost:8080 --verbose`,
+		RunE: runList,
+	}
+
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	listCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 
-	faasCmd.AddCommand(listCmd)
+	return listCmd
 }
-
-var listCmd = &cobra.Command{
-	Use:     `list [--gateway GATEWAY_URL] [--verbose]`,
-	Aliases: []string{"ls"},
-	Short:   "List OpenFaaS functions",
-	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
-	Example: `  faas-cli list
-  faas-cli list --gateway https://localhost:8080 --verbose`,
-	RunE: runList,
-}
-
 func runList(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 	var gatewayAddress string
