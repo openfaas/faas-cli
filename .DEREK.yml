@@ -1,4 +1,4 @@
-maintainers:
+curators:
  - alexellis
  - johnmccabe
  - rgee0
@@ -7,6 +7,8 @@ maintainers:
  - itscaro
  - rorpage
  - kenfdev
+ - dungeonmaster18
+
 features:
  - dco_check
  - comments
