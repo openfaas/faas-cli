@@ -83,12 +83,14 @@ func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 		url  string
 	}{
 		{name: "git protocol with sha", url: "git://github.com/openfaas/faas.git#ff78lf9h"},
+		{name: "git protocol without .git suffix", url: "git://host.xz/path/to/repo"},
 		{name: "git protocol with branch", url: "git://github.com/openfaas/faas.git#master"},
 		{name: "git protocol", url: "git://host.xz/path/to/repo.git/"},
 		{name: "scp style with ip address", url: "git@192.168.101.127:user/project.git"},
 		{name: "scp style with hostname", url: "git@github.com:user/project.git"},
 		{name: "http protocol with ip address", url: "http://192.168.101.127/user/project.git"},
 		{name: "http protocol", url: "http://github.com/user/project.git"},
+		{name: "http protocol without .git suffix", url: "http://github.com/user/project"},
 		{name: "https protocol with ip address", url: "https://192.168.101.127/user/project.git"},
 		{name: "https protocol with hostname", url: "https://github.com/user/project.git"},
 		{name: "https protocol with basic auth", url: "https://username:password@github.com/username/repository.git"},

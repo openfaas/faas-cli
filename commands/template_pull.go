@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	gitRemoteRepoRegex = `(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)(\/?|\#[-\d\w._]+?)$`
+	gitRemoteRepoRegex = `(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$`
 )
 
 var (
