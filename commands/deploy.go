@@ -230,20 +230,6 @@ func mergeSlice(values []string, overlay []string) []string {
 	return results
 }
 
-func buildLabelMap(labelOpts []string) map[string]string {
-	labelMap := map[string]string{}
-	for _, opt := range labelOpts {
-		if !strings.Contains(opt, "=") {
-			fmt.Println("Error - label option does not contain a value")
-		} else {
-			index := strings.Index(opt, "=")
-
-			labelMap[opt[0:index]] = opt[index+1:]
-		}
-	}
-	return labelMap
-}
-
 func readFiles(files []string) (map[string]string, error) {
 	envs := make(map[string]string)
 
