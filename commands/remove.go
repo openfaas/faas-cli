@@ -12,28 +12,32 @@ import (
 )
 
 func init() {
-	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-
-	faasCmd.AddCommand(removeCmd)
+	faasCmd.AddCommand(newRemoveCmd())
 }
 
-// removeCmd deletes/removes OpenFaaS function containers
-var removeCmd = &cobra.Command{
-	Use: `remove FUNCTION_NAME [--gateway GATEWAY_URL]
+// newRemoveCmd creates new 'remove' command which deletes/removes OpenFaaS function containers
+func newRemoveCmd() *cobra.Command {
+	removeCmd := &cobra.Command{
+		Use: `remove FUNCTION_NAME [--gateway GATEWAY_URL]
   faas-cli remove -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"]`,
-	Aliases: []string{"rm"},
-	Short:   "Remove deployed OpenFaaS functions",
-	Long: `Removes/deletes deployed OpenFaaS functions either via the supplied YAML config
+		Aliases: []string{"rm"},
+		Short:   "Remove deployed OpenFaaS functions",
+		Long: `Removes/deletes deployed OpenFaaS functions either via the supplied YAML config
 using the "--yaml" flag (which may contain multiple function definitions), or by
 explicitly specifying a function name.`,
-	Example: `  faas-cli remove -f https://domain/path/myfunctions.yml
+		Example: `  faas-cli remove -f https://domain/path/myfunctions.yml
   faas-cli remove -f ./samples.yml
   faas-cli remove -f ./samples.yml --filter "*gif*"
   faas-cli remove -f ./samples.yml --regex "fn[0-9]_.*"
   faas-cli remove url-ping
   faas-cli remove img2ansi --gateway==http://remote-site.com:8080`,
-	RunE: runDelete,
+		RunE: runDelete,
+	}
+
+	// Setup flags that are used by multiple commands (variables defined in faas.go)
+	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+
+	return removeCmd
 }
 
 func runDelete(cmd *cobra.Command, args []string) error {

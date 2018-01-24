@@ -22,10 +22,12 @@ func Test_remove(t *testing.T) {
 
 	resetForTest()
 
-	faasCmd.SetArgs([]string{
-		"remove",
+	removeCmd := newRemoveCmd()
+	removeCmd.SetArgs([]string{
 		"--gateway=" + s.URL,
 		"test-function",
 	})
-	faasCmd.Execute()
+	if err := removeCmd.Execute(); err != nil {
+		t.Fatalf("Inexpected error: %s", err)
+	}
 }
