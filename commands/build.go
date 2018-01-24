@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/razesdark/capitalise"
 	"github.com/spf13/cobra"
 )
 
@@ -86,28 +88,59 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-		build(&services, parallel, shrinkwrap)
-	} else {
-		if len(image) == 0 {
-			return fmt.Errorf("please provide a valid --image name for your Docker image")
+		errors := build(&services, parallel, shrinkwrap)
+
+		var funcNameLength, errorLength, errorsTotal int
+		for k, v := range errors {
+			l := len(k)
+			if l > funcNameLength {
+				funcNameLength = l
+			}
+			if v != nil {
+				errorsTotal++
+				l = len(v.Error())
+				if l > errorLength {
+					errorLength = l
+				}
+			}
 		}
-		if len(handler) == 0 {
-			return fmt.Errorf("please provide the full path to your function's handler")
+
+		fmt.Printf("\nBuild summary\n")
+		fmt.Printf("%*s | Build  | Error\n", funcNameLength, "Name")
+		fmt.Printf(strings.Repeat("-", funcNameLength) + "-+--------+-" + strings.Repeat("-", errorLength) + "\n")
+		for k, v := range errors {
+			if v == nil {
+				fmt.Printf("%*s | OK     | None \n", funcNameLength, k)
+			} else {
+				fmt.Printf("%*s | FAILED | %s\n", funcNameLength, k, capitalise.First(v.Error()))
+			}
 		}
-		if len(functionName) == 0 {
-			return fmt.Errorf("please provide the deployed --name of your function")
+		fmt.Printf("\n")
+
+		if errorsTotal > 0 {
+			return fmt.Errorf("build exited with %d errors", errorsTotal)
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
+		return nil
 	}
 
-	return nil
+	if len(image) == 0 {
+		return fmt.Errorf("please provide a valid --image name for your Docker image")
+	}
+	if len(handler) == 0 {
+		return fmt.Errorf("please provide the full path to your function's handler")
+	}
+	if len(functionName) == 0 {
+		return fmt.Errorf("please provide the deployed --name of your function")
+	}
+	return builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
+func build(services *stack.Services, queueDepth int, shrinkwrap bool) (e map[string]error) {
 	wg := sync.WaitGroup{}
 
-	workChannel := make(chan stack.Function)
+	e = make(map[string]error)
 
+	workChannel := make(chan stack.Function)
 	for i := 0; i < queueDepth; i++ {
 
 		go func(index int) {
@@ -115,10 +148,10 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			for function := range workChannel {
 				fmt.Printf("[%d] > Building: %s.\n", index, function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
+					e[function.Name] = fmt.Errorf("please provide a valid --lang or 'Dockerfile' for your function")
 
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
+					e[function.Name] = builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
 				}
 			}
 
@@ -139,6 +172,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	close(workChannel)
 
 	wg.Wait()
+
+	return
 
 }
 
