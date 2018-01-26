@@ -27,16 +27,16 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 
 			tempPath = handler
-			if _, err := os.Stat(handler); err != nil {
-				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-				fmt.Printf("Image: %s not built.\n", image)
-
+			if err := ensureHandlerPath(image, handler); err != nil {
 				return
 			}
 			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
 
 		} else {
 
+			if err := ensureHandlerPath(image, handler); err != nil {
+				return
+			}
 			tempPath = createBuildTemplate(functionName, handler, language)
 			fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
 
@@ -79,7 +79,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	CopyFiles("./template/"+language, tempPath)
 
 	// Overlay in user-function
-	CopyFiles(handler, tempPath+"function/")
+	CopyFiles(handler, functionPath)
 
 	return tempPath
 }
@@ -104,4 +104,15 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 	}
 
 	return buildFlags
+}
+
+func ensureHandlerPath(image string, handler string) error {
+	if _, err := os.Stat(handler); err != nil {
+		fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
+		fmt.Printf("Image: %s not built.\n", image)
+
+		return err
+	}
+
+	return nil
 }
