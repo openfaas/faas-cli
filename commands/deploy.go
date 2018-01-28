@@ -29,6 +29,47 @@ type DeployFlags struct {
 var deployFlags DeployFlags
 
 func init() {
+	faasCmd.AddCommand(newDeployCmd())
+}
+
+// newDeployCmd create a new 'deploy' command handling deploying OpenFaaS function containers
+func newDeployCmd() *cobra.Command {
+	deployCmd := &cobra.Command{
+		Use: `deploy -f YAML_FILE [--replace=false]
+  faas-cli deploy --image IMAGE_NAME
+                  --name FUNCTION_NAME
+                  [--lang <ruby|python|node|csharp>]
+                  [--gateway GATEWAY_URL]
+                  [--network NETWORK_NAME]
+                  [--handler HANDLER_DIR]
+                  [--fprocess PROCESS]
+                  [--env ENVVAR=VALUE ...]
+                  [--label LABEL=VALUE ...]
+				  [--replace=false]
+				  [--update=false]
+                  [--constraint PLACEMENT_CONSTRAINT ...]
+                  [--regex "REGEX"]
+                  [--filter "WILDCARD"]
+				  [--secret "SECRET_NAME"]`,
+
+		Short: "Deploy OpenFaaS functions",
+		Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
+the "--yaml" flag (which may contain multiple function definitions), or directly
+via flags. Note: --replace and --update are mutually exclusive.`,
+		Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
+  faas-cli deploy -f ./samples.yml
+  faas-cli deploy -f ./samples.yml --label canary=true
+  faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
+  faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
+  faas-cli deploy -f ./samples.yml --replace=false --update=true
+  faas-cli deploy -f ./samples.yml --replace=true --update=false
+  faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
+  faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
+                  --gateway=http://remote-site.com:8080 --lang=python
+                  --env=MYVAR=myval`,
+		RunE: runDeploy,
+	}
+
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
 	deployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
@@ -52,44 +93,7 @@ func init() {
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
-	faasCmd.AddCommand(deployCmd)
-}
-
-// deployCmd handles deploying OpenFaaS function containers
-var deployCmd = &cobra.Command{
-	Use: `deploy -f YAML_FILE [--replace=false]
-  faas-cli deploy --image IMAGE_NAME
-                  --name FUNCTION_NAME
-                  [--lang <ruby|python|node|csharp>]
-                  [--gateway GATEWAY_URL]
-                  [--network NETWORK_NAME]
-                  [--handler HANDLER_DIR]
-                  [--fprocess PROCESS]
-                  [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]
-				  [--replace=false]
-				  [--update=false]
-                  [--constraint PLACEMENT_CONSTRAINT ...]
-                  [--regex "REGEX"]
-                  [--filter "WILDCARD"]
-				  [--secret "SECRET_NAME"]`,
-
-	Short: "Deploy OpenFaaS functions",
-	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
-the "--yaml" flag (which may contain multiple function definitions), or directly
-via flags. Note: --replace and --update are mutually exclusive.`,
-	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
-  faas-cli deploy -f ./samples.yml
-  faas-cli deploy -f ./samples.yml --label canary=true
-  faas-cli deploy -f ./samples.yml --filter "*gif*" --secret dockerhuborg
-  faas-cli deploy -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli deploy -f ./samples.yml --replace=false --update=true
-  faas-cli deploy -f ./samples.yml --replace=true --update=false
-  faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
-  faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
-                  --gateway=http://remote-site.com:8080 --lang=python
-                  --env=MYVAR=myval`,
-	RunE: runDeploy,
+	return deployCmd
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
