@@ -14,15 +14,15 @@ import (
 	"github.com/openfaas/faas-cli/versioncontrol"
 )
 
-const (
-	defaultTemplateRepository = "https://github.com/openfaas/templates.git"
-	templateDirectory         = "./template/"
-)
+// DefaultTemplateRepository contains the Git repo for the official templates
+const DefaultTemplateRepository = "https://github.com/openfaas/templates.git"
+
+const templateDirectory = "./template/"
 
 // fetchTemplates fetch code templates from GitHub master zip file.
 func fetchTemplates(templateURL string, overwrite bool) error {
 	if len(templateURL) == 0 {
-		templateURL = defaultTemplateRepository
+		return fmt.Errorf("pass valid templateURL")
 	}
 
 	dir, err := ioutil.TempDir("", "openFaasTemplates")
