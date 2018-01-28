@@ -14,26 +14,30 @@ import (
 )
 
 func init() {
-	faasCmd.AddCommand(pushCmd)
-
-	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
+	faasCmd.AddCommand(newPushCmd())
 }
 
-// pushCmd handles pushing function container images to a remote repo
-var pushCmd = &cobra.Command{
-	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel]`,
-	Short: "Push OpenFaaS functions to remote registry (Docker Hub)",
-	Long: `Pushes the OpenFaaS function container image(s) defined in the supplied YAML
+// newPushCmd creates new 'push' handles pushing function container images to a remote repo
+func newPushCmd() *cobra.Command {
+	pushCmd := &cobra.Command{
+		Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel]`,
+		Short: "Push OpenFaaS functions to remote registry (Docker Hub)",
+		Long: `Pushes the OpenFaaS function container image(s) defined in the supplied YAML
 config to a remote repository.
 
 These container images must already be present in your local image cache.`,
 
-	Example: `  faas-cli push -f https://domain/path/myfunctions.yml
+		Example: `  faas-cli push -f https://domain/path/myfunctions.yml
   faas-cli push -f ./samples.yml
   faas-cli push -f ./samples.yml --parallel 4
   faas-cli push -f ./samples.yml --filter "*gif*"
   faas-cli push -f ./samples.yml --regex "fn[0-9]_.*"`,
-	RunE: runPush,
+		RunE: runPush,
+	}
+
+	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
+
+	return pushCmd
 }
 
 func runPush(cmd *cobra.Command, args []string) error {

@@ -36,12 +36,12 @@ func Test_invoke(t *testing.T) {
 	}()
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{
-			"invoke",
+		invokeCmd := newInvokeCmd()
+		invokeCmd.SetArgs([]string{
 			"--gateway=" + s.URL,
 			funcName,
 		})
-		faasCmd.Execute()
+		invokeCmd.Execute()
 	})
 
 	if found, err := regexp.MatchString(`(?m:`+expected_invoke_response+`)`, stdOut); err != nil || !found {

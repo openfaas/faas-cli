@@ -12,17 +12,22 @@ import (
 )
 
 func init() {
-	logoutCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-
-	faasCmd.AddCommand(logoutCmd)
+	faasCmd.AddCommand(newLogoutCmd())
 }
 
-var logoutCmd = &cobra.Command{
-	Use:     `logout [--gateway GATEWAY_URL]`,
-	Short:   "Log out from OpenFaaS gateway",
-	Long:    "Log out from OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
-	Example: `  faas-cli logout --gateway https://openfaas.mydomain.com`,
-	RunE:    runLogout,
+// newLogoutCmd creates a new 'logout' command
+func newLogoutCmd() *cobra.Command {
+	logoutCmd := &cobra.Command{
+		Use:     `logout [--gateway GATEWAY_URL]`,
+		Short:   "Log out from OpenFaaS gateway",
+		Long:    "Log out from OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
+		Example: `  faas-cli logout --gateway https://openfaas.mydomain.com`,
+		RunE:    runLogout,
+	}
+
+	logoutCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+
+	return logoutCmd
 }
 
 func runLogout(cmd *cobra.Command, args []string) error {

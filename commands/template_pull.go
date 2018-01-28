@@ -15,60 +15,63 @@ const (
 )
 
 var (
-	repository string
-	overwrite  bool
-	pullDebug  bool
+	overwrite bool
+	pullDebug bool
 )
 
-var supportedVerbs = [...]string{"pull"}
-
 func init() {
+	templateCmd := newTemplateCmd()
+	templateCmd.AddCommand(newTemplatePullCmd())
+
+	faasCmd.AddCommand(templateCmd)
+}
+
+// newTemplatePullCmd creates a new 'template' command
+func newTemplateCmd() *cobra.Command {
+	templateCmd := &cobra.Command{
+		Use:   "template",
+		Short: "Manage templates",
+	}
+
+	return templateCmd
+}
+
+// newTemplatePullCmd creates a new 'template pull' command which allows the user to fetch a template from a repository
+func newTemplatePullCmd() *cobra.Command {
+	templatePullCmd := &cobra.Command{
+		Use: "pull <repository URL>",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 1 {
+				// assume it is a local repo
+				if _, err := os.Stat(args[0]); err == nil {
+					return nil
+				}
+
+				var validURL = regexp.MustCompile(gitRemoteRepoRegex)
+				if !validURL.MatchString(args[0]) {
+					return fmt.Errorf("the repository URL must be a valid git repo uri")
+				}
+			}
+
+			return nil
+		},
+		Short: "Downloads templates from the specified github repo",
+		Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
+	directory from the root of the repo, if it exists.`,
+		Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
+		Run:     runTemplatePull,
+	}
+
 	templatePullCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
 	templatePullCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
 
-	faasCmd.AddCommand(templatePullCmd)
-}
-
-// templatePullCmd allows the user to fetch a template from a repository
-var templatePullCmd = &cobra.Command{
-	Use: "template pull <repository URL>",
-	Args: func(cmd *cobra.Command, args []string) error {
-		msg := fmt.Sprintf(`Must use a supported verb for 'faas-cli template'
-Currently supported verbs: %v`, supportedVerbs)
-
-		if len(args) == 0 {
-			return fmt.Errorf(msg)
-		}
-
-		if args[0] != "pull" {
-			return fmt.Errorf(msg)
-		}
-
-		if len(args) > 1 {
-
-			// assume it is a local repo
-			if _, err := os.Stat(args[1]); err == nil {
-				return nil
-			}
-
-			var validURL = regexp.MustCompile(gitRemoteRepoRegex)
-			if !validURL.MatchString(args[1]) {
-				return fmt.Errorf("The repository URL must be a valid git repo uri")
-			}
-		}
-		return nil
-	},
-	Short: "Downloads templates from the specified github repo",
-	Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
-	directory from the root of the repo, if it exists.`,
-	Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
-	Run:     runTemplatePull,
+	return templatePullCmd
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) {
 	repository := ""
-	if len(args) > 1 {
-		repository = args[1]
+	if len(args) == 1 {
+		repository = args[0]
 	}
 
 	fmt.Println("Fetch templates from repository: " + repository)

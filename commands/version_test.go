@@ -15,8 +15,9 @@ func Test_addVersionDev(t *testing.T) {
 	version.GitCommit = "sha-test"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version"})
-		faasCmd.Execute()
+		versionCmd := newVersionCmd()
+		versionCmd.SetArgs([]string{})
+		versionCmd.Execute()
 	})
 
 	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
@@ -33,8 +34,9 @@ func Test_addVersion(t *testing.T) {
 	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version"})
-		faasCmd.Execute()
+		versionCmd := newVersionCmd()
+		versionCmd.SetArgs([]string{})
+		versionCmd.Execute()
 	})
 
 	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
@@ -50,8 +52,9 @@ func Test_addVersion_short_version(t *testing.T) {
 	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version", "--short-version"})
-		faasCmd.Execute()
+		versionCmd := newVersionCmd()
+		versionCmd.SetArgs([]string{"--short-version"})
+		versionCmd.Execute()
 	})
 
 	if found, err := regexp.MatchString("^version\\.tag", stdOut); err != nil || !found {

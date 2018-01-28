@@ -41,11 +41,11 @@ func Test_list(t *testing.T) {
 	resetForTest()
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{
-			"list",
+		listCmd := newListCmd()
+		listCmd.SetArgs([]string{
 			"--gateway=" + s.URL,
 		})
-		faasCmd.Execute()
+		listCmd.Execute()
 	})
 
 	matches := regexp.MustCompile(`(?m:function-test-[12])`).FindAllStringSubmatch(stdOut, 2)
@@ -58,10 +58,11 @@ func Test_list_errors(t *testing.T) {
 
 	resetForTest()
 
-	faasCmd.SetArgs([]string{
-		"list", "--gateway", "bad-gateway",
+	listCmd := newListCmd()
+	listCmd.SetArgs([]string{
+		"--gateway", "bad-gateway",
 	})
-	err := faasCmd.Execute()
+	err := listCmd.Execute()
 
 	if err == nil {
 		t.Fatal("No error found while testing bad gateway")
@@ -69,10 +70,11 @@ func Test_list_errors(t *testing.T) {
 
 	resetForTest()
 
-	faasCmd.SetArgs([]string{
-		"list", "--yaml", "non-existant-yaml",
+	listCmd = newListCmd()
+	listCmd.SetArgs([]string{
+		"--yaml", "non-existant-yaml",
 	})
-	err = faasCmd.Execute()
+	err = listCmd.Execute()
 
 	if err == nil {
 		t.Fatal("No error found while testing missing yaml")

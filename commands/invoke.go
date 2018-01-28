@@ -19,6 +19,21 @@ var (
 )
 
 func init() {
+	faasCmd.AddCommand(newInvokeCmd())
+}
+
+// newInvokeCmd creates a new 'invoke' command
+func newInvokeCmd() *cobra.Command {
+	invokeCmd := &cobra.Command{
+		Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE]`,
+		Short: "Invoke an OpenFaaS function",
+		Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
+		Example: `  faas-cli invoke echo --gateway https://domain:port
+  faas-cli invoke echo --gateway https://domain:port --content-type application/json
+  faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
+		RunE: runInvoke,
+	}
+
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	invokeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
@@ -26,17 +41,7 @@ func init() {
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
 
-	faasCmd.AddCommand(invokeCmd)
-}
-
-var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE]`,
-	Short: "Invoke an OpenFaaS function",
-	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
-	Example: `  faas-cli invoke echo --gateway https://domain:port
-  faas-cli invoke echo --gateway https://domain:port --content-type application/json
-  faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
-	RunE: runInvoke,
+	return invokeCmd
 }
 
 func runInvoke(cmd *cobra.Command, args []string) error {

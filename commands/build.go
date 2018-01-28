@@ -24,6 +24,34 @@ var (
 )
 
 func init() {
+	faasCmd.AddCommand(newBuildCmd())
+}
+
+// newBuildCmd creates a new 'build' which allows the user to build an OpenFaaS function container
+func newBuildCmd() *cobra.Command {
+	buildCmd := &cobra.Command{
+		Use: `build -f YAML_FILE [--no-cache] [--squash]
+  faas-cli build --image IMAGE_NAME
+                 --handler HANDLER_DIR
+                 --name FUNCTION_NAME
+                 [--lang <ruby|python|python3|node|csharp|Dockerfile>]
+                 [--no-cache] [--squash]
+                 [--regex "REGEX"]
+				 [--filter "WILDCARD"]
+				 [--parallel PARALLEL_DEPTH]`,
+		Short: "Builds OpenFaaS function containers",
+		Long: `Builds OpenFaaS function containers either via the supplied YAML config using
+the "--yaml" flag (which may contain multiple function definitions), or directly
+via flags.`,
+		Example: `  faas-cli build -f https://domain/path/myfunctions.yml
+  faas-cli build -f ./samples.yml --no-cache
+  faas-cli build -f ./samples.yml --filter "*gif*"
+  faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
+  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
+                 --name=my_fn --squash`,
+		RunE: runBuild,
+	}
+
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	buildCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
 	buildCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
@@ -41,31 +69,7 @@ func init() {
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
-	faasCmd.AddCommand(buildCmd)
-}
-
-// buildCmd allows the user to build an OpenFaaS function container
-var buildCmd = &cobra.Command{
-	Use: `build -f YAML_FILE [--no-cache] [--squash]
-  faas-cli build --image IMAGE_NAME
-                 --handler HANDLER_DIR
-                 --name FUNCTION_NAME
-                 [--lang <ruby|python|python3|node|csharp|Dockerfile>]
-                 [--no-cache] [--squash]
-                 [--regex "REGEX"]
-				 [--filter "WILDCARD"]
-				 [--parallel PARALLEL_DEPTH]`,
-	Short: "Builds OpenFaaS function containers",
-	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
-the "--yaml" flag (which may contain multiple function definitions), or directly
-via flags.`,
-	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
-  faas-cli build -f ./samples.yml --no-cache
-  faas-cli build -f ./samples.yml --filter "*gif*"
-  faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
-  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
-                 --name=my_fn --squash`,
-	RunE: runBuild,
+	return buildCmd
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {

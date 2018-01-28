@@ -23,21 +23,26 @@ var (
 )
 
 func init() {
+	faasCmd.AddCommand(newLoginCmd())
+}
+
+// newLoginCmd creates a new 'login' command
+func newLoginCmd() *cobra.Command {
+	loginCmd := &cobra.Command{
+		Use:   `login [--username USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL]`,
+		Short: "Log in to OpenFaaS gateway",
+		Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
+		Example: `  faas-cli login -u user -p password --gateway http://localhost:8080
+  cat ~/faas_pass.txt | faas-cli login -u user --password-stdin --gateway https://openfaas.mydomain.com`,
+		RunE: runLogin,
+	}
+
 	loginCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	loginCmd.Flags().StringVarP(&username, "username", "u", "", "Gateway username")
 	loginCmd.Flags().StringVarP(&password, "password", "p", "", "Gateway password")
 	loginCmd.Flags().BoolVar(&passwordStdin, "password-stdin", false, "Reads the gateway password from stdin")
 
-	faasCmd.AddCommand(loginCmd)
-}
-
-var loginCmd = &cobra.Command{
-	Use:   `login [--username USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL]`,
-	Short: "Log in to OpenFaaS gateway",
-	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
-	Example: `  faas-cli login -u user -p password --gateway http://localhost:8080
-  cat ~/faas_pass.txt | faas-cli login -u user --password-stdin --gateway https://openfaas.mydomain.com`,
-	RunE: runLogin,
+	return loginCmd
 }
 
 func runLogin(cmd *cobra.Command, args []string) error {
