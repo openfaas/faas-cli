@@ -1,3 +1,0 @@
-[submodule "commands/testdata/templates"]
-	path = commands/testdata/templates
-	url = https://github.com/openfaas/templates.git

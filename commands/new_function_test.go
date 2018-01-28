@@ -19,16 +19,7 @@ const SuccessMsg = `(?m:Function created in folder)`
 const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
 const ListOptionOutput = `Languages available as templates:
-- csharp
 - dockerfile
-- go
-- go-armhf
-- node
-- node-arm64
-- node-armhf
-- python
-- python-armhf
-- python3
 - ruby`
 
 const LangNotExistsOutput = `(?m:is unavailable or not supported)`
