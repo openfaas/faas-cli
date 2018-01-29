@@ -226,6 +226,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 	const functionLang = "ruby"
 
 	defer func() {
+		appendFile = ""
 		if _, err := os.Stat(functionName + ".yml"); err == nil {
 			err := os.Remove(functionName + ".yml")
 			if err != nil {

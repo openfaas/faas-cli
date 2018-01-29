@@ -16,6 +16,8 @@ const (
 	defaultGateway = "http://127.0.0.1:8080"
 	defaultNetwork = ""
 	defaultYAML    = "stack.yml"
+	argumentSource = "arguments"
+	yamlSource     = "yaml"
 )
 
 // Flags that are to be added to all commands.

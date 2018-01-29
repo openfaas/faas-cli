@@ -30,3 +30,12 @@ func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) stri
 
 	return gatewayURL
 }
+
+func getFunctionSource(functionName string) (string, error) {
+	if len(functionName) > 0 {
+		return argumentSource, nil
+	} else if len(yamlFile) > 0 {
+		return yamlSource, nil
+	}
+	return "", fmt.Errorf("no function name or YAML file specified")
+}

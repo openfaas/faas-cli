@@ -123,7 +123,17 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 func runBuild(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
-	if len(yamlFile) > 0 {
+
+	functionSource, err := getFunctionSource(functionName)
+	if err != nil {
+		return err
+	}
+
+	if pullErr := PullTemplates(DefaultTemplateRepository); pullErr != nil {
+		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
+	}
+
+	if functionSource == yamlSource {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			return err
@@ -132,17 +142,9 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if parsedServices != nil {
 			services = *parsedServices
 		}
-	}
-
-	if pullErr := PullTemplates(DefaultTemplateRepository); pullErr != nil {
-		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
-	}
-
-	if len(services.Functions) > 0 {
 
 		build(&services, parallel, shrinkwrap)
-
-	} else {
+	} else if functionSource == argumentSource {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
 		}

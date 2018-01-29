@@ -121,14 +121,20 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
 
+	functionSource, err := getFunctionSource(functionName)
+	if err != nil {
+		return err
+	}
+
 	var services stack.Services
-	if len(yamlFile) > 0 {
+
+	if functionSource == yamlSource {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
 		if err != nil {
 			return err
 		}
 
-		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL, os.Getenv(openFaaSURLEnvironment))
+		gateway = parsedServices.Provider.GatewayURL
 
 		// Override network if passed
 		if len(network) > 0 {
@@ -139,6 +145,8 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			services = *parsedServices
 		}
 	}
+
+	gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 
 	if len(services.Functions) > 0 {
 
@@ -214,11 +222,12 @@ Error: %s`, fprocessErr.Error())
 
 			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
 		}
-	} else {
-		if len(image) == 0 || len(functionName) == 0 {
-			return fmt.Errorf("To deploy a function give --yaml/-f or a --image flag")
+	} else if functionSource == argumentSource {
+		if len(image) == 0 {
+			return fmt.Errorf("please provide a --image to be deployed")
 		}
 
+		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 		var registryAuth string
 		if deployFlags.sendRegistryAuth {
 			dockerConfig := configFile{}
@@ -234,6 +243,8 @@ Error: %s`, fprocessErr.Error())
 		if err := deployImage(image, fprocess, functionName, registryAuth, deployFlags); err != nil {
 			return err
 		}
+	} else {
+		return fmt.Errorf("please provide the name of a function to deploy")
 	}
 
 	return nil
@@ -259,6 +270,8 @@ func deployImage(
 	if labelErr != nil {
 		return fmt.Errorf("error parsing labels: %v", labelErr)
 	}
+
+	fmt.Printf("Deploying: %s.\n", functionName)
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
 	proxy.DeployFunction(fprocess, gateway, functionName,
