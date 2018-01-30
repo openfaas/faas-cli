@@ -4,10 +4,6 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT 1
 
 # Optimize for Docker builder caching by adding projects first.
 
-RUN mkdir -p /root/src/function
-WORKDIR /root/src/function
-COPY ./function/Function.csproj  .
-
 WORKDIR /root/src/
 COPY ./root.csproj  .
 RUN dotnet restore ./root.csproj
