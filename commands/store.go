@@ -36,9 +36,10 @@ func init() {
 	storeCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 
 	// Setup flags used by store command
-	storeListCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
-	storeInspectCmd.Flags().StringVarP(&storeAddress, "store", "g", defaultStore, "Store URL starting with http(s)://")
+	storeListCmd.Flags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative URL starting with http(s)://")
 	storeListCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
+
+	storeInspectCmd.Flags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
 	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
 
 	// Setup flags that are used only by deploy command (variables defined above)
@@ -49,12 +50,10 @@ func init() {
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 
-	// Set bash-completion.
-	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
-
 	storeCmd.AddCommand(storeListCmd)
 	storeCmd.AddCommand(storeInspectCmd)
 	storeCmd.AddCommand(storeDeployCmd)
+
 	faasCmd.AddCommand(storeCmd)
 }
 
@@ -68,16 +67,17 @@ var storeListCmd = &cobra.Command{
 	Use:     `list [--store STORE_URL]`,
 	Short:   "List OpenFaaS store items",
 	Long:    "Lists the available items in OpenFaas store",
-	Example: `  faas-cli store list --store https://domain:port`,
+	Example: `  faas-cli store list --url https://domain:port/store.json`,
 	RunE:    runStoreList,
 }
 
 var storeInspectCmd = &cobra.Command{
-	Use:     `inspect (FUNCTION_NAME|FUNCTION_TITLE) [--store STORE_URL]`,
-	Short:   "Show OpenFaaS store function details",
-	Long:    "Prints the detailed informations of the specified OpenFaaS function",
-	Example: `  faas-cli store inspect NodeInfo --store https://domain:port`,
-	RunE:    runStoreInspect,
+	Use:   `inspect (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
+	Short: "Show OpenFaaS store function details",
+	Long:  "Prints the detailed informations of the specified OpenFaaS function",
+	Example: `  faas-cli store inspect NodeInfo
+  faas-cli store inspect NodeInfo --url https://domain:port/store.json`,
+	RunE: runStoreInspect,
 }
 
 var storeDeployCmd = &cobra.Command{
@@ -91,14 +91,15 @@ var storeDeployCmd = &cobra.Command{
 							[--constraint PLACEMENT_CONSTRAINT ...]
 							[--regex "REGEX"]
 							[--filter "WILDCARD"]
-							[--secret "SECRET_NAME"]`,
+							[--secret "SECRET_NAME"]
+							[--url STORE_URL]`,
 
 	Short: "Deploy OpenFaaS functions from the store",
 	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
-							faas-cli store deploy figlet
-									--gateway=http://remote-site.com:8080 --lang=python
-									--env=MYVAR=myval`,
+  faas-cli store deploy figlet \
+    --gateway=http://localhost:8080 --lang=python \
+    --env=MYVAR=myval`,
 	RunE: runStoreDeploy,
 }
 
