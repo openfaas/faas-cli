@@ -31,16 +31,16 @@ const (
 )
 
 func init() {
-	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	storeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative URL starting with http(s)://")
 
 	// Setup flags used by store command
-	storeListCmd.Flags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative URL starting with http(s)://")
 	storeListCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
 
-	storeInspectCmd.Flags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
 	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
 
+	// Setup flags that are used by multiple commands (variables defined in faas.go)
+	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	storeDeployCmd.Flags().StringVar(&network, "network", "", "Name of the network")
 	// Setup flags that are used only by deploy command (variables defined above)
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.envvarOpts, "env", "e", []string{}, "Adds one or more environment variables to the defined ones by store (ENVVAR=VALUE)")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
@@ -63,7 +63,7 @@ var storeCmd = &cobra.Command{
 }
 
 var storeListCmd = &cobra.Command{
-	Use:     `list [--store STORE_URL]`,
+	Use:     `list [--url STORE_URL]`,
 	Short:   "List OpenFaaS store items",
 	Long:    "Lists the available items in OpenFaas store",
 	Example: `  faas-cli store list --url https://domain:port/store.json`,
@@ -81,20 +81,21 @@ var storeInspectCmd = &cobra.Command{
 
 var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
-							[--gateway GATEWAY_URL]
-							[--env ENVVAR=VALUE ...]
-							[--label LABEL=VALUE ...]
-							[--replace=false]
-							[--update=true]
-							[--constraint PLACEMENT_CONSTRAINT ...]
-							[--secret "SECRET_NAME"]
-							[--url STORE_URL]`,
+                        [--gateway GATEWAY_URL]
+                        [--network NETWORK_NAME]
+                        [--env ENVVAR=VALUE ...]
+                        [--label LABEL=VALUE ...]
+                        [--replace=false]
+                        [--update=true]
+                        [--constraint PLACEMENT_CONSTRAINT ...]
+                        [--secret "SECRET_NAME"]
+                        [--url STORE_URL]`,
 
 	Short: "Deploy OpenFaaS functions from the store",
 	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
   faas-cli store deploy figlet \
-    --gateway=http://localhost:8080 --lang=python \
+    --gateway=http://localhost:8080 \
     --env=MYVAR=myval`,
 	RunE: runStoreDeploy,
 }
@@ -110,8 +111,7 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	content := renderStoreItems(items)
-	fmt.Print(content)
+	fmt.Print(renderStoreItems(items))
 
 	return nil
 }
@@ -207,6 +207,11 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 			label := fmt.Sprintf("%s=%s", k, v)
 			storeDeployFlags.labelOpts = append(storeDeployFlags.labelOpts, label)
 		}
+	}
+
+	// Use the network from manifest if not changed by user
+	if !cmd.Flag("network").Changed {
+		network = item.Network
 	}
 
 	return RunDeploy(
