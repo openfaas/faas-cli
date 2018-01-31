@@ -33,7 +33,6 @@ const (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	storeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	storeCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 
 	// Setup flags used by store command
 	storeListCmd.Flags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative URL starting with http(s)://")
@@ -83,14 +82,11 @@ var storeInspectCmd = &cobra.Command{
 var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
 							[--gateway GATEWAY_URL]
-							[--handler HANDLER_DIR]
 							[--env ENVVAR=VALUE ...]
 							[--label LABEL=VALUE ...]
 							[--replace=false]
 							[--update=true]
 							[--constraint PLACEMENT_CONSTRAINT ...]
-							[--regex "REGEX"]
-							[--filter "WILDCARD"]
 							[--secret "SECRET_NAME"]
 							[--url STORE_URL]`,
 
