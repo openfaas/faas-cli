@@ -31,27 +31,7 @@ const (
 )
 
 func init() {
-	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative URL starting with http(s)://")
-
-	// Setup flags used by store command
-	storeListCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
-
-	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
-
-	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	storeDeployCmd.Flags().StringVar(&network, "network", "", "Name of the network")
-	// Setup flags that are used only by deploy command (variables defined above)
-	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.envvarOpts, "env", "e", []string{}, "Adds one or more environment variables to the defined ones by store (ENVVAR=VALUE)")
-	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
-	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.replace, "replace", false, "Replace any existing function")
-	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.update, "update", true, "Update existing functions")
-	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
-	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
-
-	storeCmd.AddCommand(storeListCmd)
-	storeCmd.AddCommand(storeInspectCmd)
-	storeCmd.AddCommand(storeDeployCmd)
+	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
 
 	faasCmd.AddCommand(storeCmd)
 }
@@ -60,60 +40,6 @@ var storeCmd = &cobra.Command{
 	Use:   `store`,
 	Short: "OpenFaaS store commands",
 	Long:  "Allows browsing and deploying OpenFaaS store functions",
-}
-
-var storeListCmd = &cobra.Command{
-	Use:     `list [--url STORE_URL]`,
-	Short:   "List OpenFaaS store items",
-	Long:    "Lists the available items in OpenFaas store",
-	Example: `  faas-cli store list --url https://domain:port/store.json`,
-	RunE:    runStoreList,
-}
-
-var storeInspectCmd = &cobra.Command{
-	Use:   `inspect (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
-	Short: "Show OpenFaaS store function details",
-	Long:  "Prints the detailed informations of the specified OpenFaaS function",
-	Example: `  faas-cli store inspect NodeInfo
-  faas-cli store inspect NodeInfo --url https://domain:port/store.json`,
-	RunE: runStoreInspect,
-}
-
-var storeDeployCmd = &cobra.Command{
-	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
-                        [--gateway GATEWAY_URL]
-                        [--network NETWORK_NAME]
-                        [--env ENVVAR=VALUE ...]
-                        [--label LABEL=VALUE ...]
-                        [--replace=false]
-                        [--update=true]
-                        [--constraint PLACEMENT_CONSTRAINT ...]
-                        [--secret "SECRET_NAME"]
-                        [--url STORE_URL]`,
-
-	Short: "Deploy OpenFaaS functions from the store",
-	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
-	Example: `  faas-cli store deploy figlet
-  faas-cli store deploy figlet \
-    --gateway=http://localhost:8080 \
-    --env=MYVAR=myval`,
-	RunE: runStoreDeploy,
-}
-
-func runStoreList(cmd *cobra.Command, args []string) error {
-	items, err := storeList(storeAddress)
-	if err != nil {
-		return err
-	}
-
-	if len(items) == 0 {
-		fmt.Printf("The store is empty.")
-		return nil
-	}
-
-	fmt.Print(renderStoreItems(items))
-
-	return nil
 }
 
 func renderStoreItems(items []schema.StoreItem) string {
@@ -139,27 +65,6 @@ func renderDescription(descr string) string {
 	return descr
 }
 
-func runStoreInspect(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("please provide the function name")
-	}
-
-	storeItems, err := storeList(storeAddress)
-	if err != nil {
-		return err
-	}
-
-	item := findFunction(args[0], storeItems)
-	if item == nil {
-		return fmt.Errorf("function '%s' not found", functionName)
-	}
-
-	content := renderStoreItem(item)
-	fmt.Print(content)
-
-	return nil
-}
-
 func renderStoreItem(item *schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
@@ -176,51 +81,6 @@ func renderStoreItem(item *schema.StoreItem) string {
 	fmt.Fprintln(w)
 	w.Flush()
 	return b.String()
-}
-
-func runStoreDeploy(cmd *cobra.Command, args []string) error {
-	if len(args) < 1 {
-		return fmt.Errorf("please provide the function name")
-	}
-
-	storeItems, err := storeList(storeAddress)
-	if err != nil {
-		return err
-	}
-
-	item := findFunction(args[0], storeItems)
-	if item == nil {
-		return fmt.Errorf("function '%s' not found", functionName)
-	}
-
-	// Add the store environment variables to the provided ones from cmd
-	if item.Environment != nil {
-		for k, v := range item.Environment {
-			env := fmt.Sprintf("%s=%s", k, v)
-			storeDeployFlags.envvarOpts = append(storeDeployFlags.envvarOpts, env)
-		}
-	}
-
-	// Add the store labels to the provided ones from cmd
-	if item.Labels != nil {
-		for k, v := range item.Labels {
-			label := fmt.Sprintf("%s=%s", k, v)
-			storeDeployFlags.labelOpts = append(storeDeployFlags.labelOpts, label)
-		}
-	}
-
-	// Use the network from manifest if not changed by user
-	if !cmd.Flag("network").Changed {
-		network = item.Network
-	}
-
-	return RunDeploy(
-		args,
-		item.Image,
-		item.Fprocess,
-		item.Name,
-		storeDeployFlags,
-	)
 }
 
 func storeList(store string) ([]schema.StoreItem, error) {
