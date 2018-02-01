@@ -193,10 +193,19 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
-	// Add the store environement variables to the provided ones from cmd
+	// Add the store environment variables to the provided ones from cmd
 	if item.Environment != nil {
-		for _, env := range item.Environment {
+		for k, v := range item.Environment {
+			env := fmt.Sprintf("%s=%s", k, v)
 			storeDeployFlags.envvarOpts = append(storeDeployFlags.envvarOpts, env)
+		}
+	}
+
+	// Add the store labels to the provided ones from cmd
+	if item.Labels != nil {
+		for k, v := range item.Labels {
+			label := fmt.Sprintf("%s=%s", k, v)
+			storeDeployFlags.labelOpts = append(storeDeployFlags.labelOpts, label)
 		}
 	}
 

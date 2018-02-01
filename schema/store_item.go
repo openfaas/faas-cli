@@ -2,6 +2,7 @@ package schema
 
 // StoreItem represents an item of store
 type StoreItem struct {
+	Icon        string            `json:"icon"`
 	Title       string            `json:"title"`
 	Description string            `json:"description"`
 	Image       string            `json:"image"`
@@ -10,4 +11,5 @@ type StoreItem struct {
 	Network     string            `json:"network"`
 	RepoURL     string            `json:"repo_url"`
 	Environment map[string]string `json:"environment"`
+	Labels      map[string]string `json:"labels"`
 }
