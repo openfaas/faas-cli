@@ -66,7 +66,7 @@ Currently supported verbs: %v`, supportedVerbs)
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) {
-	repository := ""
+	repository := DefaultTemplateRepository
 	if len(args) > 1 {
 		repository = args[1]
 	}
