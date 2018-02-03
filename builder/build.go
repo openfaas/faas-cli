@@ -27,14 +27,20 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 
 			tempPath = handler
-			if err := ensureHandlerPath(image, handler); err != nil {
+			if err := ensureHandlerPath(handler); err != nil {
+				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
+				fmt.Printf("Image: %s not built.\n", image)
+
 				return
 			}
 			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
 
 		} else {
 
-			if err := ensureHandlerPath(image, handler); err != nil {
+			if err := ensureHandlerPath(handler); err != nil {
+				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
+				fmt.Printf("Image: %s not built.\n", image)
+
 				return
 			}
 			tempPath = createBuildTemplate(functionName, handler, language)
@@ -106,11 +112,8 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 	return buildFlags
 }
 
-func ensureHandlerPath(image string, handler string) error {
+func ensureHandlerPath(handler string) error {
 	if _, err := os.Stat(handler); err != nil {
-		fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-		fmt.Printf("Image: %s not built.\n", image)
-
 		return err
 	}
 
