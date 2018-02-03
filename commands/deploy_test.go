@@ -98,3 +98,21 @@ func Test_deploy(t *testing.T) {
 		t.Fatalf("Output is not as expected:\n%s", stdOut)
 	}
 }
+
+func Test_deploy_withYAML_withoutTemplates(t *testing.T) {
+	yamlFile = "./testdata/stack-files/stack1.yml"
+	defer func() {
+		yamlFile = ""
+	}()
+
+	stdOut := test.CaptureStdout(func() {
+		faasCmd.SetArgs([]string{
+			"deploy",
+		})
+		faasCmd.Execute()
+	})
+
+	if found, err := regexp.MatchString(`(?m:Language not found: )`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\n%s", stdOut)
+	}
+}
