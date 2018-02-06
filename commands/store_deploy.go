@@ -58,7 +58,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	item := findFunction(args[0], storeItems)
+	item := storeFindFunction(args[0], storeItems)
 	if item == nil {
 		return fmt.Errorf("function '%s' not found", functionName)
 	}
