@@ -48,8 +48,14 @@ var NewFunctionTests = []NewFunctionTest{
 		expectedMsg: SuccessMsg,
 	},
 	{
-		title:       "new_2",
-		funcName:    "new-test-2",
+		title:       "lowercase-dockerfile",
+		funcName:    "lowercase-dockerfile",
+		funcLang:    "dockerfile",
+		expectedMsg: SuccessMsg,
+	},
+	{
+		title:       "uppercase-dockerfile",
+		funcName:    "uppercase-dockerfile",
 		funcLang:    "dockerfile",
 		expectedMsg: SuccessMsg,
 	},
@@ -82,13 +88,20 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 
 	faasCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")
-	stdOut := faasCmd.Execute()
+	execErr := faasCmd.Execute()
 
 	if nft.expectedMsg == SuccessMsg {
 
 		// Make sure that the folder and file was created:
 		if _, err := os.Stat("./" + funcName); os.IsNotExist(err) {
 			t.Fatalf("%s/ directory was not created", funcName)
+		}
+
+		// Check that the Dockerfile was created
+		if funcLang == "Dockerfile" || funcLang == "dockerfile" {
+			if _, err := os.Stat("./" + funcName + "/Dockerfile"); os.IsNotExist(err) {
+				t.Fatalf("Dockerfile language should create a Dockerfile for you", funcName)
+			}
 		}
 
 		if _, err := os.Stat(funcYAML); os.IsNotExist(err) {
@@ -115,8 +128,8 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 	} else {
 		// Validate new function output
-		if found, err := regexp.MatchString(nft.expectedMsg, stdOut.Error()); err != nil || !found {
-			t.Fatalf("Output is not as expected: %s\n", stdOut)
+		if found, err := regexp.MatchString(nft.expectedMsg, execErr.Error()); err != nil || !found {
+			t.Fatalf("Output is not as expected: %s\n", execErr)
 		}
 	}
 
