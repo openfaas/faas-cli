@@ -11,15 +11,14 @@ import (
 
 func init() {
 	// Setup flags used by store command
-	storeInspectCmd.Flags().BoolVarP(&verboseDescription, "verbose", "v", false, "Verbose output for the field values")
+	storeInspectCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output for the field values")
 
 	storeCmd.AddCommand(storeInspectCmd)
 }
 
 var storeInspectCmd = &cobra.Command{
 	Use:   `inspect (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
-	Short: "Show OpenFaaS store function details",
-	Long:  "Prints the detailed informations of the specified OpenFaaS function",
+	Short: "Show details of OpenFaaS function from a store",
 	Example: `  faas-cli store inspect NodeInfo
   faas-cli store inspect NodeInfo --url https://domain:port/store.json`,
 	RunE: runStoreInspect,
