@@ -33,7 +33,7 @@ functions:
 
   # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
-    lang: Dockerfile
+    lang: dockerfile
     handler: ./sample/imagemagick
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"
