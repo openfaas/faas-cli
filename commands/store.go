@@ -10,9 +10,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
-
 	"text/tabwriter"
+	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
@@ -20,9 +19,9 @@ import (
 )
 
 var (
-	storeAddress       string
-	verboseDescription bool
-	storeDeployFlags   DeployFlags
+	storeAddress     string
+	verbose          bool
+	storeDeployFlags DeployFlags
 )
 
 const (
@@ -39,7 +38,7 @@ func init() {
 var storeCmd = &cobra.Command{
 	Use:   `store`,
 	Short: "OpenFaaS store commands",
-	Long:  "Allows browsing and deploying OpenFaaS store functions",
+	Long:  "Allows browsing and deploying OpenFaaS functions from a store",
 }
 
 func storeRenderItems(items []schema.StoreItem) string {
@@ -58,7 +57,7 @@ func storeRenderItems(items []schema.StoreItem) string {
 }
 
 func storeRenderDescription(descr string) string {
-	if !verboseDescription && len(descr) > maxDescriptionLen {
+	if !verbose && len(descr) > maxDescriptionLen {
 		return descr[0:maxDescriptionLen-3] + "..."
 	}
 
@@ -93,12 +92,12 @@ func storeList(store string) ([]schema.StoreItem, error) {
 
 	getRequest, err := http.NewRequest(http.MethodGet, store, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS store on URL: %s", store)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
 	}
 
 	res, err := client.Do(getRequest)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS store on URL: %s", store)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
 	}
 
 	if res.Body != nil {
@@ -107,14 +106,14 @@ func storeList(store string) ([]schema.StoreItem, error) {
 
 	switch res.StatusCode {
 	case http.StatusOK:
-
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read result from OpenFaaS store on URL: %s", store)
+			return nil, fmt.Errorf("cannot read result from OpenFaaS store at URL: %s", store)
 		}
+
 		jsonErr := json.Unmarshal(bytesOut, &results)
 		if jsonErr != nil {
-			return nil, fmt.Errorf("cannot parse result from OpenFaaS store on URL: %s\n%s", store, jsonErr.Error())
+			return nil, fmt.Errorf("cannot parse result from OpenFaaS store at URL: %s\n%s", store, jsonErr.Error())
 		}
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)

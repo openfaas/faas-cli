@@ -39,8 +39,8 @@ var storeDeployCmd = &cobra.Command{
                         [--secret "SECRET_NAME"]
                         [--url STORE_URL]`,
 
-	Short: "Deploy OpenFaaS functions from the store",
-	Long:  `Same as faas-cli deploy except pre-loaded with arguments from the store`,
+	Short: "Deploy OpenFaaS functions from a store",
+	Long:  `Same as faas-cli deploy except that function is pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
   faas-cli store deploy figlet \
     --gateway=http://localhost:8080 \
