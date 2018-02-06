@@ -107,6 +107,9 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
+	if lang == "Dockerfile" {
+		lang = "dockerfile"
+	}
 	builder.CopyFiles(filepath.Join("template", lang, "function"), functionName)
 
 	var stackYaml string
