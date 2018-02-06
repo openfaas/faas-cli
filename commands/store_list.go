@@ -35,7 +35,7 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	fmt.Print(renderStoreItems(items))
+	fmt.Print(storeRenderItems(items))
 
 	return nil
 }

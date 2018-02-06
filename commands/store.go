@@ -42,14 +42,14 @@ var storeCmd = &cobra.Command{
 	Long:  "Allows browsing and deploying OpenFaaS store functions",
 }
 
-func renderStoreItems(items []schema.StoreItem) string {
+func storeRenderItems(items []schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
 
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\n", item.Title, renderDescription(item.Description))
+		fmt.Fprintf(w, "%s\t%s\n", item.Title, storeRenderDescription(item.Description))
 	}
 
 	fmt.Fprintln(w)
@@ -57,7 +57,7 @@ func renderStoreItems(items []schema.StoreItem) string {
 	return b.String()
 }
 
-func renderDescription(descr string) string {
+func storeRenderDescription(descr string) string {
 	if !verboseDescription && len(descr) > maxDescriptionLen {
 		return descr[0:maxDescriptionLen-3] + "..."
 	}
@@ -65,14 +65,14 @@ func renderDescription(descr string) string {
 	return descr
 }
 
-func renderStoreItem(item *schema.StoreItem) string {
+func storeRenderItem(item *schema.StoreItem) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
 	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tPROCESS\tREPO")
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 		item.Title,
-		renderDescription(item.Description),
+		storeRenderDescription(item.Description),
 		item.Image,
 		item.Fprocess,
 		item.RepoURL,
@@ -125,7 +125,7 @@ func storeList(store string) ([]schema.StoreItem, error) {
 	return results, nil
 }
 
-func findFunction(functionName string, storeItems []schema.StoreItem) *schema.StoreItem {
+func storeFindFunction(functionName string, storeItems []schema.StoreItem) *schema.StoreItem {
 	var item schema.StoreItem
 
 	for _, item = range storeItems {
