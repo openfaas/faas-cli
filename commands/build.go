@@ -60,9 +60,9 @@ var buildCmd = &cobra.Command{
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
-  faas-cli build -f ./samples.yml --no-cache
-  faas-cli build -f ./samples.yml --filter "*gif*"
-  faas-cli build -f ./samples.yml --regex "fn[0-9]_.*"
+  faas-cli build -f ./stack.yml --no-cache
+  faas-cli build -f ./stack.yml --filter "*gif*"
+  faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
                  --name=my_fn --squash`,
 	RunE: runBuild,

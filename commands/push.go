@@ -29,10 +29,10 @@ config to a remote repository.
 These container images must already be present in your local image cache.`,
 
 	Example: `  faas-cli push -f https://domain/path/myfunctions.yml
-  faas-cli push -f ./samples.yml
-  faas-cli push -f ./samples.yml --parallel 4
-  faas-cli push -f ./samples.yml --filter "*gif*"
-  faas-cli push -f ./samples.yml --regex "fn[0-9]_.*"`,
+  faas-cli push -f ./stack.yml
+  faas-cli push -f ./stack.yml --parallel 4
+  faas-cli push -f ./stack.yml --filter "*gif*"
+  faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"`,
 	RunE: runPush,
 }
 

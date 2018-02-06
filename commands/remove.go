@@ -28,9 +28,9 @@ var removeCmd = &cobra.Command{
 using the "--yaml" flag (which may contain multiple function definitions), or by
 explicitly specifying a function name.`,
 	Example: `  faas-cli remove -f https://domain/path/myfunctions.yml
-  faas-cli remove -f ./samples.yml
-  faas-cli remove -f ./samples.yml --filter "*gif*"
-  faas-cli remove -f ./samples.yml --regex "fn[0-9]_.*"
+  faas-cli remove -f ./stack.yml
+  faas-cli remove -f ./stack.yml --filter "*gif*"
+  faas-cli remove -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli remove url-ping
   faas-cli remove img2ansi --gateway==http://remote-site.com:8080`,
 	RunE: runDelete,

@@ -1,5 +1,5 @@
 #!/bin/sh
 
-./faas-cli build --yaml ./samples.yml # --squash=true
+./faas-cli build # --squash=true
 
 docker images |head -n 4

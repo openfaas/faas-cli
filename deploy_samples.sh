@@ -1,6 +1,6 @@
 #!/bin/sh
 
-./faas-cli deploy --yaml ./samples.yml
+./faas-cli deploy --yaml ./stack.yml
 
 sleep 5
 

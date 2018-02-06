@@ -129,7 +129,7 @@ A YAML stack file groups functions together and also saves on typing.
 
 You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
 
-Here is an example file using the `samples.yml` file included in the repository.
+Here is an example file using the `stack.yml` file included in the repository.
 
 ```yaml
 provider:
@@ -148,7 +148,7 @@ This url-ping function is defined in the sample/url-ping folder makes use of Pyt
 * Build the files in the .yml file:
 
 ```
-$ faas-cli build -f ./samples.yml
+$ faas-cli build -f ./stack.yml
 ```
 
 > `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `--yaml`.
@@ -156,7 +156,7 @@ $ faas-cli build -f ./samples.yml
 You can also download over HTTP/s:
 
 ```
-$ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/samples.yml
+$ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/stack.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
@@ -166,7 +166,7 @@ Docker along with a Python template will be used to build an image named alexell
 Now you can use the following command to deploy your function(s):
 
 ```
-$ faas-cli deploy -f ./samples.yml
+$ faas-cli deploy -f ./stack.yml
 ```
 
 #### Managing secrets
