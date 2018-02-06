@@ -89,7 +89,17 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
                   --env=MYVAR=myval`,
-	RunE: runDeploy,
+	PreRunE: preRunDeploy,
+	RunE:    runDeploy,
+}
+
+// preRunDeploy validates args & flags
+func preRunDeploy(cmd *cobra.Command, args []string) error {
+	if language == "Dockerfile" {
+		language = "dockerfile"
+	}
+
+	return nil
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {

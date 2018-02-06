@@ -27,7 +27,7 @@ functions:
     image: alexellis/faas-nodejs-echo
 
   imagemagick:
-    lang: Dockerfile
+    lang: dockerfile
     handler: ./sample/imagemagick
     image: functions/resizer
     fprocess: "convert - -resize 50% fd:1"

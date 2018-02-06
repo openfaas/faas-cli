@@ -18,12 +18,11 @@ import (
 
 var (
 	appendFile string
-	lang       string
 	list       bool
 )
 
 func init() {
-	newFunctionCmd.Flags().StringVar(&lang, "lang", "", "Language or template to use")
+	newFunctionCmd.Flags().StringVar(&language, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
@@ -42,7 +41,17 @@ language or type in --list for a list of languages available.`,
   faas-cli new text-parser --lang python --gateway http://mydomain:8080
   faas-cli new text-reader --lang python --append stack.yml
   faas-cli new --list`,
-	RunE: runNewFunction,
+	PreRunE: preRunNewFunction,
+	RunE:    runNewFunction,
+}
+
+// preRunNewFunction validates args & flags
+func preRunNewFunction(cmd *cobra.Command, args []string) error {
+	if language == "Dockerfile" {
+		language = "dockerfile"
+	}
+
+	return nil
 }
 
 func runNewFunction(cmd *cobra.Command, args []string) error {
@@ -72,14 +81,14 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 
 	functionName = args[0]
 
-	if len(lang) == 0 {
+	if len(language) == 0 {
 		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates(DefaultTemplateRepository)
 
-	if stack.IsValidTemplate(lang) == false {
-		return fmt.Errorf("%s is unavailable or not supported", lang)
+	if stack.IsValidTemplate(language) == false {
+		return fmt.Errorf("%s is unavailable or not supported", language)
 	}
 
 	appendMode := len(appendFile) > 0
@@ -107,10 +116,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
-	if lang == "Dockerfile" {
-		lang = "dockerfile"
-	}
-	builder.CopyFiles(filepath.Join("template", lang, "function"), functionName)
+	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
 
 	var stackYaml string
 
@@ -126,7 +132,7 @@ functions:
 
 	stackYaml +=
 		`  ` + functionName + `:
-    lang: ` + lang + `
+    lang: ` + language + `
     handler: ./` + functionName + `
     image: ` + functionName + `
 `

@@ -81,7 +81,10 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
 
-	// Drop in directory tree from template
+	// Both Dockerfile and dockerfile are accepted
+	if language == "Dockerfile" {
+		language = "dockerfile"
+	}
 	CopyFiles("./template/"+language, tempPath)
 
 	// Overlay in user-function

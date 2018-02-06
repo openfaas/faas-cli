@@ -50,6 +50,12 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 		return nil, err
 	}
 
+	for _, f := range services.Functions {
+		if f.Language == "Dockerfile" {
+			f.Language = "dockerfile"
+		}
+	}
+
 	if services.Provider.Name != providerName {
 		return nil, fmt.Errorf("'%s' is the only valid provider for this tool - found: %s", providerName, services.Provider.Name)
 	}
