@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -50,12 +49,6 @@ func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error
 
 func IsValidTemplate(lang string) bool {
 	var found bool
-
-	// TODO harmonise to lowercase when fetching template & parsing yaml
-	// Ensure that `lang` is lowercase in case of Dockerfile
-	if strings.ToLower(lang) == "dockerfile" {
-		lang = strings.ToLower(lang)
-	}
 
 	if _, err := os.Stat("./template/" + lang); err == nil {
 		templateYAMLPath := "./template/" + lang + "/template.yml"

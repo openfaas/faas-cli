@@ -65,7 +65,17 @@ via flags.`,
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
                  --name=my_fn --squash`,
-	RunE: runBuild,
+	PreRunE: preRunBuild,
+	RunE:    runBuild,
+}
+
+// preRunBuild validates args & flags
+func preRunBuild(cmd *cobra.Command, args []string) error {
+	if language == "Dockerfile" {
+		language = "dockerfile"
+	}
+
+	return nil
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
