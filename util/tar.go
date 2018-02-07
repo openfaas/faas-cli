@@ -10,30 +10,39 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
+// CreateTar creates a tar buffer from a directory path
 func CreateTar(path string, buffer *bytes.Buffer) {
 	tw := tar.NewWriter(buffer)
+	defer tw.Close()
+
+	path = strings.TrimRight(filepath.ToSlash(path), "/") + "/"
 	addDirToTar(tw, path, path)
-	tw.Close()
 }
 
+// addDirToTar adds a directory to the tar writer
 func addDirToTar(tw *tar.Writer, path string, basepath string) {
-	dir, _ := ioutil.ReadDir(path)
-	for _, f := range dir {
-		if f.IsDir() {
-			addDirToTar(tw, path+f.Name()+"/", basepath)
-		} else {
-			relativePath := path + f.Name()
-			DebugPrint("Adding file to tar : %s\n", relativePath)
-			if err := addFileToTar(tw, relativePath, basepath); err != nil {
-				fmt.Printf("ERROR: %s\n", err)
+	if dir, err := ioutil.ReadDir(path); err != nil {
+		fmt.Printf("ERROR: %s\n", err)
+	} else {
+		for _, f := range dir {
+			if f.IsDir() {
+				addDirToTar(tw, path+f.Name()+"/", basepath)
+			} else {
+				relativePath := path + f.Name()
+				DebugPrint("Adding file to tar : %s\n", relativePath)
+				if err := addFileToTar(tw, relativePath, basepath); err != nil {
+					fmt.Printf("ERROR: %s\n", err)
+				}
 			}
 		}
 	}
 }
 
+// addFileToTar adds file to the tar writer
 func addFileToTar(tw *tar.Writer, path string, basepath string) error {
 	file, err := os.Open(path)
 	if err != nil {
