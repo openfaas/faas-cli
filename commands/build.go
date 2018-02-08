@@ -71,9 +71,7 @@ via flags.`,
 
 // preRunBuild validates args & flags
 func preRunBuild(cmd *cobra.Command, args []string) error {
-	if language == "Dockerfile" {
-		language = "dockerfile"
-	}
+	language, _ = validateLanguageFlag(language)
 
 	return nil
 }
