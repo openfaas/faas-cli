@@ -47,9 +47,7 @@ language or type in --list for a list of languages available.`,
 
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
-	if language == "Dockerfile" {
-		language = "dockerfile"
-	}
+	language, _ = validateLanguageFlag(language)
 
 	return nil
 }

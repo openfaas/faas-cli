@@ -95,9 +95,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 
 // preRunDeploy validates args & flags
 func preRunDeploy(cmd *cobra.Command, args []string) error {
-	if language == "Dockerfile" {
-		language = "dockerfile"
-	}
+	language, _ = validateLanguageFlag(language)
 
 	return nil
 }
