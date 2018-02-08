@@ -50,7 +50,7 @@ var buildCmd = &cobra.Command{
   faas-cli build --image IMAGE_NAME
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
-                 [--lang <ruby|python|python3|node|csharp|Dockerfile>]
+                 [--lang <ruby|python|python3|node|csharp|dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
 				 [--filter "WILDCARD"]
@@ -115,7 +115,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			for function := range workChannel {
 				fmt.Printf(aec.YellowF.Apply("[%d] > Building %s.\n"), index, function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid --lang or 'Dockerfile' for your function.")
+					fmt.Println("Please provide a valid language for your function.")
 				} else {
 					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
 				}
