@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v2"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -205,18 +205,33 @@ func RunDeploy(
 			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
-		envvars, err := parseMap(deployFlags.envvarOpts, "env")
-		if err != nil {
-			return fmt.Errorf("error parsing envvars: %v", err)
+		if err := deployImage(image, fprocess, functionName, deployFlags); err != nil {
+			return err
 		}
-
-		labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
-		if labelErr != nil {
-			return fmt.Errorf("error parsing labels: %v", labelErr)
-		}
-		functionResourceRequest1 := proxy.FunctionResourceRequest{}
-		proxy.DeployFunction(fprocess, gateway, functionName, image, language, deployFlags.replace, envvars, network, deployFlags.constraints, deployFlags.update, deployFlags.secrets, labelMap, functionResourceRequest1)
 	}
+
+	return nil
+}
+
+// deployImage deploys a function with the given image
+func deployImage(
+	image string,
+	fprocess string,
+	functionName string,
+	deployFlags DeployFlags,
+) error {
+	envvars, err := parseMap(deployFlags.envvarOpts, "env")
+	if err != nil {
+		return fmt.Errorf("error parsing envvars: %v", err)
+	}
+
+	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
+	if labelErr != nil {
+		return fmt.Errorf("error parsing labels: %v", labelErr)
+	}
+
+	functionResourceRequest1 := proxy.FunctionResourceRequest{}
+	proxy.DeployFunction(fprocess, gateway, functionName, image, language, deployFlags.replace, envvars, network, deployFlags.constraints, deployFlags.update, deployFlags.secrets, labelMap, functionResourceRequest1)
 
 	return nil
 }
