@@ -90,12 +90,7 @@ func storeList(store string) ([]schema.StoreItem, error) {
 	timeout := 60 * time.Second
 	client := proxy.MakeHTTPClient(&timeout)
 
-	getRequest, err := http.NewRequest(http.MethodGet, store, nil)
-	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
-	}
-
-	res, err := client.Do(getRequest)
+	res, err := client.Get(store)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
 	}
