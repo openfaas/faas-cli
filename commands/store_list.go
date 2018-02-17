@@ -4,8 +4,11 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
+	"text/tabwriter"
 
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
 
@@ -37,4 +40,27 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 	fmt.Print(storeRenderItems(items))
 
 	return nil
+}
+
+func storeRenderItems(items []schema.StoreItem) string {
+	var b bytes.Buffer
+	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
+
+	for _, item := range items {
+		fmt.Fprintf(w, "%s\t%s\n", item.Title, storeRenderDescription(item.Description))
+	}
+
+	fmt.Fprintln(w)
+	w.Flush()
+	return b.String()
+}
+
+func storeRenderDescription(descr string) string {
+	if !verbose && len(descr) > maxDescriptionLen {
+		return descr[0:maxDescriptionLen-3] + "..."
+	}
+
+	return descr
 }
