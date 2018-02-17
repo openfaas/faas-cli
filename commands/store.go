@@ -4,13 +4,11 @@
 package commands
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"text/tabwriter"
 	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
@@ -39,47 +37,6 @@ var storeCmd = &cobra.Command{
 	Use:   `store`,
 	Short: "OpenFaaS store commands",
 	Long:  "Allows browsing and deploying OpenFaaS functions from a store",
-}
-
-func storeRenderItems(items []schema.StoreItem) string {
-	var b bytes.Buffer
-	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
-
-	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\n", item.Title, storeRenderDescription(item.Description))
-	}
-
-	fmt.Fprintln(w)
-	w.Flush()
-	return b.String()
-}
-
-func storeRenderDescription(descr string) string {
-	if !verbose && len(descr) > maxDescriptionLen {
-		return descr[0:maxDescriptionLen-3] + "..."
-	}
-
-	return descr
-}
-
-func storeRenderItem(item *schema.StoreItem) string {
-	var b bytes.Buffer
-	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tPROCESS\tREPO")
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-		item.Title,
-		storeRenderDescription(item.Description),
-		item.Image,
-		item.Fprocess,
-		item.RepoURL,
-	)
-
-	fmt.Fprintln(w)
-	w.Flush()
-	return b.String()
 }
 
 func storeList(store string) ([]schema.StoreItem, error) {
