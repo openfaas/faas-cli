@@ -15,6 +15,24 @@ Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
 [Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
 
+### FAQ
+
+* Does the CLI hang while deploying `faas deploy`?
+
+Checkout the [troubleshooting guide](https://github.com/openfaas/faas/blob/master/guide/troubleshooting.md)
+
+* Can you not push your image via `faas push`?
+
+Make sure you have specified your Docker Hub user account in your YAML file - so if your account is `alexellis2` and your image name is `demo`, then put:
+
+```
+    image: alexellis2/demo
+```
+
+* Need other help with troubleshooting?
+
+Checkout the [troubleshooting guide](https://github.com/openfaas/faas/blob/master/guide/troubleshooting.md)
+
 ### Get started: Install the CLI
 
 You can install the CLI with a `curl` utility script, `brew` or by downloading the binary from the releases page. Once installed you'll get the `faas-cli` command and `faas` alias.
