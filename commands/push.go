@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"sync"
 
 	"github.com/morikuni/aec"
@@ -52,6 +53,11 @@ func runPush(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
+		invalidImages := validateImages(&services)
+		if len(invalidImages) > 0 {
+			return fmt.Errorf("Unable to push one or more of your functions to Docker Hub\n" + invalidImages + "\n\nYou must provide a username or registry prefix to the Function's image such as user1/function1.\nIf you need a Docker Hub account, you can sign up here: https://hub.docker.com")
+		}
+
 		pushStack(&services, parallel)
 	} else {
 		return fmt.Errorf("you must supply a valid YAML file")
@@ -75,8 +81,8 @@ func pushStack(services *stack.Services, queueDepth int) {
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s.\n"), index, function.Name)
 				if len(function.Image) == 0 {
 					fmt.Println("Please provide a valid Image value in the YAML file.")
-				} else if !validImageString(function.Image) {
-					fmt.Printf("Unable to push %s. You must provide a username or registry prefix such as user1/function.\nIf you need a Docker Hub account, you can sign up here: https://hub.docker.com\n", function.Name)
+				} else if function.SkipBuild {
+					fmt.Printf("Skipping %s\n", function.Name)
 				} else {
 					pushImage(function.Image)
 					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
@@ -99,9 +105,19 @@ func pushStack(services *stack.Services, queueDepth int) {
 
 }
 
-func validImageString(image string) bool {
-	ip := "(\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\b)(:\\d+)?"
-	re := regexp.MustCompile("([a-z].+)\\/|" + ip + "\\/")
-	ma := re.FindAllString(image, 1)
-	return len(ma) >= 1
+func validateImages(services *stack.Services) string {
+	errMsg := make([]string, 0)
+	for name, function := range services.Functions {
+		if function.SkipBuild {
+			continue
+		}
+		ip := "(\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\b)(:\\d+)?"
+		re := regexp.MustCompile("([a-z].+)\\/|" + ip + "\\/")
+		ma := re.FindAllString(function.Image, 1)
+
+		if len(ma) < 1 {
+			errMsg = append(errMsg, fmt.Sprintf(" - %s", name))
+		}
+	}
+	return strings.Join(errMsg, "\n")
 }
