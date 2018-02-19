@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"regexp"
 	"sync"
 
 	"github.com/morikuni/aec"
@@ -74,10 +75,12 @@ func pushStack(services *stack.Services, queueDepth int) {
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s.\n"), index, function.Name)
 				if len(function.Image) == 0 {
 					fmt.Println("Please provide a valid Image value in the YAML file.")
+				} else if !validImageString(function.Image) {
+					fmt.Printf("Unable to push %s. You must provide a username or registry prefix such as user1/function.\nIf you need a Docker Hub account, you can sign up here: https://hub.docker.com\n", function.Name)
 				} else {
 					pushImage(function.Image)
+					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
 				}
-				fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
 			}
 
 			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
@@ -94,4 +97,11 @@ func pushStack(services *stack.Services, queueDepth int) {
 
 	wg.Wait()
 
+}
+
+func validImageString(image string) bool {
+	ip := "(\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\b)(:\\d+)?"
+	re := regexp.MustCompile("([a-z].+)\\/|" + ip + "\\/")
+	ma := re.FindAllString(image, 1)
+	return len(ma) >= 1
 }
