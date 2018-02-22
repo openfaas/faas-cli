@@ -52,11 +52,12 @@ func runPush(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-		invalidImages := validateImages(&services)
+		invalidImages := validateImages(services.Functions)
 		if len(invalidImages) > 0 {
+			imageList := strings.Join(invalidImages, "\n- ")
 			return fmt.Errorf(`
-Unable to push one or more of your functions to Docker Hub
-` + invalidImages + `
+Unable to push one or more of your functions to Docker Hub:
+- ` + imageList + `
 
 You must provide a username or registry prefix to the Function's image such as user1/function1`)
 		}
@@ -108,16 +109,14 @@ func pushStack(services *stack.Services, queueDepth int) {
 
 }
 
-func validateImages(services *stack.Services) string {
-	errMsg := make([]string, 0)
-	for name, function := range services.Functions {
-		if function.SkipBuild {
-			continue
-		}
+func validateImages(functions map[string]stack.Function) []string {
+	invalidImages := []string{}
 
-		if !strings.Contains(function.Image, `/`) {
-			errMsg = append(errMsg, fmt.Sprintf(" - %s", name))
+	for name, function := range functions {
+
+		if !function.SkipBuild && !strings.Contains(function.Image, `/`) {
+			invalidImages = append(invalidImages, name)
 		}
 	}
-	return strings.Join(errMsg, "\n")
+	return invalidImages
 }
