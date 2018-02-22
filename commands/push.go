@@ -111,11 +111,8 @@ func pushStack(services *stack.Services, queueDepth int) {
 func validateImages(services *stack.Services) string {
 	errMsg := make([]string, 0)
 	for name, function := range services.Functions {
-		if function.SkipBuild {
-			continue
-		}
 
-		if !strings.Contains(function.Image, `/`) {
+		if !function.SkipBuild && !strings.Contains(function.Image, `/`) {
 			errMsg = append(errMsg, fmt.Sprintf(" - %s", name))
 		}
 	}
