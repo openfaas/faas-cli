@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -55,7 +54,11 @@ func runPush(cmd *cobra.Command, args []string) error {
 	if len(services.Functions) > 0 {
 		invalidImages := validateImages(&services)
 		if len(invalidImages) > 0 {
-			return fmt.Errorf("Unable to push one or more of your functions to Docker Hub\n" + invalidImages + "\n\nYou must provide a username or registry prefix to the Function's image such as user1/function1.\nIf you need a Docker Hub account, you can sign up here: https://hub.docker.com")
+			return fmt.Errorf(`
+Unable to push one or more of your functions to Docker Hub
+` + invalidImages + `
+
+You must provide a username or registry prefix to the Function's image such as user1/function1`)
 		}
 
 		pushStack(&services, parallel)
@@ -111,11 +114,8 @@ func validateImages(services *stack.Services) string {
 		if function.SkipBuild {
 			continue
 		}
-		ip := "(\\b\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\b)(:\\d+)?"
-		re := regexp.MustCompile("([a-z].+)\\/|" + ip + "\\/")
-		ma := re.FindAllString(function.Image, 1)
 
-		if len(ma) < 1 {
+		if !strings.Contains(function.Image, `/`) {
 			errMsg = append(errMsg, fmt.Sprintf(" - %s", name))
 		}
 	}
