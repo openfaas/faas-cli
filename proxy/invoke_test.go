@@ -25,6 +25,7 @@ func Test_InvokeFunction(t *testing.T) {
 		&bytesIn,
 		"text/plain",
 		[]string{},
+		[]string{},
 	)
 
 	if err != nil {
@@ -42,6 +43,7 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		"function",
 		&bytesIn,
 		"text/plain",
+		[]string{},
 		[]string{},
 	)
 
@@ -63,6 +65,7 @@ func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
 		"function",
 		&bytesIn,
 		"text/plain",
+		[]string{},
 		[]string{},
 	)
 

@@ -16,6 +16,7 @@ import (
 var (
 	contentType string
 	query       []string
+	headers     []string
 )
 
 func init() {
@@ -25,17 +26,20 @@ func init() {
 
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
+	invokeCmd.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "pass HTTP request header")
 
 	faasCmd.AddCommand(invokeCmd)
 }
 
 var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE]`,
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE] [--header PARAM=VALUE]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
 	Example: `  faas-cli invoke echo --gateway https://domain:port
   faas-cli invoke echo --gateway https://domain:port --content-type application/json
-  faas-cli invoke env --query repo=faas-cli --query org=openfaas`,
+  faas-cli invoke env --query repo=faas-cli --query org=openfaas
+  faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
+  faas-cli invoke env -H X-Ping-Url=http://request.bin/etc`,
 	RunE: runInvoke,
 }
 
@@ -72,7 +76,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers)
 	if err != nil {
 		return err
 	}
