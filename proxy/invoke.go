@@ -14,7 +14,7 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -29,6 +29,11 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		return nil, qsErr
 	}
 
+	headerMap, headerErr := parseHeaders(headers)
+	if headerErr != nil {
+		return nil, headerErr
+	}
+
 	gatewayURL := gateway + "/function/" + name + qs
 
 	req, err := http.NewRequest(http.MethodPost, gatewayURL, reader)
@@ -39,6 +44,11 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	req.Header.Add("Content-Type", contentType)
+	// Add additional headers to request
+	for name, value := range headerMap {
+		req.Header.Add(name, value)
+	}
+
 	SetAuth(req, gateway)
 
 	res, err := client.Do(req)
@@ -90,4 +100,28 @@ func buildQueryString(query []string) (string, error) {
 	}
 
 	return qs, nil
+}
+
+// parseHeaders parses header values from command
+func parseHeaders(headers []string) (map[string]string, error) {
+	headerMap := make(map[string]string)
+
+	for _, header := range headers {
+		headerValues := strings.Split(header, "=")
+		if len(headerValues) != 2 {
+			return headerMap, fmt.Errorf("the --header or -H flag must take the form of key=value")
+		}
+
+		name, value := headerValues[0], headerValues[1]
+		if name == "" {
+			return headerMap, fmt.Errorf("the --header or -H flag must take the form of key=value (empty key given)")
+		}
+
+		if value == "" {
+			return headerMap, fmt.Errorf("the --header or -H flag must take the form of key=value (empty value given)")
+		}
+
+		headerMap[name] = value
+	}
+	return headerMap, nil
 }
