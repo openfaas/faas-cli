@@ -8,12 +8,12 @@ import (
 )
 
 func validateLanguageFlag(language string) (string, error) {
-	var err error = nil
+	var err error
 
 	if language == "Dockerfile" {
 		language = "dockerfile"
 
-		err = errors.New("Dockerfile was converted to dockerfile")
+		err = errors.New(`language "Dockerfile" was converted to "dockerfile" automatically`)
 	}
 
 	return language, err
