@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Flags that are to be added to commands.
+// DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
 	envvarOpts  []string
 	replace     bool
@@ -30,7 +30,7 @@ var deployFlags DeployFlags
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
-	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "Fprocess to be run by the watchdog")
+	deployCmd.Flags().StringVar(&fprocess, "fprocess", "", "fprocess value to be run as a serverless function by the watchdog")
 	deployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	deployCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	deployCmd.Flags().StringVar(&image, "image", "", "Docker image name to build")
@@ -101,17 +101,10 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return RunDeploy(args, image, fprocess, functionName, deployFlags)
+	return runDeployCommand(args, image, fprocess, functionName, deployFlags)
 }
 
-func RunDeploy(
-	args []string,
-	image string,
-	fprocess string,
-	functionName string,
-	deployFlags DeployFlags,
-) error {
-
+func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags) error {
 	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
@@ -184,9 +177,11 @@ func RunDeploy(
 			// Get FProcess to use from the ./template/template.yml, if a template is being used
 			if languageExistsNotDockerfile(function.Language) {
 				var fprocessErr error
+
 				function.FProcess, fprocessErr = deriveFprocess(function)
 				if fprocessErr != nil {
-					return fprocessErr
+					return fmt.Errorf(`template directory may be missing or invalid, please run "faas template pull"
+Error: %s`, fprocessErr.Error())
 				}
 			}
 
