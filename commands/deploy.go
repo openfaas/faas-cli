@@ -186,6 +186,7 @@ func RunDeploy(
 				var fprocessErr error
 				function.FProcess, fprocessErr = deriveFprocess(function)
 				if fprocessErr != nil {
+					fmt.Printf("Language not found: %s\n", function.Language)
 					return fprocessErr
 				}
 			}
