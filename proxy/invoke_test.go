@@ -15,22 +15,42 @@ import (
 )
 
 func Test_InvokeFunction(t *testing.T) {
-	s := test.MockHttpServerStatus(t, http.StatusOK)
+	s := test.MockHttpServerStatus(t, http.StatusOK, http.StatusOK)
 	defer s.Close()
 
-	bytesIn := []byte("test data")
-	_, err := InvokeFunction(
-		s.URL,
-		"function",
-		&bytesIn,
-		"text/plain",
-		[]string{},
-		[]string{},
-	)
+	t.Run("Sync", func(t *testing.T) {
+		bytesIn := []byte("test data")
+		_, err := InvokeFunction(
+			s.URL,
+			"function",
+			&bytesIn,
+			"text/plain",
+			[]string{},
+			[]string{},
+			false,
+		)
 
-	if err != nil {
-		t.Fatalf("Error returned: %s", err)
-	}
+		if err != nil {
+			t.Fatalf("Error returned: %s", err)
+		}
+	})
+
+	t.Run("Async", func(t *testing.T) {
+		bytesIn := []byte("test data")
+		_, err := InvokeFunction(
+			s.URL,
+			"function",
+			&bytesIn,
+			"text/plain",
+			[]string{},
+			[]string{},
+			true,
+		)
+
+		if err != nil {
+			t.Fatalf("Error returned: %s", err)
+		}
+	})
 }
 
 func Test_InvokeFunction_Not2xx(t *testing.T) {
@@ -45,6 +65,7 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		"text/plain",
 		[]string{},
 		[]string{},
+		false,
 	)
 
 	if err == nil {
@@ -67,6 +88,7 @@ func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
 		"text/plain",
 		[]string{},
 		[]string{},
+		false,
 	)
 
 	if err == nil {
