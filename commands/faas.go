@@ -33,6 +33,7 @@ var (
 	gateway      string
 	handler      string
 	image        string
+	imagePrefix  string
 	language     string
 )
 

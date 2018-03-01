@@ -25,30 +25,43 @@ const ListOptionOutput = `Languages available as templates:
 const LangNotExistsOutput = `(?m:is unavailable or not supported)`
 
 type NewFunctionTest struct {
-	title       string
-	funcName    string
-	funcLang    string
-	expectedMsg string
+	title         string
+	prefix        string
+	funcName      string
+	funcLang      string
+	expectedImage string
+	expectedMsg   string
 }
 
 var NewFunctionTests = []NewFunctionTest{
 	{
-		title:       "new_1",
-		funcName:    "new-test-1",
-		funcLang:    "ruby",
-		expectedMsg: SuccessMsg,
+		title:         "new_1",
+		funcName:      "new-test-1",
+		funcLang:      "ruby",
+		expectedImage: "new-test-1",
+		expectedMsg:   SuccessMsg,
 	},
 	{
-		title:       "lowercase-dockerfile",
-		funcName:    "lowercase-dockerfile",
-		funcLang:    "dockerfile",
-		expectedMsg: SuccessMsg,
+		title:         "lowercase-dockerfile",
+		funcName:      "lowercase-dockerfile",
+		funcLang:      "dockerfile",
+		expectedImage: "lowercase-dockerfile",
+		expectedMsg:   SuccessMsg,
 	},
 	{
-		title:       "uppercase-dockerfile",
-		funcName:    "uppercase-dockerfile",
-		funcLang:    "dockerfile",
-		expectedMsg: SuccessMsg,
+		title:         "uppercase-dockerfile",
+		funcName:      "uppercase-dockerfile",
+		funcLang:      "dockerfile",
+		expectedImage: "uppercase-dockerfile",
+		expectedMsg:   SuccessMsg,
+	},
+	{
+		title:         "func-with-prefix",
+		funcName:      "func-with-prefix",
+		prefix:        "username",
+		funcLang:      "dockerfile",
+		expectedImage: "username/func-with-prefix",
+		expectedMsg:   SuccessMsg,
 	},
 	{
 		title:       "invalid_1",
@@ -61,6 +74,7 @@ var NewFunctionTests = []NewFunctionTest{
 func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	funcName := nft.funcName
 	funcLang := nft.funcLang
+	imagePrefix := nft.prefix
 	var funcYAML string
 	funcYAML = funcName + ".yml"
 
@@ -75,6 +89,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		funcName,
 		"--lang=" + funcLang,
 		"--gateway=" + defaultGateway,
+		"--prefix=" + imagePrefix,
 	}
 
 	faasCmd.SetArgs(cmdParameters)
@@ -113,7 +128,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 
 		testServices.Functions = make(map[string]stack.Function)
-		testServices.Functions[funcName] = stack.Function{Language: funcLang, Image: funcName, Handler: "./" + funcName}
+		testServices.Functions[funcName] = stack.Function{Language: funcLang, Image: nft.expectedImage, Handler: "./" + funcName}
 		if !reflect.DeepEqual(services.Functions[funcName], testServices.Functions[funcName]) {
 			t.Fatalf("YAML `functions` section was not created correctly for file %s, got %v", funcYAML, services.Functions[funcName])
 		}
