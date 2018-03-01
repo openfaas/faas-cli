@@ -17,6 +17,7 @@ var (
 	contentType string
 	query       []string
 	headers     []string
+	invokeAsync bool
 )
 
 func init() {
@@ -27,6 +28,7 @@ func init() {
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
 	invokeCmd.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "pass HTTP request header")
+	invokeCmd.Flags().BoolVarP(&invokeAsync, "async", "a", false, "Invoke the function asynchronously")
 
 	faasCmd.AddCommand(invokeCmd)
 }
@@ -76,7 +78,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync)
 	if err != nil {
 		return err
 	}
