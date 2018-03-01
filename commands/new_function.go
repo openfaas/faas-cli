@@ -24,6 +24,7 @@ var (
 func init() {
 	newFunctionCmd.Flags().StringVar(&language, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
+	newFunctionCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 	newFunctionCmd.Flags().StringVarP(&appendFile, "append", "a", "", "Append to existing YAML file")
@@ -114,6 +115,13 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
+	var imageName string
+	if len(imagePrefix) > 0 {
+		imageName = imagePrefix + "/" + functionName
+	} else {
+		imageName = functionName
+	}
+
 	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
 
 	var stackYaml string
@@ -132,7 +140,7 @@ functions:
 		`  ` + functionName + `:
     lang: ` + language + `
     handler: ./` + functionName + `
-    image: ` + functionName + `
+    image: ` + imageName + `
 `
 
 	printFiglet()
