@@ -41,6 +41,7 @@ var invokeCmd = &cobra.Command{
   faas-cli invoke echo --gateway https://domain:port --content-type application/json
   faas-cli invoke env --query repo=faas-cli --query org=openfaas
   faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
+  faas-cli invoke resize-img --async -H "X-Callback-Url: http://gateway:8080/function/send2slack" < image.png
   faas-cli invoke env -H X-Ping-Url=http://request.bin/etc`,
 	RunE: runInvoke,
 }
