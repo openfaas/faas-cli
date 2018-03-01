@@ -116,6 +116,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	}
 
 	var imageName string
+	imagePrefix = strings.TrimSpace(imagePrefix)
 	if len(imagePrefix) > 0 {
 		imageName = imagePrefix + "/" + functionName
 	} else {

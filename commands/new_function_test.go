@@ -58,9 +58,17 @@ var NewFunctionTests = []NewFunctionTest{
 	{
 		title:         "func-with-prefix",
 		funcName:      "func-with-prefix",
-		prefix:        "username",
+		prefix:        " username ",
 		funcLang:      "dockerfile",
 		expectedImage: "username/func-with-prefix",
+		expectedMsg:   SuccessMsg,
+	},
+	{
+		title:         "func-with-whitespace-only-prefix",
+		funcName:      "func-with-whitespace-only-prefix",
+		prefix:        " ",
+		funcLang:      "dockerfile",
+		expectedImage: "func-with-whitespace-only-prefix",
 		expectedMsg:   SuccessMsg,
 	},
 	{
