@@ -14,7 +14,7 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string, async bool) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -34,7 +34,12 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		return nil, headerErr
 	}
 
-	gatewayURL := gateway + "/function/" + name + qs
+	functionEndpoint := "/function/"
+	if async {
+		functionEndpoint = "/async-function/"
+	}
+
+	gatewayURL := gateway + functionEndpoint + name + qs
 
 	req, err := http.NewRequest(http.MethodPost, gatewayURL, reader)
 	if err != nil {
