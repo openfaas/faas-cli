@@ -25,58 +25,62 @@ func Test_invoke(t *testing.T) {
 			ResponseStatusCode: http.StatusOK,
 			ResponseBody:       expected_invoke_response,
 		},
+	})
+	defer s.Close()
+
+	os.Stdin, _ = ioutil.TempFile("", "stdin")
+	os.Stdin.WriteString("test-data")
+	os.Stdin.Seek(0, 0)
+	defer func() {
+		os.Remove(os.Stdin.Name())
+	}()
+
+	stdOut := test.CaptureStdout(func() {
+		faasCmd.SetArgs([]string{
+			"invoke",
+			"--gateway=" + s.URL,
+			funcName,
+		})
+		faasCmd.Execute()
+	})
+
+	if found, err := regexp.MatchString(`(?m:`+expected_invoke_response+`)`, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:`+expected_invoke_response+`)`, stdOut)
+	}
+
+}
+
+func Test_async_invoke(t *testing.T) {
+	funcName := "test-1"
+
+	s := test.MockHttpServer(t, []test.Request{
 		{
 			Method:             http.MethodPost,
 			Uri:                "/async-function/" + funcName,
-			ResponseStatusCode: http.StatusOK,
-			ResponseBody:       expected_invoke_response,
+			ResponseStatusCode: http.StatusAccepted,
 		},
 	})
 	defer s.Close()
 
-	t.Run("Sync", func(t *testing.T) {
-		os.Stdin, _ = ioutil.TempFile("", "stdin")
-		os.Stdin.WriteString("test-data")
-		os.Stdin.Seek(0, 0)
-		defer func() {
-			os.Remove(os.Stdin.Name())
-		}()
+	os.Stdin, _ = ioutil.TempFile("", "stdin")
+	os.Stdin.WriteString("test-data")
+	os.Stdin.Seek(0, 0)
+	defer func() {
+		os.Remove(os.Stdin.Name())
+	}()
 
-		stdOut := test.CaptureStdout(func() {
-			faasCmd.SetArgs([]string{
-				"invoke",
-				"--gateway=" + s.URL,
-				funcName,
-			})
-			faasCmd.Execute()
+	stdOut := test.CaptureStdout(func() {
+		faasCmd.SetArgs([]string{
+			"invoke",
+			"--gateway=" + s.URL,
+			"--async",
+			funcName,
 		})
-
-		if found, err := regexp.MatchString(`(?m:`+expected_invoke_response+`)`, stdOut); err != nil || !found {
-			t.Fatalf("Output is not as expected:\n%s", stdOut)
-		}
+		faasCmd.Execute()
 	})
 
-	t.Run("Async", func(t *testing.T) {
-		os.Stdin, _ = ioutil.TempFile("", "stdin")
-		os.Stdin.WriteString("test-data")
-		os.Stdin.Seek(0, 0)
-		defer func() {
-			os.Remove(os.Stdin.Name())
-		}()
-
-		stdOut := test.CaptureStdout(func() {
-			faasCmd.SetArgs([]string{
-				"invoke",
-				"--gateway=" + s.URL,
-				"--async",
-				funcName,
-			})
-			faasCmd.Execute()
-		})
-
-		if found, err := regexp.MatchString(`(?m:`+expected_invoke_response+`)`, stdOut); err != nil || !found {
-			t.Fatalf("Async output is not as expected:\n%s", stdOut)
-		}
-	})
+	if found, err := regexp.MatchString(`(?m:)`, stdOut); err != nil || !found {
+		t.Fatalf("Async output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:)`, stdOut)
+	}
 
 }

@@ -15,42 +15,43 @@ import (
 )
 
 func Test_InvokeFunction(t *testing.T) {
-	s := test.MockHttpServerStatus(t, http.StatusOK, http.StatusOK)
+	s := test.MockHttpServerStatus(t, http.StatusOK)
 	defer s.Close()
 
-	t.Run("Sync", func(t *testing.T) {
-		bytesIn := []byte("test data")
-		_, err := InvokeFunction(
-			s.URL,
-			"function",
-			&bytesIn,
-			"text/plain",
-			[]string{},
-			[]string{},
-			false,
-		)
+	bytesIn := []byte("test data")
+	_, err := InvokeFunction(
+		s.URL,
+		"function",
+		&bytesIn,
+		"text/plain",
+		[]string{},
+		[]string{},
+		false,
+	)
 
-		if err != nil {
-			t.Fatalf("Error returned: %s", err)
-		}
-	})
+	if err != nil {
+		t.Fatalf("Error returned: %s", err)
+	}
+}
 
-	t.Run("Async", func(t *testing.T) {
-		bytesIn := []byte("test data")
-		_, err := InvokeFunction(
-			s.URL,
-			"function",
-			&bytesIn,
-			"text/plain",
-			[]string{},
-			[]string{},
-			true,
-		)
+func Test_InvokeFunction_Async(t *testing.T) {
+	s := test.MockHttpServerStatus(t, http.StatusAccepted)
+	defer s.Close()
 
-		if err != nil {
-			t.Fatalf("Error returned: %s", err)
-		}
-	})
+	bytesIn := []byte("test data")
+	_, err := InvokeFunction(
+		s.URL,
+		"function",
+		&bytesIn,
+		"text/plain",
+		[]string{},
+		[]string{},
+		true,
+	)
+
+	if err != nil {
+		t.Fatalf("Error returned: %s", err)
+	}
 }
 
 func Test_InvokeFunction_Not2xx(t *testing.T) {
