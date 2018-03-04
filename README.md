@@ -129,6 +129,7 @@ Curated language templates:
 |---|---|---|
 | PHP | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
 | PHP5 | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
+| F# | @hayer | https://github.com/hayer/faas-fsharp-template/ |
 
 Read more on [community templates here](guide/TEMPLATE.md).
 
