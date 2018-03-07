@@ -18,6 +18,7 @@ var (
 	query       []string
 	headers     []string
 	invokeAsync bool
+	httpMethod  string
 )
 
 func init() {
@@ -29,12 +30,13 @@ func init() {
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
 	invokeCmd.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "pass HTTP request header")
 	invokeCmd.Flags().BoolVarP(&invokeAsync, "async", "a", false, "Invoke the function asynchronously")
+	invokeCmd.Flags().StringVarP(&httpMethod, "method", "m", "POST", "pass HTTP request method")
 
 	faasCmd.AddCommand(invokeCmd)
 }
 
 var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE] [--header PARAM=VALUE]`,
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE] [--header PARAM=VALUE] [--method HTTP_METHOD]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
 	Example: `  faas-cli invoke echo --gateway https://domain:port
@@ -42,7 +44,8 @@ var invokeCmd = &cobra.Command{
   faas-cli invoke env --query repo=faas-cli --query org=openfaas
   faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
   faas-cli invoke resize-img --async -H "X-Callback-Url=http://gateway:8080/function/send2slack" < image.png
-  faas-cli invoke env -H X-Ping-Url=http://request.bin/etc`,
+  faas-cli invoke env -H X-Ping-Url=http://request.bin/etc
+  faas-cli invoke flask --method GET`,
 	RunE: runInvoke,
 }
 
@@ -79,7 +82,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod)
 	if err != nil {
 		return err
 	}
