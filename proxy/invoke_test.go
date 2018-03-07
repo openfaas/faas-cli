@@ -27,6 +27,7 @@ func Test_InvokeFunction(t *testing.T) {
 		[]string{},
 		[]string{},
 		false,
+		http.MethodPost,
 	)
 
 	if err != nil {
@@ -47,6 +48,7 @@ func Test_InvokeFunction_Async(t *testing.T) {
 		[]string{},
 		[]string{},
 		true,
+		http.MethodPost,
 	)
 
 	if err != nil {
@@ -67,6 +69,7 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		[]string{},
 		[]string{},
 		false,
+		http.MethodPost,
 	)
 
 	if err == nil {
@@ -90,6 +93,7 @@ func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
 		[]string{},
 		[]string{},
 		false,
+		http.MethodPost,
 	)
 
 	if err == nil {

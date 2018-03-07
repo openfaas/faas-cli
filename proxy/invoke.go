@@ -15,7 +15,7 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string, async bool) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string, async bool, httpMethod string) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -40,9 +40,14 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		functionEndpoint = "/async-function/"
 	}
 
+	httpMethodErr := validateHTTPMethod(httpMethod)
+	if httpMethodErr != nil {
+		return nil, httpMethodErr
+	}
+
 	gatewayURL := gateway + functionEndpoint + name + qs
 
-	req, err := http.NewRequest(http.MethodPost, gatewayURL, reader)
+	req, err := http.NewRequest(httpMethod, gatewayURL, reader)
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)
@@ -132,4 +137,24 @@ func parseHeaders(headers []string) (map[string]string, error) {
 		headerMap[name] = value
 	}
 	return headerMap, nil
+}
+
+// validateMethod validates the HTTP request method
+func validateHTTPMethod(httpMethod string) error {
+	var allowedMethods = []string{http.MethodGet, http.MethodPost}
+	helpString := strings.Join(allowedMethods, "/")
+
+	if !contains(allowedMethods, httpMethod) {
+		return fmt.Errorf("the --method or -m flag must take one of these values (%s)", helpString)
+	}
+	return nil
+}
+
+func contains(s []string, item string) bool {
+	for _, value := range s {
+		if value == item {
+			return true
+		}
+	}
+	return false
 }
