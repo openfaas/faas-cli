@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -30,7 +31,7 @@ var listCmd = &cobra.Command{
 	Short:   "List OpenFaaS functions",
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
 	Example: `  faas-cli list
-  faas-cli list --gateway https://localhost:8080 --verbose`,
+  faas-cli list --gateway https://127.0.0.1:8080 --verbose`,
 	RunE: runList,
 }
 
@@ -50,7 +51,7 @@ func runList(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv("OPENFAAS_URL"))
 
 	functions, err := proxy.ListFunctions(gatewayAddress)
 	if err != nil {

@@ -1,6 +1,6 @@
 provider:
   name: faas
-  gateway: http://localhost:8080  # can be a remote server
+  gateway: http://127.0.0.1:8080  # can be a remote server
   network: "func_functions"       # this is optional and defaults to func_functions
 
 functions:
@@ -31,7 +31,7 @@ functions:
     requests:
       memory: 30m
 
-  # curl localhost:8080/function/shrink-image --data-binary @big.png > smaller.png
+  # curl 127.0.0.1:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
     lang: dockerfile
     handler: ./sample/imagemagick

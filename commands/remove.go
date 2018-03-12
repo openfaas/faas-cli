@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -52,7 +53,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway)
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv("OPENFAAS_URL"))
 
 	if len(services.Functions) > 0 {
 		if len(services.Provider.Network) == 0 {

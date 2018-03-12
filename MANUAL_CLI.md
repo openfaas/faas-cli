@@ -51,7 +51,7 @@ $ faas-cli deploy \
 
 200 OK
 
-URL: http://localhost:8080/function/node_info
+URL: http://127.0.0.1:8080/function/node_info
 ```
 
 > This tool can be used to deploy any Docker image as a FaaS function, as long as it includes the watchdog binary as the `CMD` or `ENTRYPOINT` of the image.

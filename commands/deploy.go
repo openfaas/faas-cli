@@ -119,7 +119,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			return err
 		}
 
-		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL)
+		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL, os.Getenv("OPENFAAS_URL"))
 
 		// Override network if passed
 		if len(network) > 0 && network != defaultNetwork {
@@ -301,25 +301,6 @@ func mergeMap(i map[string]string, j map[string]string) map[string]string {
 		merged[k] = v
 	}
 	return merged
-}
-
-func getGatewayURL(argumentURL string, defaultURL string, yamlURL string) string {
-	var gatewayURL string
-
-	if len(argumentURL) > 0 && argumentURL != defaultURL {
-		gatewayURL = argumentURL
-	} else if len(yamlURL) > 0 {
-		gatewayURL = yamlURL
-	} else {
-		gatewayURL = defaultURL
-	}
-
-	gatewayURL = strings.ToLower(strings.TrimRight(gatewayURL, "/"))
-	if !strings.HasPrefix(gatewayURL, "http") {
-		gatewayURL = fmt.Sprintf("http://%s", gatewayURL)
-	}
-
-	return gatewayURL
 }
 
 func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, fileEnvironment map[string]string) (map[string]string, error) {
