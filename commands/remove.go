@@ -53,7 +53,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv("OPENFAAS_URL"))
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	if len(services.Functions) > 0 {
 		if len(services.Provider.Network) == 0 {
