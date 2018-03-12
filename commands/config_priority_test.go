@@ -62,6 +62,14 @@ func Test_getGatewayURL(t *testing.T) {
 			argumentURL:    "",
 			expectedURL:    "http://remote2:8080",
 		},
+		{
+			name:           "ARG provided with env-var override",
+			defaultURL:     defaultValue,
+			yamlURL:        defaultValue,
+			environmentURL: "http://remote2:8080",
+			argumentURL:    "http://remote1:8080",
+			expectedURL:    "http://remote1:8080",
+		},
 	}
 
 	fails := 0
