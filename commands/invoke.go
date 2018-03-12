@@ -70,7 +70,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv("OPENFAAS_URL"))
+	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) != 0 {

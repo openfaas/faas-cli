@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+const openFaaSURLEnvironment = "OPENFAAS_URL"
+
 func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) string {
 	var gatewayURL string
 

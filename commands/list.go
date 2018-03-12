@@ -51,7 +51,7 @@ func runList(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv("OPENFAAS_URL"))
+	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	functions, err := proxy.ListFunctions(gatewayAddress)
 	if err != nil {
