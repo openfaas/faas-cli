@@ -91,6 +91,18 @@ The main commands supported by the CLI are:
 * `faas-cli logout` - removes basic auth credentials for a given gateway
 * `faas-cli store` - allows browsing and deploying OpenFaaS store functions
 
+The default gateway URL of `127.0.0.1:8080` can be overriden in three places including an environmental variable.
+
+* 1st priority `--gateway` flag
+* 2nd priority `--yaml` / `-f` flag or `stack.yml` if in current directory
+* 3rd priority `OPENFAAS_URL` environmental variable
+
+For Kubernetes users you may want to set this in your `.bash_rc` file:
+
+```
+export OPENFAAS_URL=127.0.0.1:31112
+```
+
 Advanced commands:
 
 * `faas-cli template pull` - pull in templates from a remote GitHub repository [Detailed Documentation](guide/TEMPLATE.md)
@@ -141,6 +153,9 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 * If you are using a stack file add the `skip_build: true` attribute
 * Use one of the [samples as a basis](https://github.com/openfaas/faas/tree/master/sample-functions)
 
+Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https://blog.alexellis.io/cli-functions-with-openfaas/)
+
+
 ### Use a YAML stack file
 
 A YAML stack file groups functions together and also saves on typing.
@@ -152,7 +167,7 @@ Here is an example file using the `stack.yml` file included in the repository.
 ```yaml
 provider:
   name: faas
-  gateway: http://localhost:8080
+  gateway: http://127.0.0.1:8080
 
 functions:
   url-ping:
@@ -187,9 +202,21 @@ Now you can use the following command to deploy your function(s):
 $ faas-cli deploy -f ./stack.yml
 ```
 
-#### Managing secrets
+#### Secure secret management
 
-You can deploy secrets and configuration via environmental variables in-line or via external files.
+Secrets can be used with OpenFaaS when using Docker Swarm or Kubernetes, this means your data is encrypted at rest and is less likely to be leaked during logging / stack traces than with environmental variables.
+
+```yaml
+  secrets:
+    - secret-name-1
+    - secret-name-2
+```
+
+Secrets should be defined in the cluster ahead of time using `docker secret create` or `kubectl`.
+
+#### Managing environment/configuration
+
+You can deploy non-encrypted secrets and configuration via environmental variables set either in-line or via external (environment) files.
 
 > Note: external files take priority over in-line environmental variables. This allows you to specify a default and then have overrides within an external file.
 
@@ -289,12 +316,12 @@ You can initiate a HTTP POST via `curl`:
 * if you want to pass input from STDIN then use `--data-binary @-`
 
 ```
-$ curl -d '{"hello": "world"}' http://localhost:8080/function/nodejs-echo
+$ curl -d '{"hello": "world"}' http://127.0.0.1:8080/function/nodejs-echo
 { nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
 
-$ curl --data-binary @README.md http://localhost:8080/function/nodejs-echo
+$ curl --data-binary @README.md http://127.0.0.1:8080/function/nodejs-echo
 
-$ uname -a | curl http://localhost:8080/function/nodejs-echo--data-binary @-
+$ uname -a | curl http://127.0.0.1:8080/function/nodejs-echo--data-binary @-
 ```
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)

@@ -43,7 +43,7 @@ var storeDeployCmd = &cobra.Command{
 	Long:  `Same as faas-cli deploy except that function is pre-loaded with arguments from the store`,
 	Example: `  faas-cli store deploy figlet
   faas-cli store deploy figlet \
-    --gateway=http://localhost:8080 \
+    --gateway=http://127.0.0.1:8080 \
     --env=MYVAR=myval`,
 	RunE: runStoreDeploy,
 }
