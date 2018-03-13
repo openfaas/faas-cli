@@ -195,8 +195,8 @@ See above for notes on Brew. At present the brew team are auto-releasing PRs to 
 
 Community packages:
 
-* Arch Linux PKGBUILD (see [rawkode](https://github.com/rawkode))
-* Chocolately (see [pkeuter](https://github.com/pkeuter) via [au-packages](https://github.com/openfaas-incubator/au-packages))
+* ~~Arch Linux PKGBUILD (see [rawkode](https://github.com/rawkode)) [unmaintained]~~
+* ~~Chocolately (see [pkeuter](https://github.com/pkeuter) via [au-packages](https://github.com/openfaas-incubator/au-packages)) [unmaintained]~~
 
 ### Update CHANGELOG
 
