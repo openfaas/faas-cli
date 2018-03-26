@@ -3,12 +3,12 @@ FROM alpine:3.6
 # 2. Add fwatchdog binary via https://github.com/openfaas/faas/releases/
 # 3. Then set fprocess to the process you want to invoke per request - i.e. "cat" or "my_binary"
 
-#ADD https://github.com/openfaas/faas/releases/download/0.7.1/fwatchdog /usr/bin
+#ADD https://github.com/openfaas/faas/releases/download/0.7.8/fwatchdog /usr/bin
 #RUN chmod +x /usr/bin/fwatchdog
 
 RUN apk --no-cache add curl \
     && echo "Pulling watchdog binary from Github." \
-    && curl -sSL https://github.com/openfaas/faas/releases/download/0.7.1/fwatchdog > /usr/bin/fwatchdog \
+    && curl -sSL https://github.com/openfaas/faas/releases/download/0.7.8/fwatchdog > /usr/bin/fwatchdog \
     && chmod +x /usr/bin/fwatchdog \
     && apk del curl --no-cache
     
