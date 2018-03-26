@@ -3,6 +3,10 @@ provider:
   gateway: http://127.0.0.1:8080  # can be a remote server
   network: "func_functions"       # this is optional and defaults to func_functions
 
+
+## Note for Kubernetes memory specifications:
+## Run: `sed -ie s/40m/40Mi/g stack.yml`
+
 functions:
   url-ping:
     lang: python
