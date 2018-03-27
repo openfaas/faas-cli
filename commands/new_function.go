@@ -99,6 +99,12 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		if _, statErr := os.Stat(appendFile); statErr != nil {
 			return fmt.Errorf("unable to find file: %s - %s", appendFile, statErr.Error())
 		}
+
+		duplicateError := duplicateFunctionName(functionName, appendFile)
+
+		if duplicateError != nil {
+			return duplicateError
+		}
 	}
 
 	if _, err := os.Stat(functionName); err == nil {
@@ -155,6 +161,7 @@ functions:
 		if readErr != nil {
 			fmt.Printf("unable to read %s to append, %s", appendFile, readErr)
 		}
+
 		buffer := string(originalBytes) + stackYaml
 
 		stackWriteErr = ioutil.WriteFile(appendFile, []byte(buffer), 0600)
@@ -183,6 +190,27 @@ func printAvailableTemplates(availableTemplates []string) string {
 		result += fmt.Sprintf("- %s\n", template)
 	}
 	return result
+}
+
+func duplicateFunctionName(functionName string, appendFile string) error {
+	fileBytes, readErr := ioutil.ReadFile(appendFile)
+	if readErr != nil {
+		return fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
+	}
+
+	services, parseErr := stack.ParseYAMLData(fileBytes, "", "")
+
+	if parseErr != nil {
+		return fmt.Errorf("Error parsing %s yml file", appendFile)
+	}
+
+	if _, ok := services.Functions[functionName]; ok {
+		return fmt.Errorf(`
+Function %s already exists in %s file. 
+Cannot have duplicate function names in same yml file`, functionName, appendFile)
+	}
+
+	return nil
 }
 
 // StrSort sort strings
