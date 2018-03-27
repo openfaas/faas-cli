@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"reflect"
 	"regexp"
@@ -23,6 +24,7 @@ const ListOptionOutput = `Languages available as templates:
 - ruby`
 
 const LangNotExistsOutput = `(?m:is unavailable or not supported)`
+const FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
 
 type NewFunctionTest struct {
 	title         string
@@ -205,6 +207,65 @@ func Test_languageNotExists(t *testing.T) {
 	// Validate new function output
 	if found, err := regexp.MatchString(LangNotExistsOutput, stdOut); err != nil || !found {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
+	}
+}
+
+func Test_duplicateFunctionName(t *testing.T) {
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+	defer tearDownNewFunction(t)
+
+	const functionName = "sampleFunc"
+	const functionLang = "ruby"
+
+	defer func() {
+		if _, err := os.Stat(functionName + ".yml"); err == nil {
+			err := os.Remove(functionName + ".yml")
+			if err != nil {
+				t.Log(err)
+			}
+		}
+	}()
+
+	// Create a yml file with the same function name and language
+	writeFunctionYmlFile(functionName, functionLang, t)
+
+	appendParameters := []string{
+		"new",
+		functionName,
+		"--lang=" + functionLang,
+		"--append=" + functionName + ".yml",
+	}
+
+	faasCmd.SetArgs(appendParameters)
+	stdOut := faasCmd.Execute().Error()
+
+	if found, err := regexp.MatchString(FunctionExistsOutput, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
+	}
+}
+
+func writeFunctionYmlFile(functionName string, lang string, t *testing.T) {
+	var stackYaml string
+
+	stackYaml +=
+		`provider:
+  name: faas
+  gateway: ` + defaultGateway + `
+
+functions:
+`
+
+	stackYaml +=
+		`  ` + functionName + `:
+    lang: ` + lang + `
+    handler: ./` + functionName + `
+    image: ` + functionName + `
+`
+
+	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stackYaml), 0600)
+	if stackWriteErr != nil {
+		t.Log(fmt.Errorf("error writing stack file %s", stackWriteErr))
 	}
 }
 
