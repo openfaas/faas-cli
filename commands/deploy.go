@@ -200,6 +200,8 @@ Error: %s`, fprocessErr.Error())
 			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
 		}
 
+		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
+
 		if err := deployImage(image, fprocess, functionName, deployFlags); err != nil {
 			return err
 		}
