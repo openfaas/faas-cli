@@ -14,7 +14,7 @@ import (
 
 const (
 	defaultGateway = "http://127.0.0.1:8080"
-	defaultNetwork = "func_functions"
+	defaultNetwork = ""
 	defaultYAML    = "stack.yml"
 )
 

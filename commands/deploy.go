@@ -122,7 +122,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL, os.Getenv(openFaaSURLEnvironment))
 
 		// Override network if passed
-		if len(network) > 0 && network != defaultNetwork {
+		if len(network) > 0 {
 			parsedServices.Provider.Network = network
 		}
 
@@ -132,6 +132,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 	}
 
 	if len(services.Functions) > 0 {
+
 		if len(services.Provider.Network) == 0 {
 			services.Provider.Network = defaultNetwork
 		}
