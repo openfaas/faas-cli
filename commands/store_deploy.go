@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -84,10 +85,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		network = item.Network
 	}
 
-	return deployImage(
-		item.Image,
-		item.Fprocess,
-		item.Name,
-		storeDeployFlags,
-	)
+	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+
+	return deployImage(item.Image, item.Fprocess, item.Name, storeDeployFlags)
 }
