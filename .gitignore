@@ -19,3 +19,6 @@ obj
 
 .idea
 .DS_Store
+
+template
+build
