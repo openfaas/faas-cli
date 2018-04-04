@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"sync"
 
 	"github.com/morikuni/aec"
@@ -17,10 +18,12 @@ import (
 
 // Flags that are to be added to commands.
 var (
-	nocache    bool
-	squash     bool
-	parallel   int
-	shrinkwrap bool
+	nocache     bool
+	squash      bool
+	parallel    int
+	shrinkwrap  bool
+	buildArgs   []string
+	buildArgMap map[string]string
 )
 
 func init() {
@@ -38,6 +41,8 @@ func init() {
 
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 
+	buildCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
+
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -54,13 +59,14 @@ var buildCmd = &cobra.Command{
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
 				 [--filter "WILDCARD"]
-				 [--parallel PARALLEL_DEPTH]`,
+				 [--parallel PARALLEL_DEPTH]
+				 [--build-arg KEY=VALUE]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
-  faas-cli build -f ./stack.yml --no-cache
+  faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
@@ -72,6 +78,25 @@ via flags.`,
 // preRunBuild validates args & flags
 func preRunBuild(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
+
+	buildArgMap = make(map[string]string)
+
+	for _, kvp := range buildArgs {
+		values := strings.Split(kvp, "=")
+		if len(values) != 2 {
+			return fmt.Errorf("each build-arg must take the form key=value")
+		}
+		k := strings.TrimSpace(values[0])
+		v := strings.TrimSpace(values[1])
+		if len(k) == 0 {
+			return fmt.Errorf("build-arg must have a non-empty key")
+		}
+		if len(v) == 0 {
+			return fmt.Errorf("build-arg must have a non-empty value")
+		}
+
+		buildArgMap[k] = v
+	}
 
 	return nil
 }
@@ -96,6 +121,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 
 	if len(services.Functions) > 0 {
 		build(&services, parallel, shrinkwrap)
+
 	} else {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
@@ -106,7 +132,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
+		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap)
 	}
 
 	return nil
@@ -125,7 +151,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap)
 				}
 				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}
