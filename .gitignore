@@ -1,5 +1,5 @@
 **/node_modules/
-build/
+build
 !contrib/bash/faas-cli
 faas-cli
 faas-cli-darwin
@@ -20,5 +20,3 @@ obj
 .idea
 .DS_Store
 
-template
-build
