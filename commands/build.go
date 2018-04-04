@@ -79,26 +79,40 @@ via flags.`,
 func preRunBuild(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
 
-	buildArgMap = make(map[string]string)
+	mapped, err := parseBuildArgs(buildArgs)
 
-	for _, kvp := range buildArgs {
-		values := strings.Split(kvp, "=")
-		if len(values) != 2 {
-			return fmt.Errorf("each build-arg must take the form key=value")
-		}
-		k := strings.TrimSpace(values[0])
-		v := strings.TrimSpace(values[1])
-		if len(k) == 0 {
-			return fmt.Errorf("build-arg must have a non-empty key")
-		}
-		if len(v) == 0 {
-			return fmt.Errorf("build-arg must have a non-empty value")
-		}
-
-		buildArgMap[k] = v
+	if err == nil {
+		buildArgMap = mapped
 	}
 
-	return nil
+	return err
+}
+
+func parseBuildArgs(args []string) (map[string]string, error) {
+	mapped := make(map[string]string)
+
+	for _, kvp := range args {
+		index := strings.Index(kvp, "=")
+		if index == -1 {
+			return nil, fmt.Errorf("each build-arg must take the form key=value")
+		}
+
+		values := []string{kvp[0:index], kvp[index+1:]}
+
+		k := strings.TrimSpace(values[0])
+		v := strings.TrimSpace(values[1])
+
+		if len(k) == 0 {
+			return nil, fmt.Errorf("build-arg must have a non-empty key")
+		}
+		if len(v) == 0 {
+			return nil, fmt.Errorf("build-arg must have a non-empty value")
+		}
+
+		mapped[k] = v
+	}
+
+	return mapped, nil
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
