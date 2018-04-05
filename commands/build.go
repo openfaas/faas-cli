@@ -21,6 +21,7 @@ var (
 	squash     bool
 	parallel   int
 	shrinkwrap bool
+	argOpts    []string
 )
 
 func init() {
@@ -38,6 +39,8 @@ func init() {
 
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 
+	buildCmd.Flags().StringArrayVarP(&argOpts, "build-arg", "", []string{}, "provide one or more build argument (ARG=VALUE)")
+
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -51,6 +54,7 @@ var buildCmd = &cobra.Command{
                  --handler HANDLER_DIR
                  --name FUNCTION_NAME
                  [--lang <ruby|python|python3|node|csharp|dockerfile>]
+                 [--build-arg ARG=VALUE ...]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
 				 [--filter "WILDCARD"]
@@ -64,7 +68,7 @@ via flags.`,
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
-                 --name=my_fn --squash`,
+                 --name=my_fn --squash --build-arg=MYARG=myval`,
 	PreRunE: preRunBuild,
 	RunE:    runBuild,
 }
@@ -94,8 +98,13 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
+	allArg, argErr := compileArg(argOpts)
+	if argErr != nil {
+		return fmt.Errorf("build failed: %v", argErr)
+	}
+
 	if len(services.Functions) > 0 {
-		build(&services, parallel, shrinkwrap)
+		build(&services, parallel, shrinkwrap, allArg)
 	} else {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
@@ -106,16 +115,18 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap)
+		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, allArg)
 	}
 
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
+func build(services *stack.Services, queueDepth int, shrinkwrap bool, allArg map[string]string) {
 	wg := sync.WaitGroup{}
+	defer wg.Wait()
 
 	workChannel := make(chan stack.Function)
+	defer close(workChannel)
 
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
@@ -125,7 +136,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap)
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, allArg)
 				}
 				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}
@@ -143,11 +154,6 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			workChannel <- function
 		}
 	}
-
-	close(workChannel)
-
-	wg.Wait()
-
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.
@@ -164,4 +170,13 @@ func PullTemplates(templateURL string) error {
 		}
 	}
 	return err
+}
+
+func compileArg(argOpts []string) (map[string]string, error) {
+	arguments, err := parseMap(argOpts, "build-arg")
+	if err != nil {
+		return nil, fmt.Errorf("error parsing argvars: %v", err)
+	}
+
+	return arguments, nil
 }
