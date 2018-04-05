@@ -13,7 +13,7 @@ import (
 )
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgs map[string]string) {
 
 	if stack.IsValidTemplate(language) {
 
@@ -53,7 +53,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 		}
 
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"))
+		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgs)
 		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
 		ExecCommand(tempPath, builder)
 		fmt.Printf("Image: %s built.\n", image)
@@ -93,7 +93,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	return tempPath
 }
 
-func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy string) string {
+func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgs map[string]string) string {
 
 	buildFlags := ""
 
@@ -110,6 +110,12 @@ func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy str
 
 	if len(httpsProxy) > 0 {
 		buildFlags += fmt.Sprintf("--build-arg https_proxy=%s ", httpsProxy)
+	}
+
+	for key, value := range buildArgs {
+		if len(key) > 0 {
+			buildFlags += fmt.Sprintf("--build-arg %s=%s ", key, value)
+		}
 	}
 
 	return buildFlags
