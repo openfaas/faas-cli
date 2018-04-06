@@ -9,8 +9,8 @@
 <!--- If suggesting a change/improvement, explain the difference from current behavior -->
 
 ## Possible Solution
-<!--- Not obligatory, but suggest a fix/reason for the bug, -->
-<!--- or ideas how to implement the addition or change -->
+<!--- Not obligatory, but suggest a fix/reason for the bug with details on how you -->
+<!--- arrived at your diagnosis, or ideas how to implement the addition or change -->
 
 ## Steps to Reproduce (for bugs)
 <!--- Provide a link to a live example, or an unambiguous set of steps to -->
@@ -26,9 +26,11 @@
 
 ## Your Environment
 <!--- Include as many relevant details about the environment you experienced the bug in -->
-* Docker version `docker version` (e.g. Docker 17.0.05 ):
+* FaaS-CLI version ( Full output from: `faas-cli version` ):
 
-* Are you using Docker Swarm or Kubernetes (FaaS-netes)?
+* Docker version ( Full output from: `docker version` ):
+
+* Are you using Docker Swarm (FaaS-swarm ) or Kubernetes (FaaS-netes)?
 
 * Operating System and version (e.g. Linux, Windows, MacOS):
 
