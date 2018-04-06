@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"sync"
 
 	"github.com/morikuni/aec"
@@ -79,40 +78,12 @@ via flags.`,
 func preRunBuild(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
 
-	mapped, err := parseBuildArgs(buildArgs)
-
+	mapped, err := parseMap(buildArgs, "build-arg")
 	if err == nil {
-		buildArgMap = mapped
+		return fmt.Errorf("failed to parse build-arg: %v", err)
 	}
-
-	return err
-}
-
-func parseBuildArgs(args []string) (map[string]string, error) {
-	mapped := make(map[string]string)
-
-	for _, kvp := range args {
-		index := strings.Index(kvp, "=")
-		if index == -1 {
-			return nil, fmt.Errorf("each build-arg must take the form key=value")
-		}
-
-		values := []string{kvp[0:index], kvp[index+1:]}
-
-		k := strings.TrimSpace(values[0])
-		v := strings.TrimSpace(values[1])
-
-		if len(k) == 0 {
-			return nil, fmt.Errorf("build-arg must have a non-empty key")
-		}
-		if len(v) == 0 {
-			return nil, fmt.Errorf("build-arg must have a non-empty value")
-		}
-
-		mapped[k] = v
-	}
-
-	return mapped, nil
+	buildArgMap = mapped
+	return nil
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
@@ -154,8 +125,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 
 func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	wg := sync.WaitGroup{}
+	defer wg.Wait()
 
 	workChannel := make(chan stack.Function)
+	defer close(workChannel)
 
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
@@ -183,11 +156,6 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 			workChannel <- function
 		}
 	}
-
-	close(workChannel)
-
-	wg.Wait()
-
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.

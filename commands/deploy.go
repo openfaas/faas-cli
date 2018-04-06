@@ -272,24 +272,24 @@ func readFiles(files []string) (map[string]string, error) {
 	return envs, nil
 }
 
-func parseMap(envvars []string, keyName string) (map[string]string, error) {
+func parseMap(args []string, keyName string) (map[string]string, error) {
 	result := make(map[string]string)
-	for _, envvar := range envvars {
-		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
+	for _, arg := range args {
+		s := strings.SplitN(strings.TrimSpace(arg), "=", 2)
 		if len(s) != 2 {
 			return nil, fmt.Errorf("label format is not correct, needs key=value")
 		}
-		envvarName := s[0]
-		envvarValue := s[1]
+		argName := s[0]
+		argValue := s[1]
 
-		if !(len(envvarName) > 0) {
-			return nil, fmt.Errorf("empty %s name: [%s]", keyName, envvar)
+		if !(len(argName) > 0) {
+			return nil, fmt.Errorf("empty %s name: [%s]", keyName, arg)
 		}
-		if !(len(envvarValue) > 0) {
-			return nil, fmt.Errorf("empty %s value: [%s]", keyName, envvar)
+		if !(len(argValue) > 0) {
+			return nil, fmt.Errorf("empty %s value: [%s]", keyName, arg)
 		}
 
-		result[envvarName] = envvarValue
+		result[argName] = argValue
 	}
 	return result, nil
 }

@@ -25,7 +25,7 @@ func Test_build(t *testing.T) {
 }
 
 func Test_parseBuildArgs_ValidParts(t *testing.T) {
-	mapped, err := parseBuildArgs([]string{"k=v"})
+	mapped, err := parseMap([]string{"k=v"}, "build-arg")
 
 	if err != nil {
 		t.Errorf("err was supposed to be nil but was: %s", err.Error())
@@ -39,9 +39,9 @@ func Test_parseBuildArgs_ValidParts(t *testing.T) {
 }
 
 func Test_parseBuildArgs_NoSeparator(t *testing.T) {
-	_, err := parseBuildArgs([]string{"kv"})
+	_, err := parseMap([]string{"kv"}, "build-arg")
 
-	want := "each build-arg must take the form key=value"
+	want := "label format is not correct, needs key=value"
 	if err != nil && err.Error() != want {
 		t.Errorf("Expected an error due to missing seperator")
 		t.Fail()
@@ -49,9 +49,9 @@ func Test_parseBuildArgs_NoSeparator(t *testing.T) {
 }
 
 func Test_parseBuildArgs_EmptyKey(t *testing.T) {
-	_, err := parseBuildArgs([]string{"=v"})
+	_, err := parseMap([]string{"=v"}, "build-arg")
 
-	want := "build-arg must have a non-empty key"
+	want := "empty build-arg name: [=v]"
 	if err == nil {
 		t.Errorf("Expected an error due to missing key")
 		t.Fail()
@@ -62,7 +62,7 @@ func Test_parseBuildArgs_EmptyKey(t *testing.T) {
 }
 
 func Test_parseBuildArgs_MultipleSeparators(t *testing.T) {
-	mapped, err := parseBuildArgs([]string{"k=v=z"})
+	mapped, err := parseMap([]string{"k=v=z"}, "build-arg")
 
 	if err != nil {
 		t.Errorf("Expected second separator to be included in value")
