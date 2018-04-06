@@ -73,7 +73,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxy.DeleteFunction(gateway, functionName)
+		proxy.DeleteFunction(gatewayAddress, functionName)
 	}
 
 	return nil
