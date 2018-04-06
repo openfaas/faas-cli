@@ -308,6 +308,10 @@ functions:
 
 Use environmental variables for setting tokens and configuration.
 
+#### Custom build arguments with Docker
+
+If you want to pass a build-time argument to Docker you can do so with `faas-cli build --build-arg name=value`.
+
 #### Access functions with `curl`
 
 You can initiate a HTTP POST via `curl`:
