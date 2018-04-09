@@ -238,7 +238,7 @@ func Test_ParseYAMLDataRegex(t *testing.T) {
 				}
 
 				if !strings.Contains(err.Error(), test.expectedError) {
-					t.Errorf("Test_ParseYAMLDataRegex test [%s] test failed, expected error message of '%s', got '%v'", test.title, test.expectedError, err)
+					t.Errorf("Test_ParseYAMLDataRegex test [%s] test failed, unexpected error message, want '%s' got '%v'", test.title, test.expectedError, err)
 				}
 
 			} else {
@@ -259,10 +259,10 @@ func Test_ParseYAMLDataRegex(t *testing.T) {
 				t.Log(strkeys)
 
 				if !reflect.DeepEqual(strkeys, test.functions) {
-					t.Errorf("Test_ParseYAMLDataRegex test [%s] test failed, does not match expected result;\n  parsedYAML:   [%v]\n  expected: [%v]",
+					t.Errorf("Test_ParseYAMLDataRegex test [%s] test failed, does not match expected result, want [%v] got [%v]",
 						test.title,
-						strkeys,
 						test.functions,
+						strkeys,
 					)
 				}
 			}
@@ -284,7 +284,7 @@ func Test_ParseYAMLDataFilter(t *testing.T) {
 				}
 
 				if !strings.Contains(err.Error(), test.expectedError) {
-					t.Errorf("Test_ParseYAMLDataFilter test [%s] test failed, expected error message of '%s', got '%v'", test.title, test.expectedError, err)
+					t.Errorf("Test_ParseYAMLDataFilter test [%s] test failed, unexpected error message,  want '%s' got '%v'", test.title, test.expectedError, err)
 				}
 
 			} else {
@@ -305,10 +305,10 @@ func Test_ParseYAMLDataFilter(t *testing.T) {
 				t.Log(strkeys)
 
 				if !reflect.DeepEqual(strkeys, test.functions) {
-					t.Errorf("Test_ParseYAMLDataFilter test [%s] failed, does not match expected result;\n  parsedYAML:   [%v]\n  expected: [%v]",
+					t.Errorf("Test_ParseYAMLDataFilter test [%s] failed, does not match expected result, want: [%v] got: [%v]",
 						test.title,
-						strkeys,
 						test.functions,
+						strkeys,
 					)
 				}
 			}

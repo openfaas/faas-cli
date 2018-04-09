@@ -24,7 +24,7 @@ func Test_DeleteFunction(t *testing.T) {
 
 	r := regexp.MustCompile(`(?m:Removing old function.)`)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Want: %s, got: %s", "Removing old function", stdout)
+		t.Fatalf("Delete function message, want: %s got: %s", "Removing old function", stdout)
 	}
 }
 
@@ -38,7 +38,7 @@ func Test_DeleteFunction_404(t *testing.T) {
 
 	r := regexp.MustCompile(`(?m:No existing function to remove)`)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Want: %s, got: %s", "No existing function to remove", stdout)
+		t.Fatalf("Delete function not exists, want: %s got: %s", "No existing function to remove", stdout)
 	}
 }
 
@@ -52,7 +52,7 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 
 	r := regexp.MustCompile(`(?m:Server returned unexpected status code)`)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+		t.Fatalf("Output not as expected: %s", stdout)
 	}
 }
 
@@ -66,6 +66,6 @@ func Test_DeleteFunction_MissingURLPrefix(t *testing.T) {
 	expectedErrMsg := "first path segment in URL cannot contain colon"
 	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(stdout) {
-		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
+		t.Fatalf("Delete function missing url prefix, want: %s got: %s", expectedErrMsg, stdout)
 	}
 }

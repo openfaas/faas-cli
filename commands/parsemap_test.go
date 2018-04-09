@@ -23,7 +23,7 @@ func Test_parseMap_NoSeparator(t *testing.T) {
 
 	want := "label format is not correct, needs key=value"
 	if err != nil && err.Error() != want {
-		t.Errorf("Expected an error due to missing seperator")
+		t.Errorf("Expected an error due to missing seperator, want: %s got: %s", want, err.Error())
 		t.Fail()
 	}
 }
@@ -36,7 +36,7 @@ func Test_parseMap_EmptyKey(t *testing.T) {
 		t.Errorf("Expected an error due to missing key")
 		t.Fail()
 	} else if err.Error() != want {
-		t.Errorf("missing key error want: %s, got: %s", want, err.Error())
+		t.Errorf("missing key error, want: %s got: %s", want, err.Error())
 		t.Fail()
 	}
 }
