@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	stackFile string
-	list      bool
+	list bool
 )
 
 func init() {
@@ -27,20 +26,20 @@ func init() {
 	newFunctionCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
-	newFunctionCmd.Flags().StringVar(&stackFile, "stack", "", "generate or append to provided YAML file")
 
 	faasCmd.AddCommand(newFunctionCmd)
 }
 
 // newFunctionCmd displays newFunction information
 var newFunctionCmd = &cobra.Command{
-	Use:   "new FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list | --stack=STACK_FILE)",
+	Use:   "new FUNCTION_NAME --lang=FUNCTION_LANGUAGE [--gateway=http://domain:port] | --list | --yaml=YAML_FILE)",
 	Short: "Create a new template in the current folder with the name given as name",
-	Long: `The new command creates a new function based upon hello-world in the given
-language or type in --list for a list of languages available.`,
+	Long: `The new command creates a new function based upon hello-world in the given language
+or type in --list for a list of languages available.  YAML file can be specified by
+--yaml flag to generate new file otherwise it will append function to existing file`,
 	Example: `faas-cli new chatbot --lang node
   faas-cli new text-parser --lang python --gateway http://mydomain:8080
-  faas-cli new text-reader --lang python --stack stack.yml
+  faas-cli new text-reader --lang python --yaml stack.yml
   faas-cli new --list`,
 	PreRunE: preRunNewFunction,
 	RunE:    runNewFunction,
@@ -91,20 +90,20 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	}
 
 	appendMode := false
-	fileProvided := len(stackFile) > 0
+	fileProvided := len(yamlFile) > 0
 	if fileProvided {
-		if (strings.HasSuffix(stackFile, ".yml") || strings.HasSuffix(stackFile, ".yaml")) == false {
+		if (strings.HasSuffix(yamlFile, ".yml") || strings.HasSuffix(yamlFile, ".yaml")) == false {
 			return fmt.Errorf("the stack file suffix should be .yml or .yaml")
 		}
 
-		if _, statErr := os.Stat(stackFile); statErr == nil {
+		if _, statErr := os.Stat(yamlFile); statErr == nil {
 			appendMode = true
 		} else if !os.IsNotExist(statErr) {
-			return fmt.Errorf("unable to access stack file %s, error %v", stackFile, statErr)
+			return fmt.Errorf("unable to access stack file %s, error %v", yamlFile, statErr)
 		}
 
 		if appendMode {
-			duplicateError := duplicateFunctionName(functionName, stackFile)
+			duplicateError := duplicateFunctionName(functionName, yamlFile)
 			if duplicateError != nil {
 				return duplicateError
 			}
@@ -161,23 +160,23 @@ functions:
 	var stackWriteErr error
 
 	if appendMode {
-		originalBytes, readErr := ioutil.ReadFile(stackFile)
+		originalBytes, readErr := ioutil.ReadFile(yamlFile)
 		if readErr != nil {
-			fmt.Printf("unable to read %s to append, %s", stackFile, readErr)
+			fmt.Printf("unable to read %s to append, %s", yamlFile, readErr)
 		}
 
 		buffer := string(originalBytes) + stackYaml
 
-		stackWriteErr = ioutil.WriteFile(stackFile, []byte(buffer), 0600)
+		stackWriteErr = ioutil.WriteFile(yamlFile, []byte(buffer), 0600)
 		if stackWriteErr != nil {
 			return fmt.Errorf("error writing stack file %s", stackWriteErr)
 		}
 
-		fmt.Printf("Stack file updated: %s\n", stackFile)
+		fmt.Printf("Stack file updated: %s\n", yamlFile)
 	} else {
 		filename := "./" + functionName + ".yml"
 		if fileProvided {
-			filename = stackFile
+			filename = yamlFile
 		}
 
 		stackWriteErr = ioutil.WriteFile(filename, []byte(stackYaml), 0600)
@@ -200,22 +199,22 @@ func printAvailableTemplates(availableTemplates []string) string {
 	return result
 }
 
-func duplicateFunctionName(functionName string, stackFile string) error {
-	fileBytes, readErr := ioutil.ReadFile(stackFile)
+func duplicateFunctionName(functionName string, yamlFile string) error {
+	fileBytes, readErr := ioutil.ReadFile(yamlFile)
 	if readErr != nil {
-		return fmt.Errorf("unable to read %s to append, %s", stackFile, readErr)
+		return fmt.Errorf("unable to read %s to append, %s", yamlFile, readErr)
 	}
 
 	services, parseErr := stack.ParseYAMLData(fileBytes, "", "")
 
 	if parseErr != nil {
-		return fmt.Errorf("Error parsing %s yml file", stackFile)
+		return fmt.Errorf("Error parsing %s yml file", yamlFile)
 	}
 
 	if _, ok := services.Functions[functionName]; ok {
 		return fmt.Errorf(`
 Function %s already exists in %s file. 
-Cannot have duplicate function names in same yml file`, functionName, stackFile)
+Cannot have duplicate function names in same yml file`, functionName, yamlFile)
 	}
 
 	return nil

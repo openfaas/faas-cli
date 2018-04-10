@@ -111,7 +111,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 			"--lang=" + funcLang,
 			"--gateway=" + defaultGateway,
 			"--prefix=" + imagePrefix,
-			"--stack=" + stackFile,
+			"--yaml=" + stackFile,
 		}
 		funcYAML = stackFile
 	} else {
@@ -124,6 +124,9 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 		funcYAML = funcName + ".yml"
 	}
+
+	// reset yaml file (todo: find a way to reset all flags variable)
+	yamlFile = ""
 
 	faasCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")
@@ -179,7 +182,6 @@ func Test_newFunctionTests(t *testing.T) {
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
 	defer tearDownNewFunction(t)
-
 	for _, testcase := range NewFunctionTests {
 		t.Run(testcase.title, func(t *testing.T) {
 			runNewFunctionTest(t, testcase)
@@ -257,7 +259,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 		"new",
 		functionName,
 		"--lang=" + functionLang,
-		"--stack=" + functionName + ".yml",
+		"--yaml=" + functionName + ".yml",
 	}
 
 	faasCmd.SetArgs(appendParameters)
