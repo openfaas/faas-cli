@@ -79,7 +79,7 @@ func preRunBuild(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
 
 	mapped, err := parseMap(buildArgs, "build-arg")
-	if err == nil {
+	if err != nil {
 		return fmt.Errorf("failed to parse build-arg: %v", err)
 	}
 	buildArgMap = mapped
