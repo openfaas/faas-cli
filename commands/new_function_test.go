@@ -44,6 +44,13 @@ var NewFunctionTests = []NewFunctionTest{
 		expectedMsg:   SuccessMsg,
 	},
 	{
+		title:         "test_Uppercase",
+		funcName:      "test-Uppercase",
+		funcLang:      "ruby",
+		expectedImage: "test-uppercase",
+		expectedMsg:   SuccessMsg,
+	},
+	{
 		title:         "lowercase-dockerfile",
 		funcName:      "lowercase-dockerfile",
 		funcLang:      "dockerfile",

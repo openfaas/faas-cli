@@ -129,6 +129,9 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		imageName = functionName
 	}
 
+	// lowercase the image
+	imageName = strings.ToLower(imageName)
+
 	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
 
 	var stackYaml string
