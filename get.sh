@@ -1,4 +1,14 @@
 version=$(curl -s https://api.github.com/repos/openfaas/faas-cli/releases/latest | grep 'tag_name' | cut -d\" -f4)
+if [[ ! $version ]]; then
+    echo "Failed while attempting to install faas-cli. Please manually install:"
+    echo ""
+    echo "1. Open your web browser and go to https://github.com/openfaas/faas-cli/releases"
+    echo "2. Download the latest release for your platform. Call it 'faas-cli'."
+    echo "3. chmod +x ./faas-cli"
+    echo "4. mv ./faas-cli /usr/local/bin"
+    echo "5. ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas"
+    exit 1
+fi
 
 hasCli() {
  
