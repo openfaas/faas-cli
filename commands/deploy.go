@@ -194,11 +194,8 @@ Error: %s`, fprocessErr.Error())
 			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
 		}
 	} else {
-		if len(image) == 0 {
-			return fmt.Errorf("please provide a --image to be deployed")
-		}
-		if len(functionName) == 0 {
-			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
+		if len(image) == 0 || len(functionName) == 0 {
+			return fmt.Errorf("To deploy a function give --yaml/-f or a --image flag")
 		}
 
 		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
