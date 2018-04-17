@@ -19,6 +19,7 @@ import (
 const SuccessMsg = `(?m:Function created in folder)`
 const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
+const IncludeUpperCase = "Function name must be lowercase"
 const ListOptionOutput = `Languages available as templates:
 - dockerfile
 - ruby`
@@ -41,13 +42,6 @@ var NewFunctionTests = []NewFunctionTest{
 		funcName:      "new-test-1",
 		funcLang:      "ruby",
 		expectedImage: "new-test-1",
-		expectedMsg:   SuccessMsg,
-	},
-	{
-		title:         "test_Uppercase",
-		funcName:      "test-Uppercase",
-		funcLang:      "ruby",
-		expectedImage: "test-uppercase",
 		expectedMsg:   SuccessMsg,
 	},
 	{
@@ -85,6 +79,12 @@ var NewFunctionTests = []NewFunctionTest{
 		funcName:    "new-test-invalid-1",
 		funcLang:    "dockerfilee",
 		expectedMsg: LangNotExistsOutput,
+	},
+	{
+		title:       "test_Uppercase",
+		funcName:    "test_Uppercase",
+		funcLang:    "go",
+		expectedMsg: IncludeUpperCase,
 	},
 }
 

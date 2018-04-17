@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
@@ -46,9 +47,34 @@ language or type in --list for a list of languages available.`,
 	RunE:    runNewFunction,
 }
 
+func containsLowerCase(funcname string) bool {
+	uppercase := func(c rune) bool {
+		return unicode.IsUpper(c)
+	}
+	if strings.IndexFunc(funcname, uppercase) != -1 {
+		return true
+	}
+	return false
+}
+
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
+
+	if len(args) < 1 {
+		return fmt.Errorf("please provide a name for the function")
+	}
+
+	functionName = args[0]
+
+	// validate if the function name is in right format
+	if !containsLowerCase(functionName) {
+		return fmt.Errorf("function name must be lowercase")
+	}
+
+	if len(language) == 0 {
+		return fmt.Errorf("you must supply a function language with the --lang flag")
+	}
 
 	return nil
 }
@@ -72,16 +98,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Languages available as templates:\n%s\n", printAvailableTemplates(availableTemplates))
 
 		return nil
-	}
-
-	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
-	}
-
-	functionName = args[0]
-
-	if len(language) == 0 {
-		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates(DefaultTemplateRepository)
@@ -128,9 +144,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	} else {
 		imageName = functionName
 	}
-
-	// lowercase the image
-	imageName = strings.ToLower(imageName)
 
 	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
 
