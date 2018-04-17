@@ -83,7 +83,7 @@ var NewFunctionTests = []NewFunctionTest{
 	{
 		title:       "test_Uppercase",
 		funcName:    "test_Uppercase",
-		funcLang:    "go",
+		funcLang:    "dockerfile",
 		expectedMsg: IncludeUpperCase,
 	},
 }
@@ -202,7 +202,7 @@ func Test_languageNotExists(t *testing.T) {
 	// Attempt to create a function with a non-existing language
 	cmdParameters := []string{
 		"new",
-		"sampleName",
+		"samplename",
 		"--lang=bash",
 		"--gateway=" + defaultGateway,
 		"--list=false",
@@ -222,7 +222,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 	defer tearDownFetchTemplates(t)
 	defer tearDownNewFunction(t)
 
-	const functionName = "sampleFunc"
+	const functionName = "samplefunc"
 	const functionLang = "ruby"
 
 	defer func() {

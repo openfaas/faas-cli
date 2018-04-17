@@ -52,14 +52,18 @@ func containsLowerCase(funcname string) bool {
 		return unicode.IsUpper(c)
 	}
 	if strings.IndexFunc(funcname, uppercase) != -1 {
-		return true
+		return false
 	}
-	return false
+	return true
 }
 
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
+
+	if list == true {
+		return nil
+	}
 
 	if len(args) < 1 {
 		return fmt.Errorf("please provide a name for the function")
@@ -67,9 +71,8 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 
 	functionName = args[0]
 
-	// validate if the function name is in right format
 	if !containsLowerCase(functionName) {
-		return fmt.Errorf("function name must be lowercase")
+		return fmt.Errorf("Function name must be lowercase")
 	}
 
 	if len(language) == 0 {
