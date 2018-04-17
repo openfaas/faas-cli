@@ -10,8 +10,10 @@ install:
 services:
   - docker
 
-before_script:
-  - curl -sSL test.docker.com | sudo -E sh
+addons:
+  apt:
+    packages:
+      - docker-ce
 
 script:
   - make build
