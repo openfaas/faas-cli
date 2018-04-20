@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
-	"unicode"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
@@ -47,11 +47,10 @@ language or type in --list for a list of languages available.`,
 	RunE:    runNewFunction,
 }
 
-func containsLowerCase(funcname string) bool {
-	uppercase := func(c rune) bool {
-		return unicode.IsUpper(c)
-	}
-	if strings.IndexFunc(funcname, uppercase) != -1 {
+func validateFunctionName(funcname string) bool {
+	containUppercase := regexp.MustCompile("[A-Z]")
+	matched := containUppercase.MatchString(funcname)
+	if matched {
 		return false
 	}
 	return true
@@ -71,8 +70,8 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 
 	functionName = args[0]
 
-	if !containsLowerCase(functionName) {
-		return fmt.Errorf("Function name must be lowercase")
+	if !validateFunctionName(functionName) {
+		return fmt.Errorf("function name must be lowercase")
 	}
 
 	if len(language) == 0 {

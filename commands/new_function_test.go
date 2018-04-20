@@ -19,7 +19,7 @@ import (
 const SuccessMsg = `(?m:Function created in folder)`
 const InvalidYAMLMsg = `is not valid YAML`
 const InvalidYAMLMap = `map is empty`
-const IncludeUpperCase = "Function name must be lowercase"
+const IncludeUpperCase = "function name must be lowercase"
 const ListOptionOutput = `Languages available as templates:
 - dockerfile
 - ruby`
