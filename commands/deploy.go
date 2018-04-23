@@ -428,19 +428,23 @@ func readDockerConfig(config *configFile) error {
 
 func getRegistryAuth(config *configFile, image string) string {
 
-	if len(config.AuthConfigs) == 0 {
-		return ""
+	if len(config.AuthConfigs) > 0 {
+
+		// image format is: <docker registry>/<user>/<image>
+		// so we trim <user>/<image>
+		var registry string
+		slashes := strings.Count(image, "/")
+		if slashes > 1 {
+			regS := strings.Split(image, "/")
+			registry = strings.Join(regS[:len(regS)-2], ", ")
+		}
+
+		if registry != "" {
+			return config.AuthConfigs[registry].Auth
+		} else if (registry == "") && (config.AuthConfigs[defaultDockerRegistry].Auth != "") {
+			return config.AuthConfigs[defaultDockerRegistry].Auth
+		}
 	}
 
-	// image format is: <docker registry>/<user>/<image>
-	// so we trim <user>/<image>
-	regS := strings.Split(image, "/")
-	registry := strings.Join(regS[:len(regS)-2], ", ")
-
-	if registry != "" {
-		return config.AuthConfigs[registry].Auth
-	} else if (registry == "") && (config.AuthConfigs[defaultDockerRegistry].Auth != "") {
-		return config.AuthConfigs[defaultDockerRegistry].Auth
-	}
 	return ""
 }
