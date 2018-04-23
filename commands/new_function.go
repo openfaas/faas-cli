@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -46,9 +47,36 @@ language or type in --list for a list of languages available.`,
 	RunE:    runNewFunction,
 }
 
+func validateFunctionName(funcname string) bool {
+	containUppercase := regexp.MustCompile("[A-Z]")
+	matched := containUppercase.MatchString(funcname)
+	if matched {
+		return false
+	}
+	return true
+}
+
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
+
+	if list == true {
+		return nil
+	}
+
+	if len(args) < 1 {
+		return fmt.Errorf("please provide a name for the function")
+	}
+
+	functionName = args[0]
+
+	if !validateFunctionName(functionName) {
+		return fmt.Errorf("function name must be lowercase")
+	}
+
+	if len(language) == 0 {
+		return fmt.Errorf("you must supply a function language with the --lang flag")
+	}
 
 	return nil
 }
@@ -72,16 +100,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Languages available as templates:\n%s\n", printAvailableTemplates(availableTemplates))
 
 		return nil
-	}
-
-	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
-	}
-
-	functionName = args[0]
-
-	if len(language) == 0 {
-		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates(DefaultTemplateRepository)
