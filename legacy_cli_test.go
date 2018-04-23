@@ -170,7 +170,7 @@ func Test_translateLegacyOpts(t *testing.T) {
 				}
 			}
 			if !reflect.DeepEqual(actual, test.expectedArgs) {
-				t.Errorf("TranslateLegacyOpts test [%s] test failed, does not match expected result;\n  actual:   [%v]\n  expected: [%v]",
+				t.Errorf("TranslateLegacyOpts test [%s] test failed, does not match expected result, want: [%v] got: [%v]",
 					test.title,
 					actual,
 					test.expectedArgs,

@@ -123,7 +123,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		// Check that the Dockerfile was created
 		if funcLang == "Dockerfile" || funcLang == "dockerfile" {
 			if _, err := os.Stat("./" + funcName + "/Dockerfile"); os.IsNotExist(err) {
-				t.Fatalf("Dockerfile language should create a Dockerfile for you", funcName)
+				t.Fatalf("Dockerfile language should create a Dockerfile for you as ./%s/Dockerfile", funcName)
 			}
 		}
 

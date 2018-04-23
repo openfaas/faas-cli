@@ -21,7 +21,7 @@ func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
 
 	r := regexp.MustCompile(`(?m:config file not found)`)
 	if !r.MatchString(err.Error()) {
-		t.Errorf("Error not matched: %s", err.Error())
+		t.Errorf("Error not as expected: %s", err.Error())
 	}
 }
 
@@ -39,7 +39,7 @@ func Test_UpdateAuthConfig_Insert(t *testing.T) {
 	}
 
 	if user != u || pass != p {
-		t.Errorf("got user %s and pass %s, expected %s %s", user, pass, u, p)
+		t.Errorf("user pass, want: %s %s got: %s %s", user, pass, u, p)
 	}
 }
 
@@ -57,7 +57,7 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 	}
 
 	if user != u || pass != p {
-		t.Errorf("got user %s and pass %s, expected %s %s", user, pass, u, p)
+		t.Errorf("user pass, want: %s %s got: %s %s", user, pass, u, p)
 	}
 
 	u = "admin2"
@@ -70,7 +70,7 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 	}
 
 	if user != u || pass != p {
-		t.Errorf("got user %s and pass %s, expected %s %s", user, pass, u, p)
+		t.Errorf("user pass, want: %s %s got: %s %s", user, pass, u, p)
 	}
 }
 
