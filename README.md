@@ -75,6 +75,7 @@ scoop install faas-cli
 Note: The `scoop` release may not run the latest minor release but is updated regularly.
 
 #### Build from source
+
 > the [contributing guide](CONTRIBUTING.md) has instructions for building from source and for configuring a Golang development environment.
 
 ### Run the CLI
@@ -156,6 +157,17 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 
 Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https://blog.alexellis.io/cli-functions-with-openfaas/)
 
+### Private registries
+
+* For Kubernetes
+
+Create a named image pull secret and add the secret name to the `secrets` section of your YAML file or your deployment arguments with `--secret`.
+
+Alternatively you can assign a secret to the node to allow it to pull from your private registry. In this case you do not need to assign the secret to your function.
+
+* For Docker Swarm
+
+For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which will look up your registry credentials in your local credentials store and then transmit them over the wire to the deploy command on the API Gateway. Make sure HTTPS/TLS is enabled before attempting this.
 
 ### Use a YAML stack file
 
