@@ -24,12 +24,13 @@ import (
 
 // DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
-	envvarOpts  []string
-	replace     bool
-	update      bool
-	constraints []string
-	secrets     []string
-	labelOpts   []string
+	envvarOpts       []string
+	replace          bool
+	update           bool
+	constraints      []string
+	secrets          []string
+	labelOpts        []string
+	sendRegistryAuth bool
 }
 
 var deployFlags DeployFlags
@@ -54,6 +55,8 @@ func init() {
 
 	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
+
+	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -165,7 +168,9 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				deployFlags.secrets = mergeSlice(function.Secrets, deployFlags.secrets)
 			}
 
-			function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
+			if deployFlags.sendRegistryAuth {
+				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
+			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
@@ -212,8 +217,11 @@ Error: %s`, fprocessErr.Error())
 			return fmt.Errorf("To deploy a function give --yaml/-f or a --image flag")
 		}
 
-		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
-		registryAuth := getRegistryAuth(&dockerConfig, image)
+		var registryAuth string
+		if deployFlags.sendRegistryAuth {
+			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
+			registryAuth = getRegistryAuth(&dockerConfig, image)
+		}
 
 		if err := deployImage(image, fprocess, functionName, registryAuth, deployFlags); err != nil {
 			return err
@@ -231,18 +239,25 @@ func deployImage(
 	registryAuth string,
 	deployFlags DeployFlags,
 ) error {
+
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
+
 	if err != nil {
 		return fmt.Errorf("error parsing envvars: %v", err)
 	}
 
 	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
+
 	if labelErr != nil {
 		return fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	proxy.DeployFunction(fprocess, gateway, functionName, registryAuth, image, language, deployFlags.replace, envvars, network, deployFlags.constraints, deployFlags.update, deployFlags.secrets, labelMap, functionResourceRequest1)
+	proxy.DeployFunction(fprocess, gateway, functionName,
+		registryAuth, image, language,
+		deployFlags.replace, envvars, network,
+		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
+		labelMap, functionResourceRequest1)
 
 	return nil
 }
