@@ -23,6 +23,17 @@ script:
 # todo:
 #  - ./deploy_samples.sh # requires a deployed FaaS
 
+after_success:
+    - if [ ! -z "$TRAVIS_TAG" ] ; then
+        if [ -z "$DOCKER_NS" ] ; then
+          export DOCKER_NS=openfaas;
+        fi;
+
+        docker tag $DOCKER_NS/faas-cli:latest-dev $DOCKER_NS/faas-cli:$TRAVIS_TAG;
+        echo $DOCKER_PASSWORD | docker login -u=$DOCKER_USERNAME --password-stdin;
+        docker push $DOCKER_NS/faas-cli:$TRAVIS_TAG;
+      fi;
+
 before_deploy:
   - make build_redist
 
