@@ -14,7 +14,12 @@ import (
 func Test_deploy(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
 		{
-			Method:             http.MethodPut,
+			Method:             http.MethodGet,
+			Uri:                "/system/functions",
+			ResponseStatusCode: http.StatusOK,
+		},
+		{
+			Method:             http.MethodPost,
 			Uri:                "/system/functions",
 			ResponseStatusCode: http.StatusOK,
 		},

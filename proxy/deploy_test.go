@@ -58,14 +58,14 @@ func Test_RunDeployProxyTests(t *testing.T) {
 	var deployProxyTests = []deployProxyTest{
 		{
 			title:               "200_Deploy",
-			mockServerResponses: []int{http.StatusOK, http.StatusOK},
+			mockServerResponses: []int{http.StatusOK, http.StatusOK, http.StatusOK},
 			replace:             true,
 			update:              false,
 			expectedOutput:      `(?m:Deployed)`,
 		},
 		{
 			title:               "404_Deploy",
-			mockServerResponses: []int{http.StatusOK, http.StatusNotFound},
+			mockServerResponses: []int{http.StatusOK, http.StatusOK, http.StatusNotFound},
 			replace:             true,
 			update:              false,
 			expectedOutput:      `(?m:Unexpected status: 404)`,

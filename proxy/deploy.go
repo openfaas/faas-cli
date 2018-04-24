@@ -22,25 +22,35 @@ type FunctionResourceRequest struct {
 	Requests *stack.FunctionResources
 }
 
+// DeployFunction will first check if the function exists, and if it does, or the update bool is set to true, will perform a rolling update
+// otherwise, the function will be deployed as new
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
 	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
 
-	if update == true && statusCode == http.StatusNotFound {
-		// Re-run the function with update=false
-		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
-	} else if statusCode == http.StatusOK {
+	existing := functionExists(gateway, functionName)
+
+	if update {
+		update = existing
+	} else if !update && existing {
+		fmt.Printf("Function %s already exists, you must either remove it first, or update it", functionName)
+		return
+	}
+
+	_, deployOutput := deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
+
+	if update || existing {
 		fmt.Println(rollingUpdateInfo)
 	}
+
 	fmt.Println()
 	fmt.Println(deployOutput)
 }
 
-func Deploy(fprocess string, gateway string, functionName string, image string,
+func deploy(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
 	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) (int, string) {
@@ -157,4 +167,22 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	}
 
 	return res.StatusCode, deployOutput
+}
+
+func functionExists(gateway string, funcName string) bool {
+
+	funcs, err := ListFunctions(gateway)
+
+	if err != nil {
+		fmt.Println(err.Error())
+		return false
+	}
+
+	for i := range funcs {
+		if funcs[i].Name == funcName {
+			return true
+		}
+	}
+
+	return false
 }
