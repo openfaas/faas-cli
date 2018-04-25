@@ -20,9 +20,10 @@ const (
 
 // Flags that are to be added to all commands.
 var (
-	yamlFile string
-	regex    string
-	filter   string
+	yamlFile         string
+	regex            string
+	filter           string
+	usingDefaultYaml = false
 )
 
 // Flags that are to be added to subset of commands.
@@ -63,11 +64,10 @@ func init() {
 
 // Execute TODO
 func Execute(customArgs []string) {
-	checkAndSetDefaultYaml()
-
 	faasCmd.SilenceUsage = true
 	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
+
 	if err := faasCmd.Execute(); err != nil {
 		e := err.Error()
 		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
@@ -76,9 +76,11 @@ func Execute(customArgs []string) {
 }
 
 func checkAndSetDefaultYaml() {
+	_, err := stat(defaultYAML)
 	// Check if there is a default yaml file and set it
-	if _, err := stat(defaultYAML); err == nil {
+	if len(yamlFile) == 0 && err == nil {
 		yamlFile = defaultYAML
+		usingDefaultYaml = true
 	}
 }
 
@@ -89,6 +91,9 @@ var faasCmd = &cobra.Command{
 	Short: "Manage your OpenFaaS functions from the command line",
 	Long: `
 Manage your OpenFaaS functions from the command line`,
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		checkAndSetDefaultYaml()
+	},
 	Run: runFaas,
 }
 
