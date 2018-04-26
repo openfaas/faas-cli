@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -21,6 +22,7 @@ func init() {
 	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.update, "update", true, "Update existing functions")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
+	storeDeployCmd.Flags().BoolVarP(&storeDeployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -54,6 +56,12 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
+	dockerConfig := configFile{}
+	err := readDockerConfig(&dockerConfig)
+	if err != nil {
+		log.Printf("Unable to read the docker config - %v\n", err.Error())
+	}
+
 	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
@@ -85,7 +93,11 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		network = item.Network
 	}
 
+	var registryAuth string
+	if storeDeployFlags.sendRegistryAuth {
+		registryAuth = getRegistryAuth(&dockerConfig, item.Image)
+	}
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	return deployImage(item.Image, item.Fprocess, item.Name, "", storeDeployFlags)
+	return deployImage(item.Image, item.Fprocess, item.Name, registryAuth, storeDeployFlags)
 }
