@@ -254,7 +254,7 @@ func deployImage(
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
 	proxy.DeployFunction(fprocess, gateway, functionName,
-		registryAuth, image, language,
+		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
 		labelMap, functionResourceRequest1)
