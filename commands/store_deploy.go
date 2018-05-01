@@ -15,6 +15,7 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	storeDeployCmd.Flags().StringVar(&network, "network", "", "Name of the network")
+	storeDeployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function (overriding name from the store)")
 	// Setup flags that are used only by deploy command (variables defined above)
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.envvarOpts, "env", "e", []string{}, "Adds one or more environment variables to the defined ones by store (ENVVAR=VALUE)")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
@@ -32,6 +33,7 @@ func init() {
 
 var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
+						[--name FUNCTION_NAME]
                         [--gateway GATEWAY_URL]
                         [--network NETWORK_NAME]
                         [--env ENVVAR=VALUE ...]
@@ -87,6 +89,12 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		network = item.Network
 	}
 
+	itemName := item.Name
+
+	if functionName != "" {
+		itemName = functionName
+	}
+
 	var registryAuth string
 	if storeDeployFlags.sendRegistryAuth {
 
@@ -98,7 +106,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 		registryAuth = getRegistryAuth(&dockerConfig, item.Image)
 	}
+
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	return deployImage(item.Image, item.Fprocess, item.Name, registryAuth, storeDeployFlags)
+	return deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags)
 }
