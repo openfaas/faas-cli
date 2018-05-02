@@ -53,9 +53,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 		}
 
-		flagStr := buildFlagString(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap)
-		builder := strings.Split(fmt.Sprintf("docker build %s-t %s .", flagStr, image), " ")
-		ExecCommand(tempPath, builder)
+		flagSlice := buildFlagSlice(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap)
+		spaceSafeCmdLine := []string{"docker", "build"}
+		spaceSafeCmdLine = append(spaceSafeCmdLine, flagSlice...)
+		spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image, ".")
+		ExecCommand(tempPath, spaceSafeCmdLine)
 		fmt.Printf("Image: %s built.\n", image)
 
 	} else {
@@ -93,30 +95,30 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	return tempPath
 }
 
-func buildFlagString(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string) string {
+func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string) []string {
 
-	buildFlags := ""
+	var spaceSafeBuildFlags []string
 
 	if nocache {
-		buildFlags += "--no-cache "
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--no-cache")
 	}
 	if squash {
-		buildFlags += "--squash "
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--squash")
 	}
 
 	if len(httpProxy) > 0 {
-		buildFlags += fmt.Sprintf("--build-arg http_proxy=%s ", httpProxy)
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("http_proxy=%s", httpProxy))
 	}
 
 	if len(httpsProxy) > 0 {
-		buildFlags += fmt.Sprintf("--build-arg https_proxy=%s ", httpsProxy)
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("https_proxy=%s", httpsProxy))
 	}
 
 	for k, v := range buildArgMap {
-		buildFlags += fmt.Sprintf("--build-arg %s=%s ", k, v)
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
 	}
 
-	return buildFlags
+	return spaceSafeBuildFlags
 }
 
 func ensureHandlerPath(handler string) error {
