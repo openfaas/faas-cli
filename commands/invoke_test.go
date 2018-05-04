@@ -45,7 +45,7 @@ func Test_invoke(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString(`(?m:`+expected_invoke_response+`)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:`+expected_invoke_response+`)`, stdOut)
+		t.Fatalf("Output is not as expected, want: %s got: %s", `(?m:`+expected_invoke_response+`)`, stdOut)
 	}
 
 }
@@ -80,7 +80,7 @@ func Test_async_invoke(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString(`(?m:)`, stdOut); err != nil || !found {
-		t.Fatalf("Async output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:)`, stdOut)
+		t.Fatalf("Async output is not as expected, want: %s got: %s", `(?m:)`, stdOut)
 	}
 
 }

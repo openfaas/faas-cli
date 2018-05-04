@@ -20,11 +20,11 @@ func Test_addVersionDev(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 
 	if found, err := regexp.MatchString(`(?m:Version: dev)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }
 
@@ -38,11 +38,11 @@ func Test_addVersion(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString(`(?m:Commit: sha-test)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 
 	if found, err := regexp.MatchString(`(?m:Version: version.tag)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }
 
@@ -55,6 +55,6 @@ func Test_addVersion_short_version(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString("^version\\.tag", stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }

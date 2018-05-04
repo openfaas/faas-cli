@@ -32,6 +32,7 @@ type NewFunctionTest struct {
 	prefix        string
 	funcName      string
 	funcLang      string
+	stackFile     string
 	expectedImage string
 	expectedMsg   string
 }
@@ -80,11 +81,34 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:    "dockerfilee",
 		expectedMsg: LangNotExistsOutput,
 	},
-	{
+  {
 		title:       "test_Uppercase",
 		funcName:    "test_Uppercase",
 		funcLang:    "dockerfile",
 		expectedMsg: IncludeUpperCase,
+	},
+	{
+		title:         "new_with_stack",
+		funcName:      "new_with_stack",
+		funcLang:      "ruby",
+		expectedImage: "new_with_stack",
+		stackFile:     "new_with_stack_provided.yml",
+		expectedMsg:   SuccessMsg,
+	},
+	{
+		title:         "new_with_stack_stack",
+		funcName:      "new_with_stack_stack",
+		funcLang:      "ruby",
+		expectedImage: "new_with_stack_stack",
+		stackFile:     "stack.yml",
+		expectedMsg:   SuccessMsg,
+	},
+	{
+		title:         "new_when_stack_present",
+		funcName:      "new_when_stack_present",
+		funcLang:      "ruby",
+		expectedImage: "new_when_stack_present",
+		expectedMsg:   SuccessMsg,
 	},
 }
 
@@ -92,8 +116,8 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	funcName := nft.funcName
 	funcLang := nft.funcLang
 	imagePrefix := nft.prefix
+	stackFile := nft.stackFile
 	var funcYAML string
-	funcYAML = funcName + ".yml"
 
 	// Cleanup the created directory
 	defer func() {
@@ -101,13 +125,30 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		os.Remove(funcYAML)
 	}()
 
-	cmdParameters := []string{
-		"new",
-		funcName,
-		"--lang=" + funcLang,
-		"--gateway=" + defaultGateway,
-		"--prefix=" + imagePrefix,
+	cmdParameters := []string{}
+	if stackFile != "" {
+		cmdParameters = []string{
+			"new",
+			funcName,
+			"--lang=" + funcLang,
+			"--gateway=" + defaultGateway,
+			"--prefix=" + imagePrefix,
+			"--yaml=" + stackFile,
+		}
+		funcYAML = stackFile
+	} else {
+		cmdParameters = []string{
+			"new",
+			funcName,
+			"--lang=" + funcLang,
+			"--gateway=" + defaultGateway,
+			"--prefix=" + imagePrefix,
+		}
+		funcYAML = funcName + ".yml"
 	}
+
+	// reset yaml file (todo: find a way to reset all flags variable)
+	resetForTest()
 
 	faasCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")
@@ -123,7 +164,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		// Check that the Dockerfile was created
 		if funcLang == "Dockerfile" || funcLang == "dockerfile" {
 			if _, err := os.Stat("./" + funcName + "/Dockerfile"); os.IsNotExist(err) {
-				t.Fatalf("Dockerfile language should create a Dockerfile for you", funcName)
+				t.Fatalf("Dockerfile language should create a Dockerfile for you as ./%s/Dockerfile", funcName)
 			}
 		}
 
@@ -163,7 +204,6 @@ func Test_newFunctionTests(t *testing.T) {
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
 	defer tearDownNewFunction(t)
-
 	for _, testcase := range NewFunctionTests {
 		t.Run(testcase.title, func(t *testing.T) {
 			runNewFunctionTest(t, testcase)
@@ -241,7 +281,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 		"new",
 		functionName,
 		"--lang=" + functionLang,
-		"--append=" + functionName + ".yml",
+		"--yaml=" + functionName + ".yml",
 	}
 
 	faasCmd.SetArgs(appendParameters)

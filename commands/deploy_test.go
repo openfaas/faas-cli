@@ -32,11 +32,11 @@ func Test_deploy(t *testing.T) {
 	})
 
 	if found, err := regexp.MatchString(`(?m:Deployed)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 
 	if found, err := regexp.MatchString(`(?m:200 OK)`, stdOut); err != nil || !found {
-		t.Fatalf("Output is not as expected:\n%s", stdOut)
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }
 

@@ -30,7 +30,7 @@ func Test_ListFunctions(t *testing.T) {
 	}
 	for k, v := range result {
 		if expectedListFunctionsResponse[k] != v {
-			t.Fatal("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
+			t.Fatalf("value for '%#v', want: %#v got: %#v", k, expectedListFunctionsResponse[k], v)
 		}
 	}
 }
@@ -46,7 +46,7 @@ func Test_ListFunctions_Not200(t *testing.T) {
 
 	r := regexp.MustCompile(`(?m:server returned unexpected status code)`)
 	if !r.MatchString(err.Error()) {
-		t.Fatalf("Error not matched: %s", err)
+		t.Fatalf("Error not as expected: %s", err)
 	}
 }
 
@@ -60,7 +60,7 @@ func Test_ListFunctions_MissingURLPrefix(t *testing.T) {
 	expectedErrMsg := "cannot connect to OpenFaaS on URL:"
 	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(err.Error()) {
-		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
+		t.Fatalf("connect error, want: %s got: %s", expectedErrMsg, err.Error())
 	}
 }
 

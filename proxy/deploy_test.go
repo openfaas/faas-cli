@@ -50,7 +50,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 
 	r := regexp.MustCompile(deployTest.expectedOutput)
 	if !r.MatchString(stdout) {
-		t.Fatalf("Output not matched: %s", stdout)
+		t.Fatalf("Output not as expected: %s", stdout)
 	}
 }
 
