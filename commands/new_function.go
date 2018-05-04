@@ -91,11 +91,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	}
 
 	appendMode := false
-	if len(yamlFile) > 0 {
-		if (yamlFile == defaultYAML) && usingDefaultYaml {
-			yamlFile = "./" + functionName + ".yml"
-		}
-
+	if len(yamlFile) > 0 && usingDefaultYaml == false {
 		if (strings.HasSuffix(yamlFile, ".yml") || strings.HasSuffix(yamlFile, ".yaml")) == false {
 			return fmt.Errorf("the stack file suffix should be .yml or .yaml")
 		}

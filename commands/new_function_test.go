@@ -88,6 +88,21 @@ var NewFunctionTests = []NewFunctionTest{
 		stackFile:     "new_with_stack_provided.yml",
 		expectedMsg:   SuccessMsg,
 	},
+	{
+		title:         "new_with_stack_stack",
+		funcName:      "new_with_stack_stack",
+		funcLang:      "ruby",
+		expectedImage: "new_with_stack_stack",
+		stackFile:     "stack.yml",
+		expectedMsg:   SuccessMsg,
+	},
+	{
+		title:         "new_when_stack_present",
+		funcName:      "new_when_stack_present",
+		funcLang:      "ruby",
+		expectedImage: "new_when_stack_present",
+		expectedMsg:   SuccessMsg,
+	},
 }
 
 func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
@@ -126,7 +141,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	}
 
 	// reset yaml file (todo: find a way to reset all flags variable)
-	yamlFile = ""
+	resetForTest()
 
 	faasCmd.SetArgs(cmdParameters)
 	fmt.Println("Executing command")

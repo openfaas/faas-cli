@@ -47,6 +47,7 @@ func resetForTest() {
 	yamlFile = ""
 	regex = ""
 	filter = ""
+	usingDefaultYaml = false
 }
 
 func init() {
