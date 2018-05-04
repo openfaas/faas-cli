@@ -75,6 +75,7 @@ scoop install faas-cli
 Note: The `scoop` release may not run the latest minor release but is updated regularly.
 
 #### Build from source
+
 > the [contributing guide](CONTRIBUTING.md) has instructions for building from source and for configuring a Golang development environment.
 
 ### Run the CLI
@@ -156,6 +157,17 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 
 Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https://blog.alexellis.io/cli-functions-with-openfaas/)
 
+### Private registries
+
+* For Kubernetes
+
+Create a named image pull secret and add the secret name to the `secrets` section of your YAML file or your deployment arguments with `--secret`.
+
+Alternatively you can assign a secret to the node to allow it to pull from your private registry. In this case you do not need to assign the secret to your function.
+
+* For Docker Swarm
+
+For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which will look up your registry credentials in your local credentials store and then transmit them over the wire to the deploy command on the API Gateway. Make sure HTTPS/TLS is enabled before attempting this.
 
 ### Use a YAML stack file
 
@@ -203,6 +215,8 @@ Now you can use the following command to deploy your function(s):
 $ faas-cli deploy -f ./stack.yml
 ```
 
+### YAML format reference
+
 #### Secure secret management
 
 Secrets can be used with OpenFaaS when using Docker Swarm or Kubernetes, this means your data is encrypted at rest and is less likely to be leaked during logging / stack traces than with environmental variables.
@@ -215,7 +229,7 @@ Secrets can be used with OpenFaaS when using Docker Swarm or Kubernetes, this me
 
 Secrets should be defined in the cluster ahead of time using `docker secret create` or `kubectl`.
 
-#### Managing environment/configuration
+#### Environmental variables/configuration
 
 You can deploy non-encrypted secrets and configuration via environmental variables set either in-line or via external (environment) files.
 
@@ -286,7 +300,7 @@ For example:
      canary: true
 ```
 
-#### YAML reference
+#### Other YAML fields
 
 The possible entries for functions are documented below:
 
@@ -308,7 +322,7 @@ functions:
 
 Use environmental variables for setting tokens and configuration.
 
-#### Access functions with `curl`
+### Access functions with `curl`
 
 You can initiate a HTTP POST via `curl`:
 
@@ -327,11 +341,10 @@ $ uname -a | curl http://127.0.0.1:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
-
 ### FaaS-CLI Developers / Contributors
 
 See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
 
-#### License
+### License
 
 This project is part of the OpenFaaS project licensed under the MIT License.

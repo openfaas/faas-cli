@@ -4,13 +4,19 @@
 package commands
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
+	"github.com/docker/docker-credential-helpers/client"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -18,12 +24,13 @@ import (
 
 // DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
-	envvarOpts  []string
-	replace     bool
-	update      bool
-	constraints []string
-	secrets     []string
-	labelOpts   []string
+	envvarOpts       []string
+	replace          bool
+	update           bool
+	constraints      []string
+	secrets          []string
+	labelOpts        []string
+	sendRegistryAuth bool
 }
 
 var deployFlags DeployFlags
@@ -49,6 +56,8 @@ func init() {
 	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 
+	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
+
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -72,7 +81,7 @@ var deployCmd = &cobra.Command{
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-				  [--secret "SECRET_NAME"]`,
+                  [--secret "SECRET_NAME"]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -110,6 +119,12 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
   --replace    removes an existing deployment before re-creating it
   --update     performs a rolling update to a new function image or configuration (default true)`)
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
+	}
+
+	dockerConfig := configFile{}
+	err := readDockerConfig(&dockerConfig)
+	if err != nil {
+		log.Println("Unable to read the docker config - %v", err.Error())
 	}
 
 	var services stack.Services
@@ -153,6 +168,10 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				deployFlags.secrets = mergeSlice(function.Secrets, deployFlags.secrets)
 			}
 
+			if deployFlags.sendRegistryAuth {
+				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
+			}
+
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
 				return err
@@ -191,19 +210,20 @@ Error: %s`, fprocessErr.Error())
 				Requests: function.Requests,
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
+			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
 		}
 	} else {
-		if len(image) == 0 {
-			return fmt.Errorf("please provide a --image to be deployed")
-		}
-		if len(functionName) == 0 {
-			return fmt.Errorf("please provide a --name for your function as it will be deployed on FaaS")
+		if len(image) == 0 || len(functionName) == 0 {
+			return fmt.Errorf("To deploy a function give --yaml/-f or a --image flag")
 		}
 
-		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
+		var registryAuth string
+		if deployFlags.sendRegistryAuth {
+			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
+			registryAuth = getRegistryAuth(&dockerConfig, image)
+		}
 
-		if err := deployImage(image, fprocess, functionName, deployFlags); err != nil {
+		if err := deployImage(image, fprocess, functionName, registryAuth, deployFlags); err != nil {
 			return err
 		}
 	}
@@ -216,20 +236,28 @@ func deployImage(
 	image string,
 	fprocess string,
 	functionName string,
+	registryAuth string,
 	deployFlags DeployFlags,
 ) error {
+
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
+
 	if err != nil {
 		return fmt.Errorf("error parsing envvars: %v", err)
 	}
 
 	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
+
 	if labelErr != nil {
 		return fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	proxy.DeployFunction(fprocess, gateway, functionName, image, language, deployFlags.replace, envvars, network, deployFlags.constraints, deployFlags.update, deployFlags.secrets, labelMap, functionResourceRequest1)
+	proxy.DeployFunction(fprocess, gateway, functionName,
+		registryAuth, image, language,
+		deployFlags.replace, envvars, network,
+		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
+		labelMap, functionResourceRequest1)
 
 	return nil
 }
@@ -342,4 +370,96 @@ func deriveFprocess(function stack.Function) (string, error) {
 
 func languageExistsNotDockerfile(language string) bool {
 	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
+}
+
+type authConfig struct {
+	Auth string `json:"auth,omitempty"`
+}
+
+type configFile struct {
+	AuthConfigs      map[string]authConfig `json:"auths"`
+	CredentialsStore string                `json:"credsStore,omitempty"`
+}
+
+const (
+	// docker default settings
+	configFileName        = "config.json"
+	configFileDir         = ".docker"
+	defaultDockerRegistry = "https://index.docker.io/v1/"
+)
+
+var (
+	configDir = os.Getenv("DOCKER_CONFIG")
+)
+
+func readDockerConfig(config *configFile) error {
+
+	if configDir == "" {
+		home, err := homedir.Dir()
+		if err != nil {
+			return err
+		}
+		configDir = filepath.Join(home, configFileDir)
+	}
+	filename := filepath.Join(configDir, configFileName)
+
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(content, config)
+	if err != nil {
+		return err
+	}
+
+	if config.CredentialsStore != "" {
+		p := client.NewShellProgramFunc("docker-credential-" + config.CredentialsStore)
+
+		for k := range config.AuthConfigs {
+			creds, err := client.Get(p, k)
+			if err != nil {
+				return err
+			}
+
+			if config.AuthConfigs[k].Auth == "" {
+				// apend base64 encoded "auth": "dGVzdDpQdXFxR3E2THZDYzhGQUwyUWtLcA==" (user:pass)
+				registryAuth := creds.Username + ":" + creds.Secret
+				registryAuth = base64.StdEncoding.EncodeToString([]byte(registryAuth))
+
+				var tmp = config.AuthConfigs[k]
+				tmp.Auth = registryAuth
+				config.AuthConfigs[k] = tmp
+			}
+		}
+	}
+	return nil
+}
+
+func getRegistryAuth(config *configFile, image string) string {
+
+	if len(config.AuthConfigs) > 0 {
+
+		// image format is: <docker registry>/<user>/<image>
+		// so we trim <user>/<image>
+		var registry string
+		slashes := strings.Count(image, "/")
+		if slashes > 1 {
+			regS := strings.Split(image, "/")
+			registry = strings.Join(regS[:len(regS)-2], ", ")
+		}
+
+		if registry != "" {
+			return config.AuthConfigs[registry].Auth
+		} else if (registry == "") && (config.AuthConfigs[defaultDockerRegistry].Auth != "") {
+			return config.AuthConfigs[defaultDockerRegistry].Auth
+		}
+	}
+
+	return ""
 }

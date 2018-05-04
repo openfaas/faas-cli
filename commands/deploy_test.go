@@ -39,3 +39,63 @@ func Test_deploy(t *testing.T) {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }
+
+func Test_getRegistryAuth_CustomRegistry_NotFound(t *testing.T) {
+	wantAuth := ""
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{},
+	}
+
+	result := getRegistryAuth(&configFile1, "my-custom-registry.com/alexellis2/tester")
+
+	if result != wantAuth {
+		t.Errorf("want %s (empty), got %s", wantAuth, result)
+		t.Fail()
+	}
+}
+
+func Test_getRegistryAuth_CustomRegistry_Found(t *testing.T) {
+	wantAuth := "alexellis2-auth-str"
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{
+			"my-custom-registry.com": authConfig{Auth: wantAuth},
+		},
+	}
+
+	result := getRegistryAuth(&configFile1, "my-custom-registry.com/alexellis2/tester")
+
+	if result != wantAuth {
+		t.Errorf("want %s, got %s", wantAuth, result)
+		t.Fail()
+	}
+}
+
+func Test_getRegistryAuth_DockerHub_Found(t *testing.T) {
+	wantAuth := "alexellis2-auth-str"
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{
+			defaultDockerRegistry: authConfig{Auth: wantAuth},
+		},
+	}
+
+	result := getRegistryAuth(&configFile1, "alexellis2/tester")
+
+	if result != wantAuth {
+		t.Errorf("want %s, got %s", wantAuth, result)
+		t.Fail()
+	}
+}
+
+func Test_getRegistryAuth_DockerHub_NotFound(t *testing.T) {
+	wantAuth := ""
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{},
+	}
+
+	result := getRegistryAuth(&configFile1, "alexellis2/tester")
+
+	if result != "" {
+		t.Errorf("want %s (empty), got %s", wantAuth, result)
+		t.Fail()
+	}
+}

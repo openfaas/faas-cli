@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
+	"strings"
 
 	yaml "gopkg.in/yaml.v2"
 )
@@ -49,6 +50,8 @@ func ParseYAMLDataForLanguageTemplate(fileData []byte) (*LanguageTemplate, error
 
 func IsValidTemplate(lang string) bool {
 	var found bool
+
+	lang = strings.ToLower(lang)
 
 	if _, err := os.Stat("./template/" + lang); err == nil {
 		templateYAMLPath := "./template/" + lang + "/template.yml"

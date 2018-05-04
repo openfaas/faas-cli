@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -46,9 +47,38 @@ function will be appended to the existing file`,
 	RunE:    runNewFunction,
 }
 
+// validateFunctionName provides least-common-denominator validation - i.e. only allows valid Kubernetes services names
+func validateFunctionName(functionName string) error {
+	// Regex for RFC-1123 validation:
+	// 	k8s.io/kubernetes/pkg/util/validation/validation.go
+	var validDNS = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
+	matched := validDNS.MatchString(functionName)
+	if matched {
+		return nil
+	}
+	return fmt.Errorf(`function name can only contain a-z, 0-9 and dashes`)
+}
+
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
 	language, _ = validateLanguageFlag(language)
+
+	if list == true {
+		return nil
+	}
+
+	if len(args) < 1 {
+		return fmt.Errorf("please provide a name for the function")
+	}
+	if len(language) == 0 {
+		return fmt.Errorf("you must supply a function language with the --lang flag")
+	}
+
+	functionName = args[0]
+
+	if err := validateFunctionName(functionName); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -72,16 +102,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Languages available as templates:\n%s\n", printAvailableTemplates(availableTemplates))
 
 		return nil
-	}
-
-	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
-	}
-
-	functionName = args[0]
-
-	if len(language) == 0 {
-		return fmt.Errorf("you must supply a function language with the --lang flag")
 	}
 
 	PullTemplates(DefaultTemplateRepository)

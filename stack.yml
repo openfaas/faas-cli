@@ -12,28 +12,28 @@ functions:
     lang: python
     handler: ./sample/url-ping
     image: alexellis/faas-url-ping:0.2
-    limits:
-      memory: 40m
-    requests:
-      memory: 40m
+#    limits:
+#      memory: 40m
+#    requests:
+#      memory: 40m
 
   stronghash:
     skip_build: true
     image: functions/alpine:latest
     fprocess: "sha512sum"
-    limits:
-      memory: 40m
-    requests:
-      memory: 40m
+#    limits:
+#      memory: 40m
+#    requests:
+#      memory: 40m
 
   nodejs-echo:
     lang: node
     handler: ./sample/nodejs-echo
     image: alexellis/faas-nodejs-echo:0.1
-    limits:
-      memory: 40m
-    requests:
-      memory: 40m
+#    limits:
+#      memory: 40m
+#    requests:
+#      memory: 40m
 
   # curl 127.0.0.1:8080/function/shrink-image --data-binary @big.png > smaller.png
   shrink-image:
@@ -41,17 +41,17 @@ functions:
     handler: ./sample/imagemagick
     image: functions/resizer:0.1
     fprocess: "convert - -resize 50% fd:1"
-    limits:
-      memory: 40m
-    requests:
-      memory: 40m
+#    limits:
+#      memory: 40m
+#    requests:
+#      memory: 40m
 
   ruby-echo:
     lang: ruby
     handler: ./sample/ruby-echo
     image: alexellis/ruby-echo:0.2
-    limits:
-      memory: 40m
-    requests:
-      memory: 40m
+#    limits:
+#      memory: 40m
+#    requests:
+#      memory: 40m
 
