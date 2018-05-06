@@ -36,7 +36,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	if update {
 		update = existing
 	} else if !update && existing {
-		fmt.Printf("Function %s already exists, you must either remove it first, or update it", functionName)
+		fmt.Printf("Function %s already exists, you must either remove it first, or update it\n", functionName)
 		return
 	}
 

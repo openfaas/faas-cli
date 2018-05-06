@@ -20,6 +20,8 @@ type deployProxyTest struct {
 	replace             bool
 	update              bool
 	expectedOutput      string
+	functionName        string
+	requests            []test.Request
 }
 
 func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
@@ -31,7 +33,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 
 	stdout := test.CaptureStdout(func() {
 		DeployFunction(
-			"fproces",
+			"fprocess",
 			s.URL,
 			"function",
 			"image",
@@ -68,7 +70,7 @@ func Test_RunDeployProxyTests(t *testing.T) {
 			mockServerResponses: []int{http.StatusOK, http.StatusOK, http.StatusNotFound},
 			replace:             true,
 			update:              false,
-			expectedOutput:      `(?m:Unexpected status: 404)`,
+			expectedOutput:      `(?m:Removing old function)`,
 		},
 		{
 			title:               "UpdateFailedDeployed",
@@ -111,5 +113,108 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(stdout) {
 		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
+	}
+}
+
+func runUpdateReplaceProxyTests(t *testing.T, requests []test.Request, replaceUpdateTest deployProxyTest) {
+	s := test.MockHttpServer(t, requests)
+	defer s.Close()
+
+	stdout := test.CaptureStdout(func() {
+		DeployFunction(
+			"fprocess",
+			s.URL,
+			replaceUpdateTest.functionName,
+			"image",
+			"dXNlcjpwYXNzd29yZA==",
+			"lang",
+			replaceUpdateTest.replace,
+			nil,
+			"network",
+			[]string{},
+			replaceUpdateTest.update,
+			[]string{},
+			map[string]string{},
+			FunctionResourceRequest{},
+		)
+	})
+
+	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", replaceUpdateTest.expectedOutput))
+	if !r.MatchString(stdout) {
+		t.Fatalf("Want: %s\nGot: %s", replaceUpdateTest.expectedOutput, stdout)
+	}
+}
+
+func Test_DeployFunction_UpdateReplace(t *testing.T) {
+	var deployProxyTests = []deployProxyTest{
+		{
+			title:          "Update_Existing",
+			functionName:   "func-test1",
+			replace:        false,
+			update:         true,
+			expectedOutput: "attempting rolling-update", // Success, updating
+			requests: []test.Request{
+				{
+					ResponseStatusCode: http.StatusOK,
+					ResponseBody:       expectedListFunctionsResponse,
+				},
+				{
+					ResponseStatusCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			title:          "Deploy_Existing",
+			functionName:   "func-test1",
+			replace:        true,
+			update:         false,
+			expectedOutput: "you must either remove it first, or update it", // Fail, PUTing existing function
+			requests: []test.Request{
+				{
+					ResponseStatusCode: http.StatusOK,
+					ResponseBody:       expectedListFunctionsResponse,
+				},
+			},
+		},
+		{
+			title:          "Update_New",
+			functionName:   "new-func",
+			replace:        false,
+			update:         true,
+			expectedOutput: "WARNING! Communication is not secure", // Success, performed POST
+			requests: []test.Request{
+				{
+					ResponseStatusCode: http.StatusOK,
+					ResponseBody:       expectedListFunctionsResponse,
+				},
+				{
+					ResponseStatusCode: http.StatusOK,
+				},
+			},
+		},
+		{
+			title:          "Replace_New",
+			functionName:   "new-func",
+			replace:        true,
+			update:         false,
+			expectedOutput: "WARNING! Communication is not secure", // Success, performed POST
+			requests: []test.Request{
+				{
+					ResponseStatusCode: http.StatusOK,
+					ResponseBody:       expectedListFunctionsResponse,
+				},
+				{
+					ResponseStatusCode: http.StatusOK,
+				},
+				{
+					ResponseStatusCode: http.StatusOK,
+				},
+			},
+		},
+	}
+	for _, tst := range deployProxyTests {
+		t.Run(tst.title, func(t *testing.T) {
+			runUpdateReplaceProxyTests(t, tst.requests, tst)
+		})
 	}
 }
