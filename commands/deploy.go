@@ -166,6 +166,8 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 
 			if len(function.Secrets) > 0 {
 				deployFlags.secrets = mergeSlice(function.Secrets, deployFlags.secrets)
+			} else {
+				deployFlags.secrets = nil
 			}
 
 			if deployFlags.sendRegistryAuth {
