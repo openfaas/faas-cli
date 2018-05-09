@@ -56,12 +56,6 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	dockerConfig := configFile{}
-	err := readDockerConfig(&dockerConfig)
-	if err != nil {
-		log.Printf("Unable to read the docker config - %v\n", err.Error())
-	}
-
 	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
@@ -95,6 +89,13 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	var registryAuth string
 	if storeDeployFlags.sendRegistryAuth {
+
+		dockerConfig := configFile{}
+		err := readDockerConfig(&dockerConfig)
+		if err != nil {
+			log.Printf("Unable to read the docker config - %v\n", err.Error())
+		}
+
 		registryAuth = getRegistryAuth(&dockerConfig, item.Image)
 	}
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))

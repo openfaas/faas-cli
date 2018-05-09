@@ -30,7 +30,7 @@ func Test_ListFunctions(t *testing.T) {
 	}
 	for k, v := range result {
 		if expectedListFunctionsResponse[k] != v {
-			t.Fatal("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
+			t.Fatalf("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
 		}
 	}
 }

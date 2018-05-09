@@ -121,12 +121,6 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
 
-	dockerConfig := configFile{}
-	err := readDockerConfig(&dockerConfig)
-	if err != nil {
-		log.Println("Unable to read the docker config - %v", err.Error())
-	}
-
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -169,6 +163,13 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			}
 
 			if deployFlags.sendRegistryAuth {
+
+				dockerConfig := configFile{}
+				err := readDockerConfig(&dockerConfig)
+				if err != nil {
+					log.Printf("Unable to read the docker config - %v", err.Error())
+				}
+
 				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
 			}
 
@@ -219,6 +220,12 @@ Error: %s`, fprocessErr.Error())
 
 		var registryAuth string
 		if deployFlags.sendRegistryAuth {
+			dockerConfig := configFile{}
+			err := readDockerConfig(&dockerConfig)
+			if err != nil {
+				log.Printf("Unable to read the docker config - %v\n", err.Error())
+			}
+
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
