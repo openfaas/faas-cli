@@ -17,6 +17,7 @@ import (
 )
 
 const providerName = "faas"
+const providerNameLong = "openfaas"
 
 // ParseYAMLData parse YAML file into a stack of "services".
 func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
@@ -56,8 +57,8 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 		}
 	}
 
-	if services.Provider.Name != providerName {
-		return nil, fmt.Errorf("'%s' is the only valid provider for this tool - found: %s", providerName, services.Provider.Name)
+	if services.Provider.Name != providerName && services.Provider.Name != providerNameLong {
+		return nil, fmt.Errorf("['%s', '%s'] is the only valid provider for this tool - found: %s", providerName, providerNameLong, services.Provider.Name)
 	}
 
 	if regexExists && filterExists {

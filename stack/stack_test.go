@@ -322,3 +322,56 @@ func Test_ParseYAMLDataFilterAndRegex(t *testing.T) {
 		t.Errorf("Test_ParseYAMLDataFilterAndRegex test failed, expected error not thrown")
 	}
 }
+
+func Test_ParseYAMLData_ProviderValues(t *testing.T) {
+	testCases := []struct {
+		title         string
+		provider      string
+		expectedError string
+		file          string
+	}{
+		{
+			title:         "Provider is faas and gives no error",
+			provider:      "faas",
+			expectedError: "",
+			file: `provider:
+  name: faas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+		{
+			title:         "Provider is openfaas and gives no error",
+			provider:      "faas",
+			expectedError: "",
+			file: `provider:
+  name: faas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+		{
+			title:         "Provider is serverless-openfaas and gives error",
+			provider:      "faas",
+			expectedError: "['faas', 'openfaas'] is the only valid provider for this tool - found: serverless-openfaas",
+			file: `provider:
+  name: serverless-openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.title, func(t *testing.T) {
+
+			_, err := ParseYAMLData([]byte(test.file), ".*", "*")
+			if len(test.expectedError) > 0 {
+				if test.expectedError != err.Error() {
+					t.Errorf("want error: '%s', got: '%s'", test.expectedError, err.Error())
+					t.Fail()
+				}
+			}
+		})
+	}
+}
