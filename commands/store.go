@@ -45,7 +45,7 @@ func storeList(store string) ([]schema.StoreItem, error) {
 	store = strings.TrimRight(store, "/")
 
 	timeout := 60 * time.Second
-	client := proxy.MakeHTTPClient(&timeout)
+	client := proxy.MakeHTTPClient(&timeout, true)
 
 	res, err := client.Get(store)
 	if err != nil {

@@ -25,14 +25,14 @@ type FunctionResourceRequest struct {
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
+	labels map[string]string, functionResourceRequest1 FunctionResourceRequest, tlsInsecure bool) {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
+	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1, tlsInsecure)
 
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
-		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
+		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, tlsInsecure)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -43,7 +43,7 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 func Deploy(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) (int, string) {
+	labels map[string]string, functionResourceRequest1 FunctionResourceRequest, tlsInsecure bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
@@ -108,7 +108,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	var request *http.Request
 
 	timeout := 60 * time.Second
-	client := MakeHTTPClient(&timeout)
+	client := MakeHTTPClient(&timeout, tlsInsecure)
 
 	method := http.MethodPost
 	// "application/json"

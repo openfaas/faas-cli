@@ -20,6 +20,7 @@ var (
 	username      string
 	password      string
 	passwordStdin bool
+	tlsInsecure   bool
 )
 
 func init() {
@@ -27,12 +28,13 @@ func init() {
 	loginCmd.Flags().StringVarP(&username, "username", "u", "", "Gateway username")
 	loginCmd.Flags().StringVarP(&password, "password", "p", "", "Gateway password")
 	loginCmd.Flags().BoolVar(&passwordStdin, "password-stdin", false, "Reads the gateway password from stdin")
+	loginCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	faasCmd.AddCommand(loginCmd)
 }
 
 var loginCmd = &cobra.Command{
-	Use:   `login [--username USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL]`,
+	Use:   `login [--username USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL] [--tls-no-verify]`,
 	Short: "Log in to OpenFaaS gateway",
 	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
 	Example: `  faas-cli login -u user -p password --gateway http://127.0.0.1:8080
@@ -99,7 +101,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 func validateLogin(gatewayURL string, user string, pass string) error {
 	tr := &http.Transport{
 		DisableKeepAlives: false,
-		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: tlsInsecure},
 	}
 	client := &http.Client{
 		Transport: tr,
