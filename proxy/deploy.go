@@ -22,17 +22,22 @@ type FunctionResourceRequest struct {
 	Requests *stack.FunctionResources
 }
 
+// DeployFunction first tries to deploy a function and if it exists will then attempt
+// a rolling update. Warnings are suppressed for the second API call (if required.)
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
 	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1)
+	warnInsecureGateway := true
+	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1, warnInsecureGateway)
 
+	warnInsecureGateway = false
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
-		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1)
+
+		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, warnInsecureGateway)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -40,10 +45,12 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	fmt.Println(deployOutput)
 }
 
+// Deploy a function to an OpenFaaS gateway over REST
 func Deploy(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) (int, string) {
+	labels map[string]string, functionResourceRequest1 FunctionResourceRequest,
+	warnInsecureGateway bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
@@ -52,8 +59,10 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 		fprocessTemplate = fprocess
 	}
 
-	if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
-		fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+	if warnInsecureGateway {
+		if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
+			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		}
 	}
 
 	gateway = strings.TrimRight(gateway, "/")
