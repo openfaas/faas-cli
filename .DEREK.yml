@@ -1,15 +1,1 @@
-curators:
- - alexellis
- - johnmccabe
- - rgee0
- - ericstoekl
- - itscaro
- - kenfdev
- - dungeonmaster18
- - stefanprodan
- - iyovcheva
- - viveksyngh
-
-features:
- - dco_check
- - comments
+redirect: https://raw.githubusercontent.com/openfaas/faas/master/.DEREK.yml
