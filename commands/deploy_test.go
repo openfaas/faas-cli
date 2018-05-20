@@ -99,3 +99,19 @@ func Test_getRegistryAuth_DockerHub_NotFound(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func Test_getRegistryAuth_NotRequiredForLocalImage(t *testing.T) {
+	wantAuth := ""
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{
+			defaultDockerRegistry: authConfig{Auth: "alexellis2-auth-str"},
+		},
+	}
+
+	result := getRegistryAuth(&configFile1, "tester:latest")
+
+	if result != "" {
+		t.Errorf("want %s (empty), got %s", wantAuth, result)
+		t.Fail()
+	}
+}

@@ -172,6 +172,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				}
 
 				function.RegistryAuth = getRegistryAuth(&dockerConfig, function.Image)
+
 			}
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -450,6 +451,11 @@ func readDockerConfig(config *configFile) error {
 }
 
 func getRegistryAuth(config *configFile, image string) string {
+
+	// The local library does not require an auth string.
+	if strings.Contains(image, "/") == false {
+		return ""
+	}
 
 	if len(config.AuthConfigs) > 0 {
 
