@@ -33,5 +33,7 @@ WORKDIR /root/
 
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               .
 
-CMD ["./faas-cli"]
+ENV PATH=$PATH:/root/
+
+CMD ["faas-cli"]
 
