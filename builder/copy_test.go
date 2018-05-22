@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 	"testing"
 )
@@ -52,7 +53,7 @@ func setupSourceFolder(numberOfFiles, mode int) (string, error) {
 
 	// create n files inside the created folder
 	for i := 1; i <= numberOfFiles; i++ {
-		srcFile := fmt.Sprintf("%s/test-file-%d", srcDir, i)
+		srcFile := filepath.Join(srcDir, fmt.Sprintf("test-file-%d", i))
 		fileErr := ioutil.WriteFile(srcFile, data, os.FileMode(mode))
 		if fileErr != nil {
 			return "", fileErr
@@ -65,7 +66,7 @@ func setupSourceFolder(numberOfFiles, mode int) (string, error) {
 func checkDestinationFiles(dir string, numberOfFiles, mode int) error {
 	// Check each file inside the destination folder
 	for i := 1; i <= numberOfFiles; i++ {
-		fileStat, err := os.Stat(fmt.Sprintf("%s/test-file-%d", dir, i))
+		fileStat, err := os.Stat(filepath.Join(dir, fmt.Sprintf("test-file-%d", i)))
 		if os.IsNotExist(err) {
 			return err
 		}
