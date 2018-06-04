@@ -341,6 +341,28 @@ $ uname -a | curl http://127.0.0.1:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
+### OpenFaaS Cloud (extensions)
+
+[OpenFaaS Cloud](https://github.com/openfaas/openfaas-cloud) provides a GitOps experience for functions on Kubernetes.
+
+Commands:
+
+* `seal`
+
+You can use the CLI to seal a secret for usage on public Git repo. The pre-requisite is that you have installed [SealedSecrets](https://github.com/bitnami-labs/sealed-secrets) and exported your public key from your cluster as `pub-cert.pem`.
+
+```
+$ faas-cli cloud seal --name alexellis-github --literal hmac-secret=1234 --cert=pub-cert.pem
+```
+
+Exporting the `SealedSecrets` public key:
+
+```
+kubeseal --fetch-cert pub-cert.pem
+```
+
+You can then place the `secrets.yml` file in any public Git repo without others being able to read the contents.
+
 ### FaaS-CLI Developers / Contributors
 
 See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
