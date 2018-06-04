@@ -22,3 +22,6 @@ obj
 
 
 template
+
+*.pem
+secrets.yml
