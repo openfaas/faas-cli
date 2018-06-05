@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
@@ -20,6 +21,7 @@ var (
 	name       string
 	literal    *[]string
 	outputFile string
+	fromFile   *[]string
 	certFile   string
 )
 
@@ -32,7 +34,10 @@ func init() {
 	cloudSealCmd.Flags().StringVarP(&certFile, "cert", "c", "pub-cert.pem", "Filename of public certificate")
 
 	cloudSealCmd.Flags().StringVarP(&outputFile, "output-file", "o", "secrets.yml", "Output file for secrets")
+
 	literal = cloudSealCmd.Flags().StringArrayP("literal", "l", []string{}, "Secret literal key-value data")
+
+	fromFile = cloudSealCmd.Flags().StringArrayP("from-file", "i", []string{}, "Read a secret from a from file")
 
 	cloudCmd.AddCommand(cloudSealCmd)
 }
@@ -56,16 +61,7 @@ func runCloudSeal(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Sealing secret: %s in namepsace: %s\n", name, namespace)
-	fmt.Printf("Literals:\n")
-	if literal != nil {
-		args, _ := parseBuildArgs(*literal)
 
-		for k := range args {
-			fmt.Printf("- %s\n", k)
-		}
-	} else {
-		fmt.Println("")
-	}
 	fmt.Println("")
 
 	enc := base64.StdEncoding
@@ -85,6 +81,18 @@ func runCloudSeal(cmd *cobra.Command, args []string) error {
 
 		for k, v := range args {
 			secret.Data[k] = enc.EncodeToString([]byte(v))
+		}
+	}
+
+	if fromFile != nil {
+		for _, file := range *fromFile {
+			bytesOut, err := ioutil.ReadFile(file)
+			if err != nil {
+				return err
+			}
+
+			key := filepath.Base(file)
+			secret.Data[key] = enc.EncodeToString(bytesOut)
 		}
 	}
 
