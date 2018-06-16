@@ -1,2 +1,0 @@
-language: csharp
-fprocess: dotnet ./root.dll
