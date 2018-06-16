@@ -47,6 +47,9 @@ type Function struct {
 
 	// Requests of resources requested by function
 	Requests *FunctionResources `yaml:"requests"`
+
+	// BuildOptions to determine native packages
+	BuildOptions []string `yaml:"build_options"`
 }
 
 // FunctionResources Memory and CPU
