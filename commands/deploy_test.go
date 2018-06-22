@@ -58,7 +58,7 @@ func Test_getRegistryAuth_CustomRegistry_Found(t *testing.T) {
 	wantAuth := "alexellis2-auth-str"
 	configFile1 := configFile{
 		AuthConfigs: map[string]authConfig{
-			"my-custom-registry.com": authConfig{Auth: wantAuth},
+			"my-custom-registry.com": {Auth: wantAuth},
 		},
 	}
 
@@ -74,7 +74,7 @@ func Test_getRegistryAuth_DockerHub_Found(t *testing.T) {
 	wantAuth := "alexellis2-auth-str"
 	configFile1 := configFile{
 		AuthConfigs: map[string]authConfig{
-			defaultDockerRegistry: authConfig{Auth: wantAuth},
+			defaultDockerRegistry: {Auth: wantAuth},
 		},
 	}
 
@@ -104,7 +104,7 @@ func Test_getRegistryAuth_NotRequiredForLocalImage(t *testing.T) {
 	wantAuth := ""
 	configFile1 := configFile{
 		AuthConfigs: map[string]authConfig{
-			defaultDockerRegistry: authConfig{Auth: "alexellis2-auth-str"},
+			defaultDockerRegistry: {Auth: "alexellis2-auth-str"},
 		},
 	}
 

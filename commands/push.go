@@ -5,12 +5,14 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/util"
 	"github.com/spf13/cobra"
 )
 
@@ -70,7 +72,13 @@ You must provide a username or registry prefix to the Function's image such as u
 }
 
 func pushImage(image string) {
-	builder.ExecCommand("./", []string{"docker", "push", image})
+	if util.UseDockerCLI() {
+		builder.ExecCommand("./", []string{"docker", "push", image})
+	} else {
+		if err := builder.Push(image); err != nil {
+			log.Fatalf(aec.RedF.Apply(err.Error()))
+		}
+	}
 }
 
 func pushStack(services *stack.Services, queueDepth int) {

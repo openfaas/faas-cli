@@ -23,7 +23,7 @@ func Test_PushValidation(t *testing.T) {
 
 	for _, testCase := range testCases {
 		functions := map[string]stack.Function{
-			"cli": stack.Function{
+			"cli": {
 				Name:  testCase.name,
 				Image: testCase.image,
 			},
