@@ -18,12 +18,13 @@ import (
 
 // Flags that are to be added to commands.
 var (
-	nocache     bool
-	squash      bool
-	parallel    int
-	shrinkwrap  bool
-	buildArgs   []string
-	buildArgMap map[string]string
+	nocache      bool
+	squash       bool
+	parallel     int
+	shrinkwrap   bool
+	buildArgs    []string
+	buildArgMap  map[string]string
+	buildOptions []string
 )
 
 func init() {
@@ -35,13 +36,11 @@ func init() {
 
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
-	buildCmd.Flags().BoolVar(&squash, "squash", false, `Use Docker's squash flag for smaller images
-						 [experimental] `)
+	buildCmd.Flags().BoolVar(&squash, "squash", false, `Use Docker's squash flag for smaller images [experimental] `)
 	buildCmd.Flags().IntVar(&parallel, "parallel", 1, "Build in parallel to depth specified.")
-
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
-
 	buildCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
+	buildCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -60,13 +59,15 @@ var buildCmd = &cobra.Command{
                  [--regex "REGEX"]
 				 [--filter "WILDCARD"]
 				 [--parallel PARALLEL_DEPTH]
-				 [--build-arg KEY=VALUE]`,
+				 [--build-arg KEY=VALUE]
+				 [--build-option VALUE]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
   faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
+  faas-cli build -f ./stack.yml --build-option dev
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
@@ -109,7 +110,11 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 			return nil, fmt.Errorf("build-arg must have a non-empty value")
 		}
 
-		mapped[k] = v
+		if k == builder.AdditionalPackageBuildArg && len(mapped[k]) > 0 {
+			mapped[k] = mapped[k] + " " + v
+		} else {
+			mapped[k] = v
+		}
 	}
 
 	return mapped, nil
@@ -134,6 +139,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
+
 		build(&services, parallel, shrinkwrap)
 
 	} else {
@@ -146,7 +152,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap)
+		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions)
 	}
 
 	return nil
@@ -165,7 +171,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap)
+
+					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
+					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions)
 				}
 				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}
@@ -204,4 +212,10 @@ func PullTemplates(templateURL string) error {
 		}
 	}
 	return err
+}
+
+func combineBuildOpts(YAMLBuildOpts []string, buildFlagBuildOpts []string) []string {
+
+	return mergeSlice(YAMLBuildOpts, buildFlagBuildOpts)
+
 }

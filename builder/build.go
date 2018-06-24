@@ -12,12 +12,17 @@ import (
 	"github.com/openfaas/faas-cli/stack"
 )
 
+// AdditionalPackageBuildArg holds the special build-arg keyname for use with build-opts.
+// Can also be passed as a build arg hence needs to be accessed from commands
+const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
+
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string) {
 
 	if stack.IsValidTemplate(language) {
 
 		var tempPath string
+
 		if strings.ToLower(language) == "dockerfile" {
 
 			if shrinkwrap {
@@ -53,7 +58,14 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 		}
 
-		flagSlice := buildFlagSlice(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap)
+		buildOptPackages, bopErr := getBuildOptionPackages(buildOptions, language)
+
+		if bopErr != nil {
+			fmt.Println(bopErr)
+			return
+		}
+
+		flagSlice := buildFlagSlice(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap, buildOptPackages)
 		spaceSafeCmdLine := []string{"docker", "build"}
 		spaceSafeCmdLine = append(spaceSafeCmdLine, flagSlice...)
 		spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image, ".")
@@ -95,7 +107,7 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	return tempPath
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string) []string {
+func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string) []string {
 
 	var spaceSafeBuildFlags []string
 
@@ -115,7 +127,16 @@ func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy stri
 	}
 
 	for k, v := range buildArgMap {
-		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
+
+		if k != AdditionalPackageBuildArg {
+			spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
+		} else {
+			buildOptionPackages = append(buildOptionPackages, strings.Split(v, " ")...)
+		}
+	}
+	if len(buildOptionPackages) > 0 {
+		buildOptionPackages = deDuplicate(buildOptionPackages)
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", AdditionalPackageBuildArg, strings.Join(buildOptionPackages, " ")))
 	}
 
 	return spaceSafeBuildFlags
@@ -127,4 +148,92 @@ func ensureHandlerPath(handler string) error {
 	}
 
 	return nil
+}
+
+func getBuildOptionPackages(requestedBuildOptions []string, language string) ([]string, error) {
+
+	var buildPackages []string
+
+	if len(requestedBuildOptions) > 0 {
+
+		var allFound bool
+
+		availableBuildOptions, err := getBuildOptionsFor(language)
+
+		if err != nil {
+			return nil, err
+		}
+
+		buildPackages, allFound = getPackages(availableBuildOptions, requestedBuildOptions)
+
+		if !allFound {
+			err = fmt.Errorf("Error: You're using a build option unavailable for %s. Please check /template/%s/template.yml for supported build options", language, language)
+			return nil, err
+		}
+
+	}
+	return buildPackages, nil
+}
+
+func getBuildOptionsFor(language string) ([]stack.BuildOption, error) {
+
+	var buildOptions = []stack.BuildOption{}
+
+	pathToTemplateYAML := "./template/" + language + "/template.yml"
+	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+		return buildOptions, err
+	}
+
+	var langTemplate stack.LanguageTemplate
+	parsedLangTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
+
+	if err != nil {
+		return buildOptions, err
+	}
+
+	if parsedLangTemplate != nil {
+		langTemplate = *parsedLangTemplate
+		buildOptions = langTemplate.BuildOptions
+	}
+
+	return buildOptions, nil
+}
+
+func getPackages(availableBuildOptions []stack.BuildOption, requestedBuildOptions []string) ([]string, bool) {
+	var buildPackages []string
+
+	for _, requestedOption := range requestedBuildOptions {
+
+		requestedOptionAvailable := false
+
+		for _, availableOption := range availableBuildOptions {
+
+			if availableOption.Name == requestedOption {
+				buildPackages = append(buildPackages, availableOption.Packages...)
+				requestedOptionAvailable = true
+				break
+			}
+		}
+		if requestedOptionAvailable == false {
+			return buildPackages, false
+		}
+	}
+
+	return deDuplicate(buildPackages), true
+}
+
+func deDuplicate(buildOptPackages []string) []string {
+
+	seenPackages := map[string]bool{}
+	retPackages := []string{}
+
+	for _, packageName := range buildOptPackages {
+
+		if _, alreadySeen := seenPackages[packageName]; !alreadySeen {
+
+			seenPackages[packageName] = true
+			retPackages = append(retPackages, packageName)
+		}
+	}
+	return retPackages
 }

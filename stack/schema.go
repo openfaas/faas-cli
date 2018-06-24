@@ -47,6 +47,9 @@ type Function struct {
 
 	// Requests of resources requested by function
 	Requests *FunctionResources `yaml:"requests"`
+
+	// BuildOptions to determine native packages
+	BuildOptions []string `yaml:"build_options"`
 }
 
 // FunctionResources Memory and CPU
@@ -68,6 +71,12 @@ type Services struct {
 
 // LanguageTemplate read from template.yml within root of a language template folder
 type LanguageTemplate struct {
-	Language string `yaml:"language"`
-	FProcess string `yaml:"fprocess"`
+	Language     string        `yaml:"language"`
+	FProcess     string        `yaml:"fprocess"`
+	BuildOptions []BuildOption `yaml:"build_options"`
+}
+
+type BuildOption struct {
+	Name     string   `yaml:"name"`
+	Packages []string `yaml:"packages"`
 }

@@ -53,4 +53,7 @@ COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli-armhf         
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli.exe            .
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli-arm64          .
 
-CMD ["./faas"]
+ENV PATH=$PATH:/root/
+
+CMD ["faas-cli"]
+
