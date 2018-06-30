@@ -30,6 +30,20 @@ hasCli() {
     fi
 }
 
+checkHash(){
+    if [ -x "$(command -v shasum)" ]; then
+
+    targetFileDir=${targetFile%/*}
+
+    (cd $targetFileDir && curl -sSL $url.sha256|shasum -c -s)
+   
+        if [ "$?" != "0" ]; then
+            rm $targetFile
+            echo "Binary checksum didn't match. Exiting"
+            exit 1
+        fi
+    fi
+}
 
 getPackage() {
     uname=$(uname)
@@ -56,10 +70,10 @@ getPackage() {
     ;;
     esac
 
-    targetFile="/tmp/faas-cli"
+    targetFile="/tmp/faas-cli$suffix"
     
     if [ "$userid" != "0" ]; then
-        targetFile="$(pwd)/faas-cli"
+        targetFile="$(pwd)/faas-cli$suffix"
     fi
 
     if [ -e $targetFile ]; then
@@ -69,9 +83,11 @@ getPackage() {
     url=https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli$suffix
     echo "Downloading package $url as $targetFile"
 
-    curl -sSL $url > $targetFile
+    curl -sSL $url --output $targetFile
 
     if [ "$?" = "0" ]; then
+
+    checkHash
 
     chmod +x $targetFile
 
@@ -85,7 +101,7 @@ getPackage() {
             echo "==    following commands may need to be run manually   =="
             echo "========================================================="
             echo
-            echo "  sudo cp faas-cli /usr/local/bin/"
+            echo "  sudo cp faas-cli$suffix /usr/local/bin/faas-cli"
             echo "  sudo ln -sf /usr/local/bin/faas-cli /usr/local/bin/faas"
             echo
 
@@ -94,7 +110,7 @@ getPackage() {
             echo
             echo "Running as root - Attemping to move faas-cli to /usr/local/bin"
 
-            mv $targetFile /usr/local/bin/
+            mv $targetFile /usr/local/bin/faas-cli
         
             if [ "$?" = "0" ]; then
                 echo "New version of faas-cli installed to /usr/local/bin"
@@ -108,6 +124,8 @@ getPackage() {
 	            ln -s /usr/local/bin/faas-cli /usr/local/bin/faas
 	            echo "Creating alias 'faas' for 'faas-cli'."
     	    fi
+
+            faas-cli version
         fi
     fi
 }
