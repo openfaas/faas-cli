@@ -36,7 +36,7 @@ after_success:
 
 before_deploy:
   - make build_redist
-  - for f in faas-cli*; do shasum -a 256 ./$f | awk '{print $1}' > ./$f.sha256; done
+  - ./ci/hashgen.sh
 
 deploy:
   provider: releases
