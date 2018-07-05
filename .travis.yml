@@ -32,6 +32,11 @@ after_success:
         docker tag $DOCKER_NS/faas-cli:latest-dev $DOCKER_NS/faas-cli:$TRAVIS_TAG;
         echo $DOCKER_PASSWORD | docker login -u=$DOCKER_USERNAME --password-stdin;
         docker push $DOCKER_NS/faas-cli:$TRAVIS_TAG;
+
+        docker tag $DOCKER_NS/faas-cli:latest-dev quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
+        echo $QUAY_PASSWORD | docker login -u=$QUAY_USERNAME --password-stdin quay.io;
+        docker push quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
+
       fi;
 
 before_deploy:
