@@ -68,10 +68,15 @@ func MockHttpServer(t *testing.T, requests []Request) *server {
 
 		// If the body is set, send back JSON-encoded body
 		if request.ResponseBody != nil {
-			if b, err := json.Marshal(request.ResponseBody); err != nil {
-				t.Fatal(err)
+			s, ok := request.ResponseBody.(string)
+			if !ok {
+				if b, err := json.Marshal(request.ResponseBody); err != nil {
+					t.Fatal(err)
+				} else {
+					w.Write(b)
+				}
 			} else {
-				w.Write(b)
+				w.Write([]byte(s))
 			}
 		}
 

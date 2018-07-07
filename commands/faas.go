@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/docker/docker/pkg/term"
+	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
 
@@ -46,6 +47,8 @@ func resetForTest() {
 	yamlFile = ""
 	regex = ""
 	filter = ""
+	version.Version = ""
+	shortVersion = false
 }
 
 func init() {
