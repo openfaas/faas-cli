@@ -30,12 +30,20 @@ hasCli() {
     fi
 }
 
+
 checkHash(){
-    if [ -x "$(command -v shasum)" ]; then
+
+    sha_cmd="sha256sum"
+
+    if [ ! -x "$(command -v $sha_cmd)" ]; then
+    sha_cmd="shasum -a 256"
+    fi
+
+    if [ -x "$(command -v $sha_cmd)" ]; then
 
     targetFileDir=${targetFile%/*}
 
-    (cd $targetFileDir && curl -sSL $url.sha256|shasum -c -s)
+    (cd $targetFileDir && curl -sSL $url.sha256|$sha_cmd -c -s)
    
         if [ "$?" != "0" ]; then
             rm $targetFile
@@ -108,7 +116,7 @@ getPackage() {
         else
 
             echo
-            echo "Running as root - Attemping to move faas-cli to /usr/local/bin"
+            echo "Running as root - Attempting to move faas-cli to /usr/local/bin"
 
             mv $targetFile /usr/local/bin/faas-cli
         
