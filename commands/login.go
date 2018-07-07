@@ -77,7 +77,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	fmt.Println("Calling the OpenFaaS server to validate the credentials...")
 
-	gateway = getGatewayURL(gateway, "", "", os.Getenv(openFaaSURLEnvironment))
+	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
 	if err := validateLogin(gateway, username, password); err != nil {
 		return err
