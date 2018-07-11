@@ -12,6 +12,8 @@ import (
 	"os"
 	"time"
 
+	"net/http"
+
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -49,8 +51,10 @@ func runVersion(cmd *cobra.Command, args []string) {
 		fmt.Println(version.BuildVersion())
 	} else {
 		printFiglet()
-		fmt.Printf("CLI commit: %s\n", version.GitCommit)
-		fmt.Printf("CLI version: %s\n", version.BuildVersion())
+		fmt.Printf(`CLI:
+ commit:  %s
+ version: %s
+`, version.GitCommit, version.BuildVersion())
 		printServerVersions()
 	}
 
@@ -71,13 +75,27 @@ func printServerVersions() {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	timeout := 2 * time.Second
+	timeout := 5 * time.Second
 	client := proxy.MakeHTTPClient(&timeout)
-	response, err := client.Get(gatewayAddress + "/system/info")
+
+	infoEndPoint := gatewayAddress + "/system/info"
+	req, err := http.NewRequest("GET", infoEndPoint, nil)
 	if err != nil {
-		fmt.Printf("Warning could not contact gateway for version information on %s %s\n", gatewayAddress+"/system/info", err.Error())
+		fmt.Printf("Warning could create request for %s %s\n", infoEndPoint, err.Error())
 		return
 	}
+
+	response, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Warning could not contact gateway for version information on %s %s\n", infoEndPoint, err.Error())
+		return
+	}
+
+	defer func() {
+		if response.Body != nil {
+			response.Body.Close()
+		}
+	}()
 
 	info := make(map[string]interface{})
 	upstreamBody, _ := ioutil.ReadAll(response.Body)
@@ -91,17 +109,26 @@ func printServerVersions() {
 	printGatewayDetails(gatewayAddress, version, sha, commit)
 
 	name, orchestration, sha, version := getProviderDetails(info)
-	fmt.Printf("- Provider \n\tname: %s \n\torchestration: %s \n\tversion: %s \n\tsha: %s\n",
-		name, orchestration, version, sha)
+	fmt.Printf(`
+Provider
+ name:          %s
+ orchestration: %s
+ version:       %s 
+ sha:           %s
+`, name, orchestration, version, sha)
 }
 
 func printGatewayDetails(gatewayAddress, version, sha, commit string) {
-	fmt.Printf("- Gateway \n\turi: %s", gatewayAddress)
+	fmt.Printf(`
+Gateway
+ uri:     %s`, gatewayAddress)
 
 	if version != "" {
-		fmt.Printf("\n\tversion: %s", version)
-		fmt.Printf("\n\tsha: %s", sha)
-		fmt.Printf("\n\tcommit: %s", commit)
+		fmt.Printf(`
+ version: %s
+ sha:     %s
+ commit:  %s
+`, version, sha, commit)
 	}
 
 	fmt.Println()
