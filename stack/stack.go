@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"regexp"
 	"time"
-
 	"github.com/ryanuber/go-glob"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -19,7 +18,7 @@ import (
 const providerName = "faas"
 const providerNameLong = "openfaas"
 
-// ParseYAMLData parse YAML file into a stack of "services".
+// ParseYAMLFile parse YAML file into a stack of "services".
 func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
 	var err error
 	var fileData []byte
@@ -92,6 +91,33 @@ func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, err
 	}
 
 	return &services, nil
+}
+
+// Custom unmarshaler to allow scheduling of extended resources such as GPUs, FPGAs from various vendors
+func (config *FunctionResources) UnmarshalYAML(unmarshal func(interface{}) error) error {
+
+	var raw map[string]string
+	var others = make(map[string]string)
+
+	r, _ := regexp.Compile("^[[:graph:]]+[.]{1}[[:alnum:]]+/(gpu|fpga)$")
+
+	if err := unmarshal(&raw); err != nil {
+		return err
+	}
+	for key, value := range raw {
+		switch {
+			case key == "cpu":
+				config.CPU = value
+			case key == "memory":
+				config.Memory = value
+			case r.MatchString(key):
+				others[key] = value
+			default:
+				fmt.Errorf("Ignoring unknown extended resource: %s with value: %s\n", key, value)
+		}
+	}
+	config.Others = others
+	return nil
 }
 
 func makeHTTPClient(timeout *time.Duration) http.Client {
