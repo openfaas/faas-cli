@@ -85,13 +85,18 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 
 	hasLimits := false
 	req.Limits = &requests.FunctionResources{}
-	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
+
+	if functionResourceRequest1.Limits != nil {
 		hasLimits = true
-		req.Limits.Memory = functionResourceRequest1.Limits.Memory
-	}
-	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.CPU) > 0 {
-		hasLimits = true
-		req.Limits.CPU = functionResourceRequest1.Limits.CPU
+		if len(functionResourceRequest1.Limits.Memory) > 0 {
+			req.Limits.Memory = functionResourceRequest1.Limits.Memory
+		}
+		if len(functionResourceRequest1.Limits.CPU) > 0 {
+			req.Limits.CPU = functionResourceRequest1.Limits.CPU
+		}
+		if len(functionResourceRequest1.Limits.Others) > 0 {
+			req.Limits.Others = functionResourceRequest1.Limits.Others
+		}
 	}
 	if !hasLimits {
 		req.Limits = nil
@@ -99,15 +104,18 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 
 	hasRequests := false
 	req.Requests = &requests.FunctionResources{}
-	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
+	if functionResourceRequest1.Requests != nil {
 		hasRequests = true
-		req.Requests.Memory = functionResourceRequest1.Requests.Memory
+		if len(functionResourceRequest1.Requests.Memory) > 0 {
+			req.Requests.Memory = functionResourceRequest1.Requests.Memory
+		}
+		if len(functionResourceRequest1.Requests.CPU) > 0 {
+			req.Requests.CPU = functionResourceRequest1.Requests.CPU
+		}
+		if len(functionResourceRequest1.Requests.Others) > 0 {
+			req.Requests.Others = functionResourceRequest1.Requests.Others
+		}
 	}
-	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.CPU) > 0 {
-		hasRequests = true
-		req.Requests.CPU = functionResourceRequest1.Requests.CPU
-	}
-
 	if !hasRequests {
 		req.Requests = nil
 	}

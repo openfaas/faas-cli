@@ -52,10 +52,11 @@ type Function struct {
 	BuildOptions []string `yaml:"build_options"`
 }
 
-// FunctionResources Memory and CPU
+// FunctionResources Memory, CPU and other extended resources
 type FunctionResources struct {
-	Memory string `yaml:"memory"`
-	CPU    string `yaml:"cpu"`
+	Memory  string `yaml:"memory"`
+	CPU     string `yaml:"cpu"`
+	Others  map[string]string
 }
 
 // EnvironmentFile represents external file for environment data
