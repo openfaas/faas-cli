@@ -143,9 +143,8 @@ func printFiglet() {
 }
 
 func getGatewayDetails(m map[string]interface{}) (version, sha, commit string) {
-	v := m["version"].(map[string]interface{})
-
 	if _, ok := m["orchestration"]; !ok {
+		v := m["version"].(map[string]interface{})
 		version = v["release"].(string)
 		sha = v["sha"].(string)
 		commit = v["commit_message"].(string)
