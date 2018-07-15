@@ -16,13 +16,12 @@ import (
 )
 
 // ListFunctions list deployed functions
-func ListFunctions(gateway string) ([]requests.Function, error) {
+func ListFunctions(gateway string, tlsInsecure bool) ([]requests.Function, error) {
 	var results []requests.Function
 
 	gateway = strings.TrimRight(gateway, "/")
-
 	timeout := 60 * time.Second
-	client := MakeHTTPClient(&timeout)
+	client := MakeHTTPClient(&timeout, tlsInsecure)
 
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
 	SetAuth(getRequest, gateway)

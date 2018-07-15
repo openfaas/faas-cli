@@ -31,6 +31,7 @@ func init() {
 	invokeCmd.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "pass HTTP request header")
 	invokeCmd.Flags().BoolVarP(&invokeAsync, "async", "a", false, "Invoke the function asynchronously")
 	invokeCmd.Flags().StringVarP(&httpMethod, "method", "m", "POST", "pass HTTP request method")
+	invokeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	faasCmd.AddCommand(invokeCmd)
 }
@@ -82,7 +83,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod, tlsInsecure)
 	if err != nil {
 		return err
 	}

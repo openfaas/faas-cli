@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"os"
 
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 )
 
 // InvokeFunction a function
-func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string, async bool, httpMethod string) (*[]byte, error) {
+func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType string, query []string, headers []string, async bool, httpMethod string, tlsInsecure bool) (*[]byte, error) {
 	var resBytes []byte
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -23,7 +24,12 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	reader := bytes.NewReader(*bytesIn)
 
 	var timeout *time.Duration
-	client := MakeHTTPClient(timeout)
+	client := MakeHTTPClient(timeout, tlsInsecure)
+	tr := &http.Transport{
+		DisableKeepAlives: false,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: tlsInsecure},
+	}
+	client.Transport = tr
 
 	qs, qsErr := buildQueryString(query)
 	if qsErr != nil {

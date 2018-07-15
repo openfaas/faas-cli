@@ -4,13 +4,14 @@
 package proxy
 
 import (
+	"crypto/tls"
 	"net"
 	"net/http"
 	"time"
 )
 
 // MakeHTTPClient makes a HTTP client with good defaults for timeouts.
-func MakeHTTPClient(timeout *time.Duration) http.Client {
+func MakeHTTPClient(timeout *time.Duration, tlsInsecure bool) http.Client {
 	if timeout != nil {
 		return http.Client{
 			Timeout: *timeout,
@@ -24,6 +25,7 @@ func MakeHTTPClient(timeout *time.Duration) http.Client {
 				// DisableKeepAlives:     true,
 				IdleConnTimeout:       120 * time.Millisecond,
 				ExpectContinueTimeout: 1500 * time.Millisecond,
+				TLSClientConfig:       &tls.Config{InsecureSkipVerify: tlsInsecure},
 			},
 		}
 	}
