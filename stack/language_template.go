@@ -63,3 +63,16 @@ func IsValidTemplate(lang string) bool {
 
 	return found
 }
+
+//LoadLanguageTemplate loads language template details from template.yml file.
+func LoadLanguageTemplate(lang string) (*LanguageTemplate, error) {
+	lang = strings.ToLower(lang)
+	_, err := os.Stat("./template/" + lang)
+
+	if err == nil {
+		templateYAMLPath := "./template/" + lang + "/template.yml"
+		languageTemplate, err := ParseYAMLForLanguageTemplate(templateYAMLPath)
+		return languageTemplate, err
+	}
+	return nil, err
+}

@@ -74,6 +74,8 @@ type LanguageTemplate struct {
 	Language     string        `yaml:"language"`
 	FProcess     string        `yaml:"fprocess"`
 	BuildOptions []BuildOption `yaml:"build_options"`
+	// WelcomeMessage is printed to the user after generating a function
+	WelcomeMessage string `yaml:"welcomeMessage"`
 }
 
 type BuildOption struct {
