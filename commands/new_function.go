@@ -20,6 +20,7 @@ import (
 var (
 	appendFile string
 	list       bool
+	quiet      bool
 )
 
 func init() {
@@ -29,6 +30,7 @@ func init() {
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 	newFunctionCmd.Flags().StringVarP(&appendFile, "append", "a", "", "Append to existing YAML file")
+	newFunctionCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Skip template notes")
 
 	faasCmd.AddCommand(newFunctionCmd)
 }
@@ -42,7 +44,8 @@ language or type in --list for a list of languages available.`,
 	Example: `faas-cli new chatbot --lang node
   faas-cli new text-parser --lang python --gateway http://mydomain:8080
   faas-cli new text-reader --lang python --append stack.yml
-  faas-cli new --list`,
+  faas-cli new --list
+  faas-cli new demo --lang python --quiet`,
 	PreRunE: preRunNewFunction,
 	RunE:    runNewFunction,
 }
@@ -198,6 +201,15 @@ functions:
 		}
 
 		fmt.Printf("Stack file written: %s\n", functionName+".yml")
+	}
+
+	if !quiet {
+		languageTemplate, _ := stack.LoadLanguageTemplate(language)
+
+		if languageTemplate.WelcomeMessage != "" {
+			fmt.Println("\nNotes:")
+			fmt.Printf("%s\n", languageTemplate.WelcomeMessage)
+		}
 	}
 
 	return nil
