@@ -41,6 +41,10 @@ type CreateFunctionRequest struct {
 
 	// Requests of resources requested by function
 	Requests *FunctionResources `json:"requests"`
+
+	// ReadOnlyRootFilesystem removes write-access from the root filesystem
+	// mount-point.
+	ReadOnlyRootFilesystem bool `json:"readOnlyRootFilesystem"`
 }
 
 // FunctionResources Memory and CPU
@@ -56,6 +60,9 @@ type Function struct {
 	InvocationCount float64 `json:"invocationCount"` // TODO: shouldn't this be int64?
 	Replicas        uint64  `json:"replicas"`
 	EnvProcess      string  `json:"envProcess"`
+
+	// AvailableReplicas is the count of replicas ready to receive invocations as reported by the back-end
+	AvailableReplicas uint64 `json:"availableReplicas"`
 
 	// Labels are metadata for functions which may be used by the
 	// back-end for making scheduling or routing decisions
