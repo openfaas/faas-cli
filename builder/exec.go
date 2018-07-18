@@ -25,3 +25,13 @@ func ExecCommand(tempPath string, builder []string) {
 		log.Fatalf(aec.RedF.Apply(errString))
 	}
 }
+
+// ExecCommand run a system command an return stdout
+func ExecCommandWithOutput(builder []string) string {
+	output, err := exec.Command(builder[0], builder[1:]...).Output()
+	if err != nil {
+		errString := fmt.Sprintf("ERROR - Could not execute command: %s", builder)
+		log.Fatalf(aec.RedF.Apply(errString))
+	}
+	return string(output)
+}
