@@ -45,6 +45,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 			[]string{},
 			map[string]string{},
 			FunctionResourceRequest{},
+			false,
 		)
 	})
 
@@ -104,6 +105,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 			[]string{},
 			map[string]string{},
 			FunctionResourceRequest{},
+			false,
 		)
 	})
 

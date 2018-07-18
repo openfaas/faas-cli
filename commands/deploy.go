@@ -28,13 +28,14 @@ import (
 
 // DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
-	envvarOpts       []string
-	replace          bool
-	update           bool
-	constraints      []string
-	secrets          []string
-	labelOpts        []string
-	sendRegistryAuth bool
+	envvarOpts             []string
+	replace                bool
+	update                 bool
+	readOnlyRootFilesystem bool
+	constraints            []string
+	secrets                []string
+	labelOpts              []string
+	sendRegistryAuth       bool
 }
 
 var deployFlags DeployFlags
@@ -59,6 +60,7 @@ func init() {
 
 	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
+	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 	deployCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
@@ -87,7 +89,8 @@ var deployCmd = &cobra.Command{
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
 				  [--secret "SECRET_NAME"]
-				  [--tag VALUE]`,
+				  [--tag VALUE]
+				  [--readonly=false]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -227,7 +230,12 @@ Error: %s`, fprocessErr.Error())
 			}
 			function.Image = schema.BuildImageName(tagMode, function.Image, sha, "master")
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
+			if deployFlags.readOnlyRootFilesystem {
+				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
+			}
+
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1, function.ReadOnlyRootFilesystem)
+
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -274,6 +282,9 @@ func deployImage(
 ) (error, int) {
 
 	var statusCode int
+	// default to a readable filesystem until we get more input about the expected behavior
+	// and if we want to add another flag for this case
+	readOnlyRootFilesystem := false
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
@@ -291,7 +302,7 @@ func deployImage(
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, functionResourceRequest1)
+		labelMap, functionResourceRequest1, readOnlyRootFilesystem)
 
 	return nil, statusCode
 }

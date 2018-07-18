@@ -27,17 +27,17 @@ type FunctionResourceRequest struct {
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) int {
+	labels map[string]string, functionResourceRequest1 FunctionResourceRequest, readOnlyRootFilesystem bool) int {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
 	warnInsecureGateway := true
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1, warnInsecureGateway)
+	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway)
 
 	warnInsecureGateway = false
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, warnInsecureGateway)
+		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -51,7 +51,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
 	labels map[string]string, functionResourceRequest1 FunctionResourceRequest,
-	warnInsecureGateway bool) (int, string) {
+	readOnlyRootFilesystem bool, warnInsecureGateway bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
@@ -73,15 +73,16 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	}
 
 	req := requests.CreateFunctionRequest{
-		EnvProcess:   fprocessTemplate,
-		Image:        image,
-		RegistryAuth: registryAuth,
-		Network:      network,
-		Service:      functionName,
-		EnvVars:      envVars,
-		Constraints:  constraints,
-		Secrets:      secrets,
-		Labels:       &labels,
+		EnvProcess:             fprocessTemplate,
+		Image:                  image,
+		RegistryAuth:           registryAuth,
+		Network:                network,
+		Service:                functionName,
+		EnvVars:                envVars,
+		Constraints:            constraints,
+		Secrets:                secrets,
+		Labels:                 &labels,
+		ReadOnlyRootFilesystem: readOnlyRootFilesystem,
 	}
 
 	hasLimits := false
