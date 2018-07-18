@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -126,7 +127,6 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
   --update     performs a rolling update to a new function image or configuration (default true)`)
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
-
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -146,6 +146,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		}
 	}
 
+	var failedStatusCodes = make(map[string]int)
 	if len(services.Functions) > 0 {
 
 		if len(services.Provider.Network) == 0 {
@@ -226,7 +227,10 @@ Error: %s`, fprocessErr.Error())
 			}
 			function.Image = schema.BuildImageName(tagMode, function.Image, sha, "master")
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
+			if badStatusCode(statusCode) {
+				failedStatusCodes[k] = statusCode
+			}
 		}
 	} else {
 		if len(image) == 0 || len(functionName) == 0 {
@@ -244,10 +248,17 @@ Error: %s`, fprocessErr.Error())
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
-
-		if err := deployImage(image, fprocess, functionName, registryAuth, deployFlags); err != nil {
+		err, statusCode := deployImage(image, fprocess, functionName, registryAuth, deployFlags)
+		if err != nil {
 			return err
 		}
+		if badStatusCode(statusCode) {
+			failedStatusCodes[functionName] = statusCode
+		}
+	}
+
+	if err := deployFailed(failedStatusCodes); err != nil {
+		return err
 	}
 
 	return nil
@@ -260,28 +271,29 @@ func deployImage(
 	functionName string,
 	registryAuth string,
 	deployFlags DeployFlags,
-) error {
+) (error, int) {
 
+	var statusCode int
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
-		return fmt.Errorf("error parsing envvars: %v", err)
+		return fmt.Errorf("error parsing envvars: %v", err), statusCode
 	}
 
 	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
 
 	if labelErr != nil {
-		return fmt.Errorf("error parsing labels: %v", labelErr)
+		return fmt.Errorf("error parsing labels: %v", labelErr), statusCode
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	proxy.DeployFunction(fprocess, gateway, functionName,
+	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
 		labelMap, functionResourceRequest1)
 
-	return nil
+	return nil, statusCode
 }
 
 func mergeSlice(values []string, overlay []string) []string {
@@ -489,4 +501,21 @@ func getRegistryAuth(config *configFile, image string) string {
 	}
 
 	return ""
+}
+
+func deployFailed(status map[string]int) error {
+	if len(status) == 0 {
+		return nil
+	} else {
+		var allErrors []string
+		for funcName, funcStatus := range status {
+			err := fmt.Errorf("Function '%s' failed to deploy with status code: %d", funcName, funcStatus)
+			allErrors = append(allErrors, err.Error())
+		}
+		return fmt.Errorf(strings.Join(allErrors, "\n"))
+	}
+}
+
+func badStatusCode(statusCode int) bool {
+	return statusCode != http.StatusAccepted && statusCode != http.StatusOK
 }
