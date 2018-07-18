@@ -27,7 +27,7 @@ type FunctionResourceRequest struct {
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) {
+	labels map[string]string, functionResourceRequest1 FunctionResourceRequest) int {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
 	warnInsecureGateway := true
@@ -37,12 +37,13 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		_, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, warnInsecureGateway)
+		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, warnInsecureGateway)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
 	fmt.Println()
 	fmt.Println(deployOutput)
+	return statusCode
 }
 
 // Deploy a function to an OpenFaaS gateway over REST
