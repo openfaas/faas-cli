@@ -26,7 +26,7 @@ RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /bui
 # Release stage
 FROM alpine:3.6
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates git
 
 WORKDIR /root/
 
