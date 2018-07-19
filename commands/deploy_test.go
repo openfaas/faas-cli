@@ -70,6 +70,22 @@ func Test_getRegistryAuth_CustomRegistry_Found(t *testing.T) {
 	}
 }
 
+func Test_getRegistryAuth_NestedGitlabRegistry_Found(t *testing.T) {
+	wantAuth := "alexellis2-auth-str"
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{
+			"registry.gitlab.com": authConfig{Auth: wantAuth},
+		},
+	}
+
+	result := getRegistryAuth(&configFile1, "registry.gitlab.com/alexellis2/tester/function1")
+
+	if result != wantAuth {
+		t.Errorf("want %s, got %s", wantAuth, result)
+		t.Fail()
+	}
+}
+
 func Test_getRegistryAuth_DockerHub_Found(t *testing.T) {
 	wantAuth := "alexellis2-auth-str"
 	configFile1 := configFile{

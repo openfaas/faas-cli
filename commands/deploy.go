@@ -464,7 +464,7 @@ func getRegistryAuth(config *configFile, image string) string {
 		slashes := strings.Count(image, "/")
 		if slashes > 1 {
 			regS := strings.Split(image, "/")
-			registry = strings.Join(regS[:len(regS)-2], ", ")
+			registry = regS[0]
 		}
 
 		if registry != "" {
