@@ -17,7 +17,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag bool) {
 
 	if stack.IsValidTemplate(language) {
 
@@ -68,6 +68,14 @@ func BuildImage(image string, handler string, functionName string, language stri
 		flagSlice := buildFlagSlice(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap, buildOptPackages)
 		spaceSafeCmdLine := []string{"docker", "build"}
 		spaceSafeCmdLine = append(spaceSafeCmdLine, flagSlice...)
+		if tag {
+			version := GetVersion()
+			if len(version) == 0 {
+				fmt.Printf("Cannot tag image with Git SHA as this is not a Git repository.\n")
+			} else {
+				spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image+version)
+			}
+		}
 		spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image, ".")
 		ExecCommand(tempPath, spaceSafeCmdLine)
 		fmt.Printf("Image: %s built.\n", image)

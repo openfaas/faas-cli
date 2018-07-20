@@ -17,6 +17,7 @@ import (
 
 	"github.com/docker/docker-credential-helpers/client"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -58,6 +59,8 @@ func init() {
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 
+	deployCmd.Flags().BoolVar(&tag, "tag", false, "Deploy function version tagged with Git SHA")
+
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -81,7 +84,8 @@ var deployCmd = &cobra.Command{
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-                  [--secret "SECRET_NAME"]`,
+				  [--secret "SECRET_NAME"]
+				  [--tag]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -94,6 +98,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./stack.yml --replace=false --update=true
   faas-cli deploy -f ./stack.yml --replace=true --update=false
+  faas-cli deploy -f ./stack.yml --tag
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -110,10 +115,10 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return runDeployCommand(args, image, fprocess, functionName, deployFlags)
+	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tag)
 }
 
-func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags) error {
+func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tag bool) error {
 	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
@@ -210,6 +215,11 @@ Error: %s`, fprocessErr.Error())
 			functionResourceRequest1 := proxy.FunctionResourceRequest{
 				Limits:   function.Limits,
 				Requests: function.Requests,
+			}
+
+			if tag {
+				version := builder.GetVersion()
+				function.Image = function.Image + version
 			}
 
 			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
