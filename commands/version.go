@@ -57,7 +57,6 @@ func runVersion(cmd *cobra.Command, args []string) {
 `, version.GitCommit, version.BuildVersion())
 		printServerVersions()
 	}
-
 }
 
 func printServerVersions() {
@@ -87,7 +86,6 @@ func printServerVersions() {
 
 	response, err := client.Do(req)
 	if err != nil {
-		fmt.Printf("Warning could not contact gateway for version information on %s %s\n", infoEndPoint, err.Error())
 		return
 	}
 
