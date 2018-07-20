@@ -28,9 +28,9 @@ func ExecCommand(tempPath string, builder []string) {
 }
 
 // ExecCommand run a system command an return stdout
-func ExecCommandWithOutput(builder []string) string {
-	output, err := exec.Command(builder[0], builder[1:]...).Output()
-	if err != nil {
+func ExecCommandWithOutput(builder []string, skipFailure bool) string {
+	output, err := exec.Command(builder[0], builder[1:]...).CombinedOutput()
+	if err != nil && !skipFailure {
 		errString := fmt.Sprintf("ERROR - Could not execute command: %s", builder)
 		log.Fatalf(aec.RedF.Apply(errString))
 	}
@@ -39,19 +39,15 @@ func ExecCommandWithOutput(builder []string) string {
 
 //Generate image version of type gittag-gitsha
 func GetVersion() string {
-	verifyGitDirCommand := []string{"/bin/sh", "-c", "if [ -d .git ]; then echo True; fi;"}
-	gitDir := ExecCommandWithOutput(verifyGitDirCommand)
-	gitDir = strings.TrimSuffix(gitDir, "\n")
-	if gitDir != "True" {
+	getShaCommand := []string{"git", "rev-parse", "--short", "HEAD"}
+	sha := ExecCommandWithOutput(getShaCommand, true)
+	if strings.Contains(sha, "Not a git repository") {
 		return ""
 	}
-
-	getShaCommand := []string{"git", "rev-parse", "--short", "HEAD"}
-	sha := ExecCommandWithOutput(getShaCommand)
 	sha = strings.TrimSuffix(sha, "\n")
 
 	getTagCommand := []string{"git", "tag", "--points-at", sha}
-	tag := ExecCommandWithOutput(getTagCommand)
+	tag := ExecCommandWithOutput(getTagCommand, true)
 	tag = strings.TrimSuffix(tag, "\n")
 	if len(tag) == 0 {
 		tag = "latest"
