@@ -18,11 +18,12 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
+	pushCmd.Flags().BoolVar(&tag, "tag", false, "Push function image, tagged with Git SHA")
 }
 
 // pushCmd handles pushing function container images to a remote repo
 var pushCmd = &cobra.Command{
-	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel]`,
+	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel] [--tag]`,
 	Short: "Push OpenFaaS functions to remote registry (Docker Hub)",
 	Long: `Pushes the OpenFaaS function container image(s) defined in the supplied YAML
 config to a remote repository.
@@ -33,7 +34,8 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./stack.yml
   faas-cli push -f ./stack.yml --parallel 4
   faas-cli push -f ./stack.yml --filter "*gif*"
-  faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"`,
+  faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"
+  faas-cli push -f ./stack.yml --tag`,
 	RunE: runPush,
 }
 
@@ -62,7 +64,7 @@ Unable to push one or more of your functions to Docker Hub:
 You must provide a username or registry prefix to the Function's image such as user1/function1`)
 		}
 
-		pushStack(&services, parallel)
+		pushStack(&services, parallel, tag)
 	} else {
 		return fmt.Errorf("you must supply a valid YAML file")
 	}
@@ -73,8 +75,9 @@ func pushImage(image string) {
 	builder.ExecCommand("./", []string{"docker", "push", image})
 }
 
-func pushStack(services *stack.Services, queueDepth int) {
+func pushStack(services *stack.Services, queueDepth int, tag bool) {
 	wg := sync.WaitGroup{}
+	version := ""
 
 	workChannel := make(chan stack.Function)
 
@@ -88,7 +91,10 @@ func pushStack(services *stack.Services, queueDepth int) {
 				} else if function.SkipBuild {
 					fmt.Printf("Skipping %s\n", function.Name)
 				} else {
-					pushImage(function.Image)
+					if tag {
+						version = builder.GetVersion()
+					}
+					pushImage(function.Image + version)
 					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
 				}
 			}
