@@ -69,7 +69,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 		spaceSafeCmdLine := []string{"docker", "build"}
 		spaceSafeCmdLine = append(spaceSafeCmdLine, flagSlice...)
 		if tag {
-			version := getVersion()
+			version := GetVersion()
 			if len(version) == 0 {
 				fmt.Printf("Cannot tag image with Git SHA as this is not a Git repository.\n")
 			} else {
@@ -244,26 +244,4 @@ func deDuplicate(buildOptPackages []string) []string {
 		}
 	}
 	return retPackages
-}
-
-func getVersion() string {
-	verifyGitDirCommand := []string{"/bin/sh", "-c", "if [ -d .git ]; then echo True; fi;"}
-	gitDir := ExecCommandWithOutput(verifyGitDirCommand)
-	gitDir = strings.TrimSuffix(gitDir, "\n")
-	if gitDir != "True" {
-		return ""
-	}
-
-	getShaCommand := []string{"git", "rev-parse", "--short", "HEAD"}
-	sha := ExecCommandWithOutput(getShaCommand)
-	sha = strings.TrimSuffix(sha, "\n")
-
-	getTagCommand := []string{"git", "tag", "--points-at", sha}
-	tag := ExecCommandWithOutput(getTagCommand)
-	tag = strings.TrimSuffix(tag, "\n")
-	if len(tag) == 0 {
-		tag = "latest"
-	}
-
-	return ":" + tag + "-" + sha
 }
