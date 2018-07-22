@@ -26,6 +26,15 @@
   version = "v1.13.1"
 
 [[projects]]
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "client",
+    "credentials"
+  ]
+  revision = "5241b46610f2491efdf9d1c85f1ddf5b02f6d962"
+  version = "v0.6.1"
+
+[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
@@ -86,6 +95,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2be6e10930e850400f61959a5142ef723e71ac78350e99a77a5a86bb0c62fb2"
+  inputs-digest = "5669b5e9e64a448d63296ffa1ebb81bb8c619a8203c4bd3149f0cb5e7e851613"
   solver-name = "gps-cdcl"
   solver-version = 1
