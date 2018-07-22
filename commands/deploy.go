@@ -60,6 +60,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
+	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -220,7 +221,7 @@ Error: %s`, fprocessErr.Error())
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
 			}
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1, function.ReadOnlyRootFilesystem)
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -241,10 +242,11 @@ Error: %s`, fprocessErr.Error())
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
-		err, statusCode := deployImage(image, fprocess, functionName, registryAuth, deployFlags)
+		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure)
 		if err != nil {
 			return err
 		}
+
 		if badStatusCode(statusCode) {
 			failedStatusCodes[functionName] = statusCode
 		}
@@ -264,7 +266,8 @@ func deployImage(
 	functionName string,
 	registryAuth string,
 	deployFlags DeployFlags,
-) (error, int) {
+	tlsInsecure bool,
+) (int, error) {
 
 	var statusCode int
 	// default to a readable filesystem until we get more input about the expected behavior
@@ -273,13 +276,13 @@ func deployImage(
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
-		return fmt.Errorf("error parsing envvars: %v", err), statusCode
+		return statusCode, fmt.Errorf("error parsing envvars: %v", err)
 	}
 
 	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
 
 	if labelErr != nil {
-		return fmt.Errorf("error parsing labels: %v", labelErr), statusCode
+		return statusCode, fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
@@ -287,9 +290,9 @@ func deployImage(
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, functionResourceRequest1, readOnlyRootFilesystem)
+		labelMap, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
 
-	return nil, statusCode
+	return statusCode, nil
 }
 
 func mergeSlice(values []string, overlay []string) []string {
@@ -502,14 +505,14 @@ func getRegistryAuth(config *configFile, image string) string {
 func deployFailed(status map[string]int) error {
 	if len(status) == 0 {
 		return nil
-	} else {
-		var allErrors []string
-		for funcName, funcStatus := range status {
-			err := fmt.Errorf("Function '%s' failed to deploy with status code: %d", funcName, funcStatus)
-			allErrors = append(allErrors, err.Error())
-		}
-		return fmt.Errorf(strings.Join(allErrors, "\n"))
 	}
+
+	var allErrors []string
+	for funcName, funcStatus := range status {
+		err := fmt.Errorf("Function '%s' failed to deploy with status code: %d", funcName, funcStatus)
+		allErrors = append(allErrors, err.Error())
+	}
+	return fmt.Errorf(strings.Join(allErrors, "\n"))
 }
 
 func badStatusCode(statusCode int) bool {
