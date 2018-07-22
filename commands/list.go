@@ -21,12 +21,13 @@ func init() {
 	listCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
+	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	faasCmd.AddCommand(listCmd)
 }
 
 var listCmd = &cobra.Command{
-	Use:     `list [--gateway GATEWAY_URL] [--verbose]`,
+	Use:     `list [--gateway GATEWAY_URL] [--verbose] [--tls-no-verify]`,
 	Aliases: []string{"ls"},
 	Short:   "List OpenFaaS functions",
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
@@ -53,7 +54,7 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	functions, err := proxy.ListFunctions(gatewayAddress)
+	functions, err := proxy.ListFunctions(gatewayAddress, tlsInsecure)
 	if err != nil {
 		return err
 	}

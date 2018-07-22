@@ -29,6 +29,7 @@ var (
 func init() {
 	versionCmd.Flags().BoolVar(&shortVersion, "short-version", false, "Just print Git SHA")
 	versionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	versionCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	faasCmd.AddCommand(versionCmd)
 }
@@ -75,7 +76,7 @@ func printServerVersions() {
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	timeout := 5 * time.Second
-	client := proxy.MakeHTTPClient(&timeout)
+	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
 
 	infoEndPoint := gatewayAddress + "/system/info"
 	req, err := http.NewRequest("GET", infoEndPoint, nil)

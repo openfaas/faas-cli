@@ -109,6 +109,6 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	err, _ = deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags)
+	_, err = deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure)
 	return err
 }
