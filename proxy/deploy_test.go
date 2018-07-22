@@ -14,6 +14,8 @@ import (
 	"github.com/openfaas/faas-cli/test"
 )
 
+const tlsNoVerify = true
+
 type deployProxyTest struct {
 	title               string
 	mockServerResponses []int
@@ -46,6 +48,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 			map[string]string{},
 			FunctionResourceRequest{},
 			false,
+			tlsNoVerify,
 		)
 	})
 
@@ -106,6 +109,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 			map[string]string{},
 			FunctionResourceRequest{},
 			false,
+			tlsNoVerify,
 		)
 	})
 
