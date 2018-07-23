@@ -5,10 +5,10 @@ package builder
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 )
 
@@ -17,9 +17,24 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag bool) {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag string) error {
 
 	if stack.IsValidTemplate(language) {
+
+		format := schema.DefaultFormat
+
+		var version string
+
+		if strings.ToLower(tag) == "sha" {
+			version = GetGitSHA()
+			if len(version) == 0 {
+				return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
+
+			}
+			format = schema.SHAFormat
+		}
+
+		imageName := schema.BuildImageName(format, image, version, "master")
 
 		var tempPath string
 
@@ -27,62 +42,80 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 			if shrinkwrap {
 				fmt.Printf("Nothing to do for: %s.\n", functionName)
-
-				return
+				return nil
 			}
 
 			tempPath = handler
 			if err := ensureHandlerPath(handler); err != nil {
-				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-				fmt.Printf("Image: %s not built.\n", image)
 
-				return
+				return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 			}
-			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", image)
+
+			fmt.Printf("Building: %s with Dockerfile. Please wait..\n", imageName)
 
 		} else {
 
 			if err := ensureHandlerPath(handler); err != nil {
-				fmt.Printf("Unable to build %s, %s is an invalid path\n", image, handler)
-				fmt.Printf("Image: %s not built.\n", image)
-
-				return
+				return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 			}
+
 			tempPath = createBuildTemplate(functionName, handler, language)
-			fmt.Printf("Building: %s with %s template. Please wait..\n", image, language)
+			fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 			if shrinkwrap {
 				fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 
-				return
+				return nil
 			}
 		}
 
-		buildOptPackages, bopErr := getBuildOptionPackages(buildOptions, language)
+		buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language)
 
-		if bopErr != nil {
-			fmt.Println(bopErr)
-			return
+		if buildPackageErr != nil {
+			return buildPackageErr
+
 		}
 
-		flagSlice := buildFlagSlice(nocache, squash, os.Getenv("http_proxy"), os.Getenv("https_proxy"), buildArgMap, buildOptPackages)
-		spaceSafeCmdLine := []string{"docker", "build"}
-		spaceSafeCmdLine = append(spaceSafeCmdLine, flagSlice...)
-		if tag {
-			version := GetVersion()
-			if len(version) == 0 {
-				fmt.Printf("Cannot tag image with Git SHA as this is not a Git repository.\n")
-			} else {
-				spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image+version)
-			}
+		dockerBuildVal := dockerBuild{
+			Image:            imageName,
+			NoCache:          nocache,
+			Squash:           squash,
+			HTTPProxy:        os.Getenv("http_proxy"),
+			HTTPSProxy:       os.Getenv("https_proxy"),
+			BuildArgMap:      buildArgMap,
+			BuildOptPackages: buildOptPackages,
 		}
-		spaceSafeCmdLine = append(spaceSafeCmdLine, "-t", image, ".")
+
+		spaceSafeCmdLine := getDockerBuildCommand(dockerBuildVal)
+
 		ExecCommand(tempPath, spaceSafeCmdLine)
-		fmt.Printf("Image: %s built.\n", image)
+		fmt.Printf("Image: %s built.\n", imageName)
 
 	} else {
-		log.Fatalf("Language template: %s not supported. Build a custom Dockerfile instead.", language)
+		return fmt.Errorf("language template: %s not supported, build a custom Dockerfile", language)
 	}
+
+	return nil
+}
+
+func getDockerBuildCommand(build dockerBuild) []string {
+	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages)
+	command := []string{"docker", "build"}
+	command = append(command, flagSlice...)
+	command = append(command, "-t", build.Image, ".")
+
+	return command
+}
+
+type dockerBuild struct {
+	Image            string
+	Version          string
+	NoCache          bool
+	Squash           bool
+	HTTPProxy        string
+	HTTPSProxy       string
+	BuildArgMap      map[string]string
+	BuildOptPackages []string
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template

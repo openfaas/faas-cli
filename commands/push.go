@@ -10,6 +10,7 @@ import (
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
@@ -18,12 +19,13 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
-	pushCmd.Flags().BoolVar(&tag, "tag", false, "Push function image, tagged with Git SHA")
+	pushCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
+
 }
 
 // pushCmd handles pushing function container images to a remote repo
 var pushCmd = &cobra.Command{
-	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel] [--tag]`,
+	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel] [--tag VALUE]`,
 	Short: "Push OpenFaaS functions to remote registry (Docker Hub)",
 	Long: `Pushes the OpenFaaS function container image(s) defined in the supplied YAML
 config to a remote repository.
@@ -35,7 +37,7 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./stack.yml --parallel 4
   faas-cli push -f ./stack.yml --filter "*gif*"
   faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli push -f ./stack.yml --tag`,
+  faas-cli push -f ./stack.yml --tag=sha`,
 	RunE: runPush,
 }
 
@@ -75,9 +77,8 @@ func pushImage(image string) {
 	builder.ExecCommand("./", []string{"docker", "push", image})
 }
 
-func pushStack(services *stack.Services, queueDepth int, tag bool) {
+func pushStack(services *stack.Services, queueDepth int, tag string) {
 	wg := sync.WaitGroup{}
-	version := ""
 
 	workChannel := make(chan stack.Function)
 
@@ -85,17 +86,24 @@ func pushStack(services *stack.Services, queueDepth int, tag bool) {
 		go func(index int) {
 			wg.Add(1)
 			for function := range workChannel {
-				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s.\n"), index, function.Name)
+				tagMode := schema.DefaultFormat
+				var sha string
+				if strings.ToLower(tag) == "sha" {
+					sha = builder.GetGitSHA()
+					tagMode = schema.SHAFormat
+				}
+
+				imageName := schema.BuildImageName(tagMode, function.Image, sha, "master")
+
+				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s [%s].\n"), index, function.Name, imageName)
 				if len(function.Image) == 0 {
 					fmt.Println("Please provide a valid Image value in the YAML file.")
 				} else if function.SkipBuild {
 					fmt.Printf("Skipping %s\n", function.Name)
 				} else {
-					if tag {
-						version = builder.GetVersion()
-					}
-					pushImage(function.Image + version)
-					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s done.\n"), index, function.Name)
+
+					pushImage(imageName)
+					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s [%s] done.\n"), index, function.Name, imageName)
 				}
 			}
 

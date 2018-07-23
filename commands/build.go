@@ -25,7 +25,7 @@ var (
 	buildArgs    []string
 	buildArgMap  map[string]string
 	buildOptions []string
-	tag          bool
+	tag          string
 )
 
 func init() {
@@ -42,7 +42,7 @@ func init() {
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 	buildCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
 	buildCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
-	buildCmd.Flags().BoolVar(&tag, "tag", false, "Tag function image with Git SHA")
+	buildCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -63,7 +63,7 @@ var buildCmd = &cobra.Command{
 				 [--parallel PARALLEL_DEPTH]
 				 [--build-arg KEY=VALUE]
 				 [--build-option VALUE]
-				 [--tag]`,
+				 [--tag VALUE]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
@@ -71,7 +71,7 @@ via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
   faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli build -f ./stack.yml --build-option dev
-  faas-cli build -f ./stack.yml --tag
+  faas-cli build -f ./stack.yml --tag=sha
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
@@ -156,7 +156,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tag)
+		err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tag)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -177,7 +180,10 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				} else {
 
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
+					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
+					if err != nil {
+						log.Println(err)
+					}
 				}
 				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}

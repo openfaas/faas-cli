@@ -37,8 +37,8 @@ func ExecCommandWithOutput(builder []string, skipFailure bool) string {
 	return string(output)
 }
 
-//Generate image version of type gittag-gitsha
-func GetVersion() string {
+// GetGitSHA returns the short Git commit SHA from local repo
+func GetGitSHA() string {
 	getShaCommand := []string{"git", "rev-parse", "--short", "HEAD"}
 	sha := ExecCommandWithOutput(getShaCommand, true)
 	if strings.Contains(sha, "Not a git repository") {
@@ -46,12 +46,5 @@ func GetVersion() string {
 	}
 	sha = strings.TrimSuffix(sha, "\n")
 
-	getTagCommand := []string{"git", "tag", "--points-at", sha}
-	tag := ExecCommandWithOutput(getTagCommand, true)
-	tag = strings.TrimSuffix(tag, "\n")
-	if len(tag) == 0 {
-		tag = "latest"
-	}
-
-	return ":" + tag + "-" + sha
+	return sha
 }
