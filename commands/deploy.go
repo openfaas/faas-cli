@@ -18,8 +18,11 @@ import (
 
 	"github.com/docker/docker-credential-helpers/client"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+
 	"github.com/spf13/cobra"
 )
 
@@ -60,6 +63,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
+	deployCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	// Set bash-completion.
@@ -86,6 +90,7 @@ var deployCmd = &cobra.Command{
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
 				  [--secret "SECRET_NAME"]
+				  [--tag VALUE]
 				  [--readonly=false]`,
 
 	Short: "Deploy OpenFaaS functions",
@@ -99,6 +104,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./stack.yml --replace=false --update=true
   faas-cli deploy -f ./stack.yml --replace=true --update=false
+  faas-cli deploy -f ./stack.yml --tag=sha
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -115,10 +121,10 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return runDeployCommand(args, image, fprocess, functionName, deployFlags)
+	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tag)
 }
 
-func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags) error {
+func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tag string) error {
 	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
@@ -216,6 +222,15 @@ Error: %s`, fprocessErr.Error())
 				Limits:   function.Limits,
 				Requests: function.Requests,
 			}
+
+			tagMode := schema.DefaultFormat
+			var sha string
+			if strings.ToLower(tag) == "sha" {
+				sha = builder.GetGitSHA()
+				tagMode = schema.SHAFormat
+			}
+
+			function.Image = schema.BuildImageName(tagMode, function.Image, sha, "master")
 
 			if deployFlags.readOnlyRootFilesystem {
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
