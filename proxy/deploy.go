@@ -27,17 +27,18 @@ type FunctionResourceRequest struct {
 func DeployFunction(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest, readOnlyRootFilesystem bool, tlsInsecure bool) int {
+	labels map[string]string, annotations map[string]string,
+	functionResourceRequest1 FunctionResourceRequest, readOnlyRootFilesystem bool, tlsInsecure bool) int {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
 	warnInsecureGateway := true
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
 
 	warnInsecureGateway = false
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -50,7 +51,8 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 func Deploy(fprocess string, gateway string, functionName string, image string,
 	registryAuth string, language string, replace bool, envVars map[string]string,
 	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, functionResourceRequest1 FunctionResourceRequest,
+	labels map[string]string, annotations map[string]string,
+	functionResourceRequest1 FunctionResourceRequest,
 	readOnlyRootFilesystem bool, warnInsecureGateway bool, tlsInsecure bool) (int, string) {
 
 	var deployOutput string
@@ -82,6 +84,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 		Constraints:            constraints,
 		Secrets:                secrets,
 		Labels:                 &labels,
+		Annotations:            &annotations,
 		ReadOnlyRootFilesystem: readOnlyRootFilesystem,
 	}
 

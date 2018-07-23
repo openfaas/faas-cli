@@ -53,6 +53,9 @@ type Function struct {
 
 	// BuildOptions to determine native packages
 	BuildOptions []string `yaml:"build_options"`
+
+	// Annotations
+	Annotations *map[string]string `yaml:"annotations"`
 }
 
 // FunctionResources Memory and CPU

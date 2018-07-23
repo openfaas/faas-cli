@@ -131,6 +131,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
   --update     performs a rolling update to a new function image or configuration (default true)`)
 		return fmt.Errorf("cannot specify --update and --replace at the same time")
 	}
+
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
@@ -223,6 +224,11 @@ Error: %s`, fprocessErr.Error())
 				Requests: function.Requests,
 			}
 
+			var annotations map[string]string
+			if function.Annotations != nil {
+				annotations = *function.Annotations
+			}
+
 			tagMode := schema.DefaultFormat
 			var sha string
 			if strings.ToLower(tag) == "sha" {
@@ -236,7 +242,7 @@ Error: %s`, fprocessErr.Error())
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
 			}
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, annotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -301,11 +307,12 @@ func deployImage(
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
+	var noAnnotations map[string]string = nil
 	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
+		labelMap, noAnnotations, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
 
 	return statusCode, nil
 }
