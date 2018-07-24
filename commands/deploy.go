@@ -105,6 +105,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./stack.yml --replace=false --update=true
   faas-cli deploy -f ./stack.yml --replace=true --update=false
   faas-cli deploy -f ./stack.yml --tag=sha
+  faas-cli deploy -f ./stack.yml --tag=branch
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -229,8 +230,14 @@ Error: %s`, fprocessErr.Error())
 				sha = builder.GetGitSHA()
 				tagMode = schema.SHAFormat
 			}
+			var branch string
+			if strings.ToLower(tag) == "branch" {
+				branch = builder.GetGitBranch()
+				sha = builder.GetGitSHA()
+				tagMode = schema.BranchAndSHAFormat
+			}
 
-			function.Image = schema.BuildImageName(tagMode, function.Image, sha, "master")
+			function.Image = schema.BuildImageName(tagMode, function.Image, sha, branch)
 
 			if deployFlags.readOnlyRootFilesystem {
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem

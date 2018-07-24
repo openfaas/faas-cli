@@ -34,7 +34,23 @@ func BuildImage(image string, handler string, functionName string, language stri
 			format = schema.SHAFormat
 		}
 
-		imageName := schema.BuildImageName(format, image, version, "master")
+		var branch string
+
+		if strings.ToLower(tag) == "branch" {
+			branch = GetGitBranch()
+			if len(branch) == 0 {
+				return fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
+
+			}
+			version = GetGitSHA()
+			if len(version) == 0 {
+				return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
+
+			}
+			format = schema.BranchAndSHAFormat
+		}
+
+		imageName := schema.BuildImageName(format, image, version, branch)
 
 		var tempPath string
 
