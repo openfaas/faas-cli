@@ -48,3 +48,13 @@ func GetGitSHA() string {
 
 	return sha
 }
+
+func GetGitBranch() string {
+	getBranchCommand := []string{"git", "rev-parse", "--symbolic-full-name", "--abbrev-ref", "HEAD"}
+	branch := ExecCommandWithOutput(getBranchCommand, true)
+	if strings.Contains(branch, "Not a git repository") {
+		return ""
+	}
+	branch = strings.TrimSuffix(branch, "\n")
+	return branch
+}

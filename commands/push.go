@@ -37,7 +37,8 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./stack.yml --parallel 4
   faas-cli push -f ./stack.yml --filter "*gif*"
   faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli push -f ./stack.yml --tag=sha`,
+  faas-cli push -f ./stack.yml --tag=sha
+  faas-cli push -f ./stack.yml --tag=branch`,
 	RunE: runPush,
 }
 
@@ -92,8 +93,14 @@ func pushStack(services *stack.Services, queueDepth int, tag string) {
 					sha = builder.GetGitSHA()
 					tagMode = schema.SHAFormat
 				}
+				var branch string
+				if strings.ToLower(tag) == "branch" {
+					branch = builder.GetGitBranch()
+					sha = builder.GetGitSHA()
+					tagMode = schema.BranchAndSHAFormat
+				}
 
-				imageName := schema.BuildImageName(tagMode, function.Image, sha, "master")
+				imageName := schema.BuildImageName(tagMode, function.Image, sha, branch)
 
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s [%s].\n"), index, function.Name, imageName)
 				if len(function.Image) == 0 {

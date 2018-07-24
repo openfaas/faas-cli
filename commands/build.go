@@ -72,6 +72,7 @@ via flags.`,
   faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli build -f ./stack.yml --build-option dev
   faas-cli build -f ./stack.yml --tag=sha
+  faas-cli build -f ./stack.yml --tag=branch
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
