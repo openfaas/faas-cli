@@ -85,10 +85,14 @@ func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 	values := getDockerBuildCommand(dockerBuildVal)
 
 	joined := strings.Join(values, " ")
-	want := "docker build --build-arg USERNAME=admin --build-arg PASSWORD=1234 -t imagename:latest ."
+	wantArg1 := "--build-arg USERNAME=admin"
+	wantArg2 := "--build-arg PASSWORD=1234"
 
-	if joined != want {
-		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	if strings.Contains(joined, wantArg1) == false {
+		t.Errorf("want %s in %s, but didn't find it", wantArg1, joined)
+	}
+	if strings.Contains(joined, wantArg2) == false {
+		t.Errorf("want %s in %s, but didn't find it", wantArg2, joined)
 	}
 }
 
