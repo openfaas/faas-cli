@@ -170,9 +170,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 
 	workChannel := make(chan stack.Function)
 
+	wg.Add(queueDepth)
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
-			wg.Add(1)
 			for function := range workChannel {
 				fmt.Printf(aec.YellowF.Apply("[%d] > Building %s.\n"), index, function.Name)
 				if len(function.Language) == 0 {
