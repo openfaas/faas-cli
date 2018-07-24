@@ -83,9 +83,9 @@ func pushStack(services *stack.Services, queueDepth int, tag string) {
 
 	workChannel := make(chan stack.Function)
 
+	wg.Add(queueDepth)
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
-			wg.Add(1)
 			for function := range workChannel {
 				tagMode := schema.DefaultFormat
 				var sha string
