@@ -87,5 +87,5 @@ func storeFindFunction(functionName string, storeItems []schema.StoreItem) *sche
 		}
 	}
 
-	return &item
+	return nil
 }

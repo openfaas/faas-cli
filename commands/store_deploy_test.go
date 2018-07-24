@@ -22,7 +22,7 @@ func Test_storeDeploy_withNameFlag(t *testing.T) {
 		faasCmd.SetArgs([]string{
 			"store",
 			"deploy",
-			"test-function",
+			"figlet",
 			"--gateway=" + s.URL,
 			"--name=foo",
 		})
@@ -59,7 +59,7 @@ func Test_storeDeploy_withoutNameFlag(t *testing.T) {
 		faasCmd.SetArgs([]string{
 			"store",
 			"deploy",
-			"test-function",
+			"figlet",
 			"--gateway=" + s.URL,
 		})
 		faasCmd.Execute()
