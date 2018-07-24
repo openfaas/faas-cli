@@ -70,7 +70,7 @@ func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 	}
 }
 
-func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
+/*func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 	dockerBuildVal := dockerBuild{
 		Image:   "imagename:latest",
 		NoCache: false,
@@ -90,7 +90,7 @@ func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 	if joined != want {
 		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
 	}
-}
+}*/
 
 func Test_buildFlagSlice(t *testing.T) {
 
