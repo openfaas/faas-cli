@@ -42,12 +42,79 @@ functions:
     handler: ./sample/abcd-eeee
     image: stuff2/stuff23423
 `
-
 const TestData_2 string = `provider:
   name: faas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
+`
+const TestData_ExtResources string = `provider:
+  name: faas
+  gateway: http://127.0.0.1:8080
 
+functions:
+  f1:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      cpu: 0.1
+      vendor.domain/gpu: 1
+  f2:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      memory: 10m
+      vendor.domain/fpga: 1
+  f3:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      cpu: 0.1
+      memory: 10m
+      vendor.domain/gpu: 1
+      vendor.domain/fpga: 1
+  f4:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      vendor_1.domain/gpu: 1
+      vendor_2.domain/gpu: 1
+      vendor_3.domain/fpga: 1
+  f5:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      something/gpu: 1
+  f6:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      something/fpga: 1
+  f7:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      some.vendor/gpu: 1
+      some.vendor/fastgpu: 1
+  f8:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      some.vendor/fpga: 1
+      some.vendor/fastfpga: 1
+  f9:
+    lang: node
+    handler: handler
+    image: image
+    limits:
+      random: 1
 `
 
 const noMatchesErrorMsg string = "no functions matching --filter/--regex were found in the YAML file"
@@ -371,6 +438,96 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 					t.Errorf("want error: '%s', got: '%s'", test.expectedError, err.Error())
 					t.Fail()
 				}
+			}
+		})
+	}
+}
+
+var ParseYAMLTests_ExtResources = []struct {
+	title          string
+	function       string
+	expected      []string
+}{
+	{
+		title:         "Valid resource: gpu",
+    function:      "f1",
+    expected:     []string{"vendor.domain/gpu"},
+	},
+	{
+		title:         "Valid resource: fpga",
+    function:      "f2",
+    expected:     []string{"vendor.domain/fpga"},
+	},
+	{
+		title:         "Valid resources: gpu, fpga",
+    function:      "f3",
+    expected:     []string{"vendor.domain/fpga", "vendor.domain/gpu"},
+	},
+	{
+		title:         "Valid resources: gpu, gpu, fpga",
+    function:      "f4",
+    expected:     []string{"vendor_1.domain/gpu", "vendor_2.domain/gpu", "vendor_3.domain/fpga"},
+	},
+	{
+		title:         "Resource specified with invalid domain: something/gpu",
+    function:      "f5",
+    expected:     []string{},
+	},
+	{
+		title:         "Resource specified with invalid domain: something/fpga",
+    function:      "f6",
+    expected:     []string{},
+	},
+	{
+		title:         "Invalid resource: fastgpu",
+    function:      "f7",
+    expected:     []string{"some.vendor/gpu"},
+	},
+	{
+		title:         "Invalid resource: fastfpga",
+    function:      "f8",
+    expected:     []string{"some.vendor/fpga"},
+	},
+	{
+		title:         "Invalid resource: random",
+    function:      "f9",
+    expected:     []string{},
+	},
+}
+
+/**
+ * Test parsing of extended resources, such as GPUs and FPGAs
+ */
+func Test_ParseYAMLData_ExtResources(t *testing.T) {
+
+	for _, test := range ParseYAMLTests_ExtResources {
+		t.Run(test.title, func(t *testing.T) {
+			parsedYAML, err := ParseYAMLData([]byte(TestData_ExtResources), test.function, "")
+
+			if err != nil {
+				t.Errorf("Test_ParseYAMLData_ExtResources [%s] test failed: %v", test.title, err)
+				return
+			}
+
+			for _, function := range parsedYAML.Functions {
+				keys := reflect.ValueOf(function.Limits.Others).MapKeys()
+
+				parsed := make([]string, len(keys))
+
+				for i := 0; i < len(keys); i++ {
+					parsed[i] = keys[i].String()
+				}
+				sort.Strings(parsed)
+
+				if ! reflect.DeepEqual(parsed, test.expected) {
+					t.Errorf("Test_ParseYAMLData_ExtResources [%s] test failed, does not match expected result;\n  parsed resources:   [%v]\n  expected resources: [%v]",
+						test.title,
+						parsed,
+						test.expected,
+					)
+				}
+
+				t.Log(parsed)
 			}
 		})
 	}
