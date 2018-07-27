@@ -5,6 +5,7 @@ package builder
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 
@@ -156,7 +157,21 @@ func createBuildTemplate(functionName string, handler string, language string) s
 	CopyFiles("./template/"+language, tempPath)
 
 	// Overlay in user-function
-	CopyFiles(handler, functionPath)
+	// CopyFiles(handler, functionPath)
+	infos, readErr := ioutil.ReadDir(handler)
+	if readErr != nil {
+		fmt.Printf("Error reading the handler %s - %s.\n", handler, readErr.Error())
+	}
+
+	for _, info := range infos {
+		switch info.Name() {
+		case "build":
+			fmt.Println("Skipping \"build\" folder")
+			continue
+		default:
+			CopyFiles(info.Name(), functionPath)
+		}
+	}
 
 	return tempPath
 }
@@ -177,7 +192,21 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 		language = "dockerfile"
 	}
 
-	CopyFiles(handler, tempPath)
+	// CopyFiles(handler, tempPath)
+	infos, readErr := ioutil.ReadDir(handler)
+	if readErr != nil {
+		fmt.Printf("Error reading the handler %s - %s.\n", handler, readErr.Error())
+	}
+
+	for _, info := range infos {
+		switch info.Name() {
+		case "build":
+			fmt.Println("Skipping \"build\" folder")
+			continue
+		default:
+			CopyFiles(info.Name(), tempPath)
+		}
+	}
 
 	return tempPath
 }
