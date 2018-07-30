@@ -56,12 +56,13 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		if strings.ToLower(language) == "dockerfile" {
 
+			tempPath = handler
 			if shrinkwrap {
-				fmt.Printf("Nothing to do for: %s.\n", functionName)
+				tempPath = dockerBuildFolder(functionName, handler, language)
+				fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 				return nil
 			}
 
-			tempPath = handler
 			if err := ensureHandlerPath(handler); err != nil {
 
 				return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
@@ -152,14 +153,31 @@ func createBuildTemplate(functionName string, handler string, language string) s
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
 	}
 
-	// Both Dockerfile and dockerfile are accepted
-	if language == "Dockerfile" {
-		language = "dockerfile"
-	}
 	CopyFiles("./template/"+language, tempPath)
 
 	// Overlay in user-function
 	CopyFiles(handler, functionPath)
+
+	return tempPath
+}
+
+func dockerBuildFolder(functionName string, handler string, language string) string {
+	tempPath := fmt.Sprintf("./build/%s/", functionName)
+	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
+
+	clearErr := os.RemoveAll(tempPath)
+	if clearErr != nil {
+		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
+	}
+
+	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath)
+
+	// Both Dockerfile and dockerfile are accepted
+	if language == "Dockerfile" {
+		language = "dockerfile"
+	}
+
+	CopyFiles(handler, tempPath)
 
 	return tempPath
 }
