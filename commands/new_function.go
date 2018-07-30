@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"text/template"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
@@ -55,20 +56,20 @@ func validateFunctionName(functionName string) error {
 	// Regex for RFC-1123 validation:
 	// 	k8s.io/kubernetes/pkg/util/validation/validation.go
 	var validDNS = regexp.MustCompile(`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`)
-	matched := validDNS.MatchString(functionName)
-	if matched {
+	if matched := validDNS.MatchString(functionName); matched {
 		return nil
+	} else {
+		return fmt.Errorf(`function name can only contain a-z, 0-9 and dashes`)
 	}
-	return fmt.Errorf(`function name can only contain a-z, 0-9 and dashes`)
 }
 
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
-	language, _ = validateLanguageFlag(language)
-
 	if list == true {
 		return nil
 	}
+
+	language, _ = validateLanguageFlag(language)
 
 	if len(args) < 1 {
 		return fmt.Errorf("please provide a name for the function")
@@ -91,7 +92,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		var availableTemplates []string
 
 		templateFolders, err := ioutil.ReadDir(templateDirectory)
-
 		if err != nil {
 			return fmt.Errorf("no language templates were found. Please run 'faas-cli template pull'")
 		}
@@ -109,10 +109,11 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 
 	PullTemplates(DefaultTemplateRepository)
 
-	if stack.IsValidTemplate(language) == false {
+	if !stack.IsValidTemplate(language) {
 		return fmt.Errorf("%s is unavailable or not supported", language)
 	}
 
+	var services *stack.Services
 	appendMode := len(appendFile) > 0
 	if appendMode {
 		if (strings.HasSuffix(appendFile, ".yml") || strings.HasSuffix(appendFile, ".yaml")) == false {
@@ -123,10 +124,19 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("unable to find file: %s - %s", appendFile, statErr.Error())
 		}
 
-		duplicateError := duplicateFunctionName(functionName, appendFile)
+		var duplicateError error
+		services, duplicateError = duplicateFunctionName(functionName, appendFile)
 
 		if duplicateError != nil {
 			return duplicateError
+		}
+	} else {
+		services = &stack.Services{
+			Provider: stack.Provider{
+				Name:       "faas",
+				GatewayURL: gateway,
+			},
+			Functions: make(map[string]stack.Function),
 		}
 	}
 
@@ -134,80 +144,77 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("folder: %s already exists", functionName)
 	}
 
-	if err := os.Mkdir(functionName, 0700); err == nil {
-		fmt.Printf("Folder: %s created.\n", functionName)
-	} else {
+	if err := os.Mkdir(functionName, 0700); err != nil {
 		return fmt.Errorf("folder: could not create %s : %s", functionName, err)
 	}
+	fmt.Printf("Folder: %s created.\n", functionName)
 
 	if err := updateGitignore(); err != nil {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
-	var imageName string
-	imagePrefix = strings.TrimSpace(imagePrefix)
-	if len(imagePrefix) > 0 {
-		imageName = imagePrefix + "/" + functionName
-	} else {
-		imageName = functionName
-	}
-
+	// Create function directory from template.
 	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
+	printFiglet()
+	fmt.Printf("\nFunction created in folder: %s\n", functionName)
 
-	var stackYaml string
-
-	if !appendMode {
-		stackYaml +=
-			`provider:
-  name: faas
-  gateway: ` + gateway + `
+	// Define template of stack file.
+	const stackTmpl = `{{ if .Provider.Name -}}
+provider:
+  name: {{ .Provider.Name }}
+  gateway: {{ .Provider.GatewayURL }}
 
 functions:
+{{- end }}
+{{- range $name, $function := .Functions }}
+  {{ $name }}:
+    lang: {{ $function.Language }}
+    handler: ./{{ $name }}
+    image: {{ $function.Image }}
+{{- end }}
 `
+
+	var imageName string
+	if imagePrefix = strings.TrimSpace(imagePrefix); len(imagePrefix) > 0 {
+		imageName = fmt.Sprintf("%s/%s:latest", imagePrefix, functionName)
+	} else {
+		imageName = fmt.Sprintf("%s:latest", functionName)
 	}
 
-	stackYaml +=
-		`  ` + functionName + `:
-    lang: ` + language + `
-    handler: ./` + functionName + `
-    image: ` + imageName + `
-`
+	function := stack.Function{
+		Name:     functionName,
+		Language: language,
+		Image:    imageName,
+	}
+	services.Functions[functionName] = function
 
-	printFiglet()
-	fmt.Println()
-	fmt.Printf("Function created in folder: %s\n", functionName)
+	var fileName string
+	if appendMode {
+		fileName = appendFile
+	} else {
+		fileName = functionName + ".yml"
+	}
+	f, err := os.OpenFile("./"+fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("could not open file '%s' %s", fileName, err)
+	}
 
-	var stackWriteErr error
+	t := template.Must(template.New("stack").Parse(stackTmpl))
+	if err := t.Execute(f, services); err != nil {
+		return fmt.Errorf("could not parse functions into stack template %s", err)
+	}
 
 	if appendMode {
-		originalBytes, readErr := ioutil.ReadFile(appendFile)
-		if readErr != nil {
-			fmt.Printf("unable to read %s to append, %s", appendFile, readErr)
-		}
-
-		buffer := string(originalBytes) + stackYaml
-
-		stackWriteErr = ioutil.WriteFile(appendFile, []byte(buffer), 0600)
-		if stackWriteErr != nil {
-			return fmt.Errorf("error writing stack file %s", stackWriteErr)
-		}
-
-		fmt.Printf("Stack file updated: %s\n", appendFile)
+		fmt.Printf("Stack file updated: %s\n", fileName)
 	} else {
-
-		stackWriteErr = ioutil.WriteFile("./"+functionName+".yml", []byte(stackYaml), 0600)
-		if stackWriteErr != nil {
-			return fmt.Errorf("error writing stack file %s", stackWriteErr)
-		}
-
-		fmt.Printf("Stack file written: %s\n", functionName+".yml")
+		fmt.Printf("Stack file written: %s\n", fileName)
 	}
 
 	if !quiet {
 		languageTemplate, _ := stack.LoadLanguageTemplate(language)
 
 		if languageTemplate.WelcomeMessage != "" {
-			fmt.Println("\nNotes:")
+			fmt.Printf("\nNotes:\n")
 			fmt.Printf("%s\n", languageTemplate.WelcomeMessage)
 		}
 	}
@@ -217,37 +224,32 @@ functions:
 
 func printAvailableTemplates(availableTemplates []string) string {
 	var result string
-	sort.Sort(StrSort(availableTemplates))
+	sort.Slice(availableTemplates, func(i, j int) bool {
+		return availableTemplates[i] < availableTemplates[j]
+	})
 	for _, template := range availableTemplates {
 		result += fmt.Sprintf("- %s\n", template)
 	}
 	return result
 }
 
-func duplicateFunctionName(functionName string, appendFile string) error {
+func duplicateFunctionName(functionName string, appendFile string) (*stack.Services, error) {
 	fileBytes, readErr := ioutil.ReadFile(appendFile)
 	if readErr != nil {
-		return fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
+		return nil, fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
 	}
 
 	services, parseErr := stack.ParseYAMLData(fileBytes, "", "")
 
 	if parseErr != nil {
-		return fmt.Errorf("Error parsing %s yml file", appendFile)
+		return nil, fmt.Errorf("Error parsing %s yml file", appendFile)
 	}
 
 	if _, ok := services.Functions[functionName]; ok {
-		return fmt.Errorf(`
+		return nil, fmt.Errorf(`
 Function %s already exists in %s file. 
 Cannot have duplicate function names in same yml file`, functionName, appendFile)
 	}
 
-	return nil
+	return services, nil
 }
-
-// StrSort sort strings
-type StrSort []string
-
-func (a StrSort) Len() int           { return len(a) }
-func (a StrSort) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
-func (a StrSort) Less(i, j int) bool { return a[i] < a[j] }
