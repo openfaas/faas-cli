@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"reflect"
 	"regexp"
@@ -16,16 +15,23 @@ import (
 	"github.com/openfaas/faas-cli/test"
 )
 
-const SuccessMsg = `(?m:Function created in folder)`
-const InvalidYAMLMsg = `is not valid YAML`
-const InvalidYAMLMap = `map is empty`
-const IncludeUpperCase = "function name can only contain a-z, 0-9 and dashes"
-const ListOptionOutput = `Languages available as templates:
+const (
+	SuccessMsg        = `(?m:Function created in folder)`
+	InvalidYAMLMsg    = `is not valid YAML`
+	InvalidYAMLMap    = `map is empty`
+	IncludeUpperCase  = "function name can only contain a-z, 0-9 and dashes"
+	NoFunctionName    = "please provide a name for the function"
+	NoLanguage        = "you must supply a function language with the --lang flag"
+	NoTemplates       = "no language templates were found. Please run 'faas-cli template pull'"
+	InvalidFileSuffix = "when appending to a stack the suffix should be .yml or .yaml"
+	InvalidFile       = "unable to find file: (.+)? - (.+)?"
+	ListOptionOutput  = `Languages available as templates:
 - dockerfile
 - ruby`
 
-const LangNotExistsOutput = `(?m:is unavailable or not supported)`
-const FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
+	LangNotExistsOutput  = `(?m:is unavailable or not supported)`
+	FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
+)
 
 type NewFunctionTest struct {
 	title         string
@@ -41,21 +47,21 @@ var NewFunctionTests = []NewFunctionTest{
 		title:         "new_1",
 		funcName:      "new-test-1",
 		funcLang:      "ruby",
-		expectedImage: "new-test-1",
+		expectedImage: "new-test-1:latest",
 		expectedMsg:   SuccessMsg,
 	},
 	{
 		title:         "lowercase-dockerfile",
 		funcName:      "lowercase-dockerfile",
 		funcLang:      "dockerfile",
-		expectedImage: "lowercase-dockerfile",
+		expectedImage: "lowercase-dockerfile:latest",
 		expectedMsg:   SuccessMsg,
 	},
 	{
 		title:         "uppercase-dockerfile",
 		funcName:      "uppercase-dockerfile",
 		funcLang:      "dockerfile",
-		expectedImage: "uppercase-dockerfile",
+		expectedImage: "uppercase-dockerfile:latest",
 		expectedMsg:   SuccessMsg,
 	},
 	{
@@ -63,7 +69,7 @@ var NewFunctionTests = []NewFunctionTest{
 		funcName:      "func-with-prefix",
 		prefix:        " username ",
 		funcLang:      "dockerfile",
-		expectedImage: "username/func-with-prefix",
+		expectedImage: "username/func-with-prefix:latest",
 		expectedMsg:   SuccessMsg,
 	},
 	{
@@ -71,7 +77,7 @@ var NewFunctionTests = []NewFunctionTest{
 		funcName:      "func-with-whitespace-only-prefix",
 		prefix:        " ",
 		funcLang:      "dockerfile",
-		expectedImage: "func-with-whitespace-only-prefix",
+		expectedImage: "func-with-whitespace-only-prefix:latest",
 		expectedMsg:   SuccessMsg,
 	},
 	{
@@ -86,6 +92,18 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:    "dockerfile",
 		expectedMsg: IncludeUpperCase,
 	},
+	{
+		title:       "no-function-name",
+		funcName:    "",
+		funcLang:    "",
+		expectedMsg: NoFunctionName,
+	},
+	{
+		title:       "no-language",
+		funcName:    "no-language",
+		funcLang:    "",
+		expectedMsg: NoLanguage,
+	},
 }
 
 func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
@@ -95,18 +113,14 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	var funcYAML string
 	funcYAML = funcName + ".yml"
 
-	// Cleanup the created directory
-	defer func() {
-		os.RemoveAll(funcName)
-		os.Remove(funcYAML)
-	}()
-
 	cmdParameters := []string{
 		"new",
-		funcName,
 		"--lang=" + funcLang,
 		"--gateway=" + defaultGateway,
 		"--prefix=" + imagePrefix,
+	}
+	if len(funcName) != 0 {
+		cmdParameters = append(cmdParameters, funcName)
 	}
 
 	faasCmd.SetArgs(cmdParameters)
@@ -162,10 +176,10 @@ func Test_newFunctionTests(t *testing.T) {
 	// Download templates
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
-	defer tearDownNewFunction(t)
 
 	for _, testcase := range NewFunctionTests {
 		t.Run(testcase.title, func(t *testing.T) {
+			defer tearDownNewFunction(t, testcase.funcName)
 			runNewFunctionTest(t, testcase)
 		})
 	}
@@ -175,7 +189,6 @@ func Test_newFunctionListCmds(t *testing.T) {
 	// Download templates
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
-	defer tearDownNewFunction(t)
 
 	cmdParameters := []string{
 		"new",
@@ -187,8 +200,23 @@ func Test_newFunctionListCmds(t *testing.T) {
 		faasCmd.Execute()
 	})
 
-	// Validate new function output
+	// Validate command output
 	if !strings.HasPrefix(stdOut, ListOptionOutput) {
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
+	}
+}
+
+func Test_newFunctionListNoTemplates(t *testing.T) {
+	cmdParameters := []string{
+		"new",
+		"--list",
+	}
+
+	faasCmd.SetArgs(cmdParameters)
+	stdOut := faasCmd.Execute().Error()
+
+	// Validate command output
+	if !strings.HasPrefix(stdOut, NoTemplates) {
 		t.Fatalf("Output is not as expected: %s\n", stdOut)
 	}
 }
@@ -197,7 +225,6 @@ func Test_languageNotExists(t *testing.T) {
 	// Download templates
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
-	defer tearDownNewFunction(t)
 
 	// Attempt to create a function with a non-existing language
 	cmdParameters := []string{
@@ -217,34 +244,72 @@ func Test_languageNotExists(t *testing.T) {
 	}
 }
 
-func Test_duplicateFunctionName(t *testing.T) {
+func Test_appendInvalidSuffix(t *testing.T) {
+	const functionName = "samplefunc"
+	const functionLang = "ruby"
+
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
-	defer tearDownNewFunction(t)
+
+	// Create function
+	parameters := []string{
+		"new",
+		functionName,
+		"--lang=" + functionLang,
+		"--append=" + functionName + ".txt",
+	}
+	faasCmd.SetArgs(parameters)
+	stdOut := faasCmd.Execute().Error()
+
+	if found, err := regexp.MatchString(InvalidFileSuffix, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
+	}
+}
+
+func Test_appendInvalidFile(t *testing.T) {
+	const functionName = "samplefunc"
+	const functionLang = "ruby"
+
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+
+	// Create function
+	parameters := []string{
+		"new",
+		functionName,
+		"--lang=" + functionLang,
+		"--append=" + functionLang + ".yml",
+	}
+	faasCmd.SetArgs(parameters)
+	stdOut := faasCmd.Execute().Error()
+
+	if found, err := regexp.MatchString(InvalidFile, stdOut); err != nil || !found {
+		t.Fatalf("Output is not as expected: %s\n", stdOut)
+	}
+}
+
+func Test_duplicateFunctionName(t *testing.T) {
+	resetForTest()
 
 	const functionName = "samplefunc"
 	const functionLang = "ruby"
 
-	defer func() {
-		if _, err := os.Stat(functionName + ".yml"); err == nil {
-			err := os.Remove(functionName + ".yml")
-			if err != nil {
-				t.Log(err)
-			}
-		}
-	}()
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
+	defer tearDownNewFunction(t, functionName)
 
-	// Create a yml file with the same function name and language
-	writeFunctionYmlFile(functionName, functionLang, t)
-
-	appendParameters := []string{
+	// Create function
+	parameters := []string{
 		"new",
 		functionName,
 		"--lang=" + functionLang,
-		"--append=" + functionName + ".yml",
 	}
+	faasCmd.SetArgs(parameters)
+	faasCmd.Execute()
 
-	faasCmd.SetArgs(appendParameters)
+	// Attempt to create duplicate function
+	parameters = append(parameters, "--append="+functionName+".yml")
+	faasCmd.SetArgs(parameters)
 	stdOut := faasCmd.Execute().Error()
 
 	if found, err := regexp.MatchString(FunctionExistsOutput, stdOut); err != nil || !found {
@@ -252,36 +317,8 @@ func Test_duplicateFunctionName(t *testing.T) {
 	}
 }
 
-func writeFunctionYmlFile(functionName string, lang string, t *testing.T) {
-	var stackYaml string
-
-	stackYaml +=
-		`provider:
-  name: faas
-  gateway: ` + defaultGateway + `
-
-functions:
-`
-
-	stackYaml +=
-		`  ` + functionName + `:
-    lang: ` + lang + `
-    handler: ./` + functionName + `
-    image: ` + functionName + `
-`
-
-	stackWriteErr := ioutil.WriteFile("./"+functionName+".yml", []byte(stackYaml), 0600)
-	if stackWriteErr != nil {
-		t.Log(fmt.Errorf("error writing stack file %s", stackWriteErr))
-	}
-}
-
-func tearDownNewFunction(t *testing.T) {
-	// Remove existing archive file if it exists
-	if _, err := os.Stat(".gitignore"); err == nil {
-		err := os.Remove(".gitignore")
-		if err != nil {
-			t.Log(err)
-		}
-	}
+func tearDownNewFunction(t *testing.T, functionName string) {
+	os.Remove(".gitignore")
+	os.RemoveAll(functionName)
+	os.Remove(functionName + ".yml")
 }

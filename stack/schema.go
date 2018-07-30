@@ -48,8 +48,14 @@ type Function struct {
 	// Requests of resources requested by function
 	Requests *FunctionResources `yaml:"requests"`
 
+	// ReadOnlyRootFilesystem is used to set the container filesystem to read-only
+	ReadOnlyRootFilesystem bool `yaml:"readOnlyRootFilesystem"`
+
 	// BuildOptions to determine native packages
 	BuildOptions []string `yaml:"build_options"`
+
+	// Annotations
+	Annotations *map[string]string `yaml:"annotations"`
 }
 
 // FunctionResources Memory and CPU

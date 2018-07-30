@@ -7,6 +7,95 @@ import (
 	"github.com/openfaas/faas-cli/stack"
 )
 
+func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:            "imagename:latest",
+		NoCache:          false,
+		Squash:           false,
+		HTTPProxy:        "",
+		HTTPSProxy:       "",
+		BuildArgMap:      make(map[string]string),
+		BuildOptPackages: []string{},
+	}
+
+	values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	want := "docker build -t imagename:latest ."
+
+	if joined != want {
+		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+}
+
+func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:            "imagename:latest",
+		NoCache:          true,
+		Squash:           false,
+		HTTPProxy:        "",
+		HTTPSProxy:       "",
+		BuildArgMap:      make(map[string]string),
+		BuildOptPackages: []string{},
+	}
+
+	values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	want := "docker build --no-cache -t imagename:latest ."
+
+	if joined != want {
+		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+}
+
+func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:            "imagename:latest",
+		NoCache:          false,
+		Squash:           false,
+		HTTPProxy:        "http://127.0.0.1:3128",
+		HTTPSProxy:       "https://127.0.0.1:3128",
+		BuildArgMap:      make(map[string]string),
+		BuildOptPackages: []string{},
+	}
+
+	values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	want := "docker build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 -t imagename:latest ."
+
+	if joined != want {
+		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+}
+
+func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:   "imagename:latest",
+		NoCache: false,
+		Squash:  false,
+		BuildArgMap: map[string]string{
+			"USERNAME": "admin",
+			"PASSWORD": "1234",
+		},
+		BuildOptPackages: []string{},
+	}
+
+	values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	wantArg1 := "--build-arg USERNAME=admin"
+	wantArg2 := "--build-arg PASSWORD=1234"
+
+	if strings.Contains(joined, wantArg1) == false {
+		t.Errorf("want %s in %s, but didn't find it", wantArg1, joined)
+	}
+	if strings.Contains(joined, wantArg2) == false {
+		t.Errorf("want %s in %s, but didn't find it", wantArg2, joined)
+	}
+}
+
 func Test_buildFlagSlice(t *testing.T) {
 
 	var buildFlagOpts = []struct {
@@ -271,86 +360,11 @@ func Test_deDuplicate(t *testing.T) {
 						break
 					}
 				}
-				if found == false {
 
+				if found == false {
 					t.Errorf("Slices differ in values  - wanted: %s, found %s", strings.Join(test.expectedStrings, " "), strings.Join(uniqueStrings, " "))
 				}
 			}
 		})
 	}
 }
-
-/*func Test_validateBuildOption(t *testing.T) {
-
-	buildOptions := []struct {
-		buildOption           string
-		expectedBuildArgValue string
-	}{
-		{
-			buildOption:           "dev",
-			expectedBuildArgValue: "ADDITIONAL_PACKAGE=make automake gcc g++ subversion python3-dev musl-dev libffi-dev",
-		},
-
-		{
-			buildOption:           "undefined",
-			expectedBuildArgValue: "",
-		},
-	}
-
-	os.MkdirAll("template/python3", os.ModePerm)
-	python3_template_yml, err := os.Create("template/python3/template.yml")
-	if err != nil {
-		t.Errorf("Error creating template/python3/template.yml file")
-	}
-
-	_, err = python3_template_yml.WriteString("language: python3\n" +
-		"fprocess: python3 index.py\n" +
-		"build_options: \n" +
-		"  - name: dev\n" +
-		"    packages: \n" +
-		"      - make\n" +
-		"      - automake\n" +
-		"      - gcc\n" +
-		"      - g++\n" +
-		"      - subversion\n" +
-		"      - python3-dev\n" +
-		"      - musl-dev\n" +
-		"      - libffi-dev\n")
-
-	if err != nil {
-		t.Errorf("Error writing to template/python3/template.yml file")
-	}
-
-	os.MkdirAll("template/unsupported", os.ModePerm)
-	unsupported_template_yml, err := os.Create("template/unsupported/template.yml")
-	if err != nil {
-		t.Errorf("Error creating template/unsupported/template.yml file")
-	}
-
-	_, err = unsupported_template_yml.WriteString("language: python3\n" +
-		"fprocess: python3 index.py\n")
-
-	if err != nil {
-		t.Errorf("Error writing to template/pythunsupportedon3/template.yml file")
-	}
-
-	for _, test := range buildOptions {
-		t.Run(test.buildOption, func(t *testing.T) {
-			res, _, _ := validateBuildOption(test.buildOption, "python3")
-			_, isValid, _ := validateBuildOption(test.buildOption, "unsupported")
-
-			if res != test.expectedBuildArgValue {
-				t.Errorf("validateBuildOption failed for build-option %s. Expected to return %s, but returned %s",
-					test.buildOption, test.expectedBuildArgValue, res)
-			}
-
-			if isValid && test.buildOption == "dev" {
-				t.Errorf("validateBuildOption failed for build-option %s and unsupported language. Expected validation to fail, but it was successful",
-					test.buildOption)
-			}
-		})
-	}
-
-	os.RemoveAll("template")
-}
-*/

@@ -45,7 +45,9 @@ func storeList(store string) ([]schema.StoreItem, error) {
 	store = strings.TrimRight(store, "/")
 
 	timeout := 60 * time.Second
-	client := proxy.MakeHTTPClient(&timeout)
+	tlsInsecure := false
+
+	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
 
 	res, err := client.Get(store)
 	if err != nil {
@@ -85,5 +87,5 @@ func storeFindFunction(functionName string, storeItems []schema.StoreItem) *sche
 		}
 	}
 
-	return &item
+	return nil
 }

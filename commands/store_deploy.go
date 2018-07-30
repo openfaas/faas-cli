@@ -63,9 +63,10 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	item := storeFindFunction(args[0], storeItems)
+	requestedStoreFn := args[0]
+	item := storeFindFunction(requestedStoreFn, storeItems)
 	if item == nil {
-		return fmt.Errorf("function '%s' not found", functionName)
+		return fmt.Errorf("function '%s' not found", requestedStoreFn)
 	}
 
 	// Add the store environment variables to the provided ones from cmd
@@ -109,5 +110,13 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	return deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags)
+	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure)
+
+	if badStatusCode(statusCode) {
+		failedStatusCode := map[string]int{itemName: statusCode}
+		err := deployFailed(failedStatusCode)
+		return err
+	}
+
+	return err
 }

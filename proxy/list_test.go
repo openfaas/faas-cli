@@ -23,7 +23,7 @@ func Test_ListFunctions(t *testing.T) {
 	})
 	defer s.Close()
 
-	result, err := ListFunctions(s.URL)
+	result, err := ListFunctions(s.URL, !tlsNoVerify)
 
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
@@ -38,7 +38,7 @@ func Test_ListFunctions(t *testing.T) {
 func Test_ListFunctions_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := ListFunctions(s.URL)
+	_, err := ListFunctions(s.URL, tlsNoVerify)
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -51,7 +51,7 @@ func Test_ListFunctions_Not200(t *testing.T) {
 }
 
 func Test_ListFunctions_MissingURLPrefix(t *testing.T) {
-	_, err := ListFunctions("127.0.0.1:8080")
+	_, err := ListFunctions("127.0.0.1:8080", tlsNoVerify)
 
 	if err == nil {
 		t.Fatalf("Error was not returned")

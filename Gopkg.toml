@@ -1,3 +1,7 @@
+[prune]
+  go-tests = true
+  unused-packages = true
+
 [[constraint]]
   name = "github.com/mitchellh/go-homedir"
   revision = "b8bc1bf767474819792c23f32d8286a45736f1c6"
@@ -8,7 +12,7 @@
 
 [[constraint]]
   name = "github.com/openfaas/faas"
-  version = "0.6.16"
+  version = "0.8.8"
 
 [[constraint]]
   name = "github.com/spf13/cobra"

@@ -26,6 +26,15 @@
   version = "v1.13.1"
 
 [[projects]]
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "client",
+    "credentials"
+  ]
+  revision = "5241b46610f2491efdf9d1c85f1ddf5b02f6d962"
+  version = "v0.6.1"
+
+[[projects]]
   name = "github.com/inconshreveable/mousetrap"
   packages = ["."]
   revision = "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
@@ -44,8 +53,8 @@
 [[projects]]
   name = "github.com/openfaas/faas"
   packages = ["gateway/requests"]
-  revision = "262b0afda7a0161d3ee4b3dafdcc085128b215df"
-  version = "0.6.16"
+  revision = "4cbb7d968d21f4ae2daacfb27213c9371d4d4449"
+  version = "0.8.8"
 
 [[projects]]
   name = "github.com/ryanuber/go-glob"
@@ -86,6 +95,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "a2be6e10930e850400f61959a5142ef723e71ac78350e99a77a5a86bb0c62fb2"
+  inputs-digest = "13931e3dc144611ad27c9cc8e720fdf547dcd2ca4538e7446cbf390235d32ca0"
   solver-name = "gps-cdcl"
   solver-version = 1

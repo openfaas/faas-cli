@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -17,20 +18,24 @@ import (
 
 	"github.com/docker/docker-credential-helpers/client"
 	homedir "github.com/mitchellh/go-homedir"
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+
 	"github.com/spf13/cobra"
 )
 
 // DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
-	envvarOpts       []string
-	replace          bool
-	update           bool
-	constraints      []string
-	secrets          []string
-	labelOpts        []string
-	sendRegistryAuth bool
+	envvarOpts             []string
+	replace                bool
+	update                 bool
+	readOnlyRootFilesystem bool
+	constraints            []string
+	secrets                []string
+	labelOpts              []string
+	sendRegistryAuth       bool
 }
 
 var deployFlags DeployFlags
@@ -55,8 +60,11 @@ func init() {
 
 	deployCmd.Flags().StringArrayVar(&deployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	deployCmd.Flags().StringArrayVar(&deployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
+	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
+	deployCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
+	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -81,7 +89,9 @@ var deployCmd = &cobra.Command{
                   [--constraint PLACEMENT_CONSTRAINT ...]
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
-                  [--secret "SECRET_NAME"]`,
+				  [--secret "SECRET_NAME"]
+				  [--tag VALUE]
+				  [--readonly=false]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -94,6 +104,8 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./stack.yml --replace=false --update=true
   faas-cli deploy -f ./stack.yml --replace=true --update=false
+  faas-cli deploy -f ./stack.yml --tag=sha
+  faas-cli deploy -f ./stack.yml --tag=branch
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
@@ -110,10 +122,10 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return runDeployCommand(args, image, fprocess, functionName, deployFlags)
+	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tag)
 }
 
-func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags) error {
+func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tag string) error {
 	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
@@ -140,6 +152,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		}
 	}
 
+	var failedStatusCodes = make(map[string]int)
 	if len(services.Functions) > 0 {
 
 		if len(services.Provider.Network) == 0 {
@@ -212,7 +225,34 @@ Error: %s`, fprocessErr.Error())
 				Requests: function.Requests,
 			}
 
-			proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, functionResourceRequest1)
+			var annotations map[string]string
+			if function.Annotations != nil {
+				annotations = *function.Annotations
+			}
+
+			tagMode := schema.DefaultFormat
+			var sha string
+			if strings.ToLower(tag) == "sha" {
+				sha = builder.GetGitSHA()
+				tagMode = schema.SHAFormat
+			}
+			var branch string
+			if strings.ToLower(tag) == "branch" {
+				branch = builder.GetGitBranch()
+				sha = builder.GetGitSHA()
+				tagMode = schema.BranchAndSHAFormat
+			}
+
+			function.Image = schema.BuildImageName(tagMode, function.Image, sha, branch)
+
+			if deployFlags.readOnlyRootFilesystem {
+				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
+			}
+
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, annotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
+			if badStatusCode(statusCode) {
+				failedStatusCodes[k] = statusCode
+			}
 		}
 	} else {
 		if len(image) == 0 || len(functionName) == 0 {
@@ -230,10 +270,18 @@ Error: %s`, fprocessErr.Error())
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
-
-		if err := deployImage(image, fprocess, functionName, registryAuth, deployFlags); err != nil {
+		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure)
+		if err != nil {
 			return err
 		}
+
+		if badStatusCode(statusCode) {
+			failedStatusCodes[functionName] = statusCode
+		}
+	}
+
+	if err := deployFailed(failedStatusCodes); err != nil {
+		return err
 	}
 
 	return nil
@@ -246,28 +294,34 @@ func deployImage(
 	functionName string,
 	registryAuth string,
 	deployFlags DeployFlags,
-) error {
+	tlsInsecure bool,
+) (int, error) {
 
+	var statusCode int
+	// default to a readable filesystem until we get more input about the expected behavior
+	// and if we want to add another flag for this case
+	readOnlyRootFilesystem := false
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
-		return fmt.Errorf("error parsing envvars: %v", err)
+		return statusCode, fmt.Errorf("error parsing envvars: %v", err)
 	}
 
 	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
 
 	if labelErr != nil {
-		return fmt.Errorf("error parsing labels: %v", labelErr)
+		return statusCode, fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	proxy.DeployFunction(fprocess, gateway, functionName,
+	var noAnnotations map[string]string = nil
+	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, functionResourceRequest1)
+		labelMap, noAnnotations, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
 
-	return nil
+	return statusCode, nil
 }
 
 func mergeSlice(values []string, overlay []string) []string {
@@ -464,7 +518,7 @@ func getRegistryAuth(config *configFile, image string) string {
 		slashes := strings.Count(image, "/")
 		if slashes > 1 {
 			regS := strings.Split(image, "/")
-			registry = strings.Join(regS[:len(regS)-2], ", ")
+			registry = regS[0]
 		}
 
 		if registry != "" {
@@ -475,4 +529,21 @@ func getRegistryAuth(config *configFile, image string) string {
 	}
 
 	return ""
+}
+
+func deployFailed(status map[string]int) error {
+	if len(status) == 0 {
+		return nil
+	}
+
+	var allErrors []string
+	for funcName, funcStatus := range status {
+		err := fmt.Errorf("Function '%s' failed to deploy with status code: %d", funcName, funcStatus)
+		allErrors = append(allErrors, err.Error())
+	}
+	return fmt.Errorf(strings.Join(allErrors, "\n"))
+}
+
+func badStatusCode(statusCode int) bool {
+	return statusCode != http.StatusAccepted && statusCode != http.StatusOK
 }
