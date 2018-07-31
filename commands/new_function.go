@@ -130,6 +130,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 			return duplicateError
 		}
 	} else {
+		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 		services = &stack.Services{
 			Provider: stack.Provider{
 				Name:       "faas",
