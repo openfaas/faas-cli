@@ -49,6 +49,7 @@ func resetForTest() {
 	filter = ""
 	version.Version = ""
 	shortVersion = false
+	appendFile = ""
 }
 
 func init() {
