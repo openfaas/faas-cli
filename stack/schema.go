@@ -49,7 +49,7 @@ type Function struct {
 	Requests *FunctionResources `yaml:"requests"`
 
 	// ReadOnlyRootFilesystem is used to set the container filesystem to read-only
-	ReadOnlyRootFilesystem bool `yaml:"readOnlyRootFilesystem"`
+	ReadOnlyRootFilesystem bool `yaml:"readonly_root_filesystem"`
 
 	// BuildOptions to determine native packages
 	BuildOptions []string `yaml:"build_options"`
