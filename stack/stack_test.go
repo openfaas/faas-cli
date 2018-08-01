@@ -444,54 +444,54 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 }
 
 var ParseYAMLTests_ExtResources = []struct {
-	title          string
-	function       string
-	expected      []string
+	title    string
+	function string
+	expected []string
 }{
 	{
-		title:         "Valid resource: gpu",
-    function:      "f1",
-    expected:     []string{"vendor.domain/gpu"},
+		title:    "Valid resource: gpu",
+		function: "f1",
+		expected: []string{"vendor.domain/gpu"},
 	},
 	{
-		title:         "Valid resource: fpga",
-    function:      "f2",
-    expected:     []string{"vendor.domain/fpga"},
+		title:    "Valid resource: fpga",
+		function: "f2",
+		expected: []string{"vendor.domain/fpga"},
 	},
 	{
-		title:         "Valid resources: gpu, fpga",
-    function:      "f3",
-    expected:     []string{"vendor.domain/fpga", "vendor.domain/gpu"},
+		title:    "Valid resources: gpu, fpga",
+		function: "f3",
+		expected: []string{"vendor.domain/fpga", "vendor.domain/gpu"},
 	},
 	{
-		title:         "Valid resources: gpu, gpu, fpga",
-    function:      "f4",
-    expected:     []string{"vendor_1.domain/gpu", "vendor_2.domain/gpu", "vendor_3.domain/fpga"},
+		title:    "Valid resources: gpu, gpu, fpga",
+		function: "f4",
+		expected: []string{"vendor_1.domain/gpu", "vendor_2.domain/gpu", "vendor_3.domain/fpga"},
 	},
 	{
-		title:         "Resource specified with invalid domain: something/gpu",
-    function:      "f5",
-    expected:     []string{},
+		title:    "Resource specified with invalid domain: something/gpu",
+		function: "f5",
+		expected: []string{},
 	},
 	{
-		title:         "Resource specified with invalid domain: something/fpga",
-    function:      "f6",
-    expected:     []string{},
+		title:    "Resource specified with invalid domain: something/fpga",
+		function: "f6",
+		expected: []string{},
 	},
 	{
-		title:         "Invalid resource: fastgpu",
-    function:      "f7",
-    expected:     []string{"some.vendor/gpu"},
+		title:    "Invalid resource: fastgpu",
+		function: "f7",
+		expected: []string{"some.vendor/gpu"},
 	},
 	{
-		title:         "Invalid resource: fastfpga",
-    function:      "f8",
-    expected:     []string{"some.vendor/fpga"},
+		title:    "Invalid resource: fastfpga",
+		function: "f8",
+		expected: []string{"some.vendor/fpga"},
 	},
 	{
-		title:         "Invalid resource: random",
-    function:      "f9",
-    expected:     []string{},
+		title:    "Invalid resource: random",
+		function: "f9",
+		expected: []string{},
 	},
 }
 
@@ -519,7 +519,7 @@ func Test_ParseYAMLData_ExtResources(t *testing.T) {
 				}
 				sort.Strings(parsed)
 
-				if ! reflect.DeepEqual(parsed, test.expected) {
+				if !reflect.DeepEqual(parsed, test.expected) {
 					t.Errorf("Test_ParseYAMLData_ExtResources [%s] test failed, does not match expected result;\n  parsed resources:   [%v]\n  expected resources: [%v]",
 						test.title,
 						parsed,

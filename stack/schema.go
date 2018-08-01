@@ -62,7 +62,7 @@ type Function struct {
 type FunctionResources struct {
 	Memory string `yaml:"memory"`
 	CPU    string `yaml:"cpu"`
-	Others  map[string]string
+	Others map[string]string
 }
 
 // EnvironmentFile represents external file for environment data

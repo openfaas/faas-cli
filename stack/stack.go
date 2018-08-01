@@ -5,14 +5,14 @@ package stack
 
 import (
 	"fmt"
+	"github.com/ryanuber/go-glob"
+	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
 	"regexp"
 	"time"
-	"github.com/ryanuber/go-glob"
-	yaml "gopkg.in/yaml.v2"
 )
 
 const providerName = "faas"
@@ -106,14 +106,14 @@ func (config *FunctionResources) UnmarshalYAML(unmarshal func(interface{}) error
 	}
 	for key, value := range raw {
 		switch {
-			case key == "cpu":
-				config.CPU = value
-			case key == "memory":
-				config.Memory = value
-			case r.MatchString(key):
-				others[key] = value
-			default:
-				fmt.Errorf("Ignoring unknown extended resource: %s with value: %s\n", key, value)
+		case key == "cpu":
+			config.CPU = value
+		case key == "memory":
+			config.Memory = value
+		case r.MatchString(key):
+			others[key] = value
+		default:
+			fmt.Errorf("Ignoring unknown extended resource: %s with value: %s\n", key, value)
 		}
 	}
 	config.Others = others
