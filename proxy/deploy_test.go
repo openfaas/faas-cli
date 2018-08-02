@@ -12,6 +12,7 @@ import (
 	"regexp"
 
 	"github.com/openfaas/faas-cli/test"
+	"github.com/openfaas/faas/gateway/requests"
 )
 
 const tlsNoVerify = true
@@ -31,24 +32,27 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	)
 	defer s.Close()
 
+	req := requests.CreateFunctionRequest{
+		EnvProcess:             "fprocess",
+		Image:                  "image",
+		RegistryAuth:           "dXNlcjpwYXNzd29yZA==",
+		Network:                "network",
+		Service:                "function",
+		EnvVars:                nil,
+		Constraints:            []string{},
+		Secrets:                []string{},
+		Labels:                 &map[string]string{},
+		Annotations:            &map[string]string{},
+		ReadOnlyRootFilesystem: false,
+	}
 	stdout := test.CaptureStdout(func() {
 		DeployFunction(
-			"fproces",
+			req,
 			s.URL,
-			"function",
-			"image",
-			"dXNlcjpwYXNzd29yZA==",
 			"language",
 			deployTest.replace,
-			nil,
-			"network",
-			[]string{},
 			deployTest.update,
-			[]string{},
-			map[string]string{},
-			map[string]string{},
 			FunctionResourceRequest{},
-			false,
 			tlsNoVerify,
 		)
 	})
@@ -93,24 +97,27 @@ func Test_RunDeployProxyTests(t *testing.T) {
 func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 	url := "127.0.0.1:8080"
 
+	req := requests.CreateFunctionRequest{
+		EnvProcess:             "fprocess",
+		Image:                  "image",
+		RegistryAuth:           "dXNlcjpwYXNzd29yZA==",
+		Network:                "network",
+		Service:                "function",
+		EnvVars:                nil,
+		Constraints:            []string{},
+		Secrets:                []string{},
+		Labels:                 &map[string]string{},
+		Annotations:            &map[string]string{},
+		ReadOnlyRootFilesystem: false,
+	}
 	stdout := test.CaptureStdout(func() {
 		DeployFunction(
-			"fprocess",
+			req,
 			url,
-			"function",
-			"image",
-			"dXNlcjpwYXNzd29yZA==",
 			"language",
 			false,
-			nil,
-			"network",
-			[]string{},
 			false,
-			[]string{},
-			map[string]string{},
-			map[string]string{},
 			FunctionResourceRequest{},
-			false,
 			tlsNoVerify,
 		)
 	})
