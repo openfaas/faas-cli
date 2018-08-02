@@ -24,21 +24,42 @@ type FunctionResourceRequest struct {
 
 // DeployFunction first tries to deploy a function and if it exists will then attempt
 // a rolling update. Warnings are suppressed for the second API call (if required.)
-func DeployFunction(fprocess string, gateway string, functionName string, image string,
-	registryAuth string, language string, replace bool, envVars map[string]string,
-	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, annotations map[string]string,
-	functionResourceRequest1 FunctionResourceRequest, readOnlyRootFilesystem bool, tlsInsecure bool) int {
+func DeployFunction(
+	req requests.CreateFunctionRequest,
+	gateway string,
+	language string,
+	replace bool,
+	update bool,
+	functionResourceRequest1 FunctionResourceRequest,
+	tlsInsecure bool,
+) int {
 
-	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
+	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", req.Service)
 	warnInsecureGateway := true
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+	statusCode, deployOutput := Deploy(
+		req,
+		gateway,
+		language,
+		replace,
+		update,
+		functionResourceRequest1,
+		warnInsecureGateway,
+		tlsInsecure,
+	)
 
 	warnInsecureGateway = false
 	if update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
-
-		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+		statusCode, deployOutput = Deploy(
+			req,
+			gateway,
+			language,
+			replace,
+			false,
+			functionResourceRequest1,
+			warnInsecureGateway,
+			tlsInsecure,
+		)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -48,22 +69,21 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 }
 
 // Deploy a function to an OpenFaaS gateway over REST
-func Deploy(fprocess string, gateway string, functionName string, image string,
-	registryAuth string, language string, replace bool, envVars map[string]string,
-	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, annotations map[string]string,
+func Deploy(
+	req requests.CreateFunctionRequest,
+	gateway string,
+	language string,
+	replace bool,
+	update bool,
 	functionResourceRequest1 FunctionResourceRequest,
-	readOnlyRootFilesystem bool, warnInsecureGateway bool, tlsInsecure bool) (int, string) {
+	warnInsecureGateway bool,
+	tlsInsecure bool,
+) (int, string) {
 
 	var deployOutput string
-	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
-	var fprocessTemplate string
-	if len(fprocess) > 0 {
-		fprocessTemplate = fprocess
-	}
 
 	if warnInsecureGateway {
-		if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
+		if (req.RegistryAuth != "") && !strings.HasPrefix(gateway, "https") {
 			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
 		}
 	}
@@ -71,21 +91,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	gateway = strings.TrimRight(gateway, "/")
 
 	if replace {
-		DeleteFunction(gateway, functionName)
-	}
-
-	req := requests.CreateFunctionRequest{
-		EnvProcess:             fprocessTemplate,
-		Image:                  image,
-		RegistryAuth:           registryAuth,
-		Network:                network,
-		Service:                functionName,
-		EnvVars:                envVars,
-		Constraints:            constraints,
-		Secrets:                secrets,
-		Labels:                 &labels,
-		Annotations:            &annotations,
-		ReadOnlyRootFilesystem: readOnlyRootFilesystem,
+		DeleteFunction(gateway, req.Service)
 	}
 
 	hasLimits := false
@@ -112,7 +118,6 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 		hasRequests = true
 		req.Requests.CPU = functionResourceRequest1.Requests.CPU
 	}
-
 	if !hasRequests {
 		req.Requests = nil
 	}
@@ -153,7 +158,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		deployOutput += fmt.Sprintf("Deployed. %s.\n", res.Status)
 
-		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, functionName)
+		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, req.Service)
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
 		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")

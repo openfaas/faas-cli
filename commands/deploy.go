@@ -22,6 +22,7 @@ import (
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas/gateway/requests"
 
 	"github.com/spf13/cobra"
 )
@@ -249,7 +250,34 @@ Error: %s`, fprocessErr.Error())
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
 			}
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, annotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
+			// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
+			var fprocessTemplate string
+			if len(function.FProcess) > 0 {
+				fprocessTemplate = function.FProcess
+			}
+			req := requests.CreateFunctionRequest{
+				EnvProcess:             fprocessTemplate,
+				Image:                  function.Image,
+				RegistryAuth:           function.RegistryAuth,
+				Network:                services.Provider.Network,
+				Service:                function.Name,
+				EnvVars:                allEnvironment,
+				Constraints:            functionConstraints,
+				Secrets:                deployFlags.secrets,
+				Labels:                 &allLabels,
+				Annotations:            &annotations,
+				ReadOnlyRootFilesystem: function.ReadOnlyRootFilesystem,
+			}
+
+			statusCode := proxy.DeployFunction(
+				req,
+				services.Provider.GatewayURL,
+				function.Language,
+				deployFlags.replace,
+				deployFlags.update,
+				functionResourceRequest1,
+				tlsInsecure,
+			)
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -270,7 +298,18 @@ Error: %s`, fprocessErr.Error())
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
-		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure)
+		// default to a readable filesystem until we get more input about the expected behavior
+		// and if we want to add another flag for this case
+		defaultReadOnlyRfs := false
+		statusCode, err := deployImage(
+			image,
+			fprocess,
+			functionName,
+			registryAuth,
+			deployFlags,
+			tlsInsecure,
+			defaultReadOnlyRfs,
+		)
 		if err != nil {
 			return err
 		}
@@ -295,12 +334,11 @@ func deployImage(
 	registryAuth string,
 	deployFlags DeployFlags,
 	tlsInsecure bool,
+	readOnlyRootFilesystem bool,
 ) (int, error) {
 
 	var statusCode int
-	// default to a readable filesystem until we get more input about the expected behavior
-	// and if we want to add another flag for this case
-	readOnlyRootFilesystem := false
+	readOnlyRfs := deployFlags.readOnlyRootFilesystem || readOnlyRootFilesystem
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
@@ -313,13 +351,35 @@ func deployImage(
 		return statusCode, fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
-	functionResourceRequest1 := proxy.FunctionResourceRequest{}
 	var noAnnotations map[string]string = nil
-	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
-		image, registryAuth, language,
-		deployFlags.replace, envvars, network,
-		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, noAnnotations, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
+	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
+	var fprocessTemplate string
+	if len(fprocess) > 0 {
+		fprocessTemplate = fprocess
+	}
+	req := requests.CreateFunctionRequest{
+		EnvProcess:             fprocessTemplate,
+		Image:                  image,
+		RegistryAuth:           registryAuth,
+		Network:                network,
+		Service:                functionName,
+		EnvVars:                envvars,
+		Constraints:            deployFlags.constraints,
+		Secrets:                deployFlags.secrets,
+		Labels:                 &labelMap,
+		Annotations:            &noAnnotations,
+		ReadOnlyRootFilesystem: readOnlyRfs,
+	}
+	functionResourceRequest1 := proxy.FunctionResourceRequest{}
+	statusCode = proxy.DeployFunction(
+		req,
+		gateway,
+		language,
+		deployFlags.replace,
+		deployFlags.update,
+		functionResourceRequest1,
+		tlsInsecure,
+	)
 
 	return statusCode, nil
 }
