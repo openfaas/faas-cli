@@ -512,13 +512,24 @@ func getRegistryAuth(config *configFile, image string) string {
 
 	if len(config.AuthConfigs) > 0 {
 
-		// image format is: <docker registry>/<user>/<image>
-		// so we trim <user>/<image>
+		// image format is either:
+		//   <docker registry>/<user>/<image>
+		//   <docker registry>/<image>
+		//   <user>/<image>
+
+		// Registry value needs to be obtained / trimmed
 		var registry string
 		slashes := strings.Count(image, "/")
 		if slashes > 1 {
 			regS := strings.Split(image, "/")
 			registry = regS[0]
+		} else {
+			if slashes == 1 {
+				regS := strings.Split(image, "/")
+				if strings.Contains(regS[0], ".") || strings.Contains(regS[0], ":") {
+					registry = regS[0]
+				}
+			}
 		}
 
 		if registry != "" {

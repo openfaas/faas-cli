@@ -88,6 +88,25 @@ func Test_getRegistryAuth_NestedGitlabRegistry_Found(t *testing.T) {
 	}
 }
 
+func Test_getRegistryAuth_CustomRegistry_NoUserPrefix(t *testing.T) {
+	hubAuth := "alexellis2-auth-str"
+	wantAuth := "alexellis2-registry-local"
+
+	configFile1 := configFile{
+		AuthConfigs: map[string]authConfig{
+			defaultDockerRegistry: authConfig{Auth: hubAuth},
+			"registry.local:5000": authConfig{Auth: wantAuth},
+		},
+	}
+
+	result := getRegistryAuth(&configFile1, "registry.local:5000/tester")
+
+	if result != wantAuth {
+		t.Errorf("registry auth without username - want %s, got %s", wantAuth, result)
+		t.Fail()
+	}
+}
+
 func Test_getRegistryAuth_DockerHub_Found(t *testing.T) {
 	wantAuth := "alexellis2-auth-str"
 	configFile1 := configFile{
