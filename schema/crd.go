@@ -1,4 +1,4 @@
-// Copyright (c) OpenFaaS Author(s) 2017. All rights reserved.
+// Copyright (c) OpenFaaS Author(s) 2018. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 package schema
@@ -8,7 +8,7 @@ import "github.com/openfaas/faas-cli/stack"
 //Metadata metadata of the object
 type Metadata struct {
 	Name      string `yaml:"name"`
-	Namespace string `yaml:"namespace"`
+	Namespace string `yaml:"namespace,omitempty"`
 }
 
 //Spec describe characteristics of the object
