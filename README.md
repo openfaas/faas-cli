@@ -171,6 +171,10 @@ For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which
 
 ### Use a YAML stack file
 
+Read the [YAML reference guide in the OpenFaaS docs](https://docs.openfaas.com/reference/yaml/).
+
+#### Quick guide
+
 A YAML stack file groups functions together and also saves on typing.
 
 You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
@@ -214,113 +218,6 @@ Now you can use the following command to deploy your function(s):
 ```
 $ faas-cli deploy -f ./stack.yml
 ```
-
-### YAML format reference
-
-#### Secure secret management
-
-Secrets can be used with OpenFaaS when using Docker Swarm or Kubernetes, this means your data is encrypted at rest and is less likely to be leaked during logging / stack traces than with environmental variables.
-
-```yaml
-  secrets:
-    - secret-name-1
-    - secret-name-2
-```
-
-Secrets should be defined in the cluster ahead of time using `docker secret create` or `kubectl`.
-
-#### Environmental variables/configuration
-
-You can deploy non-encrypted secrets and configuration via environmental variables set either in-line or via external (environment) files.
-
-> Note: external files take priority over in-line environmental variables. This allows you to specify a default and then have overrides within an external file.
-
-Priority:
-
-* environment_file - defined in zero to many external files
-
-```yaml
-  environment_file:
-    - file1.yml
-    - file2.yml
-```
-
-If you specify a variable such as "access_key" in more than one `environment_file` file then the last file in the list will take priority.
-
-Environment file format:
-
-```yaml
-environment:
-  access_key: key1
-  secret_key: key2
-```
-
-* Define environment in-line within the file:
-
-Imagine you needed to define a `http_proxy` variable to operate within a corporate network:
-
-```yaml
-functions:
-  url-ping:
-    lang: python
-    handler: ./sample/url-ping
-    image: alexellis2/faas-urlping
-    environment:
-      http_proxy: http://proxy1.corp.com:3128
-      no_proxy: http://gateway/
-```
-
-#### Constraints
-
-Constraints work with Docker Swarm and are useful for pinning functions to certain hosts.
-
-Here is an example of picking only Linux:
-
-```yaml
-   constraints:
-     - "node.platform.os == linux"
-```
-
-Or only Windows:
-
-```yaml
-   constraints:
-     - "node.platform.os == windows"
-```
-
-#### Labels
-
-Labels can be applied through a map which may be consumed by the back-end scheduler such as Docker Swarm or Kubernetes.
-
-For example:
-
-```yaml
-   labels:
-     kafka.topic: topic1
-     canary: true
-```
-
-#### Other YAML fields
-
-The possible entries for functions are documented below:
-
-```yaml
-functions:
-  deployed_function_name:
-    lang: node or python (optional)
-    handler: ./path/to/handler (optional)
-    image: docker-image-name
-    environment:
-      env1: value1
-      env2: "value2"
-    labels:
-      label1: value1
-      label2: "value2"
-   constraints:
-     - "com.hdd == ssd"
-```
-
-Use environmental variables for setting tokens and configuration.
 
 ### Access functions with `curl`
 
