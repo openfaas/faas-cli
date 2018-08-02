@@ -1,3 +1,6 @@
+// Copyright (c) OpenFaaS Project 2017. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 package builder
 
 // Copy "recursivelies copy a file object from source to dest while perserving
