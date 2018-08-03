@@ -94,6 +94,20 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		format = schema.BranchAndSHAFormat
 	}
 
+	objectsString, err := generateCRDYAML(services, format, api, functionNamespace, branch, version)
+	if err != nil {
+		return err
+	}
+
+	if len(objectsString) > 0 {
+		fmt.Println(objectsString)
+	}
+	return nil
+}
+
+//generateCRDYAML generates CRD YAML for functions
+func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+
 	var objectsString string
 
 	if len(services.Functions) > 0 {
@@ -101,16 +115,16 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			//read environment variables from the file
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
-				return err
+				return "", err
 			}
 
 			//combine all environment variables
 			allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
 			if envErr != nil {
-				return envErr
+				return "", envErr
 			}
 
-			metadata := schema.Metadata{Name: name, Namespace: functionNamespace}
+			metadata := schema.Metadata{Name: name, Namespace: namespace}
 			imageName := schema.BuildImageName(format, function.Image, version, branch)
 
 			spec := schema.Spec{
@@ -125,7 +139,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			}
 
 			crd := schema.CRD{
-				APIVersion: api,
+				APIVersion: apiVersion,
 				Kind:       resourceKind,
 				Metadata:   metadata,
 				Spec:       spec,
@@ -134,14 +148,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			//Marshal the object definition to yaml
 			objectString, err := yaml.Marshal(crd)
 			if err != nil {
-				return err
+				return "", err
 			}
 			objectsString += "---\n" + string(objectString)
 		}
 	}
 
-	if len(objectsString) > 0 {
-		fmt.Println(objectsString)
-	}
-	return nil
+	return objectsString, nil
 }
