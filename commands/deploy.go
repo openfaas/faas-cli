@@ -270,7 +270,10 @@ Error: %s`, fprocessErr.Error())
 			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
-		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure)
+		// default to a readable filesystem until we get more input about the expected behavior
+		// and if we want to add another flag for this case
+		defaultReadOnlyRFS := false
+		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure, defaultReadOnlyRFS)
 		if err != nil {
 			return err
 		}
@@ -295,12 +298,11 @@ func deployImage(
 	registryAuth string,
 	deployFlags DeployFlags,
 	tlsInsecure bool,
+	readOnlyRootFilesystem bool,
 ) (int, error) {
 
 	var statusCode int
-	// default to a readable filesystem until we get more input about the expected behavior
-	// and if we want to add another flag for this case
-	readOnlyRootFilesystem := false
+	readOnlyRFS := deployFlags.readOnlyRootFilesystem || readOnlyRootFilesystem
 	envvars, err := parseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
@@ -319,7 +321,7 @@ func deployImage(
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, noAnnotations, functionResourceRequest1, readOnlyRootFilesystem, tlsInsecure)
+		labelMap, noAnnotations, functionResourceRequest1, readOnlyRFS, tlsInsecure)
 
 	return statusCode, nil
 }
