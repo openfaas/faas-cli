@@ -110,7 +110,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure)
+	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure, item.ReadOnlyRootFilesystem)
 
 	if badStatusCode(statusCode) {
 		failedStatusCode := map[string]int{itemName: statusCode}
