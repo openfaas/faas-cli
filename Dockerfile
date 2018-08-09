@@ -30,9 +30,9 @@ RUN apk --no-cache add ca-certificates git
 
 WORKDIR /root/
 
-COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               .
+COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               /usr/bin/
 
-ENV PATH=$PATH:/root/
+ENV PATH=$PATH:/usr/bin/
 
 CMD ["faas-cli"]
 
