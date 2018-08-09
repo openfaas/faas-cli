@@ -237,7 +237,7 @@ Error: %s`, fprocessErr.Error())
 
 			annotationArgs, annotationErr := parseMap(deployFlags.annotationOpts, "annotation")
 			if annotationErr != nil {
-				return fmt.Errorf("error parsing annotations: %v", labelErr)
+				return fmt.Errorf("error parsing annotations: %v", annotationErr)
 			}
 
 			allAnnotations := mergeMap(annotations, annotationArgs)
