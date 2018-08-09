@@ -35,6 +35,7 @@ type DeployFlags struct {
 	constraints            []string
 	secrets                []string
 	labelOpts              []string
+	annotationOpts         []string
 	sendRegistryAuth       bool
 }
 
@@ -54,6 +55,8 @@ func init() {
 	deployCmd.Flags().StringArrayVarP(&deployFlags.envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
 
 	deployCmd.Flags().StringArrayVarP(&deployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
+
+	deployCmd.Flags().StringArrayVarP(&deployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
 
 	deployCmd.Flags().BoolVar(&deployFlags.replace, "replace", false, "Remove and re-create existing function(s)")
 	deployCmd.Flags().BoolVar(&deployFlags.update, "update", true, "Perform rolling update on existing function(s)")
@@ -83,7 +86,8 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
-                  [--label LABEL=VALUE ...]
+				  [--label LABEL=VALUE ...]
+				  [--annotation ANNOTATION=VALUE ...]
 				  [--replace=false]
 				  [--update=false]
                   [--constraint PLACEMENT_CONSTRAINT ...]
@@ -100,6 +104,7 @@ via flags. Note: --replace and --update are mutually exclusive.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
   faas-cli deploy -f ./stack.yml
   faas-cli deploy -f ./stack.yml --label canary=true
+  faas-cli deploy -f ./stack.yml --annotation user=true
   faas-cli deploy -f ./stack.yml --filter "*gif*" --secret dockerhuborg
   faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./stack.yml --replace=false --update=true
@@ -230,6 +235,13 @@ Error: %s`, fprocessErr.Error())
 				annotations = *function.Annotations
 			}
 
+			annotationArgs, annotationErr := parseMap(deployFlags.annotationOpts, "annotation")
+			if annotationErr != nil {
+				return fmt.Errorf("error parsing annotations: %v", labelErr)
+			}
+
+			allAnnotations := mergeMap(annotations, annotationArgs)
+
 			tagMode := schema.DefaultFormat
 			var sha string
 			if strings.ToLower(tag) == "sha" {
@@ -249,7 +261,7 @@ Error: %s`, fprocessErr.Error())
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
 			}
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, annotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
+			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, allAnnotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -315,13 +327,18 @@ func deployImage(
 		return statusCode, fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
+	annotationMap, annotationErr := parseMap(deployFlags.annotationOpts, "annotation")
+
+	if annotationErr != nil {
+		return statusCode, fmt.Errorf("error parsing annotations: %v", annotationErr)
+	}
+
 	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	var noAnnotations map[string]string = nil
 	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
 		image, registryAuth, language,
 		deployFlags.replace, envvars, network,
 		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, noAnnotations, functionResourceRequest1, readOnlyRFS, tlsInsecure)
+		labelMap, annotationMap, functionResourceRequest1, readOnlyRFS, tlsInsecure)
 
 	return statusCode, nil
 }
