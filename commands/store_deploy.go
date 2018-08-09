@@ -24,7 +24,7 @@ func init() {
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 	storeDeployCmd.Flags().BoolVarP(&storeDeployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
-
+	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -37,7 +37,8 @@ var storeDeployCmd = &cobra.Command{
                         [--gateway GATEWAY_URL]
                         [--network NETWORK_NAME]
                         [--env ENVVAR=VALUE ...]
-                        [--label LABEL=VALUE ...]
+						[--label LABEL=VALUE ...]
+						[--annotation ANNOTATION=VALUE ...]
                         [--replace=false]
                         [--update=true]
                         [--constraint PLACEMENT_CONSTRAINT ...]
@@ -82,6 +83,13 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		for k, v := range item.Labels {
 			label := fmt.Sprintf("%s=%s", k, v)
 			storeDeployFlags.labelOpts = append(storeDeployFlags.labelOpts, label)
+		}
+	}
+
+	if item.Annotations != nil {
+		for k, v := range item.Annotations {
+			annotation := fmt.Sprintf("%s=%s", k, v)
+			storeDeployFlags.annotationOpts = append(storeDeployFlags.annotationOpts, annotation)
 		}
 	}
 
