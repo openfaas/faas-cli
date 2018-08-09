@@ -10,5 +10,6 @@ echo Building openfaas/faas-cli:$eTAG
 
 docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy -t openfaas/faas-cli:$eTAG . && \
  docker create --name faas-cli openfaas/faas-cli:$eTAG && \
- docker cp faas-cli:/root/faas-cli . && \
+ docker cp faas-cli:/usr/bin/faas-cli . && \
  docker rm -f faas-cli
+
