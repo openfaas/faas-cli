@@ -32,7 +32,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeployFunction(
+		DeployFunction(&DeployFunctionSpec{
 			"fproces",
 			s.URL,
 			"function",
@@ -50,7 +50,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 			FunctionResourceRequest{},
 			false,
 			tlsNoVerify,
-		)
+		})
 	})
 
 	r := regexp.MustCompile(deployTest.expectedOutput)
@@ -94,7 +94,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 	url := "127.0.0.1:8080"
 
 	stdout := test.CaptureStdout(func() {
-		DeployFunction(
+		DeployFunction(&DeployFunctionSpec{
 			"fprocess",
 			url,
 			"function",
@@ -112,7 +112,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 			FunctionResourceRequest{},
 			false,
 			tlsNoVerify,
-		)
+		})
 	})
 
 	expectedErrMsg := "first path segment in URL cannot contain colon"

@@ -225,7 +225,7 @@ Error: %s`, fprocessErr.Error())
 				}
 			}
 
-			functionResourceRequest1 := proxy.FunctionResourceRequest{
+			functionResourceRequest := proxy.FunctionResourceRequest{
 				Limits:   function.Limits,
 				Requests: function.Requests,
 			}
@@ -261,7 +261,28 @@ Error: %s`, fprocessErr.Error())
 				function.ReadOnlyRootFilesystem = deployFlags.readOnlyRootFilesystem
 			}
 
-			statusCode := proxy.DeployFunction(function.FProcess, services.Provider.GatewayURL, function.Name, function.Image, function.RegistryAuth, function.Language, deployFlags.replace, allEnvironment, services.Provider.Network, functionConstraints, deployFlags.update, deployFlags.secrets, allLabels, allAnnotations, functionResourceRequest1, function.ReadOnlyRootFilesystem, tlsInsecure)
+			deploySpec := &proxy.DeployFunctionSpec{
+				FProcess:                function.FProcess,
+				Gateway:                 services.Provider.GatewayURL,
+				FunctionName:            function.Name,
+				Image:                   function.Image,
+				RegistryAuth:            function.RegistryAuth,
+				Language:                function.Language,
+				Replace:                 deployFlags.replace,
+				EnvVars:                 allEnvironment,
+				Network:                 services.Provider.Network,
+				Constraints:             functionConstraints,
+				Update:                  deployFlags.update,
+				Secrets:                 deployFlags.secrets,
+				Labels:                  allLabels,
+				Annotations:             allAnnotations,
+				FunctionResourceRequest: functionResourceRequest,
+				ReadOnlyRootFilesystem:  function.ReadOnlyRootFilesystem,
+				TLSInsecure:             tlsInsecure,
+			}
+
+			statusCode := proxy.DeployFunction(deploySpec)
+
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -333,12 +354,27 @@ func deployImage(
 		return statusCode, fmt.Errorf("error parsing annotations: %v", annotationErr)
 	}
 
-	functionResourceRequest1 := proxy.FunctionResourceRequest{}
-	statusCode = proxy.DeployFunction(fprocess, gateway, functionName,
-		image, registryAuth, language,
-		deployFlags.replace, envvars, network,
-		deployFlags.constraints, deployFlags.update, deployFlags.secrets,
-		labelMap, annotationMap, functionResourceRequest1, readOnlyRFS, tlsInsecure)
+	deploySpec := &proxy.DeployFunctionSpec{
+		FProcess:                fprocess,
+		Gateway:                 gateway,
+		FunctionName:            functionName,
+		Image:                   image,
+		RegistryAuth:            registryAuth,
+		Language:                language,
+		Replace:                 deployFlags.replace,
+		EnvVars:                 envvars,
+		Network:                 network,
+		Constraints:             deployFlags.constraints,
+		Update:                  deployFlags.update,
+		Secrets:                 deployFlags.secrets,
+		Labels:                  labelMap,
+		Annotations:             annotationMap,
+		FunctionResourceRequest: proxy.FunctionResourceRequest{},
+		ReadOnlyRootFilesystem:  readOnlyRFS,
+		TLSInsecure:             tlsInsecure,
+	}
+
+	statusCode = proxy.DeployFunction(deploySpec)
 
 	return statusCode, nil
 }
