@@ -22,23 +22,40 @@ type FunctionResourceRequest struct {
 	Requests *stack.FunctionResources
 }
 
+// DeployFunctionSpec defines the spec used when deploying a function
+type DeployFunctionSpec struct {
+	FProcess                string
+	Gateway                 string
+	FunctionName            string
+	Image                   string
+	RegistryAuth            string
+	Language                string
+	Replace                 bool
+	EnvVars                 map[string]string
+	Network                 string
+	Constraints             []string
+	Update                  bool
+	Secrets                 []string
+	Labels                  map[string]string
+	Annotations             map[string]string
+	FunctionResourceRequest FunctionResourceRequest
+	ReadOnlyRootFilesystem  bool
+	TLSInsecure             bool
+}
+
 // DeployFunction first tries to deploy a function and if it exists will then attempt
 // a rolling update. Warnings are suppressed for the second API call (if required.)
-func DeployFunction(fprocess string, gateway string, functionName string, image string,
-	registryAuth string, language string, replace bool, envVars map[string]string,
-	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, annotations map[string]string,
-	functionResourceRequest1 FunctionResourceRequest, readOnlyRootFilesystem bool, tlsInsecure bool) int {
+func DeployFunction(spec *DeployFunctionSpec) int {
 
-	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", functionName)
+	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", spec.FunctionName)
 	warnInsecureGateway := true
-	statusCode, deployOutput := Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, update, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+	statusCode, deployOutput := Deploy(spec, spec.Update, warnInsecureGateway)
 
 	warnInsecureGateway = false
-	if update == true && statusCode == http.StatusNotFound {
+	if spec.Update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		statusCode, deployOutput = Deploy(fprocess, gateway, functionName, image, registryAuth, language, replace, envVars, network, constraints, false, secrets, labels, annotations, functionResourceRequest1, readOnlyRootFilesystem, warnInsecureGateway, tlsInsecure)
+		statusCode, deployOutput = Deploy(spec, false, warnInsecureGateway)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -48,55 +65,50 @@ func DeployFunction(fprocess string, gateway string, functionName string, image 
 }
 
 // Deploy a function to an OpenFaaS gateway over REST
-func Deploy(fprocess string, gateway string, functionName string, image string,
-	registryAuth string, language string, replace bool, envVars map[string]string,
-	network string, constraints []string, update bool, secrets []string,
-	labels map[string]string, annotations map[string]string,
-	functionResourceRequest1 FunctionResourceRequest,
-	readOnlyRootFilesystem bool, warnInsecureGateway bool, tlsInsecure bool) (int, string) {
+func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
 	var fprocessTemplate string
-	if len(fprocess) > 0 {
-		fprocessTemplate = fprocess
+	if len(spec.FProcess) > 0 {
+		fprocessTemplate = spec.FProcess
 	}
 
 	if warnInsecureGateway {
-		if (registryAuth != "") && !strings.HasPrefix(gateway, "https") {
+		if (spec.RegistryAuth != "") && !strings.HasPrefix(spec.Gateway, "https") {
 			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
 		}
 	}
 
-	gateway = strings.TrimRight(gateway, "/")
+	gateway := strings.TrimRight(spec.Gateway, "/")
 
-	if replace {
-		DeleteFunction(gateway, functionName)
+	if spec.Replace {
+		DeleteFunction(gateway, spec.FunctionName)
 	}
 
 	req := requests.CreateFunctionRequest{
 		EnvProcess:             fprocessTemplate,
-		Image:                  image,
-		RegistryAuth:           registryAuth,
-		Network:                network,
-		Service:                functionName,
-		EnvVars:                envVars,
-		Constraints:            constraints,
-		Secrets:                secrets,
-		Labels:                 &labels,
-		Annotations:            &annotations,
-		ReadOnlyRootFilesystem: readOnlyRootFilesystem,
+		Image:                  spec.Image,
+		RegistryAuth:           spec.RegistryAuth,
+		Network:                spec.Network,
+		Service:                spec.FunctionName,
+		EnvVars:                spec.EnvVars,
+		Constraints:            spec.Constraints,
+		Secrets:                spec.Secrets,
+		Labels:                 &spec.Labels,
+		Annotations:            &spec.Annotations,
+		ReadOnlyRootFilesystem: spec.ReadOnlyRootFilesystem,
 	}
 
 	hasLimits := false
 	req.Limits = &requests.FunctionResources{}
-	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.Memory) > 0 {
+	if spec.FunctionResourceRequest.Limits != nil && len(spec.FunctionResourceRequest.Limits.Memory) > 0 {
 		hasLimits = true
-		req.Limits.Memory = functionResourceRequest1.Limits.Memory
+		req.Limits.Memory = spec.FunctionResourceRequest.Limits.Memory
 	}
-	if functionResourceRequest1.Limits != nil && len(functionResourceRequest1.Limits.CPU) > 0 {
+	if spec.FunctionResourceRequest.Limits != nil && len(spec.FunctionResourceRequest.Limits.CPU) > 0 {
 		hasLimits = true
-		req.Limits.CPU = functionResourceRequest1.Limits.CPU
+		req.Limits.CPU = spec.FunctionResourceRequest.Limits.CPU
 	}
 	if !hasLimits {
 		req.Limits = nil
@@ -104,13 +116,13 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 
 	hasRequests := false
 	req.Requests = &requests.FunctionResources{}
-	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.Memory) > 0 {
+	if spec.FunctionResourceRequest.Requests != nil && len(spec.FunctionResourceRequest.Requests.Memory) > 0 {
 		hasRequests = true
-		req.Requests.Memory = functionResourceRequest1.Requests.Memory
+		req.Requests.Memory = spec.FunctionResourceRequest.Requests.Memory
 	}
-	if functionResourceRequest1.Requests != nil && len(functionResourceRequest1.Requests.CPU) > 0 {
+	if spec.FunctionResourceRequest.Requests != nil && len(spec.FunctionResourceRequest.Requests.CPU) > 0 {
 		hasRequests = true
-		req.Requests.CPU = functionResourceRequest1.Requests.CPU
+		req.Requests.CPU = spec.FunctionResourceRequest.Requests.CPU
 	}
 
 	if !hasRequests {
@@ -122,7 +134,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	var request *http.Request
 
 	timeout := 60 * time.Second
-	client := MakeHTTPClient(&timeout, tlsInsecure)
+	client := MakeHTTPClient(&timeout, spec.TLSInsecure)
 
 	method := http.MethodPost
 	// "application/json"
@@ -153,7 +165,7 @@ func Deploy(fprocess string, gateway string, functionName string, image string,
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		deployOutput += fmt.Sprintf("Deployed. %s.\n", res.Status)
 
-		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, functionName)
+		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, spec.FunctionName)
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
 		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
