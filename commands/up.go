@@ -1,4 +1,4 @@
-// Copyright (c) Alex Ellis 2017. All rights reserved.
+// Copyright (c) OpenFaaS Author(s) 2018. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 package commands
@@ -11,13 +11,13 @@ import (
 )
 
 var (
-	push bool
+	skipPush bool
 )
 
 func init() {
 
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
-	upFlagset.BoolVar(&push, "push", false, "Push function to remote registry")
+	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upCmd.Flags().AddFlagSet(upFlagset)
 
 	build, _, _ := faasCmd.Find([]string{"build"})
@@ -34,10 +34,18 @@ func init() {
 
 // upCmd is a wrapper to the build, push and deploy commands
 var upCmd = &cobra.Command{
-	Use:     `up -f [YAML_FILE] [--push]`,
-	Short:   "Builds, pushes and deploys OpenFaaS function containers",
-	Long:    `Build, Push, Deploy`,
-	Example: `  faas-cli up`,
+	Use:   `up -f [YAML_FILE] [--skip-push] [flags from build, push, deploy]`,
+	Short: "Builds, pushes and deploys OpenFaaS function containers",
+	Long: `Build, Push, and Deploy OpenFaaS function containers either via the
+supplied YAML config using the "--yaml" flag (which may contain multiple function
+definitions), or directly via flags. 
+
+The push step may be skipped by setting the --skip-push flag.
+
+Note: All flags from the build, push and deploy flags are valid and can be combined,
+see the --help text for those commands for details.`,
+	Example: `  faas-cli up -f myfn.yaml
+faas-cli up --filter "*gif*" --secret dockerhuborg`,
 	PreRunE: preRunUp,
 	RunE:    upHandler,
 }
@@ -57,10 +65,11 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	fmt.Println()
-	if push {
+	if !skipPush {
 		if err := runPush(cmd, args); err != nil {
 			return err
 		}
+		fmt.Println()
 	}
 	if err := runDeploy(cmd, args); err != nil {
 		return err
