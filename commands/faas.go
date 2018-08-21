@@ -30,6 +30,7 @@ var (
 var (
 	fprocess     string
 	functionName string
+	handlerDir   string
 	network      string
 	gateway      string
 	handler      string

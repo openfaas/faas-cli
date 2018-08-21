@@ -4,7 +4,6 @@
 package commands
 
 import (
-	"fmt"
 	"os"
 	"reflect"
 	"regexp"
@@ -38,6 +37,7 @@ type NewFunctionTest struct {
 	prefix        string
 	funcName      string
 	funcLang      string
+	dirName       string
 	expectedImage string
 	expectedMsg   string
 }
@@ -81,6 +81,15 @@ var NewFunctionTests = []NewFunctionTest{
 		expectedMsg:   SuccessMsg,
 	},
 	{
+		title:         "long-name-with-hyphens",
+		funcName:      "long-name-with-hyphens",
+		dirName:       "customname",
+		prefix:        " ",
+		funcLang:      "dockerfile",
+		expectedImage: "long-name-with-hyphens:latest",
+		expectedMsg:   SuccessMsg,
+	},
+	{
 		title:       "invalid_1",
 		funcName:    "new-test-invalid-1",
 		funcLang:    "dockerfilee",
@@ -109,6 +118,7 @@ var NewFunctionTests = []NewFunctionTest{
 func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	funcName := nft.funcName
 	funcLang := nft.funcLang
+	dirName := nft.dirName
 	imagePrefix := nft.prefix
 	var funcYAML string
 	funcYAML = funcName + ".yml"
@@ -119,24 +129,28 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		"--gateway=" + defaultGateway,
 		"--prefix=" + imagePrefix,
 	}
+	if len(dirName) != 0 {
+		cmdParameters = append(cmdParameters, "--handler="+dirName)
+	} else {
+		dirName = funcName
+	}
 	if len(funcName) != 0 {
 		cmdParameters = append(cmdParameters, funcName)
 	}
 
 	faasCmd.SetArgs(cmdParameters)
-	fmt.Println("Executing command")
 	execErr := faasCmd.Execute()
 
 	if nft.expectedMsg == SuccessMsg {
 
 		// Make sure that the folder and file was created:
-		if _, err := os.Stat("./" + funcName); os.IsNotExist(err) {
-			t.Fatalf("%s/ directory was not created", funcName)
+		if _, err := os.Stat("./" + dirName); os.IsNotExist(err) {
+			t.Fatalf("%s/ directory was not created", dirName)
 		}
 
 		// Check that the Dockerfile was created
 		if funcLang == "Dockerfile" || funcLang == "dockerfile" {
-			if _, err := os.Stat("./" + funcName + "/Dockerfile"); os.IsNotExist(err) {
+			if _, err := os.Stat("./" + dirName + "/Dockerfile"); os.IsNotExist(err) {
 				t.Fatalf("Dockerfile language should create a Dockerfile for you: %s", funcName)
 			}
 		}
@@ -159,7 +173,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 
 		testServices.Functions = make(map[string]stack.Function)
-		testServices.Functions[funcName] = stack.Function{Language: funcLang, Image: nft.expectedImage, Handler: "./" + funcName}
+		testServices.Functions[funcName] = stack.Function{Language: funcLang, Image: nft.expectedImage, Handler: "./" + dirName}
 		if !reflect.DeepEqual(services.Functions[funcName], testServices.Functions[funcName]) {
 			t.Fatalf("YAML `functions` section was not created correctly for file %s, got %v", funcYAML, services.Functions[funcName])
 		}
@@ -323,8 +337,12 @@ func tearDownNewFunction(t *testing.T, functionName string) {
 			t.Log(err)
 		}
 	}
-	if _, err := os.Stat(functionName); err == nil {
-		if err := os.RemoveAll(functionName); err != nil {
+	hDir := handlerDir
+	if len(hDir) == 0 {
+		hDir = functionName
+	}
+	if _, err := os.Stat(hDir); err == nil {
+		if err := os.RemoveAll(hDir); err != nil {
 			t.Log(err)
 		}
 	}
@@ -334,4 +352,5 @@ func tearDownNewFunction(t *testing.T, functionName string) {
 			t.Log(err)
 		}
 	}
+	handlerDir = ""
 }
