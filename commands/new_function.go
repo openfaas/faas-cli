@@ -27,6 +27,7 @@ var (
 func init() {
 	newFunctionCmd.Flags().StringVar(&language, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
+	newFunctionCmd.Flags().StringVar(&handlerDir, "handler", "", "directory the handler will be written to")
 	newFunctionCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
@@ -140,23 +141,27 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if _, err := os.Stat(functionName); err == nil {
-		return fmt.Errorf("folder: %s already exists", functionName)
+	if len(handlerDir) == 0 {
+		handlerDir = functionName
 	}
 
-	if err := os.Mkdir(functionName, 0700); err != nil {
-		return fmt.Errorf("folder: could not create %s : %s", functionName, err)
+	if _, err := os.Stat(handlerDir); err == nil {
+		return fmt.Errorf("folder: %s already exists", handlerDir)
 	}
-	fmt.Printf("Folder: %s created.\n", functionName)
+
+	if err := os.Mkdir(handlerDir, 0700); err != nil {
+		return fmt.Errorf("folder: could not create %s : %s", handlerDir, err)
+	}
+	fmt.Printf("Folder: %s created.\n", handlerDir)
 
 	if err := updateGitignore(); err != nil {
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
 	// Create function directory from template.
-	builder.CopyFiles(filepath.Join("template", language, "function"), functionName)
+	builder.CopyFiles(filepath.Join("template", language, "function"), handlerDir)
 	printFiglet()
-	fmt.Printf("\nFunction created in folder: %s\n", functionName)
+	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
 	// Define template of stack file.
 	const stackTmpl = `{{ if .Provider.Name -}}
@@ -169,7 +174,7 @@ functions:
 {{- range $name, $function := .Functions }}
   {{ $name }}:
     lang: {{ $function.Language }}
-    handler: ./{{ $name }}
+    handler: {{ $function.Handler }}
     image: {{ $function.Image }}
 {{- end }}
 `
@@ -183,6 +188,7 @@ functions:
 
 	function := stack.Function{
 		Name:     functionName,
+		Handler:  "./" + handlerDir,
 		Language: language,
 		Image:    imageName,
 	}
