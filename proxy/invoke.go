@@ -126,7 +126,7 @@ func parseHeaders(headers []string) (map[string]string, error) {
 	headerMap := make(map[string]string)
 
 	for _, header := range headers {
-		headerValues := strings.Split(header, "=")
+		headerValues := strings.SplitN(header, "=", 2)
 		if len(headerValues) != 2 {
 			return headerMap, fmt.Errorf("the --header or -H flag must take the form of key=value")
 		}
