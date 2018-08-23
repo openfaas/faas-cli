@@ -110,3 +110,55 @@ func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
 		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
 	}
 }
+
+func Test_ParseHeaders(t *testing.T) {
+	testcases := []struct {
+		Name   string
+		Input  []string
+		Output map[string]string
+	}{
+		{
+			Name:  "Header with key-value pair as value",
+			Input: []string{`X-Hub-Signature="sha1="shashashaebaf43""`, "X-Hub-Signature-1=sha1=shashashaebaf43"},
+			Output: map[string]string{"X-Hub-Signature": `"sha1="shashashaebaf43""`,
+				"X-Hub-Signature-1": "sha1=shashashaebaf43"},
+		},
+		{
+			Name:   "Header with normal values",
+			Input:  []string{`X-Hub-Signature="shashashaebaf43"`, "X-Hub-Signature-1=shashashaebaf43"},
+			Output: map[string]string{"X-Hub-Signature": `"shashashaebaf43"`, "X-Hub-Signature-1": "shashashaebaf43"},
+		},
+		{
+			Name:   "Header with base64 string value",
+			Input:  []string{`X-Hub-Signature="shashashaebaf43="`},
+			Output: map[string]string{"X-Hub-Signature": `"shashashaebaf43="`},
+		},
+	}
+
+	for _, testcase := range testcases {
+		output, err := parseHeaders(testcase.Input)
+
+		if err != nil {
+			t.Fatalf("Testcase %s failed : %s", testcase.Name, err.Error())
+		}
+
+		if err == nil && !compareMaps(testcase.Output, output) {
+			t.Fatalf("Testcase %s failed. Want: %s, Got: %s", testcase.Name, testcase.Output, output)
+		}
+	}
+}
+
+func compareMaps(mapA map[string]string, mapB map[string]string) bool {
+	for key, valueA := range mapA {
+		valueB, exists := mapB[key]
+
+		if !exists {
+			return false
+		}
+
+		if exists && valueA != valueB {
+			return false
+		}
+	}
+	return true
+}
