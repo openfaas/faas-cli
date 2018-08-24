@@ -25,5 +25,8 @@ local-goimports:
 test-unit:
 	go test $(shell go list ./... | grep -v /vendor/ | grep -v /template/ | grep -v build) -cover
 
-ci-armhf:
+ci-armhf-push:
+	(docker push openfaas/faas-cli:$(TAG)-armhf)
+ci-armhf-build:
 	(./build.sh $(TAG)-armhf)
+
