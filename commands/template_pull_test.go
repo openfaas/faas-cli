@@ -68,7 +68,6 @@ func Test_templatePull(t *testing.T) {
 		faasCmd.SetArgs([]string{"template", "pull", "user@host.xz:openfaas/faas-cli.git"})
 		faasCmd.SetOutput(&buf)
 		err := faasCmd.Execute()
-
 		if !strings.Contains(err.Error(), "The repository URL must be a valid git repo uri") {
 			t.Fatal("Output does not contain the required string", err.Error())
 		}
@@ -124,6 +123,46 @@ func Test_repositoryUrlRemoteRegExp(t *testing.T) {
 			}
 
 		})
+	}
+}
+
+func Test_templatePullPriority(t *testing.T) {
+	templateURLs := []struct {
+		name      string
+		envURL    string
+		cliURL    string
+		resultURL string
+	}{
+		{
+			name:      "Use Default URL when none provided",
+			resultURL: DefaultTemplateRepository,
+		},
+		{
+			name:      "Use Env URL when only env provided",
+			envURL:    "https://github.com/user/project.git",
+			resultURL: "https://github.com/user/project.git",
+		},
+		{
+			name:      "Use Cli URL when only cli provided",
+			cliURL:    "git@github.com:user/project.git",
+			resultURL: "git@github.com:user/project.git",
+		},
+		{
+			name:      "Use Cli URL when both cli and env provided",
+			cliURL:    "git@github.com:user/project.git",
+			envURL:    "https://github.com/user/project.git",
+			resultURL: "git@github.com:user/project.git",
+		},
+	}
+	for _, scenario := range templateURLs {
+		t.Run(fmt.Sprintf("%s", scenario.name), func(t *testing.T) {
+			repository = getTemplateURL(scenario.cliURL, scenario.envURL, DefaultTemplateRepository)
+			if repository != scenario.resultURL {
+				t.Errorf("result URL,  want %s got %s", scenario.resultURL, repository)
+			}
+
+		})
+
 	}
 }
 

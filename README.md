@@ -108,6 +108,11 @@ Advanced commands:
 
 * `faas-cli template pull` - pull in templates from a remote GitHub repository [Detailed Documentation](guide/TEMPLATE.md)
 
+The default template URL of `https://github.com/openfaas/templates.git` can be overriden in two places including an environmental variable
+
+* 1st priority CLI input
+* 2nd priority `OPENFAAS_TEMPLATE_URL` environmental variable
+
 Help for all of the commands supported by the CLI can be found by running:
 
 * `faas-cli help` or `faas-cli [command] --help`
