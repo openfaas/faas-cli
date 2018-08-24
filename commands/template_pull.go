@@ -66,9 +66,20 @@ Currently supported verbs: %v`, supportedVerbs)
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) {
-	repository := DefaultTemplateRepository
+	repository := ""
 	if len(args) > 1 {
 		repository = args[1]
+	}
+
+	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
+
+	if _, err := os.Stat(repository); err != nil {
+		var validURL = regexp.MustCompile(gitRemoteRepoRegex)
+		if !validURL.MatchString(repository) {
+			fmt.Println("The repository URL must be a valid git repo uri")
+
+			os.Exit(1)
+		}
 	}
 
 	fmt.Println("Fetch templates from repository: " + repository)

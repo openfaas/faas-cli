@@ -8,7 +8,10 @@ import (
 	"strings"
 )
 
-const openFaaSURLEnvironment = "OPENFAAS_URL"
+const (
+	openFaaSURLEnvironment = "OPENFAAS_URL"
+	templateURLEnvironment = "OPENFAAS_TEMPLATE_URL"
+)
 
 func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) string {
 	var gatewayURL string
@@ -29,4 +32,18 @@ func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) stri
 	}
 
 	return gatewayURL
+}
+
+func getTemplateURL(argumentURL, environmentURL, defaultURL string) string {
+	var templateURL string
+
+	if len(argumentURL) > 0 && argumentURL != defaultURL {
+		templateURL = argumentURL
+	} else if len(environmentURL) > 0 {
+		templateURL = environmentURL
+	} else {
+		templateURL = defaultURL
+	}
+
+	return templateURL
 }

@@ -43,17 +43,25 @@ template
 In order to build functions using 3rd party templates, you need to add 3rd templates before the build step, with the following command:
 
 ```bash
-./faas-cli template pull https://github.com/itscaro/openfaas-template-php.git
+faas-cli template pull https://github.com/openfaas-incubator/golang-http-template
 ```
 
 If you need to update the downloaded repository, just add the flag `--overwrite` to the download command:
 
 ```bash
-./faas-cli template pull https://github.com/itscaro/openfaas-template-php.git --override
+faas-cli template pull https://github.com/openfaas-incubator/golang-http-template --override
 ```
+
+You can specify the template URL with `OPENFAAS_TEMPLATE_URL` environmental variable. CLI overrides the environmental variable.
+
+```bash
+export OPENFAAS_TEMPLATE_URL="https://github.com/openfaas-incubator/golang-http-template"
+faas-cli template pull
+```
+
 
 ## List locally available languages
 
 ```bash
-./faas-cli new --list
+faas-cli new --list
 ```
