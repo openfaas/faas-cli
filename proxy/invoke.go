@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"os"
 
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -24,12 +23,8 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	reader := bytes.NewReader(*bytesIn)
 
 	var timeout *time.Duration
-	client := MakeHTTPClient(timeout, tlsInsecure)
-	tr := &http.Transport{
-		DisableKeepAlives: false,
-		TLSClientConfig:   &tls.Config{InsecureSkipVerify: tlsInsecure},
-	}
-	client.Transport = tr
+	disableKeepAlives := false
+	client := MakeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, &disableKeepAlives)
 
 	qs, qsErr := buildQueryString(query)
 	if qsErr != nil {
