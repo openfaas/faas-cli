@@ -61,7 +61,9 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		req.Header.Add(name, value)
 	}
 
-	SetAuth(req, gateway)
+	// Removed by AE - the system-level basic auth secrets should not be transmitted
+	// to functions. Functions should implement their own auth.
+	// SetAuth(req, gateway)
 
 	res, err := client.Do(req)
 
