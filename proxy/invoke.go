@@ -144,7 +144,9 @@ func parseHeaders(headers []string) (map[string]string, error) {
 
 // validateMethod validates the HTTP request method
 func validateHTTPMethod(httpMethod string) error {
-	var allowedMethods = []string{http.MethodGet, http.MethodPost}
+	var allowedMethods = []string{
+		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
+	}
 	helpString := strings.Join(allowedMethods, "/")
 
 	if !contains(allowedMethods, httpMethod) {
