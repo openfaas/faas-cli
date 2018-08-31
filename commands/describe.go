@@ -62,6 +62,19 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	//To get correct value for invocation count from /system/functions endpoint
+	functionList, err := proxy.ListFunctions(gatewayAddress, tlsInsecure)
+	if err != nil {
+		return err
+	}
+
+	var invocationCount float64
+	for _, fn := range functionList {
+		if fn.Name == function.Name {
+			invocationCount = fn.InvocationCount
+		}
+	}
+
 	var status string
 	if function.AvailableReplicas > 0 {
 		status = "Ready"
@@ -73,7 +86,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	fmt.Printf("%s:\t\t\t%s\n", "Status", status)
 	fmt.Printf("%s:\t\t%d\n", "Replicas", function.Replicas)
 	fmt.Printf("%s:\t%d\n", "Available replicas", function.AvailableReplicas)
-	fmt.Printf("%s:\t\t%v\n", "Invocations", function.InvocationCount)
+	fmt.Printf("%s:\t\t%v\n", "Invocations", invocationCount)
 	fmt.Printf("%s:\t\t\t%s\n", "Image", function.Image)
 	fmt.Printf("%s:\t%s\n", "Function process", function.EnvProcess)
 	fmt.Printf("%s:\t\t\t%s\n", "URL", getFunctionURL(gatewayAddress, functionName))
