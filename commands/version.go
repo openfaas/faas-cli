@@ -7,12 +7,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"encoding/json"
-	"io/ioutil"
 	"os"
-	"time"
-
-	"net/http"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/proxy"
@@ -75,32 +70,9 @@ func printServerVersions() {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	timeout := 5 * time.Second
-	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
-
-	infoEndPoint := gatewayAddress + "/system/info"
-	req, err := http.NewRequest("GET", infoEndPoint, nil)
+	info, err := proxy.GetSystemInfo(gatewayAddress, tlsInsecure)
 	if err != nil {
-		fmt.Printf("Warning could create request for %s %s\n", infoEndPoint, err.Error())
-		return
-	}
-
-	response, err := client.Do(req)
-	if err != nil {
-		return
-	}
-
-	defer func() {
-		if response.Body != nil {
-			response.Body.Close()
-		}
-	}()
-
-	info := make(map[string]interface{})
-	upstreamBody, _ := ioutil.ReadAll(response.Body)
-	err = json.Unmarshal(upstreamBody, &info)
-	if err != nil {
-		fmt.Printf("Error during unmarshal of body %s %s\n", upstreamBody, err.Error())
+		fmt.Printf("Error while making request to /system/info: %s\n", err.Error())
 		return
 	}
 
