@@ -17,9 +17,9 @@ func GetSystemInfo(gateway string, tlsInsecure bool) (map[string]interface{}, er
 	timeout := 5 * time.Second
 
 	client := MakeHTTPClient(&timeout, tlsInsecure)
-	req, err := http.NewRequest("GET", infoEndPoint, nil)
+	req, err := http.NewRequest(http.MethodGet, infoEndPoint, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("invalid HTTP method or invalid URL")
 	}
 
 	response, err := client.Do(req)
