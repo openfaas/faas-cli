@@ -72,7 +72,6 @@ func printServerVersions() {
 
 	info, err := proxy.GetSystemInfo(gatewayAddress, tlsInsecure)
 	if err != nil {
-		fmt.Printf("Error while making request to /system/info: %s\n", err.Error())
 		return
 	}
 
