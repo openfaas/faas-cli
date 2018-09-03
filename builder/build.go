@@ -6,6 +6,7 @@ package builder
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -170,10 +171,14 @@ func createBuildTemplate(functionName string, handler string, language string) s
 			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
 		default:
-			CopyFiles(
+			copyErr := CopyFiles(
 				filepath.Clean(handler+"/"+info.Name()),
 				filepath.Clean(functionPath+"/"+info.Name()),
 			)
+
+			if copyErr != nil {
+				log.Fatal(copyErr)
+			}
 		}
 	}
 
@@ -208,10 +213,14 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
 		default:
-			CopyFiles(
+			copyErr := CopyFiles(
 				filepath.Clean(handler+"/"+info.Name()),
 				filepath.Clean(tempPath+"/"+info.Name()),
 			)
+
+			if copyErr != nil {
+				log.Fatal(copyErr)
+			}
 		}
 	}
 
