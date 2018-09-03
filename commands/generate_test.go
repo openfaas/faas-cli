@@ -13,7 +13,7 @@ import (
 var generateTestcases = []struct {
 	Name       string
 	Input      string
-	Output     string
+	Output     []string
 	Format     schema.BuildFormat
 	APIVersion string
 	Namespace  string
@@ -32,7 +32,7 @@ functions:
    lang: python
    handler: ./sample/url-ping
    image: alexellis/faas-url-ping:0.2`,
-		Output: `---
+		Output: []string{`---
 apiVersion: openfaas.com/v1alpha2
 kind: Function
 metadata:
@@ -41,7 +41,7 @@ metadata:
 spec:
   name: url-ping
   image: alexellis/faas-url-ping:0.2
-`,
+`},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1alpha2",
 		Namespace:  "openfaas-fn",
@@ -61,7 +61,7 @@ functions:
   lang: python
   handler: ./sample/url-ping
   image: alexellis/faas-url-ping:0.2`,
-		Output: `---
+		Output: []string{`---
 apiVersion: openfaas.com/v1alpha2
 kind: Function
 metadata:
@@ -69,7 +69,7 @@ metadata:
 spec:
   name: url-ping
   image: alexellis/faas-url-ping:0.2
-`,
+`},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1alpha2",
 		Namespace:  "",
@@ -88,7 +88,7 @@ functions:
   lang: python
   handler: ./sample/url-ping
   image: alexellis/faas-url-ping:0.2`,
-		Output: `---
+		Output: []string{`---
 apiVersion: openfaas.com/v1alpha2
 kind: Function
 metadata:
@@ -97,7 +97,7 @@ metadata:
 spec:
   name: url-ping
   image: alexellis/faas-url-ping:0.2-master-6bgf36qd
-`,
+`},
 		Format:     schema.BranchAndSHAFormat,
 		APIVersion: "openfaas.com/v1alpha2",
 		Namespace:  "openfaas-function",
@@ -122,7 +122,7 @@ functions:
   image: astronaut-finder
   environment:
    write_debug: true`,
-		Output: `---
+		Output: []string{`---
 apiVersion: openfaas.com/v2alpha2
 kind: Function
 metadata:
@@ -142,7 +142,27 @@ spec:
   image: astronaut-finder:latest
   environment:
     write_debug: "true"
-`,
+`, `---
+apiVersion: openfaas.com/v2alpha2
+kind: Function
+metadata:
+  name: astronaut-finder
+  namespace: openfaas-fn
+spec:
+  name: astronaut-finder
+  image: astronaut-finder:latest
+  environment:
+    write_debug: "true"
+---
+apiVersion: openfaas.com/v2alpha2
+kind: Function
+metadata:
+  name: url-ping
+  namespace: openfaas-fn
+spec:
+  name: url-ping
+  image: alexellis/faas-url-ping:0.2
+`},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v2alpha2",
 		Namespace:  "openfaas-fn",
@@ -170,9 +190,18 @@ func Test_generateCRDYAML(t *testing.T) {
 			t.Fatalf("%s failed: error while generating CRD YAML.", testcase.Name)
 		}
 
-		if generatedYAML != testcase.Output {
+		if !stringInSlice(generatedYAML, testcase.Output) {
 			t.Fatalf("%s failed: ouput is not as expected: %s", testcase.Name, generatedYAML)
 		}
 	}
 
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
