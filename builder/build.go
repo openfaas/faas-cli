@@ -166,8 +166,8 @@ func createBuildTemplate(functionName string, handler string, language string) s
 
 	for _, info := range infos {
 		switch info.Name() {
-		case "build":
-			fmt.Println("Skipping \"build\" folder")
+		case "build", "template":
+			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
 		default:
 			CopyFiles(
@@ -204,8 +204,8 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 
 	for _, info := range infos {
 		switch info.Name() {
-		case "build":
-			fmt.Println("Skipping \"build\" folder")
+		case "build", "template":
+			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
 		default:
 			CopyFiles(
