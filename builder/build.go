@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/openfaas/faas-cli/schema"
@@ -169,7 +170,10 @@ func createBuildTemplate(functionName string, handler string, language string) s
 			fmt.Println("Skipping \"build\" folder")
 			continue
 		default:
-			CopyFiles(info.Name(), functionPath)
+			CopyFiles(
+				filepath.Clean(handler+"/"+info.Name()),
+				filepath.Clean(functionPath+"/"+info.Name()),
+			)
 		}
 	}
 
@@ -204,7 +208,10 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 			fmt.Println("Skipping \"build\" folder")
 			continue
 		default:
-			CopyFiles(info.Name(), tempPath)
+			CopyFiles(
+				filepath.Clean(handler+"/"+info.Name()),
+				filepath.Clean(tempPath+"/"+info.Name()),
+			)
 		}
 	}
 
