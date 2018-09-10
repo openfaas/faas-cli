@@ -11,13 +11,15 @@ import (
 )
 
 var (
-	skipPush bool
+	skipPush   bool
+	skipDeploy bool
 )
 
 func init() {
 
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
+	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
 	upCmd.Flags().AddFlagSet(upFlagset)
 
 	build, _, _ := faasCmd.Find([]string{"build"})
@@ -34,13 +36,14 @@ func init() {
 
 // upCmd is a wrapper to the build, push and deploy commands
 var upCmd = &cobra.Command{
-	Use:   `up -f [YAML_FILE] [--skip-push] [flags from build, push, deploy]`,
+	Use:   `up -f [YAML_FILE] [--skip-push] [--skip-deploy] [flags from build, push, deploy]`,
 	Short: "Builds, pushes and deploys OpenFaaS function containers",
 	Long: `Build, Push, and Deploy OpenFaaS function containers either via the
 supplied YAML config using the "--yaml" flag (which may contain multiple function
 definitions), or directly via flags. 
 
-The push step may be skipped by setting the --skip-push flag.
+The push step may be skipped by setting the --skip-push flag
+and the deploy step with --skip-deploy.
 
 Note: All flags from the build, push and deploy flags are valid and can be combined,
 see the --help text for those commands for details.`,
@@ -71,8 +74,10 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println()
 	}
-	if err := runDeploy(cmd, args); err != nil {
-		return err
+	if !skipDeploy {
+		if err := runDeploy(cmd, args); err != nil {
+			return err
+		}
 	}
 	return nil
 }
