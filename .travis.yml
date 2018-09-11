@@ -41,6 +41,7 @@ after_success:
 
 before_deploy:
   - make build_redist
+  - make test-templating
   - ./ci/hashgen.sh
 
 deploy:
