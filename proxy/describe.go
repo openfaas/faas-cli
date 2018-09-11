@@ -8,7 +8,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"net/url"
+	"path"
 	"time"
 
 	"github.com/openfaas/faas/gateway/requests"
@@ -18,11 +19,16 @@ import (
 func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (requests.Function, error) {
 	var result requests.Function
 
-	gateway = strings.TrimRight(gateway, "/")
 	timeout := 60 * time.Second
 	client := MakeHTTPClient(&timeout, tlsInsecure)
 
-	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/function/"+functionName, nil)
+	gatewayURL, err := url.Parse(gateway)
+	if err != nil {
+		return result, fmt.Errorf("invalid gateway URL: %s", gateway)
+	}
+	gatewayURL.Path = path.Join(gatewayURL.Path, "/system/function/", functionName)
+
+	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL.String(), nil)
 	if err != nil {
 		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}

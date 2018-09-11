@@ -6,9 +6,12 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 
 	"github.com/spf13/cobra"
@@ -68,39 +71,53 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	var invocationCount float64
+	var invocationCount int
 	for _, fn := range functionList {
 		if fn.Name == function.Name {
-			invocationCount = fn.InvocationCount
+			invocationCount = int(fn.InvocationCount)
+			break
 		}
 	}
 
-	var status string
+	var status = "Not Ready"
 	if function.AvailableReplicas > 0 {
 		status = "Ready"
-	} else {
-		status = "Not Ready"
 	}
 
-	fmt.Printf("%s:\t\t\t%s\n", "Name", function.Name)
-	fmt.Printf("%s:\t\t\t%s\n", "Status", status)
-	fmt.Printf("%s:\t\t%d\n", "Replicas", function.Replicas)
-	fmt.Printf("%s:\t%d\n", "Available replicas", function.AvailableReplicas)
-	fmt.Printf("%s:\t\t%v\n", "Invocations", invocationCount)
-	fmt.Printf("%s:\t\t\t%s\n", "Image", function.Image)
-	fmt.Printf("%s:\t%s\n", "Function process", function.EnvProcess)
-	fmt.Printf("%s:\t\t\t%s\n", "URL", getFunctionURL(gatewayAddress, functionName))
-	fmt.Printf("%s:\t\t%s\n", "Async URL", getFunctionAsyncURL(gatewayAddress, functionName))
+	url, asyncURL := getFunctionURLs(gatewayAddress, functionName)
+
+	funcDesc := schema.FunctionDescription{
+		Name:              function.Name,
+		Status:            status,
+		Replicas:          int(function.Replicas),
+		AvailableReplicas: int(function.AvailableReplicas),
+		InvocationCount:   int(invocationCount),
+		Image:             function.Image,
+		EnvProcess:        function.EnvProcess,
+		URL:               url,
+		AsyncURL:          asyncURL,
+	}
+
+	printFunctionDescription(funcDesc)
 
 	return nil
 }
 
-func getFunctionURL(gateway string, functionName string) string {
+func getFunctionURLs(gateway string, functionName string) (string, string) {
 	gateway = strings.TrimRight(gateway, "/")
-	return gateway + "/function/" + functionName
+	return gateway + "/function/" + functionName, gateway + "/async-function/" + functionName
 }
 
-func getFunctionAsyncURL(gateway string, functionName string) string {
-	gateway = strings.TrimRight(gateway, "/")
-	return gateway + "/async-function/" + functionName
+func printFunctionDescription(funcDesc schema.FunctionDescription) {
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight)
+	fmt.Fprintln(w, "Name:\t "+funcDesc.Name)
+	fmt.Fprintln(w, "Status:\t "+funcDesc.Status)
+	fmt.Fprintln(w, "Replicas:\t "+strconv.Itoa(funcDesc.Replicas))
+	fmt.Fprintln(w, "Available replicas:\t "+strconv.Itoa(funcDesc.AvailableReplicas))
+	fmt.Fprintln(w, "Invocations:\t "+strconv.Itoa(funcDesc.InvocationCount))
+	fmt.Fprintln(w, "Image:\t "+funcDesc.Image)
+	fmt.Fprintln(w, "Function process:\t "+funcDesc.EnvProcess)
+	fmt.Fprintln(w, "URL:\t "+funcDesc.URL)
+	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
+	w.Flush()
 }

@@ -53,7 +53,7 @@ func Test_GetFunctionInfo_MissingURLPrefix(t *testing.T) {
 		t.Fatalf("Error was not returned")
 	}
 
-	expectedErrMsg := "cannot connect to OpenFaaS on URL:"
+	expectedErrMsg := "invalid gateway URL:"
 	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Want: %s, Got: %s", expectedErrMsg, err.Error())
