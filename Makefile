@@ -30,3 +30,11 @@ ci-armhf-push:
 ci-armhf-build:
 	(./build.sh $(TAG)-armhf)
 
+.PHONY: test-templating
+PORT?=38080
+FUNCTION?=templating-test-func
+FUNCTION_UP_TIMEOUT?=30
+.EXPORT_ALL_VARIABLES:
+test-templating:
+	./build_integration_test.sh
+
