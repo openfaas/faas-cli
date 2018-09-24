@@ -13,7 +13,7 @@ import (
 )
 
 func Test_list(t *testing.T) {
-	expected_list_response := []requests.Function{
+	expectedListResponse := []requests.Function{
 		{
 			Name:            "function-test-1",
 			Image:           "image-test-1",
@@ -33,7 +33,7 @@ func Test_list(t *testing.T) {
 			Method:             http.MethodGet,
 			Uri:                "/system/functions",
 			ResponseStatusCode: http.StatusOK,
-			ResponseBody:       expected_list_response,
+			ResponseBody:       expectedListResponse,
 		},
 	})
 	defer s.Close()

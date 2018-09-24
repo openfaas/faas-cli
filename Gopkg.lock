@@ -21,6 +21,14 @@
   version = "v1.0.4"
 
 [[projects]]
+  digest = "1:871b7cfa5fe18bfdbd4bf117c166c3cff8d3b61c8afe4e998b5b8ac0c160ca24"
+  name = "github.com/alexellis/hmac"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "d5d71edd7bc74eb6ae4b99eccc6bda738435f43f"
+  version = "1.2"
+
+[[projects]]
   digest = "1:53e99d883df3e940f5f0223795f300eb32b8c044f226132bfc0e74930f24ea4b"
   name = "github.com/docker/docker"
   packages = [
@@ -125,6 +133,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/alexellis/hmac",
     "github.com/docker/docker-credential-helpers/client",
     "github.com/docker/docker/pkg/term",
     "github.com/mitchellh/go-homedir",
