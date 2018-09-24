@@ -16,7 +16,11 @@
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  version = "0.0.1"
+  version = "0.0.3"
+
+[[constraint]]
+  name = "github.com/spf13/pflag"
+  version = "1.0.2"
 
 [[constraint]]
   name = "github.com/ryanuber/go-glob"
@@ -29,3 +33,4 @@
 [[constraint]]
   name = "github.com/docker/docker"
   version = "1.13.1"
+
