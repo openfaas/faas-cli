@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.9.2 as builder
+FROM golang:1.9.7 as builder
 
 WORKDIR /usr/bin/
 RUN curl -sLSf https://raw.githubusercontent.com/alexellis/license-check/master/get.sh | sh
