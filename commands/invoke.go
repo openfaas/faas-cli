@@ -4,10 +4,12 @@
 package commands
 
 import (
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/alexellis/hmac"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -19,6 +21,8 @@ var (
 	headers     []string
 	invokeAsync bool
 	httpMethod  string
+	sigHeader   string
+	key         string
 )
 
 func init() {
@@ -32,6 +36,9 @@ func init() {
 	invokeCmd.Flags().BoolVarP(&invokeAsync, "async", "a", false, "Invoke the function asynchronously")
 	invokeCmd.Flags().StringVarP(&httpMethod, "method", "m", "POST", "pass HTTP request method")
 	invokeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	invokeCmd.Flags().StringVar(&sigHeader, "sign", "", "name of HTTP request header to hold the signature")
+	invokeCmd.Flags().StringVar(&key, "key", "", "key to be used to sign the request (must be used with --sign)")
+	//invokeCmd.Flags().StringVar(&algorithm, "algorithm", "sha1", "algorithm to be used to sign the request")
 
 	faasCmd.AddCommand(invokeCmd)
 }
@@ -46,7 +53,8 @@ var invokeCmd = &cobra.Command{
   faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
   faas-cli invoke resize-img --async -H "X-Callback-Url=http://gateway:8080/function/send2slack" < image.png
   faas-cli invoke env -H X-Ping-Url=http://request.bin/etc
-  faas-cli invoke flask --method GET`,
+  faas-cli invoke flask --method GET
+  faas-cli invoke env --sign X-GitHub-Event --key yoursecret`,
 	RunE: runInvoke,
 }
 
@@ -56,6 +64,11 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("please provide a name for the function")
 	}
+
+	if missingSignFlag(sigHeader, key) {
+		return fmt.Errorf("signing requires both --sign <header-value> and --key <key-value>")
+	}
+
 	var yamlGateway string
 	functionName = args[0]
 
@@ -83,6 +96,14 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}
 
+	if len(sigHeader) > 0 {
+		signedHeader, err := generateSignedHeader(functionInput, key, sigHeader)
+		if err != nil {
+			return fmt.Errorf("unable to sign message: %s", err.Error())
+		}
+		headers = append(headers, signedHeader)
+	}
+
 	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod, tlsInsecure)
 	if err != nil {
 		return err
@@ -93,4 +114,21 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func generateSignedHeader(message []byte, key string, headerName string) (string, error) {
+
+	if len(headerName) == 0 {
+		return "", fmt.Errorf("signed header must have a non-zero length")
+	}
+
+	hash := hmac.Sign(message, []byte(key))
+	signature := hex.EncodeToString(hash)
+	signedHeader := fmt.Sprintf(`%s=%s=%s`, headerName, "sha1", string(signature[:]))
+
+	return signedHeader, nil
+}
+
+func missingSignFlag(header string, key string) bool {
+	return (len(header) > 0 && len(key) == 0) || (len(header) == 0 && len(key) > 0)
 }
