@@ -151,6 +151,18 @@ Curated language templates:
 
 Read more on [community templates here](guide/TEMPLATE.md).
 
+#### HMAC
+
+It is possible to sign a `faas-cli invoke` request using a sha1 HMAC.  To do this, the name of a header to hold the code during transmission should be specified using the `--sign` flag, and the shared secret used to hash the message should be provided through `--key`. E.g.
+
+```
+$ echo -n OpenFaaS | faas-cli invoke env --sign X-Hub-Signature --key yoursecret
+```
+Results in the following header being added:
+```
+Http_X_Hub_Signature=sha1=2fc4758f8755f57f6e1a59799b56f8a6cf33b13f
+```
+
 #### Docker image as a function
 
 Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_build: true` for pre-built images.
