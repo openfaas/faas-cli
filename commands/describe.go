@@ -109,7 +109,7 @@ func getFunctionURLs(gateway string, functionName string) (string, string) {
 }
 
 func printFunctionDescription(funcDesc schema.FunctionDescription) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.AlignRight)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.TabIndent)
 	fmt.Fprintln(w, "Name:\t "+funcDesc.Name)
 	fmt.Fprintln(w, "Status:\t "+funcDesc.Status)
 	fmt.Fprintln(w, "Replicas:\t "+strconv.Itoa(funcDesc.Replicas))

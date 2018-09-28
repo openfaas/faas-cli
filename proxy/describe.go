@@ -57,6 +57,8 @@ func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (req
 		}
 	case http.StatusUnauthorized:
 		return result, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+	case http.StatusNotFound:
+		return result, fmt.Errorf("No such function: %s", functionName)
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
