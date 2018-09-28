@@ -60,6 +60,22 @@ func Test_GetFunctionInfo_MissingURLPrefix(t *testing.T) {
 	}
 }
 
+func Test_GetFunctionInfo_NotFound(t *testing.T) {
+	s := test.MockHttpServerStatus(t, http.StatusNotFound)
+	functionName := "funct-test"
+
+	_, err := GetFunctionInfo(s.URL, functionName, tlsNoVerify)
+	if err == nil {
+		t.Fatalf("Error was not returned")
+	}
+
+	expectedErrMsg := fmt.Sprintf("No such function: %s", functionName)
+	if err.Error() != expectedErrMsg {
+		t.Fatalf("Want: %s, Got: %s", expectedErrMsg, err.Error())
+	}
+
+}
+
 var expectedGetFunctionInfoResponse = requests.Function{
 	Name:            "func-test1",
 	Image:           "image-test1",
