@@ -4,11 +4,11 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
@@ -144,9 +144,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.Functions) > 0 {
-
-		build(&services, parallel, shrinkwrap)
-
+		err := build(&services, parallel, shrinkwrap, builder.BuildImage)
+		if err != nil {
+			return err
+		}
 	} else {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
@@ -166,47 +167,100 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
-	wg := sync.WaitGroup{}
+type buildImageFunc func(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag string) error
+
+type namedError struct {
+	FunctionName string
+	Err          error
+	Skipped      bool
+}
+
+func buildImageRecover(errChan chan<- namedError, functionName string, buildImage func() error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err := errors.New(r.(string))
+			errChan <- namedError{
+				FunctionName: functionName,
+				Err:          err,
+			}
+		}
+	}()
+	err := buildImage()
+	if err != nil {
+		log.Println(err)
+	}
+	errChan <- namedError{FunctionName: functionName, Err: err}
+}
+
+func build(services *stack.Services, queueDepth int, shrinkwrap bool, buildImage buildImageFunc) error {
 
 	workChannel := make(chan stack.Function)
+	errChan := make(chan namedError)
 
-	wg.Add(queueDepth)
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
 			for function := range workChannel {
 				fmt.Printf(aec.YellowF.Apply("[%d] > Building %s.\n"), index, function.Name)
 				if len(function.Language) == 0 {
-					fmt.Println("Please provide a valid language for your function.")
+					err := fmt.Errorf("Please provide a valid language for your function")
+					log.Println(err)
+					errChan <- namedError{FunctionName: function.Name, Err: err}
 				} else {
-
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
-					if err != nil {
-						log.Println(err)
-					}
+					buildImageRecover(errChan, function.Name, func() error {
+						return buildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
+					})
 				}
 				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
 			}
-
 			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
-			wg.Done()
 		}(i)
 	}
 
-	for k, function := range services.Functions {
-		if function.SkipBuild {
-			fmt.Printf("Skipping build of: %s.\n", function.Name)
-		} else {
+	namedErrorChan := make(chan []namedError, 1)
+
+	go func() {
+		errorList := []namedError{}
+		for namedErr := range errChan {
+			errorList = append(errorList, namedErr)
+			if len(errorList) == len(services.Functions) {
+				break
+			}
+		}
+		namedErrorChan <- errorList
+	}()
+
+	go func() {
+		for k, function := range services.Functions {
+			if function.SkipBuild {
+				fmt.Printf("Skipping build of: %s.\n", function.Name)
+				errChan <- namedError{FunctionName: function.Name, Err: nil, Skipped: true}
+				continue
+			}
 			function.Name = k
 			workChannel <- function
 		}
+		close(workChannel)
+	}()
+
+	errorList := <-namedErrorChan
+	errorsTotal := 0
+
+	for _, namedErr := range errorList {
+		if namedErr.Skipped {
+			fmt.Printf("%s was skipped\n", namedErr.FunctionName)
+		} else if namedErr.Err == nil {
+			fmt.Printf("%s was built successfully\n", namedErr.FunctionName)
+		} else {
+			fmt.Printf(aec.RedF.Apply("%s failed to build with error: %v\n"), namedErr.FunctionName, namedErr.Err)
+			errorsTotal++
+		}
 	}
 
-	close(workChannel)
-
-	wg.Wait()
-
+	if errorsTotal > 0 {
+		return fmt.Errorf("build exited with %d error(s)", errorsTotal)
+	}
+	return nil
 }
 
 // PullTemplates pulls templates from Github from the master zip download file.
