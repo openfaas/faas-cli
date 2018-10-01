@@ -19,13 +19,13 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
-	pushCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
+	pushCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
 
 }
 
 // pushCmd handles pushing function container images to a remote repo
 var pushCmd = &cobra.Command{
-	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel] [--tag VALUE]`,
+	Use:   `push -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"] [--parallel] [--tag <sha|branch>]`,
 	Short: "Push OpenFaaS functions to remote registry (Docker Hub)",
 	Long: `Pushes the OpenFaaS function container image(s) defined in the supplied YAML
 config to a remote repository.
@@ -37,8 +37,8 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./stack.yml --parallel 4
   faas-cli push -f ./stack.yml --filter "*gif*"
   faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli push -f ./stack.yml --tag=sha
-  faas-cli push -f ./stack.yml --tag=branch`,
+  faas-cli push -f ./stack.yml --tag sha
+  faas-cli push -f ./stack.yml --tag branch`,
 	RunE: runPush,
 }
 

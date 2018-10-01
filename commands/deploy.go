@@ -66,7 +66,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
-	deployCmd.Flags().StringVar(&tag, "tag", "file", "Tag Docker image for function, specify file or SHA")
+	deployCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	// Set bash-completion.
@@ -94,7 +94,7 @@ var deployCmd = &cobra.Command{
                   [--regex "REGEX"]
                   [--filter "WILDCARD"]
 				  [--secret "SECRET_NAME"]
-				  [--tag VALUE]
+				  [--tag <sha|branch>]
 				  [--readonly=false]`,
 
 	Short: "Deploy OpenFaaS functions",
@@ -109,8 +109,8 @@ via flags. Note: --replace and --update are mutually exclusive.`,
   faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli deploy -f ./stack.yml --replace=false --update=true
   faas-cli deploy -f ./stack.yml --replace=true --update=false
-  faas-cli deploy -f ./stack.yml --tag=sha
-  faas-cli deploy -f ./stack.yml --tag=branch
+  faas-cli deploy -f ./stack.yml --tag sha
+  faas-cli deploy -f ./stack.yml --tag branch
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python
