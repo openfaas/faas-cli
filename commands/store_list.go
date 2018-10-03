@@ -21,6 +21,7 @@ func init() {
 
 var storeListCmd = &cobra.Command{
 	Use:     `list [--url STORE_URL]`,
+	Aliases: []string{"ls"},
 	Short:   "List available OpenFaaS functions in a store",
 	Example: `  faas-cli store list --url https://domain:port/store.json`,
 	RunE:    runStoreList,
