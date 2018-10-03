@@ -14,4 +14,6 @@ type FunctionDescription struct {
 	EnvProcess        string
 	URL               string
 	AsyncURL          string
+	Labels            *map[string]string
+	Annotations       *map[string]string
 }

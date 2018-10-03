@@ -96,6 +96,8 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		EnvProcess:        function.EnvProcess,
 		URL:               url,
 		AsyncURL:          asyncURL,
+		Labels:            function.Labels,
+		Annotations:       function.Annotations,
 	}
 
 	printFunctionDescription(funcDesc)
@@ -119,5 +121,19 @@ func printFunctionDescription(funcDesc schema.FunctionDescription) {
 	fmt.Fprintln(w, "Function process:\t "+funcDesc.EnvProcess)
 	fmt.Fprintln(w, "URL:\t "+funcDesc.URL)
 	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
+
+	if funcDesc.Labels != nil {
+		fmt.Fprintf(w, "Labels:")
+		for key, value := range *funcDesc.Labels {
+			fmt.Fprintln(w, " \t "+key+" : "+value)
+		}
+	}
+
+	if funcDesc.Annotations != nil {
+		fmt.Fprintf(w, "Annotations:")
+		for key, value := range *funcDesc.Annotations {
+			fmt.Fprintln(w, " \t "+key+" : "+value)
+		}
+	}
 	w.Flush()
 }
