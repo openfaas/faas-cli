@@ -4,11 +4,13 @@
 package commands
 
 import (
+	"bytes"
 	"os"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/test"
@@ -302,6 +304,44 @@ func Test_appendInvalidFile(t *testing.T) {
 	}
 }
 
+func Test_templateParsingyYAMLEnvs(t *testing.T) {
+
+	var services *stack.Services
+	var tpl bytes.Buffer
+
+	newFunction := stack.Function{
+		Name:     "functionName",
+		Handler:  "./handlerDir",
+		Language: "language",
+		Image:    "imageName",
+		Environment: map[string]string{
+			"alex": "ellis",
+		},
+	}
+
+	services = &stack.Services{
+		Provider: stack.Provider{
+			Name:       "faas",
+			GatewayURL: gateway,
+		},
+		Functions: make(map[string]stack.Function),
+	}
+
+	services.Functions["functionName"] = newFunction
+
+	tmplt := template.Must(template.New("stack").Parse(stackTmpl))
+	err := tmplt.Execute(&tpl, services)
+
+	if err != nil {
+		t.Fatalf("Executing the template failed: %s\n", err)
+	}
+
+	yamlStr := tpl.String()
+	if !(strings.Contains(yamlStr, "environment")) || !(strings.Contains(yamlStr, "alex")) || !(strings.Contains(yamlStr, "ellis")) {
+		t.Fatalf("Missing elements in the yaml, expected all of: '%s', '%s' & '%s' \n Found:\n %s \n", "environment", "alex", "ellis", yamlStr)
+	}
+
+}
 func Test_duplicateFunctionName(t *testing.T) {
 	resetForTest()
 
