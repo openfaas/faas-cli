@@ -24,6 +24,22 @@ var (
 	quiet      bool
 )
 
+// Define template of stack file.
+const stackTmpl = `{{ if .Provider.Name -}}
+provider:
+  name: {{ .Provider.Name }}
+  gateway: {{ .Provider.GatewayURL }}
+
+functions:
+{{- end }}
+{{- range $name, $function := .Functions }}
+  {{ $name }}:
+    lang: {{ $function.Language }}
+    handler: {{ $function.Handler }}
+    image: {{ $function.Image }}
+{{- end }}
+`
+
 func init() {
 	newFunctionCmd.Flags().StringVar(&language, "lang", "", "Language or template to use")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
@@ -162,22 +178,6 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	builder.CopyFiles(filepath.Join("template", language, "function"), handlerDir)
 	printFiglet()
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
-
-	// Define template of stack file.
-	const stackTmpl = `{{ if .Provider.Name -}}
-provider:
-  name: {{ .Provider.Name }}
-  gateway: {{ .Provider.GatewayURL }}
-
-functions:
-{{- end }}
-{{- range $name, $function := .Functions }}
-  {{ $name }}:
-    lang: {{ $function.Language }}
-    handler: {{ $function.Handler }}
-    image: {{ $function.Image }}
-{{- end }}
-`
 
 	var imageName string
 	if imagePrefix = strings.TrimSpace(imagePrefix); len(imagePrefix) > 0 {
