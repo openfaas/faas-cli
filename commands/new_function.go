@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
@@ -113,8 +112,9 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("%s is unavailable or not supported", language)
 	}
 
-	var services *stack.Services
+	var fileName, outputMsg string
 	appendMode := len(appendFile) > 0
+
 	if appendMode {
 		if (strings.HasSuffix(appendFile, ".yml") || strings.HasSuffix(appendFile, ".yaml")) == false {
 			return fmt.Errorf("when appending to a stack the suffix should be .yml or .yaml")
@@ -125,20 +125,19 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		}
 
 		var duplicateError error
-		services, duplicateError = duplicateFunctionName(functionName, appendFile)
+		duplicateError = duplicateFunctionName(functionName, appendFile)
 
 		if duplicateError != nil {
 			return duplicateError
 		}
+
+		fileName = appendFile
+		outputMsg = fmt.Sprintf("Stack file updated: %s\n", fileName)
+
 	} else {
 		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
-		services = &stack.Services{
-			Provider: stack.Provider{
-				Name:       "faas",
-				GatewayURL: gateway,
-			},
-			Functions: make(map[string]stack.Function),
-		}
+		fileName = functionName + ".yml"
+		outputMsg = fmt.Sprintf("Stack file written: %s\n", fileName)
 	}
 
 	if len(handlerDir) == 0 {
@@ -163,27 +162,9 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	printFiglet()
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
-	// Define template of stack file.
-	const stackTmpl = `{{ if .Provider.Name -}}
-provider:
-  name: {{ .Provider.Name }}
-  gateway: {{ .Provider.GatewayURL }}
-
-functions:
-{{- end }}
-{{- range $name, $function := .Functions }}
-  {{ $name }}:
-    lang: {{ $function.Language }}
-    handler: {{ $function.Handler }}
-    image: {{ $function.Image }}
-{{- end }}
-`
-
-	var imageName string
+	imageName := fmt.Sprintf("%s:latest", functionName)
 	if imagePrefix = strings.TrimSpace(imagePrefix); len(imagePrefix) > 0 {
-		imageName = fmt.Sprintf("%s/%s:latest", imagePrefix, functionName)
-	} else {
-		imageName = fmt.Sprintf("%s:latest", functionName)
+		imageName = fmt.Sprintf("%s/%s", imagePrefix, imageName)
 	}
 
 	function := stack.Function{
@@ -192,29 +173,20 @@ functions:
 		Language: language,
 		Image:    imageName,
 	}
-	services.Functions[functionName] = function
 
-	var fileName string
-	if appendMode {
-		fileName = appendFile
-	} else {
-		fileName = functionName + ".yml"
-	}
-	f, err := os.OpenFile("./"+fileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	yamlContent := prepareYAMLContent(appendMode, gateway, &function)
+
+	f, err := os.OpenFile("./"+fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
 		return fmt.Errorf("could not open file '%s' %s", fileName, err)
 	}
 
-	t := template.Must(template.New("stack").Parse(stackTmpl))
-	if err := t.Execute(f, services); err != nil {
-		return fmt.Errorf("could not parse functions into stack template %s", err)
+	_, stackWriteErr := f.Write([]byte(yamlContent))
+	if stackWriteErr != nil {
+		return fmt.Errorf("error writing stack file %s", stackWriteErr)
 	}
 
-	if appendMode {
-		fmt.Printf("Stack file updated: %s\n", fileName)
-	} else {
-		fmt.Printf("Stack file written: %s\n", fileName)
-	}
+	fmt.Print(outputMsg)
 
 	if !quiet {
 		languageTemplate, _ := stack.LoadLanguageTemplate(language)
@@ -228,6 +200,25 @@ functions:
 	return nil
 }
 
+func prepareYAMLContent(appendMode bool, gateway string, function *stack.Function) (yamlContent string) {
+
+	yamlContent = `  ` + function.Name + `:
+    lang: ` + function.Language + `
+    handler: ` + function.Handler + `
+    image: ` + function.Image + `
+`
+	if !appendMode {
+
+		yamlContent = `provider:
+  name: faas
+  gateway: ` + gateway + `
+functions:
+` + yamlContent
+	}
+
+	return yamlContent
+}
+
 func printAvailableTemplates(availableTemplates []string) string {
 	var result string
 	sort.Slice(availableTemplates, func(i, j int) bool {
@@ -239,23 +230,23 @@ func printAvailableTemplates(availableTemplates []string) string {
 	return result
 }
 
-func duplicateFunctionName(functionName string, appendFile string) (*stack.Services, error) {
+func duplicateFunctionName(functionName string, appendFile string) error {
 	fileBytes, readErr := ioutil.ReadFile(appendFile)
 	if readErr != nil {
-		return nil, fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
+		return fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
 	}
 
 	services, parseErr := stack.ParseYAMLData(fileBytes, "", "")
 
 	if parseErr != nil {
-		return nil, fmt.Errorf("Error parsing %s yml file", appendFile)
+		return fmt.Errorf("Error parsing %s yml file", appendFile)
 	}
 
-	if _, ok := services.Functions[functionName]; ok {
-		return nil, fmt.Errorf(`
+	if _, exists := services.Functions[functionName]; exists {
+		return fmt.Errorf(`
 Function %s already exists in %s file. 
-Cannot have duplicate function names in same yml file`, functionName, appendFile)
+Cannot have duplicate function names in same yaml file`, functionName, appendFile)
 	}
 
-	return services, nil
+	return nil
 }
