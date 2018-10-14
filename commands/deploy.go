@@ -289,8 +289,9 @@ Error: %s`, fprocessErr.Error())
 		}
 	} else {
 		if len(image) == 0 || len(functionName) == 0 {
-			return fmt.Errorf("To deploy a function give --yaml/-f or a --image flag")
+			return fmt.Errorf("To deploy a function give --yaml/-f or a --image and --name flag")
 		}
+		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
 		var registryAuth string
 		if deployFlags.sendRegistryAuth {
@@ -300,7 +301,6 @@ Error: %s`, fprocessErr.Error())
 				log.Printf("Unable to read the docker config - %v\n", err.Error())
 			}
 
-			gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
 			registryAuth = getRegistryAuth(&dockerConfig, image)
 		}
 		// default to a readable filesystem until we get more input about the expected behavior
