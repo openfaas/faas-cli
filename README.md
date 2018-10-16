@@ -66,13 +66,7 @@ $version = (Invoke-WebRequest "https://api.github.com/repos/openfaas/faas-cli/re
 
 #### Windows
 
-The easiest way to install the faas-cli is through `scoop`:
-
-```
-scoop install faas-cli
-```
-
-Note: The `scoop` release may not run the latest minor release but is updated regularly.
+To install the faas-cli on Windows go to [Releases](https://github.com/openfaas/faas-cli/releases) and download the latest faas-cli.exe.
 
 #### Build from source
 
