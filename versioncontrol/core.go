@@ -1,4 +1,4 @@
-// Package vcs is a simplified/stripped down version of go/internal/get/vcs that
+// Package versioncontrol is a simplified/stripped down version of go/internal/get/vcs that
 // is aimed at the simplier temporary git clone needed for OpenFaaS template fetch.
 package versioncontrol
 
