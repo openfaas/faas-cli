@@ -4,7 +4,7 @@ package versioncontrol
 var GitClone = &vcsCmd{
 	name:   "Git",
 	cmd:    "git",
-	cmds:   []string{"clone {repo} {dir} --depth=1"},
+	cmds:   []string{"clone {repo} {dir} --depth=1 --config core.autocrlf=false"},
 	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
 }
 
@@ -14,6 +14,7 @@ var GitInitRepo = &vcsCmd{
 	cmd:  "git",
 	cmds: []string{
 		"init {dir}",
+		"config core.autocrlf false",
 		"config user.email \"contact@openfaas.com\"",
 		"config user.name \"OpenFaaS\"",
 		"add {dir}",
