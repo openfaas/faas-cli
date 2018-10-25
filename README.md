@@ -111,7 +111,7 @@ Help for all of the commands supported by the CLI can be found by running:
 
 * `faas-cli help` or `faas-cli [command] --help`
 
-You can chose between using a [programming language template](https://github.com/openfaas/faas-cli/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
+You can chose between using a [programming language template](https://github.com/openfaas/templates/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
 #### Templates
 
