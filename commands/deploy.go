@@ -166,6 +166,8 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 
 		for k, function := range services.Functions {
 
+			functionSecrets := deployFlags.secrets
+
 			function.Name = k
 			fmt.Printf("Deploying: %s.\n", function.Name)
 
@@ -177,7 +179,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			}
 
 			if len(function.Secrets) > 0 {
-				deployFlags.secrets = mergeSlice(function.Secrets, deployFlags.secrets)
+				functionSecrets = mergeSlice(function.Secrets, functionSecrets)
 			}
 
 			if deployFlags.sendRegistryAuth {
@@ -273,7 +275,7 @@ Error: %s`, fprocessErr.Error())
 				Network:                 services.Provider.Network,
 				Constraints:             functionConstraints,
 				Update:                  deployFlags.update,
-				Secrets:                 deployFlags.secrets,
+				Secrets:                 functionSecrets,
 				Labels:                  allLabels,
 				Annotations:             allAnnotations,
 				FunctionResourceRequest: functionResourceRequest,
