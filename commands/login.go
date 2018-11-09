@@ -4,13 +4,14 @@
 package commands
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/openfaas/faas-cli/proxy"
 
 	"github.com/openfaas/faas-cli/config"
 	"github.com/spf13/cobra"
@@ -20,7 +21,6 @@ var (
 	username      string
 	password      string
 	passwordStdin bool
-	tlsInsecure   bool
 )
 
 func init() {
@@ -99,14 +99,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 }
 
 func validateLogin(gatewayURL string, user string, pass string) error {
-	tr := &http.Transport{
-		DisableKeepAlives: false,
-		TLSClientConfig:   &tls.Config{InsecureSkipVerify: tlsInsecure},
-	}
-	client := &http.Client{
-		Transport: tr,
-		Timeout:   time.Duration(5 * time.Second),
-	}
+	timeout := time.Duration(5 * time.Second)
+	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
 
 	req, err := http.NewRequest("GET", gatewayURL+"/system/functions", nil)
 	if err != nil {
@@ -116,7 +110,7 @@ func validateLogin(gatewayURL string, user string, pass string) error {
 	req.SetBasicAuth(user, pass)
 	res, err := client.Do(req)
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gatewayURL)
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s. %v", gatewayURL, err)
 	}
 
 	if res.Body != nil {

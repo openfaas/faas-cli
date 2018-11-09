@@ -37,6 +37,7 @@ var (
 	image        string
 	imagePrefix  string
 	language     string
+	tlsInsecure  bool
 )
 
 var stat = func(filename string) (os.FileInfo, error) {

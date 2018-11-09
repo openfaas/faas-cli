@@ -15,13 +15,13 @@ import (
 )
 
 // DeleteFunction delete a function from the FaaS server
-func DeleteFunction(gateway string, functionName string) error {
+func DeleteFunction(gateway string, functionName string, tlsInsecure bool) error {
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
 	reader := bytes.NewReader(reqBytes)
 
-	c := http.Client{}
+	c := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 	req, err := http.NewRequest("DELETE", gateway+"/system/functions", reader)
 	if err != nil {
 		fmt.Println(err)

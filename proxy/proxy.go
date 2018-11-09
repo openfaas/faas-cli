@@ -10,32 +10,39 @@ import (
 	"time"
 )
 
-// MakeHTTPClientWithDisableKeepAlives makes a HTTP client with good defaults for timeouts.
-func MakeHTTPClientWithDisableKeepAlives(timeout *time.Duration, tlsInsecure bool, disableKeepAlives *bool) http.Client {
-	if timeout != nil {
+// makeHTTPClientWithDisableKeepAlives makes a HTTP client with good defaults for timeouts.
+func makeHTTPClientWithDisableKeepAlives(timeout *time.Duration, tlsInsecure bool, disableKeepAlives bool) http.Client {
+	client := http.Client{}
+
+	if timeout != nil || tlsInsecure {
 		tr := &http.Transport{
-			Proxy: http.ProxyFromEnvironment,
-			DialContext: (&net.Dialer{
+			Proxy:             http.ProxyFromEnvironment,
+			DisableKeepAlives: disableKeepAlives,
+		}
+
+		if timeout != nil {
+			client.Timeout = *timeout
+			tr.DialContext = (&net.Dialer{
 				Timeout: *timeout,
-			}).DialContext,
+			}).DialContext
 
-			IdleConnTimeout:       120 * time.Millisecond,
-			ExpectContinueTimeout: 1500 * time.Millisecond,
-			TLSClientConfig:       &tls.Config{InsecureSkipVerify: tlsInsecure},
-		}
-		if disableKeepAlives != nil {
-			tr.DisableKeepAlives = *disableKeepAlives
+			tr.IdleConnTimeout = 120 * time.Millisecond
+			tr.ExpectContinueTimeout = 1500 * time.Millisecond
 		}
 
-		return http.Client{
-			Timeout:   *timeout,
-			Transport: tr,
+		if tlsInsecure {
+			tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: tlsInsecure}
 		}
+
+		tr.DisableKeepAlives = disableKeepAlives
+
+		client.Transport = tr
 	}
-	return http.Client{}
+
+	return client
 }
 
 // MakeHTTPClient makes a HTTP client with good defaults for timeouts.
 func MakeHTTPClient(timeout *time.Duration, tlsInsecure bool) http.Client {
-	return MakeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, nil)
+	return makeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, false)
 }

@@ -16,6 +16,10 @@ import (
 	"github.com/openfaas/faas/gateway/requests"
 )
 
+var (
+	defaultCommandTimeout = 60 * time.Second
+)
+
 // FunctionResourceRequest defines a request to set function resources
 type FunctionResourceRequest struct {
 	Limits   *stack.FunctionResources
@@ -83,7 +87,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	gateway := strings.TrimRight(spec.Gateway, "/")
 
 	if spec.Replace {
-		DeleteFunction(gateway, spec.FunctionName)
+		DeleteFunction(gateway, spec.FunctionName, spec.TLSInsecure)
 	}
 
 	req := requests.CreateFunctionRequest{
@@ -133,8 +137,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	reader := bytes.NewReader(reqBytes)
 	var request *http.Request
 
-	timeout := 60 * time.Second
-	client := MakeHTTPClient(&timeout, spec.TLSInsecure)
+	client := MakeHTTPClient(&defaultCommandTimeout, spec.TLSInsecure)
 
 	method := http.MethodPost
 	// "application/json"

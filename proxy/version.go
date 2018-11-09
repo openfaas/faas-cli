@@ -22,6 +22,8 @@ func GetSystemInfo(gateway string, tlsInsecure bool) (map[string]interface{}, er
 		return nil, fmt.Errorf("invalid HTTP method or invalid URL")
 	}
 
+	SetAuth(req, gateway)
+
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
