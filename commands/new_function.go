@@ -148,6 +148,11 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("folder: %s already exists", handlerDir)
 	}
 
+	_, err := os.Stat(fileName)
+	if err == nil && appendMode == false {
+		return fmt.Errorf("file: %s already exists", fileName)
+	}
+
 	if err := os.Mkdir(handlerDir, 0700); err != nil {
 		return fmt.Errorf("folder: could not create %s : %s", handlerDir, err)
 	}

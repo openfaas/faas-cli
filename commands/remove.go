@@ -15,6 +15,7 @@ import (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	removeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	faasCmd.AddCommand(removeCmd)
 }
@@ -64,7 +65,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 			function.Name = k
 			fmt.Printf("Deleting: %s.\n", function.Name)
 
-			proxy.DeleteFunction(gatewayAddress, function.Name)
+			proxy.DeleteFunction(gatewayAddress, function.Name, tlsInsecure)
 		}
 	} else {
 		if len(args) < 1 {
@@ -73,7 +74,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxy.DeleteFunction(gatewayAddress, functionName)
+		proxy.DeleteFunction(gatewayAddress, functionName, tlsInsecure)
 	}
 
 	return nil

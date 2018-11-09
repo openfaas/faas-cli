@@ -22,9 +22,8 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 
 	reader := bytes.NewReader(*bytesIn)
 
-	var timeout *time.Duration
-	disableKeepAlives := false
-	client := MakeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, &disableKeepAlives)
+	var disableFunctionTimeout *time.Duration
+	client := MakeHTTPClient(disableFunctionTimeout, tlsInsecure)
 
 	qs, qsErr := buildQueryString(query)
 	if qsErr != nil {

@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"github.com/openfaas/faas/gateway/requests"
 )
@@ -19,8 +18,7 @@ import (
 func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (requests.Function, error) {
 	var result requests.Function
 
-	timeout := 60 * time.Second
-	client := MakeHTTPClient(&timeout, tlsInsecure)
+	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
 	gatewayURL, err := url.Parse(gateway)
 	if err != nil {
