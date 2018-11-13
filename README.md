@@ -289,4 +289,4 @@ See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRI
 
 ### License
 
-This project is part of the OpenFaaS project licensed under the MIT License.
+This project is part of OpenFaaS and is licensed under the MIT License.
