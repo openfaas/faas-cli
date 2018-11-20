@@ -20,74 +20,42 @@ var (
 	pullDebug  bool
 )
 
-var supportedVerbs = [...]string{"pull"}
-
 func init() {
 	templatePullCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
 	templatePullCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
 
-	faasCmd.AddCommand(templatePullCmd)
+	templateCmd.AddCommand(templatePullCmd)
 }
 
 // templatePullCmd allows the user to fetch a template from a repository
 var templatePullCmd = &cobra.Command{
-	Use: "template pull <repository URL>",
-	Args: func(cmd *cobra.Command, args []string) error {
-		msg := fmt.Sprintf(`Must use a supported verb for 'faas-cli template'
-Currently supported verbs: %v`, supportedVerbs)
-
-		if len(args) == 0 {
-			return fmt.Errorf(msg)
-		}
-
-		if args[0] != "pull" {
-			return fmt.Errorf(msg)
-		}
-
-		if len(args) > 1 {
-
-			// assume it is a local repo
-			if _, err := os.Stat(args[1]); err == nil {
-				return nil
-			}
-
-			var validURL = regexp.MustCompile(gitRemoteRepoRegex)
-			if !validURL.MatchString(args[1]) {
-				return fmt.Errorf("The repository URL must be a valid git repo uri")
-			}
-		}
-		return nil
-	},
-	Short: "Downloads templates from the specified github repo",
+	Use:   `pull [REPOSITORY_URL]`,
+	Short: `Downloads templates from the specified github repo`,
 	Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
 	directory from the root of the repo, if it exists.`,
 	Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
-	Run:     runTemplatePull,
+	RunE:    runTemplatePull,
 }
 
-func runTemplatePull(cmd *cobra.Command, args []string) {
+func runTemplatePull(cmd *cobra.Command, args []string) error {
 	repository := ""
-	if len(args) > 1 {
-		repository = args[1]
+	if len(args) > 0 {
+		repository = args[0]
 	}
-
 	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
 
 	if _, err := os.Stat(repository); err != nil {
 		var validURL = regexp.MustCompile(gitRemoteRepoRegex)
 		if !validURL.MatchString(repository) {
-			fmt.Println("The repository URL must be a valid git repo uri")
-
-			os.Exit(1)
+			return fmt.Errorf("The repository URL must be a valid git repo uri")
 		}
 	}
 
 	fmt.Println("Fetch templates from repository: " + repository)
 	if err := fetchTemplates(repository, overwrite); err != nil {
-		fmt.Println(err)
-
-		os.Exit(1)
+		return fmt.Errorf("error while fetching templates: %s", err)
 	}
+	return nil
 }
 
 func pullDebugPrint(message string) {

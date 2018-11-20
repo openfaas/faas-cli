@@ -20,7 +20,10 @@ func Test_templatePull(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		faasCmd.Execute()
+		err := faasCmd.Execute()
+		if err != nil {
+			t.Errorf("unexpected error while puling valid repo: %s", err.Error())
+		}
 
 		// Verify created directories
 		if _, err := os.Stat("template"); err != nil {
@@ -32,7 +35,10 @@ func Test_templatePull(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		faasCmd.Execute()
+		err := faasCmd.Execute()
+		if err != nil {
+			t.Errorf("unexpected error while executing template pull: %s", err.Error())
+		}
 
 		var buf bytes.Buffer
 		log.SetOutput(&buf)
@@ -40,7 +46,10 @@ func Test_templatePull(t *testing.T) {
 		r := regexp.MustCompile(`(?m:Cannot overwrite the following \d+ template\(s\):)`)
 
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		faasCmd.Execute()
+		err = faasCmd.Execute()
+		if err != nil {
+			t.Errorf("unexpected error while executing template pull: %s", err.Error())
+		}
 
 		if !r.MatchString(buf.String()) {
 			t.Fatal(buf.String())
@@ -49,7 +58,10 @@ func Test_templatePull(t *testing.T) {
 		buf.Reset()
 
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository, "--overwrite"})
-		faasCmd.Execute()
+		err = faasCmd.Execute()
+		if err != nil {
+			fmt.Errorf("unexpected error while executing template pull with --overwrite: %s", err.Error())
+		}
 
 		str := buf.String()
 		if r.MatchString(str) {
@@ -63,13 +75,10 @@ func Test_templatePull(t *testing.T) {
 	})
 
 	t.Run("InvalidUrlError", func(t *testing.T) {
-		var buf bytes.Buffer
-
 		faasCmd.SetArgs([]string{"template", "pull", "user@host.xz:openfaas/faas-cli.git"})
-		faasCmd.SetOutput(&buf)
 		err := faasCmd.Execute()
 		if !strings.Contains(err.Error(), "The repository URL must be a valid git repo uri") {
-			t.Fatal("Output does not contain the required string", err.Error())
+			t.Errorf("Output does not contain the required error: %s", err.Error())
 		}
 	})
 }
@@ -172,5 +181,8 @@ func templatePullLocalTemplateRepo(t *testing.T) {
 	defer os.RemoveAll(localTemplateRepository)
 
 	faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-	faasCmd.Execute()
+	err := faasCmd.Execute()
+	if err != nil {
+		fmt.Printf("error while executing template pull: %s", err.Error())
+	}
 }

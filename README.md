@@ -145,6 +145,18 @@ Curated language templates:
 
 Read more on [community templates here](guide/TEMPLATE.md).
 
+**Templates store**
+
+The template store has templates from openfaas and openfaas-incubator organizations with openfaas templates being the official ones.
+
+In order to see what templates are available in the store type `faas-cli template store list`.
+
+> Note: You can set your own custom store location with `--url` flag
+
+To pull templates from the store just write the name of the template you want, you can pull couple of templates at once `faas-cli template store pull go golang-http python3-debian ...`
+
+> Note: This feature is still in experimental stage and in the future the CLI verbs might be changed
+
 #### HMAC
 
 It is possible to sign a `faas-cli invoke` request using a sha1 HMAC.  To do this, the name of a header to hold the code during transmission should be specified using the `--sign` flag, and the shared secret used to hash the message should be provided through `--key`. E.g.
