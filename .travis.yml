@@ -1,12 +1,7 @@
 sudo: required
 
-language: go
-
-go:
-  - 1.9.x
-install:
-  - echo "Please don't go get"
-  
+language: generic
+ 
 services:
   - docker
 
@@ -19,9 +14,6 @@ script:
   - make build
   - make build_samples
   - ./test/version.sh ./faas-cli
-
-# todo:
-#  - ./deploy_samples.sh # requires a deployed FaaS
 
 after_success:
     - if [ ! -z "$TRAVIS_TAG" ] ; then
@@ -62,3 +54,4 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
+
