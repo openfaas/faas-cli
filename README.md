@@ -151,7 +151,7 @@ The template store has templates from openfaas and openfaas-incubator organizati
 
 In order to see what templates are available in the store type `faas-cli template store list`.
 
-> Note: You can set your own custom store location with `--url` flag
+> Note: You can set your own custom store location with `--url` flag or set `OPENFAAS_TEMPLATE_STORE_URL` environmental variable
 
 To pull templates from the store just write the name of the template you want, you can pull couple of templates at once `faas-cli template store pull go golang-http python3-debian ...`
 

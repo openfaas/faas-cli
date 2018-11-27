@@ -5,12 +5,14 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -53,7 +55,7 @@ func runTemplateStoreList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error while getting templates info: %s", templatesErr)
 	}
 
-	formattedOutput := formatCommandOutput(templatesInfo)
+	formattedOutput := formatTemplatesOutput(templatesInfo, verbose)
 
 	fmt.Fprintf(cmd.OutOrStdout(), "%s", formattedOutput)
 
@@ -66,40 +68,36 @@ func getTemplateInfo(repository string) ([]TemplateInfo, error) {
 		return nil, fmt.Errorf("error while trying to create request to take template info: %s", reqErr.Error())
 	}
 
+	reqContext, cancel := context.WithTimeout(req.Context(), 5*time.Second)
+	defer cancel()
+	req = req.WithContext(reqContext)
+
 	client := http.DefaultClient
 	res, clientErr := client.Do(req)
 	if clientErr != nil {
 		return nil, fmt.Errorf("error while requesting template list: %s", clientErr.Error())
 	}
 
-	if res != nil {
-		if res.Body != nil {
-			defer res.Body.Close()
-			if res.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("unexpected status code wanted: %d got: %d", http.StatusOK, res.StatusCode)
-			}
-
-			body, bodyErr := ioutil.ReadAll(res.Body)
-			if bodyErr != nil {
-				return nil, fmt.Errorf("error while reading data from templates body: %s", bodyErr.Error())
-			}
-
-			templatesInfo := []TemplateInfo{}
-			unmarshallErr := json.Unmarshal(body, &templatesInfo)
-			if unmarshallErr != nil {
-				return nil, fmt.Errorf("error while unmarshalling into templates struct: %s", unmarshallErr.Error())
-			}
-			return templatesInfo, nil
-		}
+	if res.Body == nil {
 		return nil, fmt.Errorf("error empty response body from: %s", templateStoreURL)
 	}
-	return nil, fmt.Errorf("error empty response from: %s", templateStoreURL)
-}
+	defer res.Body.Close()
 
-func formatCommandOutput(templates []TemplateInfo) string {
-	templatesOutput := formatTemplatesOutput(templates, verbose)
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code wanted: %d got: %d", http.StatusOK, res.StatusCode)
+	}
 
-	return templatesOutput
+	body, bodyErr := ioutil.ReadAll(res.Body)
+	if bodyErr != nil {
+		return nil, fmt.Errorf("error while reading data from templates body: %s", bodyErr.Error())
+	}
+
+	templatesInfo := []TemplateInfo{}
+	unmarshallErr := json.Unmarshal(body, &templatesInfo)
+	if unmarshallErr != nil {
+		return nil, fmt.Errorf("error while unmarshalling into templates struct: %s", unmarshallErr.Error())
+	}
+	return templatesInfo, nil
 }
 
 func formatTemplatesOutput(templates []TemplateInfo, verbose bool) string {
