@@ -36,28 +36,31 @@ func runTemplateStorePull(cmd *cobra.Command, args []string) error {
 	var nonExistingTemplates []string
 	if len(args) == 0 {
 		return fmt.Errorf("\nNeed to specify one of the store templates check available ones by running the command:\n\nfaas-cli template store list\n")
-	} else {
-		envTemplateRepoStore := os.Getenv(templateStoreURLEnvironment)
-		storeURL := getTemplateStoreURL(templateStoreURL, envTemplateRepoStore, DefaultTemplatesStore)
+	}
 
-		storeTemplates, templatesErr := getTemplateInfo(storeURL)
-		if templatesErr != nil {
-			return fmt.Errorf("error while fetching templates from store: %s", templatesErr)
-		}
+	envTemplateRepoStore := os.Getenv(templateStoreURLEnvironment)
+	storeURL := getTemplateStoreURL(templateStoreURL, envTemplateRepoStore, DefaultTemplatesStore)
 
-		for _, template := range args {
-			found := false
-			for _, storeTemplate := range storeTemplates {
-				sourceName := fmt.Sprintf("%s/%s", storeTemplate.Source, storeTemplate.TemplateName)
-				if template == storeTemplate.TemplateName || template == sourceName {
-					runTemplatePull(cmd, []string{storeTemplate.Repository})
-					found = true
-					break
+	storeTemplates, templatesErr := getTemplateInfo(storeURL)
+	if templatesErr != nil {
+		return fmt.Errorf("error while fetching templates from store: %s", templatesErr)
+	}
+
+	for _, template := range args {
+		found := false
+		for _, storeTemplate := range storeTemplates {
+			sourceName := fmt.Sprintf("%s/%s", storeTemplate.Source, storeTemplate.TemplateName)
+			if template == storeTemplate.TemplateName || template == sourceName {
+				err := runTemplatePull(cmd, []string{storeTemplate.Repository})
+				if err != nil {
+					return fmt.Errorf("error while pulling template: %s : %s", storeTemplate.TemplateName, err.Error())
 				}
+				found = true
+				break
 			}
-			if !found {
-				nonExistingTemplates = append(nonExistingTemplates, fmt.Sprintf("\nThere is no template with name: `%s` in the store.\n", template))
-			}
+		}
+		if !found {
+			nonExistingTemplates = append(nonExistingTemplates, fmt.Sprintf("\nThere is no template with name: `%s` in the store.\n", template))
 		}
 	}
 	if len(nonExistingTemplates) > 0 {
