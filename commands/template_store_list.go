@@ -38,7 +38,7 @@ var templateStoreListCmd = &cobra.Command{
 	Use:     `list`,
 	Short:   `List templates from OpenFaaS organizations`,
 	Aliases: []string{"ls"},
-	Long:    `List templates from official store or from custom URL`,
+	Long:    `List templates from official store or from custom URL or set the environmental variable OPENFAAS_TEMPLATE_STORE_URL to be the default store location`,
 	Example: `  faas-cli template store list
   faas-cli template store ls
   faas-cli template store ls --url=https://raw.githubusercontent.com/openfaas/store/master/templates.json

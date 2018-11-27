@@ -65,3 +65,31 @@ faas-cli template pull
 ```bash
 faas-cli new --list
 ```
+
+## Check template store
+
+In order to check what templates are available in the template store type
+
+```bash
+faas-cli template store list
+```
+
+Pull the desired template by specifying `NAME` attribute only:
+
+```bash
+faas-cli template store pull go
+```
+
+or pull the template by mixing the repository and name the following way:
+
+```bash
+faas-cli template store pull openfaas/go
+```
+
+If you have your own store with templates, you can set that as your default official store by setting the environmental variable `OPENFAAS_TEMPLATE_STORE_URL` the following way:
+
+```bash
+export OPENFAAS_TEMPLATE_STORE_URL=https://raw.githubusercontent.com/user/openfaas-templates/templates.json
+```
+
+Now the source of the store is changed to the URL you have specified above.
