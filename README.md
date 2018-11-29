@@ -155,6 +155,8 @@ In order to see what templates are available in the store type `faas-cli templat
 
 To pull templates from the store just write the name of the template you want `faas-cli template store pull go` or the repository and name `faas-cli template store pull openfaas/go`
 
+To get more detail on a template just use the `template store describe` command and pick a template of your choice, example with `go` would look like this `faas-cli template store describe go`
+
 > Note: This feature is still in experimental stage and in the future the CLI verbs might be changed
 
 #### HMAC
