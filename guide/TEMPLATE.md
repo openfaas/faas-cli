@@ -93,3 +93,15 @@ export OPENFAAS_TEMPLATE_STORE_URL=https://raw.githubusercontent.com/user/openfa
 ```
 
 Now the source of the store is changed to the URL you have specified above.
+
+To get specific information for a template use the following command:
+
+```bash
+faas-cli template store describe golang-middleware
+```
+
+or use the source and the name in case of name collision:
+
+```bash
+faas-cli template store describe openfaas-incubator/golang-middleware
+```
