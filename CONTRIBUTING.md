@@ -99,7 +99,7 @@ $ brew uninstall --force faas-cli ; \
 
 ### How to update the `scoop` manifest
 
-The `scoop` manifest for the faas-cli is part of the official [sccop](https://github.com/lukesampson/scoop/blob/master/bucket/faas-cli.json) repo on Github. It needs to be updated for each subsequent release.
+The `scoop` manifest for the faas-cli is part of the official [scoop](https://github.com/lukesampson/scoop/blob/master/bucket/faas-cli.json) repo on Github. It needs to be updated for each subsequent release.
 
 #### Simple version bumps
 
