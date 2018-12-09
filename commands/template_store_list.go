@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -20,19 +21,18 @@ import (
 const (
 	// DefaultTemplatesStore is the URL where the official store can be found
 	DefaultTemplatesStore = "https://raw.githubusercontent.com/openfaas/store/master/templates.json"
-	allPlatforms          = "allPlatforms"
+	mainPlatform          = "x86_64"
 )
 
 var (
-	templateStoreURL   string
-	platform           string
-	availablePlatforms = [...]string{"armhf", "x86_64", "arm64"}
+	templateStoreURL string
+	platform         string
 )
 
 func init() {
 	templateStoreListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows additional language and platform")
 	templateStoreListCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
-	templateStoreListCmd.Flags().StringVarP(&platform, "platform", "p", allPlatforms, "Shows the platform if the output is verbose")
+	templateStoreListCmd.Flags().StringVarP(&platform, "platform", "p", mainPlatform, "Shows the platform if the output is verbose")
 
 	templateStoreCmd.AddCommand(templateStoreListCmd)
 }
@@ -106,10 +106,14 @@ func getTemplateInfo(repository string) ([]TemplateInfo, error) {
 }
 
 func formatTemplatesOutput(templates []TemplateInfo, verbose bool, platform string) string {
-	if platform != allPlatforms {
-		err := checkExistingPlatforms(platform)
-		if err != nil {
-			return err.Error()
+	if platform != mainPlatform {
+		for templatesLength, template := range templates {
+			if strings.EqualFold(template.Platform, platform) {
+				break
+			}
+			if len(template.Platform)-1 == templatesLength {
+				return ""
+			}
 		}
 	}
 
@@ -130,50 +134,34 @@ func formatTemplatesOutput(templates []TemplateInfo, verbose bool, platform stri
 }
 
 func formatBasicOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo, platform string) {
-	if platform != allPlatforms {
-		fmt.Fprintf(lineWriter, "NAME\tSOURCE\tDESCRIPTION\n")
-		for _, template := range templates {
-			if template.Platform == platform {
-				fmt.Fprintf(lineWriter, "%s\t%s\t%s\n",
-					template.TemplateName,
-					template.Source,
-					template.Description)
-			}
-		}
+	if platform != mainPlatform {
+		templates = filterTemplate(templates, platform)
 	} else {
-		fmt.Fprintf(lineWriter, "NAME\tSOURCE\tDESCRIPTION\n")
-		for _, template := range templates {
-			fmt.Fprintf(lineWriter, "%s\t%s\t%s\n",
-				template.TemplateName,
-				template.Source,
-				template.Description)
-		}
+		templates = filterTemplate(templates, mainPlatform)
+	}
+	fmt.Fprintf(lineWriter, "NAME\tSOURCE\tDESCRIPTION\n")
+	for _, template := range templates {
+		fmt.Fprintf(lineWriter, "%s\t%s\t%s\n",
+			template.TemplateName,
+			template.Source,
+			template.Description)
 	}
 }
 
 func formatVerboseOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo, platform string) {
-	if platform != allPlatforms {
-		fmt.Fprintf(lineWriter, "NAME\tLANGUAGE\tPLATFORM\tSOURCE\tDESCRIPTION\n")
-		for _, template := range templates {
-			if template.Platform == platform {
-				fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\n",
-					template.TemplateName,
-					template.Language,
-					template.Platform,
-					template.Source,
-					template.Description)
-			}
-		}
+	if platform != mainPlatform {
+		templates = filterTemplate(templates, platform)
 	} else {
-		fmt.Fprintf(lineWriter, "NAME\tLANGUAGE\tPLATFORM\tSOURCE\tDESCRIPTION\n")
-		for _, template := range templates {
-			fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\n",
-				template.TemplateName,
-				template.Language,
-				template.Platform,
-				template.Source,
-				template.Description)
-		}
+		templates = filterTemplate(templates, mainPlatform)
+	}
+	fmt.Fprintf(lineWriter, "NAME\tLANGUAGE\tPLATFORM\tSOURCE\tDESCRIPTION\n")
+	for _, template := range templates {
+		fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\n",
+			template.TemplateName,
+			template.Language,
+			template.Platform,
+			template.Source,
+			template.Description)
 	}
 }
 
@@ -188,14 +176,12 @@ type TemplateInfo struct {
 	Official     string `json:"official"`
 }
 
-func checkExistingPlatforms(platform string) error {
-	var err error
-	for lastPlatform, availablePlatform := range availablePlatforms {
-		if availablePlatform == platform {
-			break
-		} else if len(availablePlatforms)-1 == lastPlatform {
-			err = fmt.Errorf("\nCurrently supported platforms are: armhf, arm64 and x86_64. Unable to find: %s\n\n", platform)
+func filterTemplate(templates []TemplateInfo, platform string) []TemplateInfo {
+	var filteredTemplates []TemplateInfo
+	for _, template := range templates {
+		if strings.EqualFold(template.Platform, platform) {
+			filteredTemplates = append(filteredTemplates, template)
 		}
 	}
-	return err
+	return filteredTemplates
 }
