@@ -20,7 +20,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag string, buildLabelMap map[string]string) error {
 
 	if stack.IsValidTemplate(language) {
 
@@ -104,6 +104,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			HTTPSProxy:       os.Getenv("https_proxy"),
 			BuildArgMap:      buildArgMap,
 			BuildOptPackages: buildOptPackages,
+			BuildLabelMap:    buildLabelMap,
 		}
 
 		spaceSafeCmdLine := getDockerBuildCommand(dockerBuildVal)
@@ -119,7 +120,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 }
 
 func getDockerBuildCommand(build dockerBuild) []string {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages)
+	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
 	command := []string{"docker", "build"}
 	command = append(command, flagSlice...)
 	command = append(command, "-t", build.Image, ".")
@@ -136,6 +137,7 @@ type dockerBuild struct {
 	HTTPSProxy       string
 	BuildArgMap      map[string]string
 	BuildOptPackages []string
+	BuildLabelMap    map[string]string
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
@@ -227,7 +229,7 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 	return tempPath
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string) []string {
+func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
 
 	var spaceSafeBuildFlags []string
 
@@ -257,6 +259,10 @@ func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy stri
 	if len(buildOptionPackages) > 0 {
 		buildOptionPackages = deDuplicate(buildOptionPackages)
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", AdditionalPackageBuildArg, strings.Join(buildOptionPackages, " ")))
+	}
+
+	for k, v := range buildLabelMap {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--label", fmt.Sprintf("%s=%s", k, v))
 	}
 
 	return spaceSafeBuildFlags
