@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -107,6 +108,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		buildArgMap   map[string]string
 		buildPackages []string
 		expectedSlice []string
+		buildLabelMap map[string]string
 	}{
 		{
 			title:         "no cache only",
@@ -218,14 +220,47 @@ func Test_buildFlagSlice(t *testing.T) {
 			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima"},
 		},
+		{
+			title:      "single build-label value",
+			nocache:    false,
+			squash:     false,
+			httpProxy:  "",
+			httpsProxy: "",
+			buildArgMap: map[string]string{
+				"muppets":    "burt and ernie",
+				"playschool": "Jemima",
+			},
+			buildPackages: []string{},
+			buildLabelMap: map[string]string{
+				"org.label-schema.name": "test function",
+			},
+			expectedSlice: []string{"--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima", "--label", "org.label-schema.name=test function"},
+		},
+		{
+			title:      "multiple build-label values",
+			nocache:    false,
+			squash:     false,
+			httpProxy:  "",
+			httpsProxy: "",
+			buildArgMap: map[string]string{
+				"muppets":    "burt and ernie",
+				"playschool": "Jemima",
+			},
+			buildPackages: []string{},
+			buildLabelMap: map[string]string{
+				"org.label-schema.name":        "test function",
+				"org.label-schema.description": "This is a test function",
+			},
+			expectedSlice: []string{"--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima", "--label", "org.label-schema.name=test function", "--label", "org.label-schema.description=This is a test function"},
+		},
 	}
 
 	for _, test := range buildFlagOpts {
 
 		t.Run(test.title, func(t *testing.T) {
 
-			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages)
-
+			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap)
+			fmt.Println(flagSlice)
 			if len(flagSlice) != len(test.expectedSlice) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))
 			}
