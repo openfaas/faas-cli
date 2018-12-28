@@ -19,8 +19,8 @@ const DefaultTemplateRepository = "https://github.com/openfaas/templates.git"
 
 const templateDirectory = "./template/"
 
-// fetchTemplates fetch code templates from GitHub master zip file.
-func fetchTemplates(templateURL string, overwrite bool) error {
+// fetchTemplates fetch code templates using git clone.
+func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 	if len(templateURL) == 0 {
 		return fmt.Errorf("pass valid templateURL")
 	}
@@ -35,7 +35,7 @@ func fetchTemplates(templateURL string, overwrite bool) error {
 
 	log.Printf("Attempting to expand templates from %s\n", templateURL)
 	pullDebugPrint(fmt.Sprintf("Temp files in %s", dir))
-	args := map[string]string{"dir": dir, "repo": templateURL}
+	args := map[string]string{"dir": dir, "repo": templateURL, "refname": refName}
 	if err := versioncontrol.GitClone.Invoke(".", args); err != nil {
 		return err
 	}

@@ -82,59 +82,6 @@ func Test_templatePull(t *testing.T) {
 		}
 	})
 }
-
-func Test_repositoryUrlRemoteRegExp(t *testing.T) {
-
-	r := regexp.MustCompile(gitRemoteRepoRegex)
-	validURLs := []struct {
-		name string
-		url  string
-	}{
-		{name: "git protocol with sha", url: "git://github.com/openfaas/faas.git#ff78lf9h"},
-		{name: "git protocol without .git suffix", url: "git://host.xz/path/to/repo"},
-		{name: "git protocol with branch", url: "git://github.com/openfaas/faas.git#master"},
-		{name: "git protocol", url: "git://host.xz/path/to/repo.git/"},
-		{name: "scp style with ip address", url: "git@192.168.101.127:user/project.git"},
-		{name: "scp style with hostname", url: "git@github.com:user/project.git"},
-		{name: "http protocol with ip address", url: "http://192.168.101.127/user/project.git"},
-		{name: "http protocol", url: "http://github.com/user/project.git"},
-		{name: "http protocol without .git suffix", url: "http://github.com/user/project"},
-		{name: "https protocol with ip address", url: "https://192.168.101.127/user/project.git"},
-		{name: "https protocol with hostname", url: "https://github.com/user/project.git"},
-		{name: "https protocol with basic auth", url: "https://username:password@github.com/username/repository.git"},
-		{name: "ssh protocol with hostname no port", url: "ssh://user@host.xz/path/to/repo.git/"},
-		{name: "ssh protocol with hostname and port", url: "ssh://user@host.xz:port/path/to/repo.git/"},
-	}
-
-	for _, scenario := range validURLs {
-		t.Run(fmt.Sprintf("%s is a valid remote git url", scenario.name), func(t *testing.T) {
-			if !r.MatchString(scenario.url) {
-				t.Errorf("Url %s should pass the regex %s", scenario.url, gitRemoteRepoRegex)
-			}
-
-		})
-	}
-
-	invalidURLs := []struct {
-		name string
-		url  string
-	}{
-		{name: "local repo file protocol", url: "file:///path/to/repo.git/"},
-		{name: "ssh missing username and port", url: "host.xz:/path/to/repo.git"},
-		{name: "ssh username and missing port", url: "user@host.xz:path/to/repo.git"},
-		{name: "relative local path", url: "path/to/repo.git/"},
-		{name: "magic relative local", url: "~/path/to/repo.git"},
-	}
-	for _, scenario := range invalidURLs {
-		t.Run(fmt.Sprintf("%s is not a valid remote git url", scenario.name), func(t *testing.T) {
-			if r.MatchString(scenario.url) {
-				t.Errorf("Url %s should fail the regex %s", scenario.url, gitRemoteRepoRegex)
-			}
-
-		})
-	}
-}
-
 func Test_templatePullPriority(t *testing.T) {
 	templateURLs := []struct {
 		name      string
