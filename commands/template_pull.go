@@ -5,13 +5,9 @@ package commands
 import (
 	"fmt"
 	"os"
-	"regexp"
 
+	"github.com/openfaas/faas-cli/versioncontrol"
 	"github.com/spf13/cobra"
-)
-
-const (
-	gitRemoteRepoRegex = `(?:git|ssh|https?|git@[-\w.]+):(\/\/)?(.*?)(\.git)?(\/?|\#[-\d\w._]+?)$`
 )
 
 var (
@@ -45,14 +41,22 @@ func runTemplatePull(cmd *cobra.Command, args []string) error {
 	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
 
 	if _, err := os.Stat(repository); err != nil {
-		var validURL = regexp.MustCompile(gitRemoteRepoRegex)
-		if !validURL.MatchString(repository) {
+		if !versioncontrol.IsGitRemote(repository) && !versioncontrol.IsPinnedGitRemote(repository) {
 			return fmt.Errorf("The repository URL must be a valid git repo uri")
 		}
 	}
 
-	fmt.Println("Fetch templates from repository: " + repository)
-	if err := fetchTemplates(repository, overwrite); err != nil {
+	repository, refName := versioncontrol.ParsePinnedRemote(repository)
+
+	if err := versioncontrol.GitCheckRefName.Invoke("", map[string]string{"refname": refName}); err != nil {
+		fmt.Printf("Invalid tag or branch name `%s`\n", refName)
+		fmt.Println("See https://git-scm.com/docs/git-check-ref-format for more details of the rules Git enforces on branch and reference names.")
+
+		return err
+	}
+
+	fmt.Printf("Fetch templates from repository: %s at %s\n", repository, refName)
+	if err := fetchTemplates(repository, refName, overwrite); err != nil {
 		return fmt.Errorf("error while fetching templates: %s", err)
 	}
 	return nil

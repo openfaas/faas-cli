@@ -13,6 +13,7 @@ import (
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/versioncontrol"
 	"github.com/spf13/cobra"
 )
 
@@ -75,7 +76,7 @@ via flags.`,
   faas-cli build -f ./stack.yml --tag branch
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ 
+  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
                  --name=my_fn --squash`,
 	PreRunE: preRunBuild,
 	RunE:    runBuild,
@@ -209,14 +210,15 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 
 }
 
-// PullTemplates pulls templates from Github from the master zip download file.
+// PullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
 func PullTemplates(templateURL string) error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
-		err = fetchTemplates(templateURL, false)
+		templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
+		err = fetchTemplates(templateURL, refName, false)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err
