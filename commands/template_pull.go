@@ -26,11 +26,17 @@ func init() {
 // templatePullCmd allows the user to fetch a template from a repository
 var templatePullCmd = &cobra.Command{
 	Use:   `pull [REPOSITORY_URL]`,
-	Short: `Downloads templates from the specified github repo`,
-	Long: `Downloads the compressed github repo specified by [URL], and extracts the 'template'
-	directory from the root of the repo, if it exists.`,
-	Example: "faas-cli template pull https://github.com/openfaas/faas-cli",
-	RunE:    runTemplatePull,
+	Short: `Downloads templates from the specified git repo`,
+	Long: `Downloads templates from the specified git repo specified by [REPOSITORY_URL], and copies the 'template'
+directory from the root of the repo, if it exists.
+
+[REPOSITORY_URL] may specify a specific branch or tag to copy by adding a URL fragment with the branch or tag name.
+	`,
+	Example: `
+  faas-cli template pull https://github.com/openfaas/templates
+  faas-cli template pull https://github.com/openfaas/templates#1.0
+`,
+	RunE: runTemplatePull,
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) error {

@@ -100,9 +100,9 @@ export OPENFAAS_URL=127.0.0.1:31112
 
 Advanced commands:
 
-* `faas-cli template pull` - pull in templates from a remote GitHub repository [Detailed Documentation](guide/TEMPLATE.md)
+* `faas-cli template pull` - pull in templates from a remote git repository [Detailed Documentation](guide/TEMPLATE.md)
 
-The default template URL of `https://github.com/openfaas/templates.git` can be overriden in two places including an environmental variable
+The default template URL of `https://github.com/openfaas/templates.git` can be overridden in two places including an environmental variable
 
 * 1st priority CLI input
 * 2nd priority `OPENFAAS_TEMPLATE_URL` environmental variable
