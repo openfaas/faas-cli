@@ -80,7 +80,8 @@ via flags.`,
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
-                 --name=my_fn --squash`,
+                 --name=my_fn --squash
+  faas-cli build -f ./stack.yml --build-label org.label-schema.label-name="value"`,
 	PreRunE: preRunBuild,
 	RunE:    runBuild,
 }
@@ -104,24 +105,11 @@ func parseBuildLabel(args []string) (map[string]string, error) {
 	mapped := make(map[string]string)
 
 	for _, kvp := range args {
-		index := strings.Index(kvp, "=")
-		if index == -1 {
-			return nil, fmt.Errorf("each build-label must take the form key=value")
+		k, v, err := parseKeyValue(kvp, "build-label")
+
+		if err != nil {
+			return nil, err
 		}
-
-		values := []string{kvp[0:index], kvp[index+1:]}
-
-		k := strings.TrimSpace(values[0])
-		v := strings.TrimSpace(values[1])
-
-		if len(k) == 0 {
-			return nil, fmt.Errorf("build-label must have a non-empty key")
-		}
-
-		if len(v) == 0 {
-			return nil, fmt.Errorf("build-label must have a non-empty value")
-		}
-
 		mapped[k] = v
 	}
 
@@ -132,21 +120,10 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 	mapped := make(map[string]string)
 
 	for _, kvp := range args {
-		index := strings.Index(kvp, "=")
-		if index == -1 {
-			return nil, fmt.Errorf("each build-arg must take the form key=value")
-		}
+		k, v, err := parseKeyValue(kvp, "build-arg")
 
-		values := []string{kvp[0:index], kvp[index+1:]}
-
-		k := strings.TrimSpace(values[0])
-		v := strings.TrimSpace(values[1])
-
-		if len(k) == 0 {
-			return nil, fmt.Errorf("build-arg must have a non-empty key")
-		}
-		if len(v) == 0 {
-			return nil, fmt.Errorf("build-arg must have a non-empty value")
+		if err != nil {
+			return nil, err
 		}
 
 		if k == builder.AdditionalPackageBuildArg && len(mapped[k]) > 0 {
@@ -157,6 +134,27 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 	}
 
 	return mapped, nil
+}
+
+func parseKeyValue(kvp string, flagName string) (string, string, error) {
+	index := strings.Index(kvp, "=")
+	if index == -1 {
+		return "", "", fmt.Errorf("each %s must take the form key=value", flagName)
+	}
+
+	values := []string{kvp[0:index], kvp[index+1:]}
+
+	k := strings.TrimSpace(values[0])
+	v := strings.TrimSpace(values[1])
+
+	if len(k) == 0 {
+		return "", "", fmt.Errorf("%s must have a non-empty key", flagName)
+	}
+	if len(v) == 0 {
+		return "", "", fmt.Errorf("%s must have a non-empty value", flagName)
+	}
+
+	return k, v, nil
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
