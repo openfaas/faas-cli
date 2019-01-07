@@ -4,10 +4,13 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
 	"os"
+	"text/tabwriter"
 
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
 
@@ -15,7 +18,7 @@ import (
 var secretListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all secrets",
-	Long:  `List all secrets names and metadata`,
+	Long:  `List all secrets`,
 	Example: `faas-cli secret list
 faas-cli secret list --gateway=http://127.0.0.1:8080`,
 	RunE:    runSecretList,
@@ -53,9 +56,26 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	for _, secret := range secrets {
-		fmt.Println(secret.Name)
+	if len(secrets) == 0 {
+		fmt.Println("No secret found.")
+		return nil
 	}
+	fmt.Print(renderSecretList(secrets))
 
 	return nil
+}
+
+func renderSecretList(secrets []schema.Secret) string {
+	var b bytes.Buffer
+	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
+	fmt.Fprintln(w)
+	fmt.Fprintln(w, "NAME")
+
+	for _, secret := range secrets {
+		fmt.Fprintf(w, "%s\n", secret)
+	}
+
+	fmt.Fprintln(w)
+	w.Flush()
+	return b.String()
 }
