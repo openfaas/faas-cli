@@ -14,6 +14,12 @@ import (
 func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	var results []schema.Secret
 
+	if tlsInsecure {
+		if !strings.HasPrefix(gateway, "https") {
+			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		}
+	}
+
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
