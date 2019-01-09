@@ -16,9 +16,10 @@ import (
 
 // secretListCmd represents the secretCreate command
 var secretListCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List all secrets",
-	Long:  `List all secrets`,
+	Use:     "list",
+	Aliases: []string{"ls"},
+	Short:   "List all secrets",
+	Long:    `List all secrets`,
 	Example: `faas-cli secret list
 faas-cli secret list --gateway=http://127.0.0.1:8080`,
 	RunE:    runSecretList,
