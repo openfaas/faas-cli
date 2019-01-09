@@ -14,7 +14,7 @@ import (
 func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	var results []schema.Secret
 
-	if tlsInsecure {
+	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
 			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
 		}
@@ -40,7 +40,7 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	}
 
 	switch res.StatusCode {
-	case http.StatusOK:
+	case http.StatusOK, http.StatusAccepted:
 
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {

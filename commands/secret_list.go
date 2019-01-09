@@ -72,7 +72,7 @@ func renderSecretList(secrets []schema.Secret) string {
 	fmt.Fprintln(w, "NAME")
 
 	for _, secret := range secrets {
-		fmt.Fprintf(w, "%s\n", secret)
+		fmt.Fprintf(w, "%s\n", secret.Name)
 	}
 
 	fmt.Fprintln(w)
