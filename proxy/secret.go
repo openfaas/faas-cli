@@ -66,7 +66,21 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	return results, nil
 }
 
-//RemoveSecret remove a secret via the OpenFaaS API by name
+// UpdateSecret update a secret via the OpenFaaS API by name
+func UpdateSecret(gateway string, secret schema.Secret, value string, tlsInsecure bool) error {
+	// todo(leodido) > uncomment when rebased on top of master containing create-secret functionality
+	// if err := RemoveSecret(gateway, secret, tlsInsecure); err != nil {
+	// 	return err
+	// }
+
+	// if err := CreateSecret(gateway, secret, value, tlsInsecure); err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+// RemoveSecret remove a secret via the OpenFaaS API by name
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
 
 	if !tlsInsecure {
