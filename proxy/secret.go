@@ -66,7 +66,7 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	return results, nil
 }
 
-// RemoveSecret remove a secret via the OpenFaaS API by name
+//RemoveSecret remove a secret via the OpenFaaS API by name
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
 
 	if !tlsInsecure {
@@ -112,4 +112,60 @@ func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error 
 	}
 
 	return nil
+}
+
+//CreateSecret create secret
+func CreateSecret(gateway, secretName, secretValue string, tlsInsecure bool) (int, string) {
+	var output string
+
+	if !tlsInsecure {
+		if !strings.HasPrefix(gateway, "https") {
+			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		}
+	}
+
+	gateway = strings.TrimRight(gateway, "/")
+
+	req := schema.Secret{
+		Name:  secretName,
+		Value: secretValue,
+	}
+
+	reqBytes, _ := json.Marshal(&req)
+	reader := bytes.NewReader(reqBytes)
+
+	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+	request, err := http.NewRequest(http.MethodPost, gateway+"/system/secrets", reader)
+	SetAuth(request, gateway)
+
+	if err != nil {
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", gateway)
+		return http.StatusInternalServerError, output
+	}
+
+	res, err := client.Do(request)
+	if err != nil {
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", gateway)
+		return http.StatusInternalServerError, output
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
+		output += fmt.Sprintf("Created: %s\n", res.Status)
+
+	case http.StatusUnauthorized:
+		output += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+
+	default:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			output += fmt.Sprintf("server returned unexpected status code: %d - %s\n", res.StatusCode, string(bytesOut))
+		}
+	}
+
+	return res.StatusCode, output
 }
