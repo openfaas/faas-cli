@@ -1,4 +1,4 @@
-// Copyright (c) OpenFaaS Author(s) 2018. All rights reserved.
+// Copyright (c) OpenFaaS Author(s) 2019. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 package commands
@@ -28,20 +28,9 @@ faas-cli secret list --gateway=http://127.0.0.1:8080`,
 
 func init() {
 	secretListCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	// secretListCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 	secretListCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	secretCmd.AddCommand(secretListCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// secretCreateCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// secretCreateCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func preRunSecretListCmd(cmd *cobra.Command, args []string) error {
@@ -58,10 +47,11 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(secrets) == 0 {
-		fmt.Println("No secret found.")
+		fmt.Printf("No secrets found.\n")
 		return nil
 	}
-	fmt.Print(renderSecretList(secrets))
+
+	fmt.Printf("%s", renderSecretList(secrets))
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -63,4 +64,52 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	}
 
 	return results, nil
+}
+
+// RemoveSecret remove a secret via the OpenFaaS API by name
+func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
+
+	if !tlsInsecure {
+		if !strings.HasPrefix(gateway, "https") {
+			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		}
+	}
+
+	gateway = strings.TrimRight(gateway, "/")
+	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+
+	body, _ := json.Marshal(secret)
+
+	getRequest, err := http.NewRequest(http.MethodDelete, gateway+"/system/secrets", bytes.NewBuffer(body))
+	SetAuth(getRequest, gateway)
+
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
+	res, err := client.Do(getRequest)
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case http.StatusOK, http.StatusAccepted:
+		break
+	case http.StatusNotFound:
+		return fmt.Errorf("unable to find secret: %s", secret.Name)
+	case http.StatusUnauthorized:
+		return fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+
+	default:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+		}
+	}
+
+	return nil
 }
