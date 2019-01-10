@@ -63,6 +63,11 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(secretValue) == 0 && len(secretFile) == 0 {
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
+		}
+
 		secretStdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
