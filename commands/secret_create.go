@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +41,13 @@ func init() {
 }
 
 func preRunSecretCreate(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("give a name of a secret")
+	}
+
+	if len(args) > 1 {
+		return fmt.Errorf("give ONLY the name of a single secret")
+	}
 
 	if len(secretFile) > 0 && len(literalSecret) > 0 {
 		return fmt.Errorf("please provide secret using only one option from --from-literal, --from-file and STDIN")
@@ -49,24 +57,21 @@ func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 }
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
-	var (
-		gatewayAddress string
-		err            error
-		secretValue    string
-	)
-
 	if len(args) < 1 {
 		return fmt.Errorf("please provide secret name")
 	}
 
-	secretName := args[0]
+	secret := schema.Secret{
+		Name: args[0],
+	}
 
 	switch {
 	case len(literalSecret) > 0:
-		secretValue = literalSecret
+		secret.Value = literalSecret
 
 	case len(secretFile) > 0:
-		secretValue, err = readSecretFromFile(secretFile)
+		var err error
+		secret.Value, err = readSecretFromFile(secretFile)
 		if err != nil {
 			return err
 		}
@@ -81,19 +86,19 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		secretValue = string(secretStdin)
+		secret.Value = string(secretStdin)
 	}
 
-	secretValue = strings.TrimSpace(secretValue)
+	secret.Value = strings.TrimSpace(secret.Value)
 
-	if len(secretValue) == 0 {
+	if len(secret.Value) == 0 {
 		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")
 	}
 
-	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	fmt.Println("Creating secret: " + secretName + "\n")
-	_, output := proxy.CreateSecret(gatewayAddress, secretName, secretValue, tlsInsecure)
+	fmt.Println("Creating secret: " + secret.Name)
+	_, output := proxy.CreateSecret(gatewayAddress, secret, tlsInsecure)
 	fmt.Printf(output)
 
 	return nil

@@ -67,26 +67,32 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 }
 
 // UpdateSecret update a secret via the OpenFaaS API by name
-func UpdateSecret(gateway string, secret schema.Secret, value string, tlsInsecure bool) error {
-	// todo: probably worth hiding this check into MakeHTTPClient or makeHTTPClientWithDisableKeepAlives
-	// todo: use a constant for warning message
-	// if !tlsInsecure && !strings.HasPrefix(gateway, "https") {}
+func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
+	var output string
+
+	if !tlsInsecure {
+		if !strings.HasPrefix(gateway, "https") {
+			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		}
+	}
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
-	body, _ := json.Marshal(struct{}{}) // fixme(leodido)
+	reqBytes, _ := json.Marshal(&secret)
 
-	putRequest, err := http.NewRequest(http.MethodPut, gateway+"/system/secrets", bytes.NewBuffer(body))
+	putRequest, err := http.NewRequest(http.MethodPut, gateway+"/system/secrets", bytes.NewBuffer(reqBytes))
 	SetAuth(putRequest, gateway)
 
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return http.StatusInternalServerError, output
 	}
 
 	res, err := client.Do(putRequest)
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return http.StatusInternalServerError, output
 	}
 
 	if res.Body != nil {
@@ -95,20 +101,23 @@ func UpdateSecret(gateway string, secret schema.Secret, value string, tlsInsecur
 
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusAccepted:
+		output += fmt.Sprintf("Updated: %s\n", res.Status)
 		break
+
 	case http.StatusNotFound:
-		return fmt.Errorf("unable to find secret: %s", secret.Name)
+		output += fmt.Sprintf("unable to find secret: %s", secret.Name)
+
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		output += fmt.Sprintf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
-			return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+			output += fmt.Sprintf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
 	}
 
-	return nil
+	return res.StatusCode, output
 }
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
@@ -158,8 +167,8 @@ func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error 
 	return nil
 }
 
-//CreateSecret create secret
-func CreateSecret(gateway, secretName, secretValue string, tlsInsecure bool) (int, string) {
+// CreateSecret create secret
+func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
 	var output string
 
 	if !tlsInsecure {
@@ -170,12 +179,7 @@ func CreateSecret(gateway, secretName, secretValue string, tlsInsecure bool) (in
 
 	gateway = strings.TrimRight(gateway, "/")
 
-	req := schema.Secret{
-		Name:  secretName,
-		Value: secretValue,
-	}
-
-	reqBytes, _ := json.Marshal(&req)
+	reqBytes, _ := json.Marshal(&secret)
 	reader := bytes.NewReader(reqBytes)
 
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
