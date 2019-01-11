@@ -14,14 +14,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var (
-	secretValue string
-	secretFile  string
-)
-
 var secretUpdateCmd = &cobra.Command{
 	Use:     "update",
-	Aliases: []string{"replace"},
+	Aliases: []string{"u"},
 	Short:   "Update a secret",
 	Long:    `Update a secret by name`,
 	Example: `faas-cli secret update NAME
@@ -30,25 +25,29 @@ faas-cli secret update NAME --from-file=/path/to/secret/file
 faas-cli secret update NAME --from-literal=secret-value --gateway=http://127.0.0.1:8080
 cat /path/to/secret/file | faas-cli secret update NAME`,
 	RunE:    runSecretUpdate,
-	PreRunE: preRunSecretUpdateCmd,
+	PreRunE: preRunSecretUpdate,
 }
 
 func init() {
 	secretUpdateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretUpdateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
-	secretUpdateCmd.Flags().StringVar(&secretValue, "from-literal", "", "Value of the secret")
+	secretUpdateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretUpdateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
 
 	secretCmd.AddCommand(secretUpdateCmd)
 }
 
-func preRunSecretUpdateCmd(cmd *cobra.Command, args []string) error {
+func preRunSecretUpdate(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("give a name of a secret")
 	}
 
 	if len(args) > 1 {
 		return fmt.Errorf("give ONLY the name of a single secret")
+	}
+
+	if len(secretFile) > 0 && len(literalSecret) > 0 {
+		return fmt.Errorf("please provide secret using only one option from --from-literal, --from-file and STDIN")
 	}
 
 	return nil
@@ -61,33 +60,39 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 		Name: args[0],
 	}
 
-	if len(secretValue) == 0 {
-		if len(secretFile) == 0 {
-			stat, _ := os.Stdin.Stat()
-			if (stat.Mode() & os.ModeCharDevice) != 0 {
-				fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
-			}
-			input, err := ioutil.ReadAll(os.Stdin)
-			if err != nil {
-				return fmt.Errorf("unable to read standard input: %s", err.Error())
-			}
-			secretValue = string(input)
-		} else {
-			input, err := ioutil.ReadFile(secretFile)
-			if err != nil {
-				return fmt.Errorf("unable to read secret file: %s", err.Error())
-			}
-			secretValue = string(input)
+	switch {
+	case len(literalSecret) > 0:
+		secret.Value = literalSecret
+
+	case len(secretFile) > 0:
+		content, err := ioutil.ReadFile(secretFile)
+		if err != nil {
+			return fmt.Errorf("unable to read secret file: %s", err.Error())
 		}
-	}
-	secretValue = strings.TrimSpace(secretValue)
+		secret.Value = string(content)
 
-	err := proxy.UpdateSecret(gatewayAddress, secret, secretValue, tlsInsecure)
-	if err != nil {
-		return err
+	default:
+		stat, _ := os.Stdin.Stat()
+		if (stat.Mode() & os.ModeCharDevice) != 0 {
+			fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
+		}
+
+		secretStdin, err := ioutil.ReadAll(os.Stdin)
+		if err != nil {
+			return fmt.Errorf("unable to read standard input: %s", err.Error())
+		}
+		secret.Value = string(secretStdin)
 	}
 
-	fmt.Printf("Secret %q updated.\n", secret.Name)
+	secret.Value = strings.TrimSpace(secret.Value)
+
+	if len(secret.Value) == 0 {
+		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")
+	}
+
+	fmt.Println("Updating secret: " + secret.Name)
+	_, output := proxy.UpdateSecret(gatewayAddress, secret, tlsInsecure)
+	fmt.Printf(output)
 
 	return nil
 }
