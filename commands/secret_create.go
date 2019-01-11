@@ -14,9 +14,8 @@ import (
 )
 
 var (
-	secretName  string
-	secretValue string
-	secretFile  string
+	literalSecret string
+	secretFile    string
 )
 
 // secretCreateCmd represents the secretCreate command
@@ -33,7 +32,7 @@ cat /path/to/secret/file | faas-cli secret create secret-name`,
 }
 
 func init() {
-	secretCreateCmd.Flags().StringVar(&secretValue, "from-literal", "", "Value of the secret")
+	secretCreateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretCreateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
 	secretCreateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
@@ -42,27 +41,37 @@ func init() {
 
 func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 
+	if len(secretFile) > 0 && len(literalSecret) > 0 {
+		return fmt.Errorf("please provide secret using only one option from --from-literal, --from-file and STDIN")
+	}
+
 	return nil
 }
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
-	var gatewayAddress string
-	var err error
+	var (
+		gatewayAddress string
+		err            error
+		secretValue    string
+	)
 
 	if len(args) < 1 {
 		return fmt.Errorf("please provide secret name")
 	}
-	secretName = args[0]
 
-	if len(secretValue) == 0 && len(secretFile) > 0 {
+	secretName := args[0]
+
+	switch {
+	case len(literalSecret) > 0:
+		secretValue = literalSecret
+
+	case len(secretFile) > 0:
 		secretValue, err = readSecretFromFile(secretFile)
 		if err != nil {
 			return err
 		}
 
-	}
-
-	if len(secretValue) == 0 && len(secretFile) == 0 {
+	default:
 		stat, _ := os.Stdin.Stat()
 		if (stat.Mode() & os.ModeCharDevice) != 0 {
 			fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
@@ -72,9 +81,9 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-
 		secretValue = string(secretStdin)
 	}
+
 	secretValue = strings.TrimSpace(secretValue)
 
 	if len(secretValue) == 0 {
