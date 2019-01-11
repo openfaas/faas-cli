@@ -96,34 +96,30 @@ func preRunBuild(cmd *cobra.Command, args []string) error {
 		buildArgMap = mapped
 	}
 
-	buildLabelMap, err = parseBuildLabel(buildLabels)
+	buildLabelMap, err = parseMap(buildLabels, "build-label")
 
 	return err
-}
-
-func parseBuildLabel(args []string) (map[string]string, error) {
-	mapped := make(map[string]string)
-
-	for _, kvp := range args {
-		k, v, err := parseKeyValue(kvp, "build-label")
-
-		if err != nil {
-			return nil, err
-		}
-		mapped[k] = v
-	}
-
-	return mapped, nil
 }
 
 func parseBuildArgs(args []string) (map[string]string, error) {
 	mapped := make(map[string]string)
 
 	for _, kvp := range args {
-		k, v, err := parseKeyValue(kvp, "build-arg")
+		index := strings.Index(kvp, "=")
+		if index == -1 {
+			return nil, fmt.Errorf("each build-arg must take the form key=value")
+		}
 
-		if err != nil {
-			return nil, err
+		values := []string{kvp[0:index], kvp[index+1:]}
+
+		k := strings.TrimSpace(values[0])
+		v := strings.TrimSpace(values[1])
+
+		if len(k) == 0 {
+			return nil, fmt.Errorf("build-arg must have a non-empty key")
+		}
+		if len(v) == 0 {
+			return nil, fmt.Errorf("build-arg must have a non-empty value")
 		}
 
 		if k == builder.AdditionalPackageBuildArg && len(mapped[k]) > 0 {
@@ -134,27 +130,6 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 	}
 
 	return mapped, nil
-}
-
-func parseKeyValue(kvp string, flagName string) (string, string, error) {
-	index := strings.Index(kvp, "=")
-	if index == -1 {
-		return "", "", fmt.Errorf("each %s must take the form key=value", flagName)
-	}
-
-	values := []string{kvp[0:index], kvp[index+1:]}
-
-	k := strings.TrimSpace(values[0])
-	v := strings.TrimSpace(values[1])
-
-	if len(k) == 0 {
-		return "", "", fmt.Errorf("%s must have a non-empty key", flagName)
-	}
-	if len(v) == 0 {
-		return "", "", fmt.Errorf("%s must have a non-empty value", flagName)
-	}
-
-	return k, v, nil
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
