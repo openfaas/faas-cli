@@ -14,8 +14,8 @@ import (
 	"github.com/openfaas/faas-cli/test"
 )
 
-func Test_preRunSecretUpdate_NoArgs_Fails(t *testing.T) {
-	res := preRunSecretUpdate(nil, []string{})
+func Test_preRunSecretCreate_NoArgs_Fails(t *testing.T) {
+	res := preRunSecretCreate(nil, []string{})
 
 	want := "give a name of a secret"
 	if res.Error() != want {
@@ -23,8 +23,8 @@ func Test_preRunSecretUpdate_NoArgs_Fails(t *testing.T) {
 	}
 }
 
-func Test_preRunSecretUpdate_MoreThan1Arg_Fails(t *testing.T) {
-	res := preRunSecretUpdate(nil, []string{
+func Test_preRunSecretCreate_MoreThan1Arg_Fails(t *testing.T) {
+	res := preRunSecretCreate(nil, []string{
 		"secret1",
 		"secret2",
 	})
@@ -35,8 +35,8 @@ func Test_preRunSecretUpdate_MoreThan1Arg_Fails(t *testing.T) {
 	}
 }
 
-func Test_preRunSecretUpdate_ExtactlyOneArgIsFine(t *testing.T) {
-	res := preRunSecretUpdate(nil, []string{
+func Test_preRunSecretCreate_ExtactlyOneArgIsFine(t *testing.T) {
+	res := preRunSecretCreate(nil, []string{
 		"secret1",
 	})
 
@@ -45,11 +45,11 @@ func Test_preRunSecretUpdate_ExtactlyOneArgIsFine(t *testing.T) {
 	}
 }
 
-func Test_SecretUpdateFromStdin(t *testing.T) {
+func Test_SecretCreateFromStdin(t *testing.T) {
 	secretName := "test-secret"
 	s := test.MockHttpServer(t, []test.Request{
 		{
-			Method:             http.MethodPut,
+			Method:             http.MethodPost,
 			Uri:                "/system/secrets",
 			ResponseStatusCode: http.StatusOK,
 			ResponseBody:       secretName,
@@ -58,7 +58,7 @@ func Test_SecretUpdateFromStdin(t *testing.T) {
 	defer s.Close()
 
 	os.Stdin, _ = ioutil.TempFile("", "stdin")
-	os.Stdin.WriteString("update-me")
+	os.Stdin.WriteString("hello")
 	os.Stdin.Seek(0, 0)
 	defer func() {
 		os.Remove(os.Stdin.Name())
@@ -67,7 +67,7 @@ func Test_SecretUpdateFromStdin(t *testing.T) {
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{
 			"secret",
-			"update",
+			"create",
 			"--gateway=" + s.URL,
 			secretName,
 		})
@@ -79,11 +79,11 @@ func Test_SecretUpdateFromStdin(t *testing.T) {
 	}
 }
 
-func Test_SecretUpdateFromLiteral(t *testing.T) {
+func Test_SecretCreateFromLiteral(t *testing.T) {
 	secretName := "test-secret"
 	s := test.MockHttpServer(t, []test.Request{
 		{
-			Method:             http.MethodPut,
+			Method:             http.MethodPost,
 			Uri:                "/system/secrets",
 			ResponseStatusCode: http.StatusOK,
 			ResponseBody:       secretName,
@@ -94,7 +94,7 @@ func Test_SecretUpdateFromLiteral(t *testing.T) {
 	stdOut := test.CaptureStdout(func() {
 		faasCmd.SetArgs([]string{
 			"secret",
-			"update",
+			"create",
 			"--gateway=" + s.URL,
 			secretName,
 			`--from-literal="update-me"`,
