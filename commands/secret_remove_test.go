@@ -11,7 +11,7 @@ func Test_preRunSecretRemoveCmd_NoArgs_Fails(t *testing.T) {
 
 	res := preRunSecretRemoveCmd(nil, []string{})
 
-	want := "give a name of a secret"
+	want := "secret name required"
 	if res.Error() != want {
 		t.Errorf("want %q, got %q", want, res.Error())
 	}
@@ -24,7 +24,7 @@ func Test_preRunSecretRemoveCmd_MoreThan1Arg_Fails(t *testing.T) {
 		"secret2",
 	})
 
-	want := "give ONLY the name of a single secret"
+	want := "too many values for secret name"
 	if res.Error() != want {
 		t.Errorf("want %q, got %q", want, res.Error())
 	}
