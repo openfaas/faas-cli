@@ -31,13 +31,12 @@ func init() {
 }
 
 func preRunSecretRemoveCmd(cmd *cobra.Command, args []string) error {
-
 	if len(args) == 0 {
-		return fmt.Errorf("give a name of a secret")
+		return fmt.Errorf("secret name required")
 	}
 
 	if len(args) > 1 {
-		return fmt.Errorf("give ONLY the name of a single secret")
+		return fmt.Errorf("too many values for secret name")
 	}
 	return nil
 }
