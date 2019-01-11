@@ -11,7 +11,7 @@ import (
 	"github.com/openfaas/faas-cli/schema"
 )
 
-//GetSecretList get secrets list
+// GetSecretList get secrets list
 func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	var results []schema.Secret
 
@@ -68,21 +68,51 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 
 // UpdateSecret update a secret via the OpenFaaS API by name
 func UpdateSecret(gateway string, secret schema.Secret, value string, tlsInsecure bool) error {
-	// todo(leodido) > uncomment when rebased on top of master containing create-secret functionality
-	// if err := RemoveSecret(gateway, secret, tlsInsecure); err != nil {
-	// 	return err
-	// }
+	// todo: probably worth hiding this check into MakeHTTPClient or makeHTTPClientWithDisableKeepAlives
+	// todo: use a constant for warning message
+	// if !tlsInsecure && !strings.HasPrefix(gateway, "https") {}
 
-	// if err := CreateSecret(gateway, secret, value, tlsInsecure); err != nil {
-	// 	return err
-	// }
+	gateway = strings.TrimRight(gateway, "/")
+	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+
+	body, _ := json.Marshal(struct{}{}) // fixme(leodido)
+
+	putRequest, err := http.NewRequest(http.MethodPut, gateway+"/system/secrets", bytes.NewBuffer(body))
+	SetAuth(putRequest, gateway)
+
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
+	res, err := client.Do(putRequest)
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case http.StatusOK, http.StatusAccepted:
+		break
+	case http.StatusNotFound:
+		return fmt.Errorf("unable to find secret: %s", secret.Name)
+	case http.StatusUnauthorized:
+		return fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+
+	default:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+		}
+	}
 
 	return nil
 }
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
-
 	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
 			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
