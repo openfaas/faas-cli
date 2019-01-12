@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openfaas/faas-cli/proxy"
-
 	"github.com/openfaas/faas-cli/config"
+	"github.com/openfaas/faas-cli/faaserrors"
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -118,7 +118,7 @@ func validateLogin(gatewayURL string, user string, pass string) error {
 	}
 
 	if res.TLS == nil {
-		fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+		fmt.Println(faaserrors.NoTLSWarn)
 	}
 
 	switch res.StatusCode {

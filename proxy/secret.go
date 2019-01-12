@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/openfaas/faas-cli/faaserrors"
 	"github.com/openfaas/faas-cli/schema"
 )
 
@@ -17,7 +18,7 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 
 	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			fmt.Println(faaserrors.NoTLSWarn)
 		}
 	}
 
@@ -72,7 +73,7 @@ func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 
 	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			fmt.Println(faaserrors.NoTLSWarn)
 		}
 	}
 
@@ -124,7 +125,7 @@ func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
 	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			fmt.Println(faaserrors.NoTLSWarn)
 		}
 	}
 
@@ -173,7 +174,7 @@ func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 
 	if !tlsInsecure {
 		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			fmt.Println(faaserrors.NoTLSWarn)
 		}
 	}
 

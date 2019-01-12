@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openfaas/faas-cli/faaserrors"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas/gateway/requests"
 )
@@ -80,7 +81,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 
 	if warnInsecureGateway {
 		if (spec.RegistryAuth != "") && !strings.HasPrefix(spec.Gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
+			fmt.Println(faaserrors.NoTLSWarn)
 		}
 	}
 
