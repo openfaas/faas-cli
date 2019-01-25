@@ -15,12 +15,6 @@ import (
 func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 	var results []schema.Secret
 
-	if !tlsInsecure {
-		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-		}
-	}
-
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
@@ -70,12 +64,6 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
 	var output string
 
-	if !tlsInsecure {
-		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-		}
-	}
-
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
@@ -122,11 +110,6 @@ func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
-	if !tlsInsecure {
-		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-		}
-	}
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
@@ -170,12 +153,6 @@ func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error 
 // CreateSecret create secret
 func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
 	var output string
-
-	if !tlsInsecure {
-		if !strings.HasPrefix(gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-		}
-	}
 
 	gateway = strings.TrimRight(gateway, "/")
 

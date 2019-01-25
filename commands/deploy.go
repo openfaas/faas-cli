@@ -14,16 +14,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/docker/docker-credential-helpers/client"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
-
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 // DeployFlags holds flags that are to be added to commands.
@@ -283,6 +281,7 @@ Error: %s`, fprocessErr.Error())
 				TLSInsecure:             tlsInsecure,
 			}
 
+			fmt.Println(checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure))
 			statusCode := proxy.DeployFunction(deploySpec)
 
 			if badStatusCode(statusCode) {
@@ -376,6 +375,7 @@ func deployImage(
 		TLSInsecure:             tlsInsecure,
 	}
 
+	fmt.Println(checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure))
 	statusCode = proxy.DeployFunction(deploySpec)
 
 	return statusCode, nil

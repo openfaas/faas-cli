@@ -44,6 +44,7 @@ func preRunSecretRemoveCmd(cmd *cobra.Command, args []string) error {
 func runSecretRemove(cmd *cobra.Command, args []string) error {
 	var gatewayAddress string
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
 
 	secret := schema.Secret{
 		Name: args[0],
