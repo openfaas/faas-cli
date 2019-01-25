@@ -92,6 +92,7 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
 
 	fmt.Println("Creating secret: " + secret.Name)
 	_, output := proxy.CreateSecret(gatewayAddress, secret, tlsInsecure)

@@ -78,12 +78,6 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 		fprocessTemplate = spec.FProcess
 	}
 
-	if warnInsecureGateway {
-		if (spec.RegistryAuth != "") && !strings.HasPrefix(spec.Gateway, "https") {
-			fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
-		}
-	}
-
 	gateway := strings.TrimRight(spec.Gateway, "/")
 
 	if spec.Replace {

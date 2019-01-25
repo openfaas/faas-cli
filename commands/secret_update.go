@@ -55,6 +55,7 @@ func preRunSecretUpdate(cmd *cobra.Command, args []string) error {
 
 func runSecretUpdate(cmd *cobra.Command, args []string) error {
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
 
 	secret := schema.Secret{
 		Name: args[0],
