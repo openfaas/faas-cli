@@ -16,7 +16,7 @@ import (
 
 // secretListCmd represents the secretCreate command
 var secretListCmd = &cobra.Command{
-	Use:     "list",
+	Use:     `list [--tls-no-verify]`,
 	Aliases: []string{"ls"},
 	Short:   "List all secrets",
 	Long:    `List all secrets`,
@@ -40,7 +40,10 @@ func preRunSecretListCmd(cmd *cobra.Command, args []string) error {
 func runSecretList(cmd *cobra.Command, args []string) error {
 	var gatewayAddress string
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
+
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
+		fmt.Println(msg)
+	}
 
 	secrets, err := proxy.GetSecretList(gatewayAddress, tlsInsecure)
 	if err != nil {

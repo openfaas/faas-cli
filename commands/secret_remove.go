@@ -13,7 +13,7 @@ import (
 )
 
 var secretRemoveCmd = &cobra.Command{
-	Use:     "remove",
+	Use:     "remove [--tls-no-verify]",
 	Aliases: []string{"rm"},
 	Short:   "remove a secret",
 	Long:    `Remove a secret by name`,
@@ -44,7 +44,10 @@ func preRunSecretRemoveCmd(cmd *cobra.Command, args []string) error {
 func runSecretRemove(cmd *cobra.Command, args []string) error {
 	var gatewayAddress string
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
+
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
+		fmt.Println(msg)
+	}
 
 	secret := schema.Secret{
 		Name: args[0],

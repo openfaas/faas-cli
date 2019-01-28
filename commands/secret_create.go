@@ -21,7 +21,11 @@ var (
 
 // secretCreateCmd represents the secretCreate command
 var secretCreateCmd = &cobra.Command{
-	Use:   "create SECRET_NAME [--from-literal=SECRET_VALUE] [--from-file=/path/to/secret/file] [STDIN]",
+	Use: `create SECRET_NAME 
+			[--from-literal=SECRET_VALUE]
+			[--from-file=/path/to/secret/file]
+			[STDIN]
+			[--tls-no-verify]`,
 	Short: "Create a new secret",
 	Long:  `The create command creates a new secret from file, literal or STDIN`,
 	Example: `faas-cli secret create secret-name --from-literal=secret-value
@@ -92,7 +96,10 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
+
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
+		fmt.Println(msg)
+	}
 
 	fmt.Println("Creating secret: " + secret.Name)
 	_, output := proxy.CreateSecret(gatewayAddress, secret, tlsInsecure)
