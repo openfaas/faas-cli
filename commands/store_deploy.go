@@ -25,6 +25,8 @@ func init() {
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
 	storeDeployCmd.Flags().BoolVarP(&storeDeployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
+	storeDeployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -33,17 +35,18 @@ func init() {
 
 var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
-						[--name FUNCTION_NAME]
-                        [--gateway GATEWAY_URL]
-                        [--network NETWORK_NAME]
-                        [--env ENVVAR=VALUE ...]
-						[--label LABEL=VALUE ...]
-						[--annotation ANNOTATION=VALUE ...]
-                        [--replace=false]
-                        [--update=true]
-                        [--constraint PLACEMENT_CONSTRAINT ...]
-                        [--secret "SECRET_NAME"]
-                        [--url STORE_URL]`,
+			[--name FUNCTION_NAME]
+			[--gateway GATEWAY_URL]
+			[--network NETWORK_NAME]
+			[--env ENVVAR=VALUE ...]
+			[--label LABEL=VALUE ...]
+			[--annotation ANNOTATION=VALUE ...]
+			[--replace=false]
+			[--update=true]
+			[--constraint PLACEMENT_CONSTRAINT ...]
+			[--secret "SECRET_NAME"]
+			[--url STORE_URL]
+			[--tls-no-verify=false]`,
 
 	Short: "Deploy OpenFaaS functions from a store",
 	Long:  `Same as faas-cli deploy except that function is pre-loaded with arguments from the store`,
