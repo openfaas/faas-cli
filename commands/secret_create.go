@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/openfaas/faas-cli/proxy"
@@ -53,7 +54,9 @@ func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide secret using only one option from --from-literal, --from-file and STDIN")
 	}
 
-	return nil
+	err := validateSecretName(args[0])
+
+	return err
 }
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
@@ -103,4 +106,24 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 func readSecretFromFile(secretFile string) (string, error) {
 	fileData, err := ioutil.ReadFile(secretFile)
 	return string(fileData), err
+}
+
+//kubectl create secret generic my_secret --from-literal=my_secret=my_secret
+//The Secret "my_secret" is invalid: metadata.name: Invalid value: "my_secret": a DNS-1123 subdomain must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (e.g. 'example.com', regex used for validation is '[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*')
+
+// Kubernetes DNS-1123 Subdomain Regex
+// https://github.com/kubernetes/kubernetes/blob/6902f3112d98eb6bd0894886ff9cd3fbd03a7f79/staging/src/k8s.io/apimachinery/pkg/util/validation/validation.go#L131
+const (
+	dns1123LabelFmt     string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
+	dns1123SubdomainFmt string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"
+)
+
+func validateSecretName(secretName string) error {
+	var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
+
+	if !dns1123SubdomainRegexp.MatchString(secretName) {
+		return fmt.Errorf(`ERROR: invalid secret name: %s, secret name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (regex used for validation is %s)`, secretName, dns1123SubdomainRegexp)
+	}
+
+	return nil
 }

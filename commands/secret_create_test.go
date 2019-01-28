@@ -106,3 +106,24 @@ func Test_SecretCreateFromLiteral(t *testing.T) {
 		t.Fatalf("Output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:`+secretName+`)`, stdOut)
 	}
 }
+
+func Test_validateSecretName_Valid(t *testing.T) {
+	secretName := "api-key-secret"
+	err := validateSecretName(secretName)
+	if err != nil {
+		t.Errorf("Returned error for valid secret: %s", err.Error())
+	}
+}
+
+func Test_validateSecretName_Invalid(t *testing.T) {
+	secretName := "api_key_@secret"
+	err := validateSecretName(secretName)
+	if err == nil {
+		t.Errorf("Did not return error")
+	}
+
+	errMessage := err.Error()
+	if found, err := regexp.MatchString(`(?m:`+secretName+`)`, errMessage); err != nil || !found {
+		t.Fatalf("Output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:`+secretName+`)`, errMessage)
+	}
+}
