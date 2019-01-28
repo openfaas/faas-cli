@@ -21,7 +21,7 @@ import (
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v2"
 )
 
 // DeployFlags holds flags that are to be added to commands.
@@ -93,7 +93,8 @@ var deployCmd = &cobra.Command{
                   [--filter "WILDCARD"]
 				  [--secret "SECRET_NAME"]
 				  [--tag <sha|branch>]
-				  [--readonly=false]`,
+				  [--readonly=false]
+				  [--tls-no-verify]`,
 
 	Short: "Deploy OpenFaaS functions",
 	Long: `Deploys OpenFaaS function containers either via the supplied YAML config using
@@ -281,7 +282,10 @@ Error: %s`, fprocessErr.Error())
 				TLSInsecure:             tlsInsecure,
 			}
 
-			fmt.Println(checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure))
+			if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
+				fmt.Println(msg)
+			}
+
 			statusCode := proxy.DeployFunction(deploySpec)
 
 			if badStatusCode(statusCode) {
@@ -375,7 +379,10 @@ func deployImage(
 		TLSInsecure:             tlsInsecure,
 	}
 
-	fmt.Println(checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure))
+	if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
+		fmt.Println(msg)
+	}
+
 	statusCode = proxy.DeployFunction(deploySpec)
 
 	return statusCode, nil

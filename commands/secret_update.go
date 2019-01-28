@@ -15,7 +15,7 @@ import (
 )
 
 var secretUpdateCmd = &cobra.Command{
-	Use:     "update",
+	Use:     "update [--tls-no-verify]",
 	Aliases: []string{"u"},
 	Short:   "Update a secret",
 	Long:    `Update a secret by name`,
@@ -55,7 +55,10 @@ func preRunSecretUpdate(cmd *cobra.Command, args []string) error {
 
 func runSecretUpdate(cmd *cobra.Command, args []string) error {
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	fmt.Println(checkTLSInsecure(gatewayAddress, tlsInsecure))
+
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
+		fmt.Println(msg)
+	}
 
 	secret := schema.Secret{
 		Name: args[0],
