@@ -15,24 +15,6 @@ Demo: [ASCII cinema](https://asciinema.org/a/141284)
 
 [Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
 
-### FAQ
-
-* Does the CLI hang while deploying `faas deploy`?
-
-Checkout the [troubleshooting guide](https://github.com/openfaas/faas/blob/master/guide/troubleshooting.md)
-
-* Can you not push your image via `faas push`?
-
-Make sure you have specified your Docker Hub user account in your YAML file - so if your account is `alexellis2` and your image name is `demo`, then put:
-
-```
-    image: alexellis2/demo
-```
-
-* Need other help with troubleshooting?
-
-Checkout the [troubleshooting guide](https://github.com/openfaas/faas/blob/master/guide/troubleshooting.md)
-
 ### Get started: Install the CLI
 
 You can install the CLI with a `curl` utility script, `brew` or by downloading the binary from the releases page. Once installed you'll get the `faas-cli` command and `faas` alias.
@@ -57,20 +39,20 @@ $ brew install faas-cli
 
 Note: The `brew` release may not run the latest minor release but is updated regularly.
 
-In PowerShell:
+#### Windows
+
+To install the faas-cli on Windows go to [Releases](https://github.com/openfaas/faas-cli/releases) and download the latest faas-cli.exe.
+
+Or in PowerShell:
 
 ```
 $version = (Invoke-WebRequest "https://api.github.com/repos/openfaas/faas-cli/releases/latest" | ConvertFrom-Json)[0].tag_name
 (New-Object System.Net.WebClient).DownloadFile("https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli.exe", "faas-cli.exe")
 ```
 
-#### Windows
-
-To install the faas-cli on Windows go to [Releases](https://github.com/openfaas/faas-cli/releases) and download the latest faas-cli.exe.
-
 #### Build from source
 
-> the [contributing guide](CONTRIBUTING.md) has instructions for building from source and for configuring a Golang development environment.
+The [contributing guide](CONTRIBUTING.md) has instructions for building from source and for configuring a Golang development environment.
 
 ### Run the CLI
 
@@ -85,6 +67,7 @@ The main commands supported by the CLI are:
 * `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
 * `faas-cli logout` - removes basic auth credentials for a given gateway
 * `faas-cli store` - allows browsing and deploying OpenFaaS store functions
+* `faas-cli secret` - manage secrets for your functions
 
 The default gateway URL of `127.0.0.1:8080` can be overriden in three places including an environmental variable.
 
@@ -95,7 +78,7 @@ The default gateway URL of `127.0.0.1:8080` can be overriden in three places inc
 For Kubernetes users you may want to set this in your `.bash_rc` file:
 
 ```
-export OPENFAAS_URL=127.0.0.1:31112
+export OPENFAAS_URL=http://127.0.0.1:31112
 ```
 
 Advanced commands:
@@ -125,7 +108,7 @@ In your YAML you can also specify `lang: node/python/go/csharp/ruby`
 
 * Customise the provided templates
 
-Perhaps you need to have [`gcc` or another dependency](https://github.com/openfaas/faas-office-sample) in your Python template? That's not a problem.
+Perhaps you need to have [`gcc` or another dependency](https://github.com/faas-and-furious/faas-office-sample) in your Python template? That's not a problem.
 
 You can customise the Dockerfile or code for any of the templates. Just create a new directory and copy in the templates folder from this repository. The templates in your current working directory are always used for builds.
 
@@ -135,21 +118,13 @@ See also: `faas-cli new --help`
 
 Templates created and maintained by a third-party can be added to your local system using the `faas-cli template pull` command.
 
-Curated language templates:
-
-| Language  | Author   | URL  |
-|---|---|---|
-| PHP | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
-| PHP5 | @itscaro   | https://github.com/itscaro/openfaas-template-php/  |
-| F# | @hayer | https://github.com/hayer/faas-fsharp-template/ |
-
 Read more on [community templates here](guide/TEMPLATE.md).
 
 **Templates store**
 
-The template store has templates from openfaas and openfaas-incubator organizations with openfaas templates being the official ones.
+The template store is a great way to find official, incubator and third-party templates.
 
-In order to see what templates are available in the store type `faas-cli template store list`.
+Find templates with: `faas-cli template store list`
 
 > Note: You can set your own custom store location with `--url` flag or set `OPENFAAS_TEMPLATE_STORE_URL` environmental variable
 
@@ -228,7 +203,7 @@ $ faas-cli build -f ./stack.yml
 
 > `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `--yaml`.
 
-You can also download over HTTP/s:
+You can also download over HTTP(s):
 
 ```
 $ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/stack.yml
