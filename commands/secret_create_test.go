@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"regexp"
@@ -107,23 +108,51 @@ func Test_SecretCreateFromLiteral(t *testing.T) {
 	}
 }
 
-func Test_validateSecretName_Valid(t *testing.T) {
-	secretName := "api-key-secret"
-	err := validateSecretName(secretName)
-	if err != nil {
-		t.Errorf("Returned error for valid secret: %s", err.Error())
-	}
-}
+func Test_validateSecretName(t *testing.T) {
+	var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
-func Test_validateSecretName_Invalid(t *testing.T) {
-	secretName := "api_key_@secret"
-	err := validateSecretName(secretName)
-	if err == nil {
-		t.Errorf("Did not return error")
+	testcases := []struct {
+		Name       string
+		SecretName string
+		Err        error
+	}{
+		{
+			Name:       "Valid secret with hyphen",
+			SecretName: "api-key-secret",
+			Err:        nil,
+		},
+		{
+			Name:       "Valid secret without hyphen",
+			SecretName: "apikeysecret",
+			Err:        nil,
+		},
+		{
+			Name:       "Valid secret with hyphen and number",
+			SecretName: "api-key-secret-123",
+			Err:        nil,
+		},
+		{
+			Name:       "Invalid secret name",
+			SecretName: "api_key_@secret",
+			Err:        fmt.Errorf(invalidSecretNameMessage, "api_key_@secret", dns1123SubdomainRegexp),
+		},
+		{
+			Name:       "Invalid secret name with number",
+			SecretName: "12api_key_secret",
+			Err:        fmt.Errorf(invalidSecretNameMessage, "12api_key_secret", dns1123SubdomainRegexp),
+		},
 	}
 
-	errMessage := err.Error()
-	if found, err := regexp.MatchString(`(?m:`+secretName+`)`, errMessage); err != nil || !found {
-		t.Fatalf("Output is not as expected:\nExpected:\n%s\n Got:\n%s", `(?m:`+secretName+`)`, errMessage)
+	for _, test := range testcases {
+		isValid, err := validateSecretName(test.SecretName)
+		if isValid {
+			if err != nil {
+				t.Errorf("testcase %s failed, returned error for valid secret %s", test.Name, test.SecretName)
+			}
+		} else {
+			if err.Error() != test.Err.Error() {
+				t.Errorf("testcase %s failed, expected: %s, got: %s", test.Name, test.Err.Error(), err.Error())
+			}
+		}
 	}
 }
