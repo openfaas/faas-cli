@@ -69,7 +69,7 @@ The main commands supported by the CLI are:
 * `faas-cli store` - allows browsing and deploying OpenFaaS store functions
 * `faas-cli secret` - manage secrets for your functions
 
-The default gateway URL of `127.0.0.1:8080` can be overriden in three places including an environmental variable.
+The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
 
 * 1st priority `--gateway` flag
 * 2nd priority `--yaml` / `-f` flag or `stack.yml` if in current directory
@@ -104,7 +104,7 @@ In your YAML you can also specify `lang: node/python/go/csharp/ruby`
 
 * Supports common languages
 * Quick and easy - just write one file
-* Specify depenencies on Gemfile / requirements.txt or package.json etc
+* Specify dependencies on Gemfile / requirements.txt or package.json etc
 
 * Customise the provided templates
 
@@ -177,7 +177,7 @@ Read the [YAML reference guide in the OpenFaaS docs](https://docs.openfaas.com/r
 
 A YAML stack file groups functions together and also saves on typing.
 
-You can define individual functions or a set of of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
+You can define individual functions or a set of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
 
 Here is an example file using the `stack.yml` file included in the repository.
 
