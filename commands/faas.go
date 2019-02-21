@@ -88,7 +88,7 @@ func checkAndSetDefaultYaml() {
 	}
 }
 
-// faasCmd is the FaaS CLI root command and mimics the legacy client behaviour
+// faasCmd is the faas-cli root command and mimics the legacy client behaviour
 // Every other command attached to FaasCmd is a child command to it.
 var faasCmd = &cobra.Command{
 	Use:   "faas-cli",
