@@ -14,7 +14,7 @@ import (
 	"github.com/openfaas/faas/gateway/requests"
 )
 
-// DeleteFunction delete a function from the FaaS server
+// DeleteFunction delete a function from the OpenFaaS server
 func DeleteFunction(gateway string, functionName string, tlsInsecure bool) error {
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}

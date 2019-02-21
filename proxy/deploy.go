@@ -149,7 +149,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 
 	res, err := client.Do(request)
 	if err != nil {
-		deployOutput += fmt.Sprintln("Is FaaS deployed? Do you need to specify the --gateway flag?")
+		deployOutput += fmt.Sprintln("Is OpenFaaS deployed? Do you need to specify the --gateway flag?")
 		deployOutput += fmt.Sprintln(err)
 		return http.StatusInternalServerError, deployOutput
 	}
