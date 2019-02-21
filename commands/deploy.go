@@ -221,7 +221,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 
 				function.FProcess, fprocessErr = deriveFprocess(function)
 				if fprocessErr != nil {
-					return fmt.Errorf(`template directory may be missing or invalid, please run "faas template pull"
+					return fmt.Errorf(`template directory may be missing or invalid, please run "faas-cli template pull"
 Error: %s`, fprocessErr.Error())
 				}
 			}
