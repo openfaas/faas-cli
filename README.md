@@ -183,7 +183,7 @@ Here is an example file using the `stack.yml` file included in the repository.
 
 ```yaml
 provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
 
 functions:

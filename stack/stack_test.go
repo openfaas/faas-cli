@@ -11,7 +11,7 @@ import (
 )
 
 const TestData_1 string = `provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 
@@ -44,7 +44,7 @@ functions:
 `
 
 const TestData_2 string = `provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 
@@ -335,7 +335,7 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 			provider:      "faas",
 			expectedError: "",
 			file: `provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 `,
@@ -345,7 +345,7 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 			provider:      "faas",
 			expectedError: "",
 			file: `provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 `,

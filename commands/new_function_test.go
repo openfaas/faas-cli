@@ -167,7 +167,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		services := *parsedServices
 
 		var testServices stack.Services
-		testServices.Provider = stack.Provider{Name: "faas", GatewayURL: defaultGateway}
+		testServices.Provider = stack.Provider{Name: "openfaas", GatewayURL: defaultGateway}
 		if !reflect.DeepEqual(services.Provider, testServices.Provider) {
 			t.Fatalf("YAML `provider` section was not created correctly for file %s: got %v", funcYAML, services.Provider)
 		}

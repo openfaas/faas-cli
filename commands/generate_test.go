@@ -24,7 +24,7 @@ var generateTestcases = []struct {
 		Name: "Default Namespace and API Version",
 		Input: `
 provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"      
 functions:
@@ -53,7 +53,7 @@ spec:
 		Name: "Blank namespace",
 		Input: `
 provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 functions:
@@ -80,7 +80,7 @@ spec:
 		Name: "BranchAndSHA Image format",
 		Input: `
 provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 functions:
@@ -108,7 +108,7 @@ spec:
 		Name: "Multiple functions",
 		Input: `
 provider:
-  name: faas
+  name: openfaas
   gateway: http://127.0.0.1:8080  
   network: "func_functions"
 functions:
