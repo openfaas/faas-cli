@@ -124,14 +124,14 @@ func readSecretFromFile(secretFile string) (string, error) {
 const (
 	dns1123LabelFmt          string = "[a-z0-9]([-a-z0-9]*[a-z0-9])?"
 	dns1123SubdomainFmt      string = dns1123LabelFmt + "(\\." + dns1123LabelFmt + ")*"
-	invalidSecretNameMessage string = `ERROR: invalid secret name: %s, secret name must consist of lower case alphanumeric characters, '-' or '.', and must start and end with an alphanumeric character (regex used for validation is %s)`
+	invalidSecretNameMessage string = "ERROR: invalid secret name %s\nSecret name must start and end with an alphanumeric character \nand can only contain lower-case alphanumeric characters, '-' or '.'"
 )
 
 func validateSecretName(secretName string) (bool, error) {
 	var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
 	if !dns1123SubdomainRegexp.MatchString(secretName) {
-		return false, fmt.Errorf(invalidSecretNameMessage, secretName, dns1123SubdomainRegexp)
+		return false, fmt.Errorf(invalidSecretNameMessage, secretName)
 	}
 
 	return true, nil

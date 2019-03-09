@@ -109,7 +109,6 @@ func Test_SecretCreateFromLiteral(t *testing.T) {
 }
 
 func Test_validateSecretName(t *testing.T) {
-	var dns1123SubdomainRegexp = regexp.MustCompile("^" + dns1123SubdomainFmt + "$")
 
 	testcases := []struct {
 		Name       string
@@ -134,12 +133,12 @@ func Test_validateSecretName(t *testing.T) {
 		{
 			Name:       "Invalid secret name",
 			SecretName: "api_key_@secret",
-			Err:        fmt.Errorf(invalidSecretNameMessage, "api_key_@secret", dns1123SubdomainRegexp),
+			Err:        fmt.Errorf(invalidSecretNameMessage, "api_key_@secret"),
 		},
 		{
 			Name:       "Invalid secret name with number",
 			SecretName: "12api_key_secret",
-			Err:        fmt.Errorf(invalidSecretNameMessage, "12api_key_secret", dns1123SubdomainRegexp),
+			Err:        fmt.Errorf(invalidSecretNameMessage, "12api_key_secret"),
 		},
 	}
 
