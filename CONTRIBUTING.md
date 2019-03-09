@@ -118,7 +118,11 @@ Create a new branch and commit the manifest `faas-cli.json`, then create a PR to
 
 ## Update the utility-script
 
-Please raise a PR for the get.sh file held in this repository. It's used when people install via `curl` and `cli.openfaas.com`. The updated file then has to be redeployed to the hosting server.
+The `get.sh` file is served from the [cli.openfaas.com](https://github.com/openfaas/cli.openfaas.com) repository. 
+
+It's used when people install via `curl` and `cli.openfaas.com`. The updated file then has to be redeployed to the hosting server.
+
+Please raise a PR for changes there.
 
 ## Developer DCO (re-iteration from referenced CONTRIBUTING guide)
 
