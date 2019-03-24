@@ -49,3 +49,45 @@ func Test_getTemplateStoreURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_getImagePrefix(t *testing.T) {
+	tests := []struct {
+		title          string
+		argPrefix      string
+		envPrefix      string
+		yamlPrefix     string
+		expectedPrefix string
+	}{
+		{
+			title:          "No prefixes are set which should return a blank prefix",
+			expectedPrefix: "",
+		},
+		{
+			title:          "Environment prefix should take priority over YAML prefix",
+			envPrefix:      "envuser",
+			yamlPrefix:     "yamluser",
+			expectedPrefix: "envuser",
+		},
+		{
+			title:          "Argument prefix should take priority over both environment and YAML prefixes",
+			envPrefix:      "envuser",
+			argPrefix:      "arguser",
+			yamlPrefix:     "yamluser",
+			expectedPrefix: "arguser",
+		},
+		{
+			title:          "YAML prefix should be used if no others are set",
+			yamlPrefix:     "yamluser",
+			expectedPrefix: "yamluser",
+		},
+	}
+	// defaultURL is always present that is why we don't test that case
+	for _, test := range tests {
+		t.Run(test.title, func(t *testing.T) {
+			prefix := getImagePrefix(test.argPrefix, test.envPrefix, test.yamlPrefix)
+			if prefix != test.expectedPrefix {
+				t.Errorf("expected image prefix: `%s` got: `%s`", test.expectedPrefix, prefix)
+			}
+		})
+	}
+}

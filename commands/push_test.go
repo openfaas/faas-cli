@@ -40,3 +40,52 @@ func Test_PushValidation(t *testing.T) {
 
 	}
 }
+
+func Test_overrideImagePrefixes(t *testing.T) {
+	testCases := []struct {
+		scenario          string
+		imageName         string
+		argPrefix         string
+		expectedImageName string
+	}{
+		{
+			scenario:          "Empty image name should stay empty",
+			imageName:         "",
+			expectedImageName: "",
+		},
+		{
+			scenario:          "YAML image name without a prefix should be used if no others are provided",
+			imageName:         "yaml-image",
+			expectedImageName: "yaml-image",
+		},
+		{
+			scenario:          "YAML image name with a prefix should be used if no others are provided",
+			imageName:         "yaml-user/yaml-image",
+			expectedImageName: "yaml-user/yaml-image",
+		},
+		{
+			scenario:          "Argument prefix should be added to a YAML image name without a prefix",
+			imageName:         "yaml-image",
+			argPrefix:         "arg-user",
+			expectedImageName: "arg-user/yaml-image",
+		},
+		{
+			scenario:          "Argument prefix should be override the prefix of the image name in YAML",
+			imageName:         "yaml-user/yaml-image",
+			argPrefix:         "arg-user",
+			expectedImageName: "arg-user/yaml-image",
+		},
+	}
+
+	for _, testCase := range testCases {
+		// set cli arg used by functions
+		imagePrefix = testCase.argPrefix
+
+		newImageName := overrideImagePrefix(testCase.imageName)
+
+		if newImageName != testCase.expectedImageName {
+			t.Logf("scenario: %s. wanted image name to change from `%s` to `%s` but instead got `%s`", testCase.scenario, testCase.imageName, testCase.expectedImageName, newImageName)
+			t.Fail()
+		}
+	}
+}

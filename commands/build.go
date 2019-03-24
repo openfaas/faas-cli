@@ -35,6 +35,7 @@ func init() {
 	buildCmd.Flags().StringVar(&handler, "handler", "", "Directory with handler for function, e.g. handler.js")
 	buildCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	buildCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
+	buildCmd.Flags().StringVar(&imagePrefix, "prefix", "", "Image prefix to optionally override the one set in the stack yaml")
 
 	// Setup flags that are used only by this command (variables defined above)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
@@ -64,12 +65,14 @@ var buildCmd = &cobra.Command{
 				 [--parallel PARALLEL_DEPTH]
 				 [--build-arg KEY=VALUE]
 				 [--build-option VALUE]
-				 [--tag <sha|branch>]`,
+				 [--tag <sha|branch>]
+				 [--prefix <image prefix>]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
+  faas-cli build -f ./stack.yml --prefix yourUsername
   faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli build -f ./stack.yml --build-option dev
   faas-cli build -f ./stack.yml --tag sha
@@ -182,7 +185,11 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				} else {
 
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
+
+					// override image prefix
+					imageName := overrideImagePrefix(function.Image)
+
+					err := builder.BuildImage(imageName, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tag)
 					if err != nil {
 						log.Println(err)
 					}

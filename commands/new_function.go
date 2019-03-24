@@ -168,6 +168,8 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
 	imageName := fmt.Sprintf("%s:latest", functionName)
+	// yaml prefix is empty because we are creating the yaml file, not reading it
+	imagePrefix = getImagePrefix(imagePrefix, os.Getenv(imagePrefixEnvironment), "")
 	if imagePrefix = strings.TrimSpace(imagePrefix); len(imagePrefix) > 0 {
 		imageName = fmt.Sprintf("%s/%s", imagePrefix, imageName)
 	}

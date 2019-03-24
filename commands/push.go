@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -20,7 +21,7 @@ func init() {
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
 	pushCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
-
+	pushCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
 }
 
 // pushCmd handles pushing function container images to a remote repo
@@ -54,6 +55,14 @@ func runPush(cmd *cobra.Command, args []string) error {
 		if parsedServices != nil {
 			services = *parsedServices
 		}
+	}
+
+	for _, function := range services.Functions {
+		if function.SkipBuild {
+			continue
+		}
+
+		function.Image = overrideImagePrefix(function.Image)
 	}
 
 	if len(services.Functions) > 0 {
@@ -140,4 +149,31 @@ func validateImages(functions map[string]stack.Function) []string {
 		}
 	}
 	return invalidImages
+}
+
+func overrideImagePrefix(yamlImageName string) string {
+	if yamlImageName == "" {
+		return ""
+	}
+
+	imageNameParts := strings.Split(yamlImageName, "/")
+	var (
+		yamlPrefix    string
+		yamlHasPrefix = (len(imageNameParts) > 1)
+	)
+	if yamlHasPrefix {
+		// prefix is set in yaml
+		yamlPrefix = imageNameParts[0]
+	}
+
+	imagePrefix = getImagePrefix(imagePrefix, os.Getenv(imagePrefixEnvironment), yamlPrefix)
+	if yamlHasPrefix {
+		// update prefix in place
+		imageNameParts[0] = imagePrefix
+	} else if imagePrefix != "" {
+		// prepend prefix to image name
+		imageNameParts = append([]string{imagePrefix}, imageNameParts...)
+	}
+
+	return strings.Join(imageNameParts, "/")
 }

@@ -12,6 +12,7 @@ const (
 	openFaaSURLEnvironment      = "OPENFAAS_URL"
 	templateURLEnvironment      = "OPENFAAS_TEMPLATE_URL"
 	templateStoreURLEnvironment = "OPENFAAS_TEMPLATE_STORE_URL"
+	imagePrefixEnvironment      = "OPENFAAS_IMAGE_PREFIX"
 )
 
 func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) string {
@@ -57,4 +58,23 @@ func getTemplateStoreURL(argumentURL, environmentURL, defaultURL string) string 
 	} else {
 		return defaultURL
 	}
+}
+
+func getImagePrefix(argumentPrefix, environmentPrefix, yamlPrefix string) string {
+	// default prefix is blank/no prefix
+	var prefix string
+
+	if len(yamlPrefix) > 0 {
+		prefix = yamlPrefix
+	}
+
+	if len(environmentPrefix) > 0 {
+		prefix = environmentPrefix
+	}
+
+	if len(argumentPrefix) > 0 {
+		prefix = argumentPrefix
+	}
+
+	return prefix
 }
