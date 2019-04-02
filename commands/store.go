@@ -28,9 +28,11 @@ const (
 	maxDescriptionLen = 40
 )
 
+var platformValue string
+
 func init() {
 	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
-	storeCmd.PersistentFlags().StringVarP(&inputPlatform, "platform", "p", "", "Target platform for store")
+	storeCmd.PersistentFlags().StringVarP(&platformValue, "platform", "p", "", "Target platform for store")
 
 	faasCmd.AddCommand(storeCmd)
 }

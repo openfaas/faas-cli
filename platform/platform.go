@@ -1,7 +1,7 @@
 package platform
 
 //Platform system platform
-var Platform = ""
+var Platform string
 
 const (
 	//defaultPlatform platform x86_64
