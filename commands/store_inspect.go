@@ -32,7 +32,7 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	targetPlatform := getTargetPlatform(inputPlatform)
+	targetPlatform := getTargetPlatform(platformValue)
 	storeItems, err := storeList(storeAddress, targetPlatform)
 	if err != nil {
 		return err
