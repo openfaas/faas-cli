@@ -26,13 +26,13 @@ const (
 
 var (
 	templateStoreURL string
-	platform         string
+	inputPlatform    string
 )
 
 func init() {
 	templateStoreListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows additional language and platform")
 	templateStoreListCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
-	templateStoreListCmd.Flags().StringVarP(&platform, "platform", "p", mainPlatform, "Shows the platform if the output is verbose")
+	templateStoreListCmd.Flags().StringVarP(&inputPlatform, "platform", "p", mainPlatform, "Shows the platform if the output is verbose")
 
 	templateStoreCmd.AddCommand(templateStoreListCmd)
 }
@@ -60,7 +60,7 @@ func runTemplateStoreList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error while getting templates info: %s", templatesErr)
 	}
 
-	formattedOutput := formatTemplatesOutput(templatesInfo, verbose, platform)
+	formattedOutput := formatTemplatesOutput(templatesInfo, verbose, inputPlatform)
 
 	fmt.Fprintf(cmd.OutOrStdout(), "%s", formattedOutput)
 

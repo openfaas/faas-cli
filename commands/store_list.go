@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
@@ -31,7 +30,9 @@ var storeListCmd = &cobra.Command{
 }
 
 func runStoreList(cmd *cobra.Command, args []string) error {
-	items, err := proxy.FunctionStoreList(storeAddress)
+	targetPlatform := getTargetPlatform(inputPlatform)
+
+	items, err := storeList(storeAddress, targetPlatform)
 	if err != nil {
 		return err
 	}
@@ -46,7 +47,7 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func storeRenderItems(items []schema.StoreItem) string {
+func storeRenderItems(items []schema.StoreFunction) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)

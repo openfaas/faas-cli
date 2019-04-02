@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -65,7 +64,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	storeItems, err := proxy.FunctionStoreList(storeAddress)
+	targetPlatform := getTargetPlatform(inputPlatform)
+	storeItems, err := storeList(storeAddress, targetPlatform)
 	if err != nil {
 		return err
 	}
@@ -111,6 +111,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	var registryAuth string
+	imageName := item.GetImageName(targetPlatform)
+
 	if storeDeployFlags.sendRegistryAuth {
 
 		dockerConfig := configFile{}
@@ -119,7 +121,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 			log.Printf("Unable to read the docker config - %v\n", err.Error())
 		}
 
-		registryAuth = getRegistryAuth(&dockerConfig, item.Image)
+		registryAuth = getRegistryAuth(&dockerConfig, imageName)
 	}
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
