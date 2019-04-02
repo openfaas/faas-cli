@@ -15,21 +15,26 @@ import (
 )
 
 const (
-	SuccessMsg        = `(?m:Function created in folder)`
-	InvalidYAMLMsg    = `is not valid YAML`
-	InvalidYAMLMap    = `map is empty`
-	IncludeUpperCase  = "function name can only contain a-z, 0-9 and dashes"
-	NoFunctionName    = "please provide a name for the function"
-	NoLanguage        = "you must supply a function language with the --lang flag"
-	NoTemplates       = "no language templates were found. Please run 'faas-cli template pull'"
-	InvalidFileSuffix = "when appending to a stack the suffix should be .yml or .yaml"
-	InvalidFile       = "unable to find file: (.+)? - (.+)?"
-	ListOptionOutput  = `Languages available as templates:
+	SuccessMsg       = `(?m:Function created in folder)`
+	InvalidYAMLMsg   = `is not valid YAML`
+	InvalidYAMLMap   = `map is empty`
+	IncludeUpperCase = "function name can only contain a-z, 0-9 and dashes"
+	NoFunctionName   = "please provide a name for the function"
+	NoLanguage       = "you must supply a function language with the --lang flag"
+
+	InvalidFile      = "unable to find file: (.+)? - (.+)?"
+	ListOptionOutput = `Languages available as templates:
 - dockerfile
 - ruby`
 
 	LangNotExistsOutput  = `(?m:is unavailable or not supported)`
 	FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
+	NoTemplates          = `no language templates were found.
+
+Download templates:
+  faas-cli template pull           download the default templates
+  faas-cli template store list     view the community template store`
+	InvalidFileSuffix = "when appending to a stack the suffix should be .yml or .yaml"
 )
 
 type NewFunctionTest struct {
@@ -104,7 +109,7 @@ var NewFunctionTests = []NewFunctionTest{
 	{
 		title:       "no-function-name",
 		funcName:    "",
-		funcLang:    "",
+		funcLang:    "--lang node",
 		expectedMsg: NoFunctionName,
 	},
 	{
@@ -231,7 +236,7 @@ func Test_newFunctionListNoTemplates(t *testing.T) {
 
 	// Validate command output
 	if !strings.HasPrefix(stdOut, NoTemplates) {
-		t.Fatalf("Output is not as expected: %s\n", stdOut)
+		t.Fatalf("output of new --list incorrect, \nwant: %q, \ngot:  %q.\n", NoTemplates, stdOut)
 	}
 }
 
