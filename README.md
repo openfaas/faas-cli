@@ -59,14 +59,19 @@ The [contributing guide](CONTRIBUTING.md) has instructions for building from sou
 The main commands supported by the CLI are:
 
 * `faas-cli new` - creates a new function via a template in the current directory
+* `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
+* `faas-cli logout` - removes basic auth credentials for a given gateway
+
+* `faas-cli up` - a combination of `build/push and deploy`
+
 * `faas-cli build` - builds Docker images from the supported language types
 * `faas-cli push` - pushes Docker images into a registry
 * `faas-cli deploy` - deploys the functions into a local or remote OpenFaaS gateway
+
 * `faas-cli remove` - removes the functions from a local or remote OpenFaaS gateway
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
-* `faas-cli login` - stores basic auth credentials for OpenFaaS gateway (supports multiple gateways)
-* `faas-cli logout` - removes basic auth credentials for a given gateway
 * `faas-cli store` - allows browsing and deploying OpenFaaS store functions
+
 * `faas-cli secret` - manage secrets for your functions
 
 The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
@@ -198,7 +203,7 @@ This url-ping function is defined in the sample/url-ping folder makes use of Pyt
 * Build the files in the .yml file:
 
 ```
-$ faas-cli build -f ./stack.yml
+$ faas-cli build
 ```
 
 > `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `--yaml`.
@@ -216,7 +221,7 @@ Docker along with a Python template will be used to build an image named alexell
 Now you can use the following command to deploy your function(s):
 
 ```
-$ faas-cli deploy -f ./stack.yml
+$ faas-cli deploy
 ```
 
 ### Access functions with `curl`
