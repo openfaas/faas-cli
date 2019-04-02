@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
@@ -33,23 +32,25 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	storeItems, err := proxy.FunctionStoreList(storeAddress)
+	targetPlatform := getTargetPlatform(inputPlatform)
+	storeItems, err := storeList(storeAddress, targetPlatform)
 	if err != nil {
 		return err
 	}
 
-	item := storeFindFunction(args[0], storeItems)
+	functionName := args[0]
+	item := storeFindFunction(functionName, storeItems)
 	if item == nil {
 		return fmt.Errorf("function '%s' not found", functionName)
 	}
 
-	content := storeRenderItem(item)
+	content := storeRenderItem(item, targetPlatform)
 	fmt.Print(content)
 
 	return nil
 }
 
-func storeRenderItem(item *schema.StoreItem) string {
+func storeRenderItem(item *schema.StoreFunction, platform string) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
@@ -57,7 +58,7 @@ func storeRenderItem(item *schema.StoreItem) string {
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
 		item.Title,
 		storeRenderDescription(item.Description),
-		item.Image,
+		item.GetImageName(platform),
 		item.Fprocess,
 		item.RepoURL,
 	)

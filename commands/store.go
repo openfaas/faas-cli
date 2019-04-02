@@ -4,6 +4,15 @@
 package commands
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"time"
+
+	"github.com/openfaas/faas-cli/platform"
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
@@ -15,12 +24,13 @@ var (
 )
 
 const (
-	defaultStore      = "https://raw.githubusercontent.com/openfaas/store/master/store.json"
+	defaultStore      = "https://cdn.rawgit.com/openfaas/store/master/functions.json"
 	maxDescriptionLen = 40
 )
 
 func init() {
 	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
+	storeCmd.PersistentFlags().StringVarP(&inputPlatform, "platform", "p", "", "Target platform for store")
 
 	faasCmd.AddCommand(storeCmd)
 }
@@ -31,8 +41,64 @@ var storeCmd = &cobra.Command{
 	Long:  "Allows browsing and deploying OpenFaaS functions from a store",
 }
 
-func storeFindFunction(functionName string, storeItems []schema.StoreItem) *schema.StoreItem {
-	var item schema.StoreItem
+func storeList(store, platform string) ([]schema.StoreFunction, error) {
+	var results []schema.StoreFunction
+	var storeData schema.StoreV2
+
+	store = strings.TrimRight(store, "/")
+
+	timeout := 60 * time.Second
+	tlsInsecure := false
+
+	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
+
+	res, err := client.Get(store)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case http.StatusOK:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("cannot read result from OpenFaaS store at URL: %s", store)
+		}
+
+		jsonErr := json.Unmarshal(bytesOut, &storeData)
+		if jsonErr != nil {
+			return nil, fmt.Errorf("cannot parse result from OpenFaaS store at URL: %s\n%s", store, jsonErr.Error())
+		}
+	default:
+		bytesOut, err := ioutil.ReadAll(res.Body)
+		if err == nil {
+			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
+		}
+	}
+
+	results = filterStoreList(storeData.Functions, platform)
+	return results, nil
+}
+
+func filterStoreList(functions []schema.StoreFunction, platform string) []schema.StoreFunction {
+	var filteredList []schema.StoreFunction
+
+	for _, function := range functions {
+		_, ok := function.Images[platform]
+
+		if ok {
+			filteredList = append(filteredList, function)
+		}
+	}
+
+	return filteredList
+}
+
+func storeFindFunction(functionName string, storeItems []schema.StoreFunction) *schema.StoreFunction {
+	var item schema.StoreFunction
 
 	for _, item = range storeItems {
 		if item.Name == functionName || item.Title == functionName {
@@ -41,4 +107,12 @@ func storeFindFunction(functionName string, storeItems []schema.StoreItem) *sche
 	}
 
 	return nil
+}
+
+func getTargetPlatform(inputPlatform string) string {
+	if len(inputPlatform) == 0 {
+		return platform.GetPlatform()
+	}
+
+	return inputPlatform
 }
