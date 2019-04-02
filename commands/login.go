@@ -36,10 +36,10 @@ func init() {
 var loginCmd = &cobra.Command{
 	Use:   `login [--username admin|USERNAME] [--password PASSWORD] [--gateway GATEWAY_URL] [--tls-no-verify]`,
 	Short: "Log in to OpenFaaS gateway",
-	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default local one will be used.",
-	Example: `  faas-cli login -u user -p password --gateway http://127.0.0.1:8080
-  echo $PASSWORD | faas-cli login -s
-  cat ~/faas_pass.txt | faas-cli login -u user --password-stdin --gateway https://openfaas.mydomain.com`,
+	Long:  "Log in to OpenFaaS gateway.\nIf no gateway is specified, the default value will be used.",
+	Example: `  cat ~/faas_pass.txt | faas-cli login -u user --password-stdin
+  echo $PASSWORD | faas-cli login -s  --gateway https://openfaas.mydomain.com
+  faas-cli login -u user -p password`,
 	RunE: runLogin,
 }
 

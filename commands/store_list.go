@@ -14,7 +14,7 @@ import (
 
 func init() {
 	// Setup flags used by store command
-	storeListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output for the field values")
+	storeListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output to ssee the full description of each function in the store")
 
 	storeCmd.AddCommand(storeListCmd)
 }
@@ -23,8 +23,10 @@ var storeListCmd = &cobra.Command{
 	Use:     `list [--url STORE_URL]`,
 	Aliases: []string{"ls"},
 	Short:   "List available OpenFaaS functions in a store",
-	Example: `  faas-cli store list --url https://domain:port/store.json`,
-	RunE:    runStoreList,
+	Example: `  faas-cli store list
+  faas-cli store list --verbose
+  faas-cli store list --url https://domain:port/store.json`,
+	RunE: runStoreList,
 }
 
 func runStoreList(cmd *cobra.Command, args []string) error {
