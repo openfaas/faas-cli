@@ -42,11 +42,11 @@ var newFunctionCmd = &cobra.Command{
 	Short: "Create a new template in the current folder with the name given as name",
 	Long: `The new command creates a new function based upon hello-world in the given
 language or type in --list for a list of languages available.`,
-	Example: `faas-cli new chatbot --lang node
+	Example: `  faas-cli new chatbot --lang node
+  faas-cli new chatbot --lang node --append stack.yml
+  faas-cli new text-parser --lang python --quiet
   faas-cli new text-parser --lang python --gateway http://mydomain:8080
-  faas-cli new text-reader --lang python --append stack.yml
-  faas-cli new --list
-  faas-cli new demo --lang python --quiet`,
+  faas-cli new --list`,
 	PreRunE: preRunNewFunction,
 	RunE:    runNewFunction,
 }
@@ -70,11 +70,16 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 
 	language, _ = validateLanguageFlag(language)
 
-	if len(args) < 1 {
-		return fmt.Errorf("please provide a name for the function")
+	if len(language) == 0 && len(args) < 1 {
+		cmd.Help()
+		os.Exit(0)
 	}
 	if len(language) == 0 {
 		return fmt.Errorf("you must supply a function language with the --lang flag")
+	}
+
+	if len(args) < 1 {
+		return fmt.Errorf(`please provide a name for the function`)
 	}
 
 	functionName = args[0]
@@ -92,7 +97,11 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 
 		templateFolders, err := ioutil.ReadDir(templateDirectory)
 		if err != nil {
-			return fmt.Errorf("no language templates were found. Please run 'faas-cli template pull'")
+			return fmt.Errorf(`no language templates were found.
+
+Download templates:
+  faas-cli template pull           download the default templates
+  faas-cli template store list     view the community template store`)
 		}
 
 		for _, file := range templateFolders {
