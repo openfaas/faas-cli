@@ -25,6 +25,7 @@ var (
 
 func init() {
 	newFunctionCmd.Flags().StringVar(&language, "lang", "", "Language or template to use")
+	newFunctionCmd.Flags().StringVarP(&schemaVersion, "version", "v", defaultSchemaVersion, "The version to use for YAML stack file")
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
 	newFunctionCmd.Flags().StringVar(&handlerDir, "handler", "", "directory the handler will be written to")
 	newFunctionCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
@@ -80,6 +81,13 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 
 	if len(args) < 1 {
 		return fmt.Errorf(`please provide a name for the function`)
+	}
+
+	schemaVersion = strings.TrimSpace(schemaVersion)
+	if len(schemaVersion) < 1 {
+		return fmt.Errorf("you must supply a non-empty string with the --version flag")
+	} else if !stack.IsValidSchemaVersion(schemaVersion) {
+		return fmt.Errorf("%s are the only valid versions - found: %s", stack.ValidSchemaVersions, schemaVersion)
 	}
 
 	functionName = args[0]
@@ -188,7 +196,7 @@ Download templates:
 		Image:    imageName,
 	}
 
-	yamlContent := prepareYAMLContent(appendMode, gateway, &function)
+	yamlContent := prepareYAMLContent(appendMode, gateway, schemaVersion, &function)
 
 	f, err := os.OpenFile("./"+fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
 	if err != nil {
@@ -214,7 +222,7 @@ Download templates:
 	return nil
 }
 
-func prepareYAMLContent(appendMode bool, gateway string, function *stack.Function) (yamlContent string) {
+func prepareYAMLContent(appendMode bool, gateway string, schemaVersion string, function *stack.Function) (yamlContent string) {
 
 	yamlContent = `  ` + function.Name + `:
     lang: ` + function.Language + `
@@ -223,7 +231,8 @@ func prepareYAMLContent(appendMode bool, gateway string, function *stack.Functio
 `
 	if !appendMode {
 
-		yamlContent = `provider:
+		yamlContent = `version: ` + schemaVersion + `
+provider:
   name: openfaas
   gateway: ` + gateway + `
 functions:

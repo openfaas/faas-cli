@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	defaultGateway = "http://127.0.0.1:8080"
-	defaultNetwork = ""
-	defaultYAML    = "stack.yml"
+	defaultGateway       = "http://127.0.0.1:8080"
+	defaultNetwork       = ""
+	defaultYAML          = "stack.yml"
+	defaultSchemaVersion = "1.0"
 )
 
 // Flags that are to be added to all commands.
@@ -28,16 +29,17 @@ var (
 
 // Flags that are to be added to subset of commands.
 var (
-	fprocess     string
-	functionName string
-	handlerDir   string
-	network      string
-	gateway      string
-	handler      string
-	image        string
-	imagePrefix  string
-	language     string
-	tlsInsecure  bool
+	fprocess      string
+	functionName  string
+	handlerDir    string
+	network       string
+	gateway       string
+	handler       string
+	image         string
+	imagePrefix   string
+	language      string
+	tlsInsecure   bool
+	schemaVersion string
 )
 
 var stat = func(filename string) (os.FileInfo, error) {

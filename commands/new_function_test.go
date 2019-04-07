@@ -35,6 +35,9 @@ Download templates:
   faas-cli template pull           download the default templates
   faas-cli template store list     view the community template store`
 	InvalidFileSuffix = "when appending to a stack the suffix should be .yml or .yaml"
+
+	InvalidVersion = `(?m: are the only valid versions - found)`
+	EmptyVersion   = "you must supply a non-empty string with the --version flag"
 )
 
 type NewFunctionTest struct {
@@ -43,6 +46,7 @@ type NewFunctionTest struct {
 	funcName      string
 	funcLang      string
 	dirName       string
+	schemaVersion string
 	expectedImage string
 	expectedMsg   string
 }
@@ -118,6 +122,28 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:    "",
 		expectedMsg: NoLanguage,
 	},
+	{
+		title:         "version-with-white-space",
+		funcName:      "version-with-white-space",
+		funcLang:      "ruby",
+		schemaVersion: " ",
+		expectedMsg:   EmptyVersion,
+	},
+	{
+		title:         "invalid-version",
+		funcName:      "invalid-version",
+		funcLang:      "ruby",
+		schemaVersion: "2.0",
+		expectedMsg:   InvalidVersion,
+	},
+	{
+		title:         "valid-version",
+		funcName:      "valid-version",
+		funcLang:      "ruby",
+		expectedImage: "valid-version:latest",
+		schemaVersion: "1.0",
+		expectedMsg:   SuccessMsg,
+	},
 }
 
 func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
@@ -125,6 +151,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	funcLang := nft.funcLang
 	dirName := nft.dirName
 	imagePrefix := nft.prefix
+	schemaVersion := nft.schemaVersion
 	var funcYAML string
 	funcYAML = funcName + ".yml"
 
@@ -142,10 +169,12 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	if len(funcName) != 0 {
 		cmdParameters = append(cmdParameters, funcName)
 	}
+	if len(schemaVersion) > 0 {
+		cmdParameters = append(cmdParameters, "--version="+schemaVersion)
+	}
 
 	faasCmd.SetArgs(cmdParameters)
 	execErr := faasCmd.Execute()
-
 	if nft.expectedMsg == SuccessMsg {
 
 		// Make sure that the folder and file was created:
@@ -172,6 +201,12 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		services := *parsedServices
 
 		var testServices stack.Services
+
+		testServices.Version = defaultSchemaVersion
+		if services.Version != testServices.Version {
+			t.Fatalf("YAML `version` section was not created correctly for file %s: got %v", funcYAML, services.Version)
+		}
+
 		testServices.Provider = stack.Provider{Name: "openfaas", GatewayURL: defaultGateway}
 		if !reflect.DeepEqual(services.Provider, testServices.Provider) {
 			t.Fatalf("YAML `provider` section was not created correctly for file %s: got %v", funcYAML, services.Provider)

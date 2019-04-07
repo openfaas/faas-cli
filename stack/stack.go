@@ -20,6 +20,12 @@ import (
 
 const providerName = "faas"
 const providerNameLong = "openfaas"
+const defaultSchemaVersion = "1.0"
+
+// ValidSchemaVersions available schema versions
+var ValidSchemaVersions = []string{
+	"1.0",
+}
 
 // ParseYAMLFile parse YAML file into a stack of "services".
 func ParseYAMLFile(yamlFile, regex, filter string, envsubst bool) (*Services, error) {
@@ -90,6 +96,10 @@ func ParseYAMLData(fileData []byte, regex string, filter string, envsubst bool) 
 
 	if services.Provider.Name != providerName && services.Provider.Name != providerNameLong {
 		return nil, fmt.Errorf("['%s', '%s'] is the only valid provider for this tool - found: %s", providerName, providerNameLong, services.Provider.Name)
+	}
+
+	if len(services.Version) > 0 && !IsValidSchemaVersion(services.Version) {
+		return nil, fmt.Errorf("%s are the only valid versions for the stack file - found: %s", ValidSchemaVersions, services.Version)
 	}
 
 	if regexExists && filterExists {
@@ -166,4 +176,15 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	resBytes, err := ioutil.ReadAll(res.Body)
 
 	return resBytes, err
+}
+
+// IsValidSchemaVersion validates schema version
+func IsValidSchemaVersion(schemaVersion string) bool {
+	valid := false
+	for _, validVersion := range ValidSchemaVersions {
+		if schemaVersion == validVersion {
+			valid = true
+		}
+	}
+	return valid
 }

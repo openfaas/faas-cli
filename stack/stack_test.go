@@ -11,7 +11,8 @@ import (
 	"testing"
 )
 
-const TestData_1 string = `provider:
+const TestData_1 string = `version: 1.0
+provider:
   name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
@@ -44,7 +45,8 @@ functions:
     image: stuff2/stuff23423
 `
 
-const TestData_2 string = `provider:
+const TestData_2 string = `version: 1.0
+provider:
   name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
@@ -335,7 +337,8 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 			title:         "Provider is faas and gives no error",
 			provider:      "faas",
 			expectedError: "",
-			file: `provider:
+			file: `version: 1.0
+provider:
   name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
@@ -345,7 +348,8 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 			title:         "Provider is openfaas and gives no error",
 			provider:      "faas",
 			expectedError: "",
-			file: `provider:
+			file: `version: 1.0
+provider:
   name: openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
@@ -355,7 +359,68 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 			title:         "Provider is serverless-openfaas and gives error",
 			provider:      "faas",
 			expectedError: "['faas', 'openfaas'] is the only valid provider for this tool - found: serverless-openfaas",
-			file: `provider:
+			file: `version: 1.0
+provider:
+  name: serverless-openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.title, func(t *testing.T) {
+
+			_, err := ParseYAMLData([]byte(test.file), ".*", "*", true)
+			if len(test.expectedError) > 0 {
+				if test.expectedError != err.Error() {
+					t.Errorf("want error: '%s', got: '%s'", test.expectedError, err.Error())
+					t.Fail()
+				}
+			}
+		})
+	}
+}
+
+func Test_ParseYAMLData_SchemaVersionValues(t *testing.T) {
+	testCases := []struct {
+		title         string
+		provider      string
+		version       string
+		expectedError string
+		file          string
+	}{
+		{
+			title:         "Missing schema version assumes default with no error",
+			provider:      "",
+			version:       "",
+			expectedError: "",
+			file: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+		{
+			title:         "Insupported schema version and gives error",
+			provider:      "faas",
+			version:       "1.35",
+			expectedError: "[1.0] are the only valid versions for the stack file - found: 1.35",
+			file: `version: 1.35
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+		{
+			title:         "Schema version is valid",
+			provider:      "faas",
+			version:       "1.0",
+			expectedError: "",
+			file: `version: 1.0
+provider:
   name: serverless-openfaas
   gateway: http://127.0.0.1:8080
   network: "func_functions"
