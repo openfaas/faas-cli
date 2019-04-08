@@ -38,7 +38,8 @@ func init() {
 	invokeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	invokeCmd.Flags().StringVar(&sigHeader, "sign", "", "name of HTTP request header to hold the signature")
 	invokeCmd.Flags().StringVar(&key, "key", "", "key to be used to sign the request (must be used with --sign)")
-	//invokeCmd.Flags().StringVar(&algorithm, "algorithm", "sha1", "algorithm to be used to sign the request")
+
+	invokeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(invokeCmd)
 }
@@ -73,7 +74,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	functionName = args[0]
 
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
 		}
