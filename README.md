@@ -101,7 +101,36 @@ Help for all of the commands supported by the CLI can be found by running:
 
 You can chose between using a [programming language template](https://github.com/openfaas/templates/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
-#### Templates
+##### Environment variable substitution
+
+The CLI supports the use of `envsubst`-style templates. This means that you can have a single file with multiple configuration options such as for different user accounts, versions or environments.
+
+Here is an example use-case, in your project there is an official and a development Docker Hub username/account. For the CI server images are always pushed to `exampleco`, but in development you may want to push to your own account such as `alexellis2`.
+
+```yaml
+functions:
+  url-ping:
+    lang: python
+    handler: ./sample/url-ping
+    image: ${DOCKER_USER:-exampleco}/faas-url-ping:0.2
+```
+
+Use the default:
+
+```
+$ faas-cli build
+$ DOCKER_USER="" faas-cli build
+```
+
+Override with "alexellis2":
+
+```
+$ DOCKER_USER="alexellis2" faas-cli build
+```
+
+See also: [envsubst package from Drone](https://github.com/drone/envsubst).
+
+#### Build templates
 
 Command: `faas-cli new FUNCTION_NAME --lang python/node/go/ruby/Dockerfile/etc`
 
