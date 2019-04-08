@@ -165,7 +165,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 
 		// Make sure that the information in the YAML file is correct:
-		parsedServices, err := stack.ParseYAMLFile(funcYAML, "", "")
+		parsedServices, err := stack.ParseYAMLFile(funcYAML, "", "", false)
 		if err != nil {
 			t.Fatalf("Couldn't open modified YAML file \"%s\" due to error: %v", funcYAML, err)
 		}

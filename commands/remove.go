@@ -16,6 +16,7 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	removeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	removeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(removeCmd)
 }
@@ -43,7 +44,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	var gatewayAddress string
 	var yamlGateway string
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
 		}

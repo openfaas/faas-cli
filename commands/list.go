@@ -22,6 +22,7 @@ func init() {
 
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	listCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(listCmd)
 }
@@ -41,7 +42,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	var gatewayAddress string
 	var yamlGateway string
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
 		}

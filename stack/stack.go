@@ -22,7 +22,7 @@ const providerName = "faas"
 const providerNameLong = "openfaas"
 
 // ParseYAMLFile parse YAML file into a stack of "services".
-func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
+func ParseYAMLFile(yamlFile, regex, filter string, envsubst bool) (*Services, error) {
 	var err error
 	var fileData []byte
 	urlParsed, err := url.Parse(yamlFile)
@@ -38,7 +38,7 @@ func ParseYAMLFile(yamlFile, regex, filter string) (*Services, error) {
 			return nil, err
 		}
 	}
-	return ParseYAMLData(fileData, regex, filter)
+	return ParseYAMLData(fileData, regex, filter, envsubst)
 }
 
 func substituteEnvironment(data []byte) ([]byte, error) {
@@ -59,18 +59,24 @@ func substituteEnvironment(data []byte) ([]byte, error) {
 }
 
 // ParseYAMLData parse YAML data into a stack of "services".
-func ParseYAMLData(fileData []byte, regex string, filter string) (*Services, error) {
+func ParseYAMLData(fileData []byte, regex string, filter string, envsubst bool) (*Services, error) {
 	var services Services
 	regexExists := len(regex) > 0
 	filterExists := len(filter) > 0
 
-	substData, substErr := substituteEnvironment(fileData)
+	var source []byte
+	if envsubst {
+		substData, substErr := substituteEnvironment(fileData)
 
-	if substErr != nil {
-		return &services, substErr
+		if substErr != nil {
+			return &services, substErr
+		}
+		source = substData
+	} else {
+		source = fileData
 	}
 
-	err := yaml.Unmarshal(substData, &services)
+	err := yaml.Unmarshal(source, &services)
 	if err != nil {
 		fmt.Printf("Error with YAML file\n")
 		return nil, err

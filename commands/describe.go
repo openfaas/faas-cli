@@ -21,6 +21,8 @@ func init() {
 	describeCmd.Flags().StringVar(&functionName, "name", "", "Name of the function")
 	describeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	describeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	describeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+
 	faasCmd.AddCommand(describeCmd)
 }
 
@@ -48,7 +50,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	functionName = args[0]
 
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
 		}

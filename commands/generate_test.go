@@ -174,7 +174,7 @@ spec:
 func Test_generateCRDYAML(t *testing.T) {
 
 	for _, testcase := range generateTestcases {
-		parsedServices, err := stack.ParseYAMLData([]byte(testcase.Input), "", "")
+		parsedServices, err := stack.ParseYAMLData([]byte(testcase.Input), "", "", true)
 
 		if err != nil {
 			t.Fatalf("%s failed: error while parsing the input data.", testcase.Name)

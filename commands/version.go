@@ -25,6 +25,7 @@ func init() {
 	versionCmd.Flags().BoolVar(&shortVersion, "short-version", false, "Just print Git SHA")
 	versionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	versionCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	versionCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(versionCmd)
 }
@@ -61,7 +62,7 @@ func printServerVersions() {
 	var gatewayAddress string
 	var yamlGateway string
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err == nil && parsedServices != nil {
 			services = *parsedServices
 			yamlGateway = services.Provider.GatewayURL

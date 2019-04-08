@@ -29,6 +29,8 @@ func init() {
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "OpenFaaS CRD API version")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
 	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
+	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+
 	faasCmd.AddCommand(generateCmd)
 }
 
@@ -57,7 +59,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 	//Process function stack file
 	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter)
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
 		}
