@@ -4,6 +4,7 @@
 package stack
 
 import (
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -373,5 +374,37 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func Test_substituteEnvironment_DefaultOverridden(t *testing.T) {
+
+	os.Setenv("USER", "alexellis2")
+	want := "alexellis2/image:latest"
+	template := "${USER:-openfaas}/image:latest"
+	res, err := substituteEnvironment([]byte(template))
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if want != string(res) {
+		t.Errorf("subst, want: %s, got: %s", want, string(res))
+	}
+}
+
+func Test_substituteEnvironment_DefaultLeftEmpty(t *testing.T) {
+
+	os.Setenv("USER", "")
+	want := "openfaas/image:latest"
+	template := "${USER:-openfaas}/image:latest"
+	res, err := substituteEnvironment([]byte(template))
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if want != string(res) {
+		t.Errorf("subst, want: %s, got: %s", want, string(res))
 	}
 }
