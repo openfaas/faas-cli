@@ -408,3 +408,19 @@ func Test_substituteEnvironment_DefaultLeftEmpty(t *testing.T) {
 		t.Errorf("subst, want: %s, got: %s", want, string(res))
 	}
 }
+
+func Test_substituteEnvironment_DefaultLeftWhenNil(t *testing.T) {
+
+	os.Unsetenv("USER")
+	want := "openfaas/image:latest"
+	template := "${USER:-openfaas}/image:latest"
+	res, err := substituteEnvironment([]byte(template))
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if want != string(res) {
+		t.Errorf("subst, want: %s, got: %s", want, string(res))
+	}
+}

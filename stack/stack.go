@@ -52,7 +52,7 @@ func substituteEnvironment(data []byte) ([]byte, error) {
 		if val, ok := os.LookupEnv(input); ok {
 			return val
 		}
-		return input
+		return ""
 	})
 
 	return []byte(res), resErr

@@ -11,7 +11,7 @@ functions:
   url-ping:
     lang: python
     handler: ./sample/url-ping
-    image: alexellis/faas-url-ping:0.2
+    image: ${DOCKER_USER:-alexellis}/faas-url-ping:0.2
 #    limits:
 #      memory: 40m
 #    requests:
