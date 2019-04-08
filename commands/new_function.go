@@ -250,7 +250,7 @@ func duplicateFunctionName(functionName string, appendFile string) error {
 		return fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
 	}
 
-	services, parseErr := stack.ParseYAMLData(fileBytes, "", "")
+	services, parseErr := stack.ParseYAMLData(fileBytes, "", "", envsubst)
 
 	if parseErr != nil {
 		return fmt.Errorf("Error parsing %s yml file", appendFile)
