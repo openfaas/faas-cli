@@ -287,20 +287,49 @@ func Test_buildFlagSlice(t *testing.T) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))
 			}
 
-			//map iteration is non-deterministic so dont compare values if the buildArgMap is > 1
-			if len(test.buildArgMap) <= 1 {
-				for i, val := range flagSlice {
-
-					if val != test.expectedSlice[i] {
-						t.Errorf("Slices differ in values - wanted: %s, found %s", test.expectedSlice[i], val)
-					}
-
-				}
+			isMatch := compareSliceValues(test.expectedSlice, flagSlice)
+			if !isMatch {
+				t.Errorf("Slices differ in values - wanted: %v, found %s", test.expectedSlice, flagSlice)
 			}
 
 		})
 	}
 
+}
+
+func compareSliceValues(expectedSlice, outputSlice []string) bool {
+	var expectedValueMap = make(map[string]int)
+
+	for _, expectedValue := range expectedSlice {
+		if _, ok := expectedValueMap[expectedValue]; ok {
+			expectedValueMap[expectedValue]++
+		} else {
+			expectedValueMap[expectedValue] = 1
+		}
+	}
+
+	var outputValueMap = make(map[string]int)
+	for _, outputValue := range outputSlice {
+		if _, ok := outputValueMap[outputValue]; ok {
+			outputValueMap[outputValue]++
+		} else {
+			outputValueMap[outputValue] = 1
+		}
+	}
+
+	for key, expectedValue := range expectedValueMap {
+
+		if value, ok := expectedValueMap[key]; ok {
+			if value != expectedValue {
+				return false
+			}
+
+		} else {
+			return false
+		}
+	}
+
+	return true
 }
 
 func Test_getPackages(t *testing.T) {
