@@ -297,9 +297,8 @@ func Test_buildFlagSlice(t *testing.T) {
 
 }
 
-func compareSliceValues(expectedSlice, outputSlice []string) bool {
+func compareSliceValues(expectedSlice, actualSlice []string) bool {
 	var expectedValueMap = make(map[string]int)
-
 	for _, expectedValue := range expectedSlice {
 		if _, ok := expectedValueMap[expectedValue]; ok {
 			expectedValueMap[expectedValue]++
@@ -308,23 +307,22 @@ func compareSliceValues(expectedSlice, outputSlice []string) bool {
 		}
 	}
 
-	var outputValueMap = make(map[string]int)
-	for _, outputValue := range outputSlice {
-		if _, ok := outputValueMap[outputValue]; ok {
-			outputValueMap[outputValue]++
+	var actualValueMap = make(map[string]int)
+	for _, actualValue := range actualSlice {
+		if _, ok := actualValueMap[actualValue]; ok {
+			actualValueMap[actualValue]++
 		} else {
-			outputValueMap[outputValue] = 1
+			actualValueMap[actualValue] = 1
 		}
 	}
 
+	if len(expectedValueMap) != len(actualValueMap) {
+		return false
+	}
+
 	for key, expectedValue := range expectedValueMap {
-
-		if value, ok := expectedValueMap[key]; ok {
-			if value != expectedValue {
-				return false
-			}
-
-		} else {
+		actualValue, exists := actualValueMap[key]
+		if !exists || actualValue != expectedValue {
 			return false
 		}
 	}
