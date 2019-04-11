@@ -2,7 +2,7 @@
 FROM golang:1.11 as builder
 
 WORKDIR /usr/bin/
-RUN curl -sLSf https://raw.githubusercontent.com/alexellis/license-check/master/get.sh | sh
+RUN curl -sLSf https://raw.githubusercontent.com/teamserverless/license-check/master/get.sh | sh
 
 WORKDIR /go/src/github.com/openfaas/faas-cli
 COPY . .
