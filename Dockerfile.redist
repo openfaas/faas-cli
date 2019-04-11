@@ -39,7 +39,7 @@ RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Autho
         -a -installsuffix cgo -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.8
+FROM alpine:3.9
 
 RUN apk --no-cache add ca-certificates git
 
