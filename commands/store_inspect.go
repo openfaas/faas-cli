@@ -33,7 +33,7 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 	}
 
 	targetPlatform := getTargetPlatform(platformValue)
-	storeItems, err := storeList(storeAddress, targetPlatform)
+	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
 	}

@@ -33,7 +33,7 @@ var storeListCmd = &cobra.Command{
 func runStoreList(cmd *cobra.Command, args []string) error {
 	targetPlatform := getTargetPlatform(platformValue)
 
-	storeList, err := storeList(storeAddress, targetPlatform)
+	storeList, err := storeList(storeAddress)
 	if err != nil {
 		return err
 	}
