@@ -43,7 +43,7 @@ var storeCmd = &cobra.Command{
 	Long:  "Allows browsing and deploying OpenFaaS functions from a store",
 }
 
-func storeList(store, platform string) ([]schema.StoreFunction, error) {
+func storeList(store string) ([]schema.StoreFunction, error) {
 
 	var storeData schema.StoreV2
 
