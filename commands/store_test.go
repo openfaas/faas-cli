@@ -223,3 +223,25 @@ func Test_getStorePlatforms(t *testing.T) {
 		}
 	}
 }
+
+func Test_storeFindFunction_Positive(t *testing.T) {
+	inputFunctions := getInputStoreFunctions(t)
+	expectedFunctionName := "nodeinfo"
+
+	actualFunction := storeFindFunction(expectedFunctionName, inputFunctions)
+
+	if actualFunction.Name != expectedFunctionName {
+		t.Errorf("Function %s not found in store", expectedFunctionName)
+	}
+}
+
+func Test_storeFindFunction_Negative(t *testing.T) {
+	inputFunctions := getInputStoreFunctions(t)
+	expectedFunctionName := "openfaas-ocr"
+
+	actualFunction := storeFindFunction(expectedFunctionName, inputFunctions)
+
+	if actualFunction != nil {
+		t.Errorf("Function %s is found in store", expectedFunctionName)
+	}
+}
