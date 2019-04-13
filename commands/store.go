@@ -44,7 +44,7 @@ var storeCmd = &cobra.Command{
 }
 
 func storeList(store, platform string) ([]schema.StoreFunction, error) {
-	var results []schema.StoreFunction
+
 	var storeData schema.StoreV2
 
 	store = strings.TrimRight(store, "/")
@@ -81,8 +81,7 @@ func storeList(store, platform string) ([]schema.StoreFunction, error) {
 		}
 	}
 
-	results = filterStoreList(storeData.Functions, platform)
-	return results, nil
+	return storeData.Functions, nil
 }
 
 func filterStoreList(functions []schema.StoreFunction, platform string) []schema.StoreFunction {
@@ -117,4 +116,22 @@ func getTargetPlatform(inputPlatform string) string {
 	}
 
 	return inputPlatform
+}
+
+func getStorePlatforms(functions []schema.StoreFunction) []string {
+	var distinctPlatformMap = make(map[string]bool)
+	var result []string
+
+	for _, function := range functions {
+		for key := range function.Images {
+			_, exists := distinctPlatformMap[key]
+
+			if !exists {
+				distinctPlatformMap[key] = true
+				result = append(result, key)
+			}
+		}
+	}
+
+	return result
 }

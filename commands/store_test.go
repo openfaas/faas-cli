@@ -200,3 +200,26 @@ func Test_filterStoreList_other(t *testing.T) {
 	matchFilteredOutout(t, expectedOuputFunctions, filteredFunctions, "other")
 
 }
+
+func Test_getStorePlatforms(t *testing.T) {
+	var expectedPlatforms = []string{"arm64", "armhf", "x86_64"}
+	inputFunctions := getInputStoreFunctions(t)
+	actualPlatforms := getStorePlatforms(inputFunctions)
+
+	if len(expectedPlatforms) != len(actualPlatforms) {
+		t.Errorf("Length of platforms did not match, expected: %d, got: %d", len(expectedPlatforms), len(actualPlatforms))
+	}
+
+	for _, expectedPlatform := range expectedPlatforms {
+		isFound := false
+		for _, actualPlatform := range actualPlatforms {
+			if expectedPlatform == actualPlatform {
+				isFound = true
+			}
+		}
+
+		if !isFound {
+			t.Errorf("Expected value '%s' not found in actual platforms, expected: %v, actual: %v", expectedPlatform, expectedPlatforms, actualPlatforms)
+		}
+	}
+}
