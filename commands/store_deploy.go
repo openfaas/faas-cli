@@ -70,10 +70,12 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	platformFunctions := filterStoreList(storeItems, targetPlatform)
+
 	requestedStoreFn := args[0]
-	item := storeFindFunction(requestedStoreFn, storeItems)
+	item := storeFindFunction(requestedStoreFn, platformFunctions)
 	if item == nil {
-		return fmt.Errorf("function '%s' not found", requestedStoreFn)
+		return fmt.Errorf("function '%s' not found for platform '%s'", requestedStoreFn, targetPlatform)
 	}
 
 	// Add the store environment variables to the provided ones from cmd

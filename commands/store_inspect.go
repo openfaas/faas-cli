@@ -38,10 +38,12 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	platformFunctions := filterStoreList(storeItems, targetPlatform)
+
 	functionName := args[0]
-	item := storeFindFunction(functionName, storeItems)
+	item := storeFindFunction(functionName, platformFunctions)
 	if item == nil {
-		return fmt.Errorf("function '%s' not found", functionName)
+		return fmt.Errorf("function '%s' not found for platform '%s'", functionName, targetPlatform)
 	}
 
 	content := storeRenderItem(item, targetPlatform)

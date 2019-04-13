@@ -6,6 +6,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"text/tabwriter"
 
 	"github.com/openfaas/faas-cli/schema"
@@ -32,17 +33,20 @@ var storeListCmd = &cobra.Command{
 func runStoreList(cmd *cobra.Command, args []string) error {
 	targetPlatform := getTargetPlatform(platformValue)
 
-	items, err := storeList(storeAddress, targetPlatform)
+	storeList, err := storeList(storeAddress, targetPlatform)
 	if err != nil {
 		return err
 	}
 
-	if len(items) == 0 {
-		fmt.Printf("The store is empty.")
+	availablePlatforms := getStorePlatforms(storeList)
+	filteredFunctions := filterStoreList(storeList, targetPlatform)
+
+	if len(filteredFunctions) == 0 {
+		fmt.Printf("No functions found in the store for platform '%s', try one of the following: %s\n", targetPlatform, strings.Join(availablePlatforms, ", "))
 		return nil
 	}
 
-	fmt.Print(storeRenderItems(items))
+	fmt.Print(storeRenderItems(filteredFunctions))
 
 	return nil
 }
