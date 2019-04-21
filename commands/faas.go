@@ -14,9 +14,10 @@ import (
 )
 
 const (
-	defaultGateway = "http://127.0.0.1:8080"
-	defaultNetwork = ""
-	defaultYAML    = "stack.yml"
+	defaultGateway       = "http://127.0.0.1:8080"
+	defaultNetwork       = ""
+	defaultYAML          = "stack.yml"
+	defaultSchemaVersion = "1.0"
 )
 
 // Flags that are to be added to all commands.
