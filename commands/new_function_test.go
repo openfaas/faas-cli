@@ -145,7 +145,6 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 
 	faasCmd.SetArgs(cmdParameters)
 	execErr := faasCmd.Execute()
-
 	if nft.expectedMsg == SuccessMsg {
 
 		// Make sure that the folder and file was created:
@@ -172,6 +171,12 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		services := *parsedServices
 
 		var testServices stack.Services
+
+		testServices.Version = defaultSchemaVersion
+		if services.Version != testServices.Version {
+			t.Fatalf("YAML `version` section was not created correctly for file %s: got %v", funcYAML, services.Version)
+		}
+
 		testServices.Provider = stack.Provider{Name: "openfaas", GatewayURL: defaultGateway}
 		if !reflect.DeepEqual(services.Provider, testServices.Provider) {
 			t.Fatalf("YAML `provider` section was not created correctly for file %s: got %v", funcYAML, services.Provider)

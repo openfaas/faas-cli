@@ -71,6 +71,7 @@ type EnvironmentFile struct {
 
 // Services root level YAML file to define FaaS function-set
 type Services struct {
+	Version   string              `yaml:"version,omitempty"`
 	Functions map[string]Function `yaml:"functions,omitempty"`
 	Provider  Provider            `yaml:"provider,omitempty"`
 }

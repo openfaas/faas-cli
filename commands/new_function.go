@@ -223,7 +223,8 @@ func prepareYAMLContent(appendMode bool, gateway string, function *stack.Functio
 `
 	if !appendMode {
 
-		yamlContent = `provider:
+		yamlContent = `version: ` + defaultSchemaVersion + `
+provider:
   name: openfaas
   gateway: ` + gateway + `
 functions:
