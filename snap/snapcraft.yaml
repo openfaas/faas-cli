@@ -1,0 +1,54 @@
+name: faas-cli
+summary: CLI for OpenFaaS.
+description: This is a CLI for use with OpenFaaS - a serverless functions framework for Docker & Kubernetes.
+  
+adopt-info: faas-cli
+
+grade: stable
+confinement: strict
+
+architectures:
+  - build-on: i386
+  - build-on: amd64
+  - build-on: armhf
+  - build-on: arm64
+
+apps:
+  faas-cli:
+    command: bin/faas-cli
+    plugs:
+      - docker
+      - home
+      - network
+      - removable-media
+
+parts:
+  faas-cli:
+    plugin: nil
+    source: https://github.com/openfaas/faas-cli.git
+    override-pull: |
+      git clone https://github.com/openfaas/faas-cli.git src/github.com/openfaas/faas-cli
+      cd src/github.com/openfaas/faas-cli
+      last_committed_tag="$(git describe --tags --abbrev=0)"
+      last_committed_tag_ver="$(echo ${last_committed_tag} | sed 's/v//')"
+      last_released_tag="$(snap info $SNAPCRAFT_PROJECT_NAME | awk '$1 == "beta:" { print $2 }')"
+      # If the latest tag from the upstream project has not been released to
+      # beta, build that tag instead of master.
+      if [ "${last_committed_tag_ver}" != "${last_released_tag}" ]; then
+        git fetch
+        git checkout "${last_committed_tag}"
+      fi
+      snapcraftctl set-version "$(git describe --tags | sed 's/v//')"
+    override-build: |
+      export GOPATH=$PWD
+      cd src/github.com/openfaas/faas-cli
+      env CGO_ENABLED=0 GOOS=linux \
+      go build --ldflags "-s -w \
+        -X 'github.com/openfaas/faas-cli/version.GitCommit=$(git rev-list -1 HEAD)' \
+        -X 'github.com/openfaas/faas-cli/version.Version=$(git describe --tags --abbrev=0)'" \
+        -a -installsuffix cgo -o $SNAPCRAFT_PART_INSTALL/bin/faas-cli
+    build-snaps:
+      - go
+    build-packages:
+      - git
+      - sed
