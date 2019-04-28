@@ -60,7 +60,7 @@ func runCloudSeal(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("--name is required")
 	}
 
-	fmt.Printf("Sealing secret: %s in namepsace: %s\n", name, namespace)
+	fmt.Printf("Sealing secret: %s in namespace: %s\n", name, namespace)
 
 	fmt.Println("")
 
