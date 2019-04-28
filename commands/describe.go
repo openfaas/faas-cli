@@ -17,11 +17,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var (
+	urlOnly bool
+)
+
 func init() {
 	describeCmd.Flags().StringVar(&functionName, "name", "", "Name of the function")
 	describeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	describeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	describeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	describeCmd.Flags().BoolVar(&urlOnly, "url-only", false, "Return only the function URL")
 
 	faasCmd.AddCommand(describeCmd)
 }
@@ -87,6 +92,11 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	}
 
 	url, asyncURL := getFunctionURLs(gatewayAddress, functionName)
+
+	if urlOnly == true {
+		fmt.Printf("%s\n", url)
+		return nil
+	}
 
 	funcDesc := schema.FunctionDescription{
 		Name:              function.Name,
