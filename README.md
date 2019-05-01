@@ -306,6 +306,12 @@ $ faas-cli cloud seal --name alexellis-github --literal hmac-secret=1234 --cert=
 
 You can then place the `secrets.yml` file in any public Git repo without others being able to read the contents.
 
+### Environment variable overrides
+
+* `OPENFAAS_TEMPLATE_URL` - to set the default URL to pull templates from
+* `OPENFAAS_PREFIX` - for use with `faas-cli new` - this can act in place of `--prefix`
+* `OPENFAAS_PREFIX` - to override the default gateway URL
+
 ### FaaS-CLI Developers / Contributors
 
 See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
