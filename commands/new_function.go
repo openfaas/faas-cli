@@ -177,8 +177,11 @@ Download templates:
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
 	imageName := fmt.Sprintf("%s:latest", functionName)
-	if imagePrefix = strings.TrimSpace(imagePrefix); len(imagePrefix) > 0 {
-		imageName = fmt.Sprintf("%s/%s", imagePrefix, imageName)
+
+	imagePrefixVal := getPrefixValue()
+
+	if imagePrefixVal = strings.TrimSpace(imagePrefixVal); len(imagePrefixVal) > 0 {
+		imageName = fmt.Sprintf("%s/%s", imagePrefixVal, imageName)
 	}
 
 	function := stack.Function{
@@ -212,6 +215,18 @@ Download templates:
 	}
 
 	return nil
+}
+
+func getPrefixValue() string {
+	prefix := ""
+	if len(imagePrefix) > 0 {
+		return imagePrefix
+	}
+
+	if val, ok := os.LookupEnv("OPENFAAS_PREFIX"); ok && len(val) > 0 {
+		prefix = val
+	}
+	return prefix
 }
 
 func prepareYAMLContent(appendMode bool, gateway string, function *stack.Function) (yamlContent string) {
