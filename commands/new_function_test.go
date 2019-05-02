@@ -361,7 +361,8 @@ func tearDownNewFunction(t *testing.T, functionName string) {
 }
 
 func Test_getPrefixValue_Default(t *testing.T) {
-	os.Setenv("OPENFAAS_PREFIX", "")
+	os.Unsetenv("OPENFAAS_PREFIX")
+
 	imagePrefix = ""
 
 	val := getPrefixValue()
@@ -384,7 +385,7 @@ func Test_getPrefixValue_Env(t *testing.T) {
 
 func Test_getPrefixValue_Flag(t *testing.T) {
 	want := "other"
-	os.Setenv("OPENFAAS_PREFIX", "")
+	os.Unsetenv("OPENFAAS_PREFIX")
 	imagePrefix = "other"
 
 	val := getPrefixValue()
