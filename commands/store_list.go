@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"text/tabwriter"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +31,7 @@ var storeListCmd = &cobra.Command{
 }
 
 func runStoreList(cmd *cobra.Command, args []string) error {
-	items, err := storeList(storeAddress)
+	items, err := proxy.FunctionStoreList(storeAddress)
 	if err != nil {
 		return err
 	}

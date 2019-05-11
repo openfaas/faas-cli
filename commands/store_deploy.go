@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -62,7 +63,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the function name")
 	}
 
-	storeItems, err := storeList(storeAddress)
+	storeItems, err := proxy.FunctionStoreList(storeAddress)
 	if err != nil {
 		return err
 	}

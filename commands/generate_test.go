@@ -205,3 +205,52 @@ func stringInSlice(a string, list []string) bool {
 	}
 	return false
 }
+
+func Test_filterStoreItem_Found(t *testing.T) {
+
+	items := []schema.StoreItem{
+		schema.StoreItem{
+			Name: "figlet",
+		},
+	}
+	wantName := "figlet"
+	got, gotErr := filterStoreItem(items, wantName)
+
+	if gotErr != nil {
+		t.Errorf("got error %s", gotErr)
+		t.Fail()
+	}
+
+	if got.Name != wantName {
+		t.Errorf("name got: %s, but want: %s", got.Name, wantName)
+		t.Fail()
+	}
+
+}
+
+func Test_filterStoreItem_NotFound(t *testing.T) {
+
+	items := []schema.StoreItem{
+		schema.StoreItem{
+			Name: "figlets",
+		},
+	}
+	wantName := "figlet"
+	got, gotErr := filterStoreItem(items, wantName)
+
+	if got != nil {
+		t.Errorf("want nil, but got item %s", got.Name)
+		t.Fail()
+	}
+
+	if gotErr == nil {
+		t.Errorf("want error, got nil")
+		t.Fail()
+	}
+	wantError := "unable to find 'figlet' in store"
+	if gotErr.Error() != wantError {
+		t.Errorf("want error %s, got %s", wantError, gotErr.Error())
+		t.Fail()
+	}
+
+}
