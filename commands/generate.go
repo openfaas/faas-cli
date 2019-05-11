@@ -10,6 +10,7 @@ import (
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
+	knativev1alpha1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -164,6 +165,11 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	var objectsString string
 
 	if len(services.Functions) > 0 {
+
+		if apiVersion == knativev1alpha1.APIVersionLatest {
+			return generateknativev1alpha1ServingCRDYAML(services, format, api, functionNamespace, branch, version)
+		}
+
 		for name, function := range services.Functions {
 			//read environment variables from the file
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
@@ -205,6 +211,67 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			}
 			objectsString += "---\n" + string(objectString)
 		}
+	}
+
+	return objectsString, nil
+}
+
+func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+	crds := []knativev1alpha1.ServingCRD{}
+
+	for name, function := range services.Functions {
+
+		fileEnvironment, err := readFiles(function.EnvironmentFile)
+		if err != nil {
+			return "", err
+		}
+
+		//combine all environment variables
+		allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
+		if envErr != nil {
+			return "", envErr
+		}
+
+		var env []knativev1alpha1.EnvPair
+		for k, v := range allEnvironment {
+			env = append(env, knativev1alpha1.EnvPair{Name: k, Value: v})
+		}
+
+		crd := knativev1alpha1.ServingCRD{
+			Metadata: schema.Metadata{
+				Name:      name,
+				Namespace: namespace,
+			},
+			APIVersion: apiVersion,
+			Kind:       "Service",
+			Spec: knativev1alpha1.ServingSpec{
+				RunLatest: knativev1alpha1.ServingSpecRunLatest{
+
+					Configuration: knativev1alpha1.ServingSpecRunLatestConfiguration{
+						RevisionTemplate: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplate{
+							Spec: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpec{
+								Container: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer{
+									Image: function.Image,
+									Env:   env,
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		crds = append(crds, crd)
+	}
+
+	var objectsString string
+	for _, crd := range crds {
+		//Marshal the object definition to yaml
+		objectString, err := yaml.Marshal(crd)
+		if err != nil {
+			return "", err
+		}
+		objectsString += "---\n" + string(objectString)
 	}
 
 	return objectsString, nil
