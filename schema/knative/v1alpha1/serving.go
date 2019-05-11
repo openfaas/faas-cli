@@ -25,11 +25,28 @@ type ServingSpecRunLatestConfigurationRevisionTemplate struct {
 
 type ServingSpecRunLatestConfigurationRevisionTemplateSpec struct {
 	Container ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer `yaml:"container"`
+	Volumes   []Volume                                                       `yaml:"volumes,omitempty"`
 }
 
 type ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer struct {
-	Image string    `yaml:"image"`
-	Env   []EnvPair `yaml:"env,omitempty"`
+	Image        string        `yaml:"image"`
+	Env          []EnvPair     `yaml:"env,omitempty"`
+	VolumeMounts []VolumeMount `yaml:"volumeMounts,omitempty"`
+}
+
+type VolumeMount struct {
+	Name      string `yaml:"name"`
+	MountPath string `yaml:"mountPath"`
+	ReadOnly  bool   `yaml:"readOnly"`
+}
+
+type Volume struct {
+	Name   string `yaml:"name"`
+	Secret Secret `yaml:"secret"`
+}
+
+type Secret struct {
+	SecretName string `yaml:"secretName"`
 }
 
 type EnvPair struct {

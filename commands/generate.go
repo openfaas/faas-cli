@@ -261,6 +261,26 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 			},
 		}
 
+		var mounts []knativev1alpha1.VolumeMount
+		var volumes []knativev1alpha1.Volume
+
+		for _, secret := range function.Secrets {
+			mounts = append(mounts, knativev1alpha1.VolumeMount{
+				MountPath: "/var/openfaas/secrets/"+secret,
+				ReadOnly: true,
+				Name:      secret,
+			})
+			volumes = append(volumes, knativev1alpha1.Volume{
+				Name: secret,
+				Secret: knativev1alpha1.Secret{
+					SecretName: secret,
+				},
+			})
+		}
+
+		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Container.VolumeMounts = mounts
+		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Volumes = volumes
+
 		crds = append(crds, crd)
 	}
 
