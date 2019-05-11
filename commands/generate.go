@@ -8,8 +8,10 @@ import (
 	"strings"
 
 	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -23,9 +25,13 @@ const (
 var (
 	api               string
 	functionNamespace string
+	fromStore         string
 )
 
 func init() {
+
+	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
+
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "OpenFaaS CRD API version")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
 	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
@@ -53,12 +59,57 @@ func preRunGenerate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func filterStoreItem(items []schema.StoreItem, fromStore string) (*schema.StoreItem, error) {
+	var item *schema.StoreItem
+
+	for _, val := range items {
+		if val.Name == fromStore {
+			item = &val
+			break
+		}
+	}
+
+	if item == nil {
+		return nil, fmt.Errorf("unable to find '%s' in store", fromStore)
+	}
+
+	return item, nil
+}
+
 func runGenerate(cmd *cobra.Command, args []string) error {
 
 	var services stack.Services
 
-	//Process function stack file
-	if len(yamlFile) > 0 {
+	if len(fromStore) > 0 {
+		services = stack.Services{
+			Provider: stack.Provider{
+				Name: "openfaas",
+			},
+			Version: "1.0",
+		}
+
+		services.Functions = make(map[string]stack.Function)
+
+		items, err := proxy.FunctionStoreList(storeAddress)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("Unable to retrieve functions from URL %s", storeAddress))
+		}
+
+		item, err := filterStoreItem(items, fromStore)
+		if err != nil {
+			return err
+		}
+
+		services.Functions[item.Name] = stack.Function{
+			Name:        item.Name,
+			Image:       item.Image,
+			Labels:      &item.Labels,
+			Annotations: &item.Annotations,
+			Environment: item.Environment,
+			FProcess:    item.Fprocess,
+		}
+
+	} else if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err

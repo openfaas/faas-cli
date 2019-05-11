@@ -93,6 +93,14 @@
   version = "0.8.8"
 
 [[projects]]
+  digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
+
+[[projects]]
   digest = "1:5b92d232e81c3e8eec282c92dcaa2e0e1ad3c23157be19a01b3e33f7e6e8d137"
   name = "github.com/ryanuber/go-glob"
   packages = ["."]
@@ -152,6 +160,7 @@
     "github.com/mitchellh/go-homedir",
     "github.com/morikuni/aec",
     "github.com/openfaas/faas/gateway/requests",
+    "github.com/pkg/errors",
     "github.com/ryanuber/go-glob",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
