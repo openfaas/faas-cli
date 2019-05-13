@@ -11,6 +11,7 @@ import (
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	knativev1alpha1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
+	openfaasv1alpha2 "github.com/openfaas/faas-cli/schema/openfaas/v1alpha2"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -186,7 +187,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			metadata := schema.Metadata{Name: name, Namespace: namespace}
 			imageName := schema.BuildImageName(format, function.Image, version, branch)
 
-			spec := schema.Spec{
+			spec := openfaasv1alpha2.Spec{
 				Name:        name,
 				Image:       imageName,
 				Environment: allEnvironment,
@@ -197,7 +198,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				Secrets:     function.Secrets,
 			}
 
-			crd := schema.CRD{
+			crd := openfaasv1alpha2.CRD{
 				APIVersion: apiVersion,
 				Kind:       resourceKind,
 				Metadata:   metadata,

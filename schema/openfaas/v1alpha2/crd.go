@@ -1,15 +1,15 @@
 // Copyright (c) OpenFaaS Author(s) 2018. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package schema
+package v1alpha2
 
-import "github.com/openfaas/faas-cli/stack"
+import (
+	"github.com/openfaas/faas-cli/schema"
+	"github.com/openfaas/faas-cli/stack"
+)
 
-//Metadata metadata of the object
-type Metadata struct {
-	Name      string `yaml:"name"`
-	Namespace string `yaml:"namespace,omitempty"`
-}
+//APIVersionLatest latest API version of CRD
+const APIVersionLatest = "openfaas.com/v1alpha2"
 
 //Spec describe characteristics of the object
 type Spec struct {
@@ -39,7 +39,7 @@ type CRD struct {
 	//APIVersion CRD API version
 	APIVersion string `yaml:"apiVersion"`
 	//Kind kind of the object
-	Kind     string   `yaml:"kind"`
-	Metadata Metadata `yaml:"metadata"`
-	Spec     Spec     `yaml:"spec"`
+	Kind     string          `yaml:"kind"`
+	Metadata schema.Metadata `yaml:"metadata"`
+	Spec     Spec            `yaml:"spec"`
 }
