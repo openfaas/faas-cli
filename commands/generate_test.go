@@ -169,6 +169,63 @@ spec:
 		Branch:     "",
 		Version:    "",
 	},
+	{
+		Name: "Knative",
+		Input: `
+provider:
+  name: openfaas
+
+functions:
+  figlet:
+    image: functions/figlet:latest`,
+		Output: []string{`---
+apiVersion: serving.knative.dev/v1alpha1
+kind: Service
+metadata:
+  name: figlet
+  namespace: default
+spec:
+  runLatest:
+    configuration:
+      revisionTemplate:
+        spec:
+          container:
+            image: functions/figlet:latest
+`},
+		Format:     schema.DefaultFormat,
+		APIVersion: "serving.knative.dev/v1alpha1",
+		Namespace:  "default",
+		Branch:     "",
+		Version:    "",
+	},
+	{
+		Name: "Rio",
+		Input: `
+provider:
+  name: openfaas
+
+functions:
+  figlet:
+    image: functions/figlet:latest`,
+		Output: []string{`---
+apiVersion: rio.cattle.io/v1
+kind: Service
+metadata:
+  name: figlet
+  namespace: default
+spec:
+  image: functions/figlet:latest
+  ports:
+  - port: 8080
+    protocol: HTTP
+    targetPort: 8080
+`},
+		Format:     schema.DefaultFormat,
+		APIVersion: "rio.cattle.io/v1",
+		Namespace:  "default",
+		Branch:     "",
+		Version:    "",
+	},
 }
 
 func Test_generateCRDYAML(t *testing.T) {
@@ -191,7 +248,7 @@ func Test_generateCRDYAML(t *testing.T) {
 		}
 
 		if !stringInSlice(generatedYAML, testcase.Output) {
-			t.Fatalf("%s failed: ouput is not as expected: %s", testcase.Name, generatedYAML)
+			t.Fatalf("%s failed: output is not as expected: %s, expected: %s", testcase.Name, generatedYAML, testcase.Output)
 		}
 	}
 

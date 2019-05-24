@@ -84,6 +84,8 @@ The main commands supported by the CLI are:
 
 * `faas-cli auth` - (alpha) initiates an OAuth2 authorization flow to obtain a cookie
 
+* `faas-cli generate` - generates CRD yaml for your functions.
+
 The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
 
 * 1st priority `--gateway` flag
@@ -254,6 +256,13 @@ For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which
 ### Use a YAML stack file
 
 Read the [YAML reference guide in the OpenFaaS docs](https://docs.openfaas.com/reference/yaml/).
+
+### Generate CRD with `faas-cli generate` command
+
+You can generate CRD for your functions with `faas-cli generate`. This allows you to script out functions, not just for openfaas but also for [knative](https://cloud.google.com/knative/) or [rio](https://github.com/rancher/rio). You can specify an API type via the `--api` parameter: this can be `openfaas.com/v1alpha2` (for openfaas definitions), `serving.knative.dev/v1alpha1` (for knative) or `rio.cattle.io/v1` (for rio). The `--namespace` parameter is useful for changing the generated namespace in these definitions. 
+For example, the following command will generate your functions (defined in stack.yml) as CRD for rio to be deployed in the default namespace:
+
+```faas-cli generate --api=rio.cattle.io/v1  --namespace default```
 
 #### Quick guide
 

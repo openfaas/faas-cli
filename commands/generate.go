@@ -11,6 +11,7 @@ import (
 	"github.com/openfaas/faas-cli/schema"
 	knativev1alpha1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
 	openfaasv1alpha2 "github.com/openfaas/faas-cli/schema/openfaas/v1alpha2"
+	riov1 "github.com/openfaas/faas-cli/schema/rio/v1"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -49,7 +50,9 @@ var generateCmd = &cobra.Command{
 faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml
 faas-cli generate --api=serving.knative.dev/v1alpha1 -f stack.yml
 faas-cli generate --api=openfaas.com/v1alpha2 --namespace openfaas-fn -f stack.yml
-faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml --tag branch -n openfaas-fn`,
+faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml --tag branch -n openfaas-fn
+faas-cli generate --api=serving.knative.dev/v1alpha1 --namespace=default // for knative definitions
+faas-cli generate --api=rio.cattle.io/v1 --namespace=default // for rio definitions`,
 	PreRunE: preRunGenerate,
 	RunE:    runGenerate,
 }
@@ -146,7 +149,11 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	if len(services.Functions) > 0 {
 
 		if apiVersion == knativev1alpha1.APIVersionLatest {
-			return generateknativev1alpha1ServingCRDYAML(services, format, api, functionNamespace, branch, version)
+			return generateknativev1alpha1ServingCRDYAML(services, format, apiVersion, namespace, branch, version)
+		}
+
+		if apiVersion == riov1.APIVersionLatest {
+			return generateRioCRDYAML(services, format, apiVersion, namespace, branch, version)
 		}
 
 		for name, function := range services.Functions {
@@ -259,6 +266,60 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 
 		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Container.VolumeMounts = mounts
 		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Volumes = volumes
+
+		crds = append(crds, crd)
+	}
+
+	var objectsString string
+	for _, crd := range crds {
+		//Marshal the object definition to yaml
+		objectString, err := yaml.Marshal(crd)
+		if err != nil {
+			return "", err
+		}
+		objectsString += "---\n" + string(objectString)
+	}
+
+	return objectsString, nil
+}
+
+func generateRioCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+	crds := []riov1.CRD{}
+
+	for name, function := range services.Functions {
+
+		fileEnvironment, err := readFiles(function.EnvironmentFile)
+		if err != nil {
+			return "", err
+		}
+
+		//combine all environment variables
+		allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
+		if envErr != nil {
+			return "", envErr
+		}
+
+		var env []riov1.EnvPair
+		for k, v := range allEnvironment {
+			env = append(env, riov1.EnvPair{Name: k, Value: v})
+		}
+
+		var ports []riov1.Port
+		ports = append(ports, riov1.Port{Port: 8080, Protocol: "HTTP", TargetPort: 8080})
+
+		crd := riov1.CRD{
+			Metadata: schema.Metadata{
+				Name:      name,
+				Namespace: namespace,
+			},
+			APIVersion: apiVersion,
+			Kind:       "Service",
+			Spec: riov1.Spec{
+				Env:   env,
+				Image: function.Image,
+				Ports: ports,
+			},
+		}
 
 		crds = append(crds, crd)
 	}
