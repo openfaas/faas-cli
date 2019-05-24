@@ -117,7 +117,7 @@ functions:
 
 Use the default:
 
-```
+```sh
 $ faas-cli build
 $ DOCKER_USER="" faas-cli build
 ```
@@ -172,10 +172,12 @@ To get more detail on a template just use the `template store describe` command 
 
 It is possible to sign a `faas-cli invoke` request using a sha1 HMAC.  To do this, the name of a header to hold the code during transmission should be specified using the `--sign` flag, and the shared secret used to hash the message should be provided through `--key`. E.g.
 
-```
+```sh
 $ echo -n OpenFaaS | faas-cli invoke env --sign X-Hub-Signature --key yoursecret
 ```
+
 Results in the following header being added:
+
 ```
 Http_X_Hub_Signature=sha1=2fc4758f8755f57f6e1a59799b56f8a6cf33b13f
 ```
@@ -231,7 +233,7 @@ This url-ping function is defined in the sample/url-ping folder makes use of Pyt
 
 * Build the files in the .yml file:
 
-```
+```sh
 $ faas-cli build
 ```
 
@@ -239,7 +241,7 @@ $ faas-cli build
 
 You can also download over HTTP(s):
 
-```
+```sh
 $ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/stack.yml
 ```
 
@@ -249,7 +251,7 @@ Docker along with a Python template will be used to build an image named alexell
 
 Now you can use the following command to deploy your function(s):
 
-```
+```sh
 $ faas-cli deploy
 ```
 
@@ -261,7 +263,7 @@ You can initiate a HTTP POST via `curl`:
 * or with `--data-binary @filename.txt` to send a whole file including newlines
 * if you want to pass input from STDIN then use `--data-binary @-`
 
-```
+```sh
 $ curl -d '{"hello": "world"}' http://127.0.0.1:8080/function/nodejs-echo
 { nodeVersion: 'v6.9.1', input: '{"hello": "world"}' }
 
