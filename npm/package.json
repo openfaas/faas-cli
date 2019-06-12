@@ -1,0 +1,23 @@
+{
+  "name": "openfaas-cli",
+  "version": "1.0.0",
+  "description": "OpenFaaS CLI",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/openfaas/faas-cli.git"
+  },
+  "keywords": [
+    "openfaas",
+    "serverless"
+  ],
+  "author": "OpenFaaS Ltd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/openfaas/faas-cli/issues"
+  },
+  "homepage": "https://github.com/openfaas/faas-cli#readme"
+}
