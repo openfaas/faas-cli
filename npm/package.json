@@ -1,10 +1,14 @@
 {
-  "name": "openfaas-cli",
-  "version": "1.0.0",
+  "name": "@openfaas/faas-cli",
+  "version": "0.9.1",
   "description": "OpenFaaS CLI",
   "main": "index.js",
+  "bin": {
+    "faas": "./cli.js",
+    "faas-cli": "./cli.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "node install.js"
   },
   "repository": {
     "type": "git",
@@ -19,5 +23,10 @@
   "bugs": {
     "url": "https://github.com/openfaas/faas-cli/issues"
   },
-  "homepage": "https://github.com/openfaas/faas-cli#readme"
+  "homepage": "https://github.com/openfaas/faas-cli#readme",
+  "dependencies": {
+    "axios": "^0.19.0",
+    "delete": "^1.1.0",
+    "mkdirp": "^0.5.1"
+  }
 }
