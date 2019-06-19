@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	defaultStore      = "https://cdn.rawgit.com/openfaas/store/master/functions.json"
+	defaultStore      = "https://raw.githubusercontent.com/openfaas/store/master/functions.json"
 	maxDescriptionLen = 40
 )
 
