@@ -14,6 +14,7 @@ import (
 
 var (
 	verboseList bool
+	token       string
 )
 
 func init() {
@@ -23,6 +24,7 @@ func init() {
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	listCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	listCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	faasCmd.AddCommand(listCmd)
 }
@@ -55,7 +57,7 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	functions, err := proxy.ListFunctions(gatewayAddress, tlsInsecure)
+	functions, err := proxy.ListFunctionsToken(gatewayAddress, tlsInsecure, token)
 	if err != nil {
 		return err
 	}

@@ -16,13 +16,27 @@ import (
 
 // ListFunctions list deployed functions
 func ListFunctions(gateway string, tlsInsecure bool) ([]requests.Function, error) {
+	return ListFunctionsToken(gateway, tlsInsecure, "")
+}
+
+// ListFunctionsToken list deployed functions with a token as auth
+func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]requests.Function, error) {
 	var results []requests.Function
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
 
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
-	SetAuth(getRequest, gateway)
+
+	if len(token) > 0 {
+		getRequest.Header.Set("Authorization", "Bearer "+token)
+	} else {
+		SetAuth(getRequest, gateway)
+	}
+
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
