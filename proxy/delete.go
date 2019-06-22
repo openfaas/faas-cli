@@ -16,6 +16,11 @@ import (
 
 // DeleteFunction delete a function from the OpenFaaS server
 func DeleteFunction(gateway string, functionName string, tlsInsecure bool) error {
+	return DeleteFunctionToken(gateway, functionName, tlsInsecure, "")
+}
+
+//DeleteFunctionToken delete a function with token as auth
+func DeleteFunctionToken(gateway string, functionName string, tlsInsecure bool, token string) error {
 	gateway = strings.TrimRight(gateway, "/")
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
@@ -28,7 +33,13 @@ func DeleteFunction(gateway string, functionName string, tlsInsecure bool) error
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	SetAuth(req, gateway)
+
+	if len(token) > 0 {
+		SetToken(req, token)
+	} else {
+		SetAuth(req, gateway)
+	}
+
 	delRes, delErr := c.Do(req)
 
 	if delErr != nil {
