@@ -27,6 +27,7 @@ func init() {
 	storeDeployCmd.Flags().BoolVarP(&storeDeployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
 	storeDeployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	storeDeployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -122,7 +123,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure, item.ReadOnlyRootFilesystem)
+	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure, item.ReadOnlyRootFilesystem, token)
 
 	if badStatusCode(statusCode) {
 		failedStatusCode := map[string]int{itemName: statusCode}

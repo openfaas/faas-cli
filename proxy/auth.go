@@ -19,3 +19,8 @@ func SetAuth(req *http.Request, gateway string) {
 
 	req.SetBasicAuth(username, password)
 }
+
+//SetToken sets authentication token
+func SetToken(req *http.Request, token string) {
+	req.Header.Set("Authorization", "Bearer "+token)
+}
