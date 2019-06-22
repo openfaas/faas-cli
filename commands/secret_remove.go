@@ -26,7 +26,7 @@ faas-cli secret remove NAME --gateway=http://127.0.0.1:8080`,
 func init() {
 	secretRemoveCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretRemoveCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
-
+	secretRemoveCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretCmd.AddCommand(secretRemoveCmd)
 }
 
@@ -52,7 +52,7 @@ func runSecretRemove(cmd *cobra.Command, args []string) error {
 	secret := schema.Secret{
 		Name: args[0],
 	}
-	err := proxy.RemoveSecret(gatewayAddress, secret, tlsInsecure)
+	err := proxy.RemoveSecretToken(gatewayAddress, secret, tlsInsecure, token)
 	if err != nil {
 		return err
 	}

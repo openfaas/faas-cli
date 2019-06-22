@@ -29,6 +29,7 @@ faas-cli secret list --gateway=http://127.0.0.1:8080`,
 func init() {
 	secretListCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretListCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	secretListCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	secretCmd.AddCommand(secretListCmd)
 }
@@ -45,7 +46,7 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		fmt.Println(msg)
 	}
 
-	secrets, err := proxy.GetSecretList(gatewayAddress, tlsInsecure)
+	secrets, err := proxy.GetSecretListToken(gatewayAddress, tlsInsecure, token)
 	if err != nil {
 		return err
 	}

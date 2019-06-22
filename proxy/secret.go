@@ -13,13 +13,22 @@ import (
 
 // GetSecretList get secrets list
 func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
+	return GetSecretListToken(gateway, tlsInsecure, "")
+}
+
+// GetSecretListToken get secrets lists with taken as auth
+func GetSecretListToken(gateway string, tlsInsecure bool, token string) ([]schema.Secret, error) {
 	var results []schema.Secret
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/secrets", nil)
-	SetAuth(getRequest, gateway)
+	if len(token) > 0 {
+		SetToken(getRequest, token)
+	} else {
+		SetAuth(getRequest, gateway)
+	}
 
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
@@ -62,6 +71,11 @@ func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
 
 // UpdateSecret update a secret via the OpenFaaS API by name
 func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
+	return UpdateSecretToken(gateway, secret, tlsInsecure, "")
+}
+
+// UpdateSecretToken update a secret with token as auth
+func UpdateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) (int, string) {
 	var output string
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -70,7 +84,11 @@ func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 	reqBytes, _ := json.Marshal(&secret)
 
 	putRequest, err := http.NewRequest(http.MethodPut, gateway+"/system/secrets", bytes.NewBuffer(reqBytes))
-	SetAuth(putRequest, gateway)
+	if len(token) > 0 {
+		SetToken(putRequest, token)
+	} else {
+		SetAuth(putRequest, gateway)
+	}
 
 	if err != nil {
 		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", gateway)
@@ -110,6 +128,11 @@ func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
 func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
+	return RemoveSecretToken(gateway, secret, tlsInsecure, "")
+}
+
+// RemoveSecretToken remove a secret with token as auth
+func RemoveSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) error {
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
@@ -117,7 +140,12 @@ func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error 
 	body, _ := json.Marshal(secret)
 
 	getRequest, err := http.NewRequest(http.MethodDelete, gateway+"/system/secrets", bytes.NewBuffer(body))
-	SetAuth(getRequest, gateway)
+
+	if len(token) > 0 {
+		SetToken(getRequest, token)
+	} else {
+		SetAuth(getRequest, gateway)
+	}
 
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
@@ -152,6 +180,11 @@ func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error 
 
 // CreateSecret create secret
 func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
+	return CreateSecretToken(gateway, secret, tlsInsecure, "")
+}
+
+// CreateSecretToken create secret with token as auth
+func CreateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) (int, string) {
 	var output string
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -161,7 +194,12 @@ func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, 
 
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 	request, err := http.NewRequest(http.MethodPost, gateway+"/system/secrets", reader)
-	SetAuth(request, gateway)
+
+	if len(token) > 0 {
+		SetToken(request, token)
+	} else {
+		SetAuth(request, gateway)
+	}
 
 	if err != nil {
 		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", gateway)
