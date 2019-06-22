@@ -68,7 +68,7 @@ func init() {
 
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	deployCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
-
+	deployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -282,6 +282,7 @@ Error: %s`, fprocessErr.Error())
 				FunctionResourceRequest: functionResourceRequest,
 				ReadOnlyRootFilesystem:  function.ReadOnlyRootFilesystem,
 				TLSInsecure:             tlsInsecure,
+				Token:                   token,
 			}
 
 			if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
@@ -313,7 +314,7 @@ Error: %s`, fprocessErr.Error())
 		// default to a readable filesystem until we get more input about the expected behavior
 		// and if we want to add another flag for this case
 		defaultReadOnlyRFS := false
-		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure, defaultReadOnlyRFS)
+		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure, defaultReadOnlyRFS, token)
 		if err != nil {
 			return err
 		}
@@ -339,6 +340,7 @@ func deployImage(
 	deployFlags DeployFlags,
 	tlsInsecure bool,
 	readOnlyRootFilesystem bool,
+	token string,
 ) (int, error) {
 
 	var statusCode int
@@ -379,6 +381,7 @@ func deployImage(
 		FunctionResourceRequest: proxy.FunctionResourceRequest{},
 		ReadOnlyRootFilesystem:  readOnlyRFS,
 		TLSInsecure:             tlsInsecure,
+		Token:                   token,
 	}
 
 	if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
