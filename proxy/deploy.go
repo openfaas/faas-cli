@@ -45,6 +45,7 @@ type DeployFunctionSpec struct {
 	FunctionResourceRequest FunctionResourceRequest
 	ReadOnlyRootFilesystem  bool
 	TLSInsecure             bool
+	Token                   string
 }
 
 // DeployFunction first tries to deploy a function and if it exists will then attempt
@@ -141,7 +142,12 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 
 	var err error
 	request, err = http.NewRequest(method, gateway+"/system/functions", reader)
-	SetAuth(request, gateway)
+	if len(spec.Token) > 0 {
+		SetToken(request, spec.Token)
+	} else {
+		SetAuth(request, gateway)
+	}
+
 	if err != nil {
 		deployOutput += fmt.Sprintln(err)
 		return http.StatusInternalServerError, deployOutput
