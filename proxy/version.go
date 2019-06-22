@@ -12,7 +12,7 @@ import (
 )
 
 //GetSystemInfo get system information from /system/info endpoint
-func GetSystemInfo(gateway string, tlsInsecure bool) (map[string]interface{}, error) {
+func GetSystemInfo(gateway string, tlsInsecure bool, token string) (map[string]interface{}, error) {
 	infoEndPoint := gateway + "/system/info"
 	timeout := 5 * time.Second
 
@@ -21,9 +21,11 @@ func GetSystemInfo(gateway string, tlsInsecure bool) (map[string]interface{}, er
 	if err != nil {
 		return nil, fmt.Errorf("invalid HTTP method or invalid URL")
 	}
-
-	SetAuth(req, gateway)
-
+	if len(token) > 0 {
+		SetToken(req, token)
+	} else {
+		SetAuth(req, gateway)
+	}
 	response, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
