@@ -42,6 +42,7 @@ func init() {
 	secretCreateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
 	secretCreateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	secretCreateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretCmd.AddCommand(secretCreateCmd)
 }
 
@@ -108,7 +109,7 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("Creating secret: " + secret.Name)
-	_, output := proxy.CreateSecret(gatewayAddress, secret, tlsInsecure)
+	_, output := proxy.CreateSecretToken(gatewayAddress, secret, tlsInsecure, token)
 	fmt.Printf(output)
 
 	return nil

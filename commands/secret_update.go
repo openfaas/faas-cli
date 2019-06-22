@@ -33,7 +33,7 @@ func init() {
 	secretUpdateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretUpdateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretUpdateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
-
+	secretUpdateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretCmd.AddCommand(secretUpdateCmd)
 }
 
@@ -95,7 +95,7 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Println("Updating secret: " + secret.Name)
-	_, output := proxy.UpdateSecret(gatewayAddress, secret, tlsInsecure)
+	_, output := proxy.UpdateSecretToken(gatewayAddress, secret, tlsInsecure, token)
 	fmt.Printf(output)
 
 	return nil
