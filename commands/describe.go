@@ -22,6 +22,7 @@ func init() {
 	describeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	describeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	describeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	describeCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	faasCmd.AddCommand(describeCmd)
 }
@@ -62,13 +63,13 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	}
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	function, err := proxy.GetFunctionInfo(gatewayAddress, functionName, tlsInsecure)
+	function, err := proxy.GetFunctionInfoToken(gatewayAddress, functionName, tlsInsecure, token)
 	if err != nil {
 		return err
 	}
 
 	//To get correct value for invocation count from /system/functions endpoint
-	functionList, err := proxy.ListFunctions(gatewayAddress, tlsInsecure)
+	functionList, err := proxy.ListFunctionsToken(gatewayAddress, tlsInsecure, token)
 	if err != nil {
 		return err
 	}

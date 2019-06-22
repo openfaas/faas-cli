@@ -16,6 +16,11 @@ import (
 
 //GetFunctionInfo get an OpenFaaS function information
 func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (requests.Function, error) {
+	return GetFunctionInfoToken(gateway, functionName, tlsInsecure, "")
+}
+
+//GetFunctionInfoToken get a function information with a token as auth
+func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string) (requests.Function, error) {
 	var result requests.Function
 
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
@@ -30,7 +35,12 @@ func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (req
 	if err != nil {
 		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
-	SetAuth(getRequest, gateway)
+
+	if len(token) > 0 {
+		SetToken(getRequest, token)
+	} else {
+		SetAuth(getRequest, gateway)
+	}
 
 	res, err := client.Do(getRequest)
 	if err != nil {
