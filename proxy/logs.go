@@ -7,13 +7,16 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
+	"time"
 
-	"github.com/openfaas/faas-cli/schema"
+	"github.com/openfaas/faas-provider/logs"
 )
 
 // GetLogs list deployed functions
-func GetLogs(gateway string, tlsInsecure bool, params schema.LogRequest) (<-chan schema.LogMessage, error) {
+func GetLogs(gateway string, tlsInsecure bool, params logs.Request) (<-chan logs.Message, error) {
 
 	gateway = strings.TrimRight(gateway, "/")
 	// replace with a client that allows keep alive, Default?
@@ -25,14 +28,14 @@ func GetLogs(gateway string, tlsInsecure bool, params schema.LogRequest) (<-chan
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
-	logRequest.URL.RawQuery = params.AsQueryValues().Encode()
+	logRequest.URL.RawQuery = reqAsQueryValues(params).Encode()
 
 	res, err := client.Do(logRequest)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
-	logStream := make(chan schema.LogMessage, 1000)
+	logStream := make(chan logs.Message, 1000)
 	switch res.StatusCode {
 	case http.StatusOK:
 		go func() {
@@ -41,7 +44,7 @@ func GetLogs(gateway string, tlsInsecure bool, params schema.LogRequest) (<-chan
 
 			decoder := json.NewDecoder(res.Body)
 			for decoder.More() {
-				msg := schema.LogMessage{}
+				msg := logs.Message{}
 				err := decoder.Decode(&msg)
 				if err != nil {
 					log.Printf("cannot parse log results: %s\n", err.Error())
@@ -59,6 +62,25 @@ func GetLogs(gateway string, tlsInsecure bool, params schema.LogRequest) (<-chan
 		}
 	}
 	return logStream, nil
+}
+
+func reqAsQueryValues(r logs.Request) url.Values {
+	query := url.Values{}
+	query.Add("name", r.Name)
+	query.Add("follow", strconv.FormatBool(r.Follow))
+	if r.Instance != "" {
+		query.Add("instance", r.Instance)
+	}
+
+	if r.Since != nil {
+		query.Add("since", r.Since.Format(time.RFC3339))
+	}
+
+	if r.Tail != 0 {
+		query.Add("tail", strconv.Itoa(r.Tail))
+	}
+
+	return query
 }
 
 func makeStreamingHTTPClient(tlsInsecure bool) http.Client {

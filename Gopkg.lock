@@ -93,6 +93,17 @@
   version = "0.8.8"
 
 [[projects]]
+  digest = "1:978f9a2199f9d63160619adf9cea50a8387c66269b81e299afe092bf51a0fd64"
+  name = "github.com/openfaas/faas-provider"
+  packages = [
+    "httputil",
+    "logs",
+  ]
+  pruneopts = "UT"
+  revision = "0ca8ae603fee9736e011b81fbf02777d89a4ea85"
+  version = "0.9.2"
+
+[[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
   name = "github.com/pkg/errors"
   packages = ["."]
@@ -159,6 +170,7 @@
     "github.com/drone/envsubst",
     "github.com/mitchellh/go-homedir",
     "github.com/morikuni/aec",
+    "github.com/openfaas/faas-provider/logs",
     "github.com/openfaas/faas/gateway/requests",
     "github.com/pkg/errors",
     "github.com/ryanuber/go-glob",
