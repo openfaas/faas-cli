@@ -1,6 +1,13 @@
 GO_FILES?=$$(find . -name '*.go' |grep -v vendor)
 TAG?=latest
 
+.GIT_COMMIT=$(shell git rev-parse HEAD)
+.GIT_VERSION=$(shell git describe --tags 2>/dev/null || echo "$(.GIT_COMMIT)")
+.GIT_UNTRACKEDCHANGES := $(shell git status --porcelain --untracked-files=no)
+ifneq ($(.GIT_UNTRACKEDCHANGES),)
+	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
+endif
+
 .PHONY: build
 build:
 	./build.sh
@@ -20,6 +27,13 @@ local-fmt:
 .PHONY: local-goimports
 local-goimports:
 	goimports -w $(GO_FILES)
+
+.PHONY: local-install
+local-install:
+	CGO_ENABLED=0 go install --ldflags "-s -w \
+	   -X github.com/openfaas/faas-cli/version.GitCommit=${.GIT_COMMIT} \
+	   -X github.com/openfaas/faas-cli/version.Version=${.GIT_VERSION}" \
+	   -a -installsuffix cgo
 
 .PHONY: test-unit
 test-unit:
