@@ -38,10 +38,10 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	availablePlatforms := getStorePlatforms(storeList)
 	filteredFunctions := filterStoreList(storeList, targetPlatform)
 
 	if len(filteredFunctions) == 0 {
+		availablePlatforms := getStorePlatforms(storeList)
 		fmt.Printf("No functions found in the store for platform '%s', try one of the following: %s\n", targetPlatform, strings.Join(availablePlatforms, ", "))
 		return nil
 	}

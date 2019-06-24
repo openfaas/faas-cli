@@ -16,7 +16,7 @@ type StoreItem struct {
 	ReadOnlyRootFilesystem bool              `json:"readOnlyRootFilesystem"`
 }
 
-//StoreFunction function metadata in store
+//StoreFunction represents a multi-arch function in the store
 type StoreFunction struct {
 	Icon                   string            `json:"icon"`
 	Title                  string            `json:"title"`
