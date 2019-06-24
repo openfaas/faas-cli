@@ -34,7 +34,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 
-	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "OpenFaaS CRD API version")
+	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1alpha2, serving.knative.dev/v1alpha1")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
 	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
@@ -48,6 +48,7 @@ var generateCmd = &cobra.Command{
 	Long:  `The generate command creates kubernetes CRD YAML file for functions`,
 	Example: `faas-cli generate --api=openfaas.com/v1alpha2 --yaml stack.yml | kubectl apply  -f -
 faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml
+faas-cli generate --api=serving.knative.dev/v1alpha1 -f stack.yml
 faas-cli generate --api=openfaas.com/v1alpha2 --namespace openfaas-fn -f stack.yml
 faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml --tag branch -n openfaas-fn`,
 	PreRunE: preRunGenerate,
