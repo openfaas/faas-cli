@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/openfaas/faas-cli/platform"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/spf13/cobra"
@@ -21,6 +20,8 @@ var (
 	storeAddress     string
 	verbose          bool
 	storeDeployFlags DeployFlags
+	//Platform platform variable updated at build time
+	Platform string
 )
 
 const (
@@ -32,7 +33,7 @@ var platformValue string
 
 func init() {
 	storeCmd.PersistentFlags().StringVarP(&storeAddress, "url", "u", defaultStore, "Alternative Store URL starting with http(s)://")
-	storeCmd.PersistentFlags().StringVarP(&platformValue, "platform", "p", "", "Target platform for store")
+	storeCmd.PersistentFlags().StringVarP(&platformValue, "platform", "p", Platform, "Target platform for store")
 
 	faasCmd.AddCommand(storeCmd)
 }
@@ -88,7 +89,8 @@ func filterStoreList(functions []schema.StoreFunction, platform string) []schema
 	var filteredList []schema.StoreFunction
 
 	for _, function := range functions {
-		_, ok := function.Images[platform]
+
+		_, ok := getValueIgnoreCase(function.Images, platform)
 
 		if ok {
 			filteredList = append(filteredList, function)
@@ -96,6 +98,16 @@ func filterStoreList(functions []schema.StoreFunction, platform string) []schema
 	}
 
 	return filteredList
+}
+
+//getValueIgnoreCase get a key value from map by ignoring case for key
+func getValueIgnoreCase(kv map[string]string, key string) (string, bool) {
+	for k, v := range kv {
+		if strings.EqualFold(k, key) {
+			return v, true
+		}
+	}
+	return "", false
 }
 
 func storeFindFunction(functionName string, storeItems []schema.StoreFunction) *schema.StoreFunction {
@@ -110,11 +122,17 @@ func storeFindFunction(functionName string, storeItems []schema.StoreFunction) *
 	return nil
 }
 
+func getPlatform() string {
+	if len(Platform) == 0 {
+		return mainPlatform
+	}
+	return Platform
+}
+
 func getTargetPlatform(inputPlatform string) string {
 	if len(inputPlatform) == 0 {
-		return platform.GetPlatform()
+		return getPlatform()
 	}
-
 	return inputPlatform
 }
 

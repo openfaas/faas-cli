@@ -14,11 +14,12 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 # ldflags -X injects commit version into binary
 RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Author(s)"
 RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/) -cover \
- && VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
- && GIT_COMMIT=$(git rev-list -1 HEAD) \
- && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
+    && VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
+    && GIT_COMMIT=$(git rev-list -1 HEAD) \
+    && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
     -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
-    -X github.com/openfaas/faas-cli/version.Version=${VERSION}" \
+    -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
+    -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
     -a -installsuffix cgo -o faas-cli
 
 # Release stage
