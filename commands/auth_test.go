@@ -19,7 +19,7 @@ func Test_auth(t *testing.T) {
 			name:     "Default parameters",
 			authURL:  "",
 			clientID: "",
-			wantErr:  "--auth-url is required and must be a valid OIDC /authorize URL",
+			wantErr:  "--auth-url is required and must be a valid OIDC URL",
 		},
 		{
 			name:     "Invalid auth-url",

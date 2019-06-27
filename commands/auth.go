@@ -4,8 +4,11 @@
 package commands
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,6 +28,8 @@ var (
 	audience      string
 	listenPort    int
 	launchBrowser bool
+	grant         string
+	clientSecret  string
 )
 
 func init() {
@@ -35,14 +40,22 @@ func init() {
 	authCmd.Flags().StringVar(&audience, "audience", "", "OAuth2 audience")
 	authCmd.Flags().BoolVar(&launchBrowser, "launch-browser", true, "Launch browser for OAuth2 redirect")
 
+	authCmd.Flags().StringVar(&grant, "grant", "implicit", "grant for OAuth2 flow - either implicit or client_credentials")
+	authCmd.Flags().StringVar(&clientSecret, "client-secret", "", "OAuth2 client_secret, for use with client_credentials grant")
+
 	faasCmd.AddCommand(authCmd)
 }
 
 var authCmd = &cobra.Command{
-	Use:     `auth [--auth-url AUTH_URL | --client-id CLIENT_ID | --audience AUDIENCE | --scope SCOPE | --launch-browser LAUNCH_BROWSER]`,
-	Short:   "Obtain a token for your OpenFaaS gateway",
-	Long:    "Authenticate to an OpenFaaS gateway using OAuth2.",
-	Example: `faas-cli auth --client-id my-id --auth-url https://auth0.com/authorize --scope "oidc profile" --audience my-id`,
+	Use: `auth --auth-url AUTH_URL | --client-id CLIENT_ID --scope SCOPE
+  [--audience AUDIENCE]
+  [--launch-browser LAUNCH_BROWSER]
+  [--client-secret]
+  [--grant GRANT]`,
+	Short: "Obtain a token for your OpenFaaS gateway",
+	Long:  "Authenticate to an OpenFaaS gateway using OAuth2.",
+	Example: `  faas-cli auth --client-id my-id --auth-url https://tenant.auth0.com/authorize --scope "oidc profile" --audience my-id
+  faas-cli auth --grant=client_credentials --client-id=id --client-secret=secret --auth-url=https://tenant.auth0.com/token`,
 	RunE:    runAuth,
 	PreRunE: preRunAuth,
 }
@@ -56,7 +69,7 @@ func preRunAuth(cmd *cobra.Command, args []string) error {
 func checkValues(authURL, clientID string) error {
 
 	if len(authURL) == 0 {
-		return fmt.Errorf("--auth-url is required and must be a valid OIDC /authorize URL")
+		return fmt.Errorf("--auth-url is required and must be a valid OIDC URL")
 	}
 
 	u, uErr := url.Parse(authURL)
@@ -75,6 +88,16 @@ func checkValues(authURL, clientID string) error {
 }
 
 func runAuth(cmd *cobra.Command, args []string) error {
+	if grant == "implicit" {
+		return authImplicit()
+	} else if grant == "client_credentials" {
+		return authClientCredentials()
+	}
+	return nil
+}
+
+func authImplicit() error {
+
 	context, cancel := context.WithCancel(context.TODO())
 	defer cancel()
 
@@ -128,6 +151,48 @@ func runAuth(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+func authClientCredentials() error {
+
+	body := ClientCredentialsReq{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Audience:     audience,
+		GrantType:    grant,
+	}
+
+	bodyBytes, marshalErr := json.Marshal(body)
+	if marshalErr != nil {
+		return errors.Wrapf(marshalErr, "unable to unmarshal %s", string(bodyBytes))
+	}
+
+	buf := bytes.NewBuffer(bodyBytes)
+	req, _ := http.NewRequest(http.MethodPost, authURL, buf)
+	req.Header.Set("Content-Type", "application/json")
+	res, err := http.DefaultClient.Do(req)
+
+	if err != nil {
+		return errors.Wrap(err, fmt.Sprintf("cannot POST to %s", authURL))
+	}
+	if res.Body != nil {
+		defer res.Body.Close()
+
+		tokenData, _ := ioutil.ReadAll(res.Body)
+
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("cannot authenticate, code: %d.\nResponse: %s", res.StatusCode, string(tokenData))
+		}
+		token := ClientCredentialsToken{}
+		tokenErr := json.Unmarshal(tokenData, &token)
+		if tokenErr != nil {
+			return errors.Wrapf(tokenErr, "unable to unmarshal token: %s", string(tokenData))
+		}
+
+		printExampleTokenUsage(gateway, token.AccessToken)
+	}
+
+	return nil
+}
+
 // launchURL opens a URL with the default browser for Linux, MacOS or Windows.
 func launchURL(serverURL string) error {
 	ctx := context.Background()
@@ -147,6 +212,10 @@ func launchURL(serverURL string) error {
 	return command.Run()
 }
 
+func printExampleTokenUsage(gateway, token string) {
+	fmt.Printf("Example:\n\t./faas-cli list --gateway \"%s\" --token \"%s\"\n", gateway, token)
+}
+
 func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 
@@ -157,7 +226,7 @@ func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, 
 			}
 
 			if token := q.Get("access_token"); len(token) > 0 {
-				fmt.Printf("Example:\n\t./faas-cli list --gateway \"%s\" --token \"%s\"\n", gateway, token)
+				printExampleTokenUsage(gateway, token)
 			} else {
 				fmt.Printf("Unable to detect a valid access_token in URL fragment. Check your credentials or contact your administrator.\n")
 			}
@@ -193,4 +262,18 @@ func buildCaptureFragment() string {
  Authorization flow complete. Please close this browser window.
 </body>
 </html>`
+}
+
+type ClientCredentialsReq struct {
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Audience     string `json:"audience"`
+	GrantType    string `json:"grant_type"`
+}
+
+type ClientCredentialsToken struct {
+	AccessToken string `json:"access_token"`
+	Scope       string `json:"scope"`
+	ExpiresIn   int    `json:"expires_in"`
+	TokenType   string `json:"token_type"`
 }
