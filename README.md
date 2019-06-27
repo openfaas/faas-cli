@@ -74,6 +74,9 @@ The main commands supported by the CLI are:
 
 * `faas-cli secret` - manage secrets for your functions
 
+* `faas-cli auth` - (alpha) initiates an OAuth2 authorization flow to obtain a cookie
+
+
 The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
 
 * 1st priority `--gateway` flag

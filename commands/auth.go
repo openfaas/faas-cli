@@ -29,7 +29,7 @@ var (
 
 func init() {
 	authCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	authCmd.Flags().StringVar(&authURL, "auth-url", "", "OAuth2 auth-url")
+	authCmd.Flags().StringVar(&authURL, "auth-url", "", "OAuth2 Authorize URL i.e. http://idp/oauth/authorize")
 	authCmd.Flags().StringVar(&clientID, "client-id", "", "OAuth2 client_id")
 	authCmd.Flags().IntVar(&listenPort, "listen-port", 31111, "OAuth2 local port for receiving cookie")
 	authCmd.Flags().StringVar(&audience, "audience", "", "OAuth2 audience")
@@ -44,6 +44,27 @@ var authCmd = &cobra.Command{
 	Long:    "Authenticate to an OpenFaaS gateway using OAuth2.",
 	Example: `faas-cli auth --client-id my-id --auth-url https://auth0.com/authorize --scope "oidc profile" --audience my-id`,
 	RunE:    runAuth,
+	PreRunE: preRunAuth,
+}
+
+func preRunAuth(cmd *cobra.Command, args []string) error {
+	if len(authURL) == 0 {
+		return fmt.Errorf("--auth-url is required and must be a valid OIDC /authorize URL")
+	}
+
+	u, uErr := url.Parse(authURL)
+	if uErr != nil {
+		return fmt.Errorf("--auth-url is an invalid URL: %s", uErr.Error())
+	}
+	if u.Scheme != "http" && u.Scheme != "https" {
+		return fmt.Errorf("--auth-url is an invalid URL: %s", u.String())
+	}
+
+	if len(clientID) == 0 {
+		return fmt.Errorf("--client-id is required")
+	}
+
+	return nil
 }
 
 func runAuth(cmd *cobra.Command, args []string) error {
@@ -59,6 +80,7 @@ func runAuth(cmd *cobra.Command, args []string) error {
 	}
 
 	go func() {
+		fmt.Printf("Starting local token server on port %d\n", listenPort)
 		if err := server.ListenAndServe(); err != nil {
 			panic(err)
 		}
@@ -68,6 +90,7 @@ func runAuth(cmd *cobra.Command, args []string) error {
 			break
 		}
 	}()
+
 	defer server.Shutdown(context)
 
 	q := url.Values{}
@@ -85,7 +108,7 @@ func runAuth(cmd *cobra.Command, args []string) error {
 
 	browserBase := authURLVal
 
-	fmt.Println("Navigate to:", browserBase)
+	fmt.Printf("Launching browser: %s\n", browserBase)
 	if launchBrowser {
 		err := launchURL(browserBase.String())
 		if err != nil {
