@@ -48,6 +48,13 @@ var authCmd = &cobra.Command{
 }
 
 func preRunAuth(cmd *cobra.Command, args []string) error {
+	return checkValues(authURL,
+		clientID,
+	)
+}
+
+func checkValues(authURL, clientID string) error {
+
 	if len(authURL) == 0 {
 		return fmt.Errorf("--auth-url is required and must be a valid OIDC /authorize URL")
 	}
