@@ -106,15 +106,15 @@ func getTemplateInfo(repository string) ([]TemplateInfo, error) {
 }
 
 func formatTemplatesOutput(templates []TemplateInfo, verbose bool, platform string) string {
+
 	if platform != mainPlatform {
-		for templatesLength, template := range templates {
-			if strings.EqualFold(template.Platform, platform) {
-				break
-			}
-			if len(template.Platform)-1 == templatesLength {
-				return ""
-			}
-		}
+		templates = filterTemplate(templates, platform)
+	} else {
+		templates = filterTemplate(templates, mainPlatform)
+	}
+
+	if len(templates) == 0 {
+		return ""
 	}
 
 	var buff bytes.Buffer
@@ -122,9 +122,9 @@ func formatTemplatesOutput(templates []TemplateInfo, verbose bool, platform stri
 
 	fmt.Fprintln(lineWriter)
 	if verbose {
-		formatVerboseOutput(lineWriter, templates, platform)
+		formatVerboseOutput(lineWriter, templates)
 	} else {
-		formatBasicOutput(lineWriter, templates, platform)
+		formatBasicOutput(lineWriter, templates)
 	}
 	fmt.Fprintln(lineWriter)
 
@@ -133,12 +133,8 @@ func formatTemplatesOutput(templates []TemplateInfo, verbose bool, platform stri
 	return buff.String()
 }
 
-func formatBasicOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo, platform string) {
-	if platform != mainPlatform {
-		templates = filterTemplate(templates, platform)
-	} else {
-		templates = filterTemplate(templates, mainPlatform)
-	}
+func formatBasicOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo) {
+
 	fmt.Fprintf(lineWriter, "NAME\tSOURCE\tDESCRIPTION\n")
 	for _, template := range templates {
 		fmt.Fprintf(lineWriter, "%s\t%s\t%s\n",
@@ -148,12 +144,8 @@ func formatBasicOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo, p
 	}
 }
 
-func formatVerboseOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo, platform string) {
-	if platform != mainPlatform {
-		templates = filterTemplate(templates, platform)
-	} else {
-		templates = filterTemplate(templates, mainPlatform)
-	}
+func formatVerboseOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo) {
+
 	fmt.Fprintf(lineWriter, "NAME\tLANGUAGE\tPLATFORM\tSOURCE\tDESCRIPTION\n")
 	for _, template := range templates {
 		fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\n",
@@ -178,6 +170,7 @@ type TemplateInfo struct {
 
 func filterTemplate(templates []TemplateInfo, platform string) []TemplateInfo {
 	var filteredTemplates []TemplateInfo
+
 	for _, template := range templates {
 		if strings.EqualFold(template.Platform, platform) {
 			filteredTemplates = append(filteredTemplates, template)
