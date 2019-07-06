@@ -40,6 +40,7 @@ var functionLogsCmd = &cobra.Command{
 	Short:   "Tail logs from your functions",
 	Long:    "Tail logs from your functions",
 	Example: `faas-cli logs echo
+faas-cli logs echo --tail=5
 faas-cli logs echo --follow=false
 faas-cli logs echo --follow=false --since=10m
 faas-cli logs echo --follow=false --since=2010-01-01T00:00:00Z`,
