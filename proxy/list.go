@@ -32,7 +32,7 @@ func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]reque
 	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
 
 	if len(token) > 0 {
-		getRequest.Header.Set("Authorization", "Bearer "+token)
+		SetToken(getRequest, token)
 	} else {
 		SetAuth(getRequest, gateway)
 	}

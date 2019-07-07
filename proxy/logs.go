@@ -16,16 +16,21 @@ import (
 )
 
 // GetLogs list deployed functions
-func GetLogs(gateway string, tlsInsecure bool, params logs.Request) (<-chan logs.Message, error) {
+func GetLogs(gateway string, tlsInsecure bool, params logs.Request, token string) (<-chan logs.Message, error) {
 
 	gateway = strings.TrimRight(gateway, "/")
 	// replace with a client that allows keep alive, Default?
 	client := makeStreamingHTTPClient(tlsInsecure)
 
 	logRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/logs", nil)
-	SetAuth(logRequest, gateway)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+	}
+
+	if len(token) > 0 {
+		SetToken(logRequest, token)
+	} else {
+		SetAuth(logRequest, gateway)
 	}
 
 	logRequest.URL.RawQuery = reqAsQueryValues(params).Encode()
