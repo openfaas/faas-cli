@@ -26,6 +26,7 @@ type logFlags struct {
 	sinceTime flags.TimestampFlag
 	follow    bool
 	tail      int
+	token     string
 }
 
 func init() {
@@ -65,6 +66,7 @@ func initLogCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Var(&logFlagValues.sinceTime, "since-time", "include logs since the given timestamp (RFC3339)")
 	cmd.Flags().IntVar(&logFlagValues.tail, "tail", -1, "number of recent log lines file to display. Defaults to -1, unlimited if <=0")
 	cmd.Flags().BoolVar(&logFlagValues.follow, "follow", true, "continue printing new logs until the end of the request, up to 30s")
+	cmd.Flags().StringVarP(&logFlagValues.token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 }
 
 func runLogs(cmd *cobra.Command, args []string) error {
@@ -75,7 +77,7 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	logRequest := logRequestFromFlags(cmd, args)
-	logEvents, err := proxy.GetLogs(gatewayAddress, tlsInsecure, logRequest)
+	logEvents, err := proxy.GetLogs(gatewayAddress, tlsInsecure, logRequest, logFlagValues.token)
 	if err != nil {
 		return err
 	}
