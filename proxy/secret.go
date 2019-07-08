@@ -223,6 +223,9 @@ func CreateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, t
 	case http.StatusUnauthorized:
 		output += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 
+	case http.StatusConflict:
+		output += fmt.Sprintf("secret with the name %q already exists\n", secret.Name)
+
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

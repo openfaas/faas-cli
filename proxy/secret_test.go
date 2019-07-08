@@ -169,3 +169,22 @@ func Test_CreateSecret_Unauthorized401(t *testing.T) {
 		t.Fatalf("Error not matched: %s", output)
 	}
 }
+
+func Test_CreateSecret_Conflict409(t *testing.T) {
+	s := test.MockHttpServerStatus(t, http.StatusConflict)
+
+	secret := schema.Secret{
+		Name:  "secret-name",
+		Value: "secret-value",
+	}
+	status, output := CreateSecret(s.URL, secret, true)
+
+	if status != http.StatusConflict {
+		t.Errorf("want: %d, got: %d", http.StatusConflict, status)
+	}
+
+	r := regexp.MustCompile(`(?m:secret with the name "` + secret.Name + `" already exists)`)
+	if !r.MatchString(output) {
+		t.Fatalf("Error not matched: %s", output)
+	}
+}
