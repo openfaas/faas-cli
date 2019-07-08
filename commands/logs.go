@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/openfaas/faas-cli/flags"
@@ -83,7 +84,7 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	for logMsg := range logEvents {
-		fmt.Fprintln(os.Stdout, logMsg.String())
+		fmt.Fprintln(os.Stdout, strings.TrimRight(logMsg.String(), "\n"))
 	}
 
 	return nil
