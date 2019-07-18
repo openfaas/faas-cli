@@ -46,11 +46,13 @@ deploy:
   - faas-cli-armhf
   - faas-cli.exe
   - faas-cli-arm64
+  - faas-cli-ppc64le
   - faas-cli.sha256
   - faas-cli-darwin.sha256
   - faas-cli-armhf.sha256
   - faas-cli.exe.sha256
   - faas-cli-arm64.sha256
+  - faas-cli-ppc64le.sha256
   skip_cleanup: true
   on:
     tags: true

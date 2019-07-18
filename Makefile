@@ -55,6 +55,14 @@ ci-arm64-push:
 ci-arm64-build:
 	(./build.sh $(TAG)-arm64)
 
+.PHONY: ci-ppc64le-push
+ci-ppc64le-push:
+	(docker push openfaas/faas-cli:$(TAG)-ppc64le)
+
+.PHONY: ci-ppc64le-build
+ci-ppc64le-build:
+	(./build.sh $(TAG)-ppc64le)
+
 .PHONY: test-templating
 PORT?=38080
 FUNCTION?=templating-test-func

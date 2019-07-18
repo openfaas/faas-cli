@@ -6,6 +6,7 @@ faas-cli-darwin
 faas-cli-armhf
 faas-cli.exe
 faas-cli-arm64
+faas-cli-ppc64le
 
 *.jpg
 *.pyc
