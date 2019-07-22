@@ -46,12 +46,15 @@ faas-cli logs echo --tail=5
 faas-cli logs echo --follow=false
 faas-cli logs echo --follow=false --since=10m
 faas-cli logs echo --follow=false --since=2010-01-01T00:00:00Z`,
-	Args:    cobra.ExactArgs(1),
+	Args:    cobra.MaximumNArgs(1),
 	RunE:    runLogs,
 	PreRunE: noopPreRunCmd,
 }
 
 func noopPreRunCmd(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("function name is required")
+	}
 	return nil
 }
 
