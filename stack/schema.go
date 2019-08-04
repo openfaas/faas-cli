@@ -61,6 +61,19 @@ type Function struct {
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
+type Configuration struct {
+	StackConfig StackConfiguration `yaml:"configuration"`
+}
+
+type StackConfiguration struct {
+	TemplateConfigs []TemplateSource `yaml:"templates"`
+}
+
+type TemplateSource struct {
+	Name   string `yaml:"name"`
+	Source string `yaml:"source,omitempty"`
+}
+
 // FunctionResources Memory and CPU
 type FunctionResources struct {
 	Memory string `yaml:"memory"`

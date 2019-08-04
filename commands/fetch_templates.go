@@ -116,3 +116,27 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 
 	return existingLanguages, fetchedLanguages, nil
 }
+
+func pullTemplate(repository string) error {
+	if _, err := os.Stat(repository); err != nil {
+		if !versioncontrol.IsGitRemote(repository) && !versioncontrol.IsPinnedGitRemote(repository) {
+			return fmt.Errorf("The repository URL must be a valid git repo uri")
+		}
+	}
+
+	repository, refName := versioncontrol.ParsePinnedRemote(repository)
+
+	if err := versioncontrol.GitCheckRefName.Invoke("", map[string]string{"refname": refName}); err != nil {
+		fmt.Printf("Invalid tag or branch name `%s`\n", refName)
+		fmt.Println("See https://git-scm.com/docs/git-check-ref-format for more details of the rules Git enforces on branch and reference names.")
+
+		return err
+	}
+
+	fmt.Printf("Fetch templates from repository: %s at %s\n", repository, refName)
+	if err := fetchTemplates(repository, refName, overwrite); err != nil {
+		return fmt.Errorf("error while fetching templates: %s", err)
+	}
+
+	return nil
+}

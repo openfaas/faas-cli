@@ -60,7 +60,7 @@ func Test_templatePull(t *testing.T) {
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository, "--overwrite"})
 		err = faasCmd.Execute()
 		if err != nil {
-			fmt.Errorf("unexpected error while executing template pull with --overwrite: %s", err.Error())
+			t.Errorf("unexpected error while executing template pull with --overwrite: %s", err.Error())
 		}
 
 		str := buf.String()
