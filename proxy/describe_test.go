@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
-	"github.com/openfaas/faas/gateway/requests"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 func Test_GetFunctionInfo(t *testing.T) {
@@ -76,7 +76,7 @@ func Test_GetFunctionInfo_NotFound(t *testing.T) {
 
 }
 
-var expectedGetFunctionInfoResponse = requests.Function{
+var expectedGetFunctionInfoResponse = types.FunctionStatus{
 	Name:            "func-test1",
 	Image:           "image-test1",
 	Replicas:        1,

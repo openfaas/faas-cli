@@ -11,17 +11,17 @@ import (
 	"net/url"
 	"path"
 
-	"github.com/openfaas/faas/gateway/requests"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 //GetFunctionInfo get an OpenFaaS function information
-func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (requests.Function, error) {
+func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (types.FunctionStatus, error) {
 	return GetFunctionInfoToken(gateway, functionName, tlsInsecure, "")
 }
 
 //GetFunctionInfoToken get a function information with a token as auth
-func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string) (requests.Function, error) {
-	var result requests.Function
+func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string) (types.FunctionStatus, error) {
+	var result types.FunctionStatus
 
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 

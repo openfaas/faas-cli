@@ -11,17 +11,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/openfaas/faas/gateway/requests"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 // ListFunctions list deployed functions
-func ListFunctions(gateway string, tlsInsecure bool) ([]requests.Function, error) {
+func ListFunctions(gateway string, tlsInsecure bool) ([]types.FunctionStatus, error) {
 	return ListFunctionsToken(gateway, tlsInsecure, "")
 }
 
 // ListFunctionsToken list deployed functions with a token as auth
-func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]requests.Function, error) {
-	var results []requests.Function
+func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]types.FunctionStatus, error) {
+	var results []types.FunctionStatus
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
