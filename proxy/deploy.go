@@ -13,7 +13,8 @@ import (
 	"time"
 
 	"github.com/openfaas/faas-cli/stack"
-	"github.com/openfaas/faas/gateway/requests"
+
+	types "github.com/openfaas/faas-provider/types"
 )
 
 var (
@@ -85,7 +86,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 		DeleteFunction(gateway, spec.FunctionName, spec.TLSInsecure)
 	}
 
-	req := requests.CreateFunctionRequest{
+	req := types.FunctionDeployment{
 		EnvProcess:             fprocessTemplate,
 		Image:                  spec.Image,
 		RegistryAuth:           spec.RegistryAuth,
@@ -100,7 +101,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	}
 
 	hasLimits := false
-	req.Limits = &requests.FunctionResources{}
+	req.Limits = &types.FunctionResources{}
 	if spec.FunctionResourceRequest.Limits != nil && len(spec.FunctionResourceRequest.Limits.Memory) > 0 {
 		hasLimits = true
 		req.Limits.Memory = spec.FunctionResourceRequest.Limits.Memory
@@ -114,7 +115,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	}
 
 	hasRequests := false
-	req.Requests = &requests.FunctionResources{}
+	req.Requests = &types.FunctionResources{}
 	if spec.FunctionResourceRequest.Requests != nil && len(spec.FunctionResourceRequest.Requests.Memory) > 0 {
 		hasRequests = true
 		req.Requests.Memory = spec.FunctionResourceRequest.Requests.Memory

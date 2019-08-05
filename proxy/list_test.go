@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
-	"github.com/openfaas/faas/gateway/requests"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 func Test_ListFunctions(t *testing.T) {
@@ -64,7 +64,7 @@ func Test_ListFunctions_MissingURLPrefix(t *testing.T) {
 	}
 }
 
-var expectedListFunctionsResponse = []requests.Function{
+var expectedListFunctionsResponse = []types.FunctionStatus{
 	{
 		Name:            "func-test1",
 		Image:           "image-test1",

@@ -9,11 +9,11 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/test"
-	"github.com/openfaas/faas/gateway/requests"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 func Test_list(t *testing.T) {
-	expectedListResponse := []requests.Function{
+	expectedListResponse := []types.FunctionStatus{
 		{
 			Name:            "function-test-1",
 			Image:           "image-test-1",
