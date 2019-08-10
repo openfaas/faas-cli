@@ -6,7 +6,6 @@ package commands
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/openfaas/faas-cli/flags"
@@ -22,12 +21,16 @@ var (
 )
 
 type logFlags struct {
-	instance  string
-	since     time.Duration
-	sinceTime flags.TimestampFlag
-	follow    bool
-	tail      int
-	token     string
+	instance        string
+	since           time.Duration
+	sinceTime       flags.TimestampFlag
+	follow          bool
+	tail            int
+	token           string
+	logFormat       flags.LogFormat
+	includeName     bool
+	includeInstance bool
+	timeFormat      flags.TimeFormat
 }
 
 func init() {
@@ -71,6 +74,12 @@ func initLogCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&logFlagValues.tail, "tail", -1, "number of recent log lines file to display. Defaults to -1, unlimited if <=0")
 	cmd.Flags().BoolVar(&logFlagValues.follow, "follow", true, "continue printing new logs until the end of the request, up to 30s")
 	cmd.Flags().StringVarP(&logFlagValues.token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+
+	logFlagValues.timeFormat = flags.TimeFormat(time.RFC3339)
+	cmd.Flags().Var(&logFlagValues.logFormat, "format", "output format.  Note that JSON format will always include all log message keys (plain|key-value|json)")
+	cmd.Flags().Var(&logFlagValues.timeFormat, "time-format", "string format for the timestamp, any value go time format string is allowed, empty will not print the timestamp")
+	cmd.Flags().BoolVar(&logFlagValues.includeName, "name", true, "print the function name")
+	cmd.Flags().BoolVar(&logFlagValues.includeInstance, "instance", true, "print the function instance name/id")
 }
 
 func runLogs(cmd *cobra.Command, args []string) error {
@@ -86,8 +95,9 @@ func runLogs(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	formatter := GetLogFormatter(string(logFlagValues.logFormat))
 	for logMsg := range logEvents {
-		fmt.Fprintln(os.Stdout, strings.TrimRight(logMsg.String(), "\n"))
+		fmt.Fprintln(os.Stdout, formatter(logMsg, logFlagValues.timeFormat.String(), logFlagValues.includeName, logFlagValues.includeInstance))
 	}
 
 	return nil
