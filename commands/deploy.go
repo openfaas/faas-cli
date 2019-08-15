@@ -24,6 +24,11 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+var (
+	// readTemplate controls whether we should read the function's template when deploying.
+	readTemplate bool
+)
+
 // DeployFlags holds flags that are to be added to commands.
 type DeployFlags struct {
 	envvarOpts             []string
@@ -71,6 +76,7 @@ func init() {
 	deployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
+	deployCmd.Flags().BoolVar(&readTemplate, "read-template", true, "Read the function's template")
 
 	faasCmd.AddCommand(deployCmd)
 }
@@ -217,14 +223,16 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				return envErr
 			}
 
-			// Get FProcess to use from the ./template/template.yml, if a template is being used
-			if languageExistsNotDockerfile(function.Language) {
-				var fprocessErr error
+			if readTemplate {
+				// Get FProcess to use from the ./template/template.yml, if a template is being used
+				if languageExistsNotDockerfile(function.Language) {
+					var fprocessErr error
 
-				function.FProcess, fprocessErr = deriveFprocess(function)
-				if fprocessErr != nil {
-					return fmt.Errorf(`template directory may be missing or invalid, please run "faas-cli template pull"
+					function.FProcess, fprocessErr = deriveFprocess(function)
+					if fprocessErr != nil {
+						return fmt.Errorf(`template directory may be missing or invalid, please run "faas-cli template pull"
 Error: %s`, fprocessErr.Error())
+					}
 				}
 			}
 
