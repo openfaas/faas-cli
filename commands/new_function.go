@@ -18,9 +18,13 @@ import (
 )
 
 var (
-	appendFile string
-	list       bool
-	quiet      bool
+	appendFile    string
+	list          bool
+	quiet         bool
+	memoryLimit   string
+	cpuLimit      string
+	memoryRequest string
+	cpuRequest    string
 )
 
 func init() {
@@ -28,6 +32,12 @@ func init() {
 	newFunctionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL to store in YAML stack file")
 	newFunctionCmd.Flags().StringVar(&handlerDir, "handler", "", "directory the handler will be written to")
 	newFunctionCmd.Flags().StringVarP(&imagePrefix, "prefix", "p", "", "Set prefix for the function image")
+
+	newFunctionCmd.Flags().StringVar(&memoryLimit, "memory-limit", "", "Set a limit for the memory")
+	newFunctionCmd.Flags().StringVar(&cpuLimit, "cpu-limit", "", "Set a limit for the CPU")
+
+	newFunctionCmd.Flags().StringVar(&memoryRequest, "memory-request", "", "Set a request or the memory")
+	newFunctionCmd.Flags().StringVar(&cpuRequest, "cpu-request", "", "Set a request value for the CPU")
 
 	newFunctionCmd.Flags().BoolVar(&list, "list", false, "List available languages")
 	newFunctionCmd.Flags().StringVarP(&appendFile, "append", "a", "", "Append to existing YAML file")
@@ -192,6 +202,20 @@ Download templates:
 		Image:    imageName,
 	}
 
+	if len(memoryLimit) > 0 || len(cpuLimit) > 0 {
+		function.Limits = &stack.FunctionResources{
+			CPU:    cpuLimit,
+			Memory: memoryLimit,
+		}
+	}
+
+	if len(memoryRequest) > 0 || len(cpuRequest) > 0 {
+		function.Requests = &stack.FunctionResources{
+			CPU:    cpuRequest,
+			Memory: memoryRequest,
+		}
+	}
+
 	yamlContent := prepareYAMLContent(appendMode, gateway, &function)
 
 	f, err := os.OpenFile("./"+fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
@@ -237,6 +261,30 @@ func prepareYAMLContent(appendMode bool, gateway string, function *stack.Functio
     handler: ` + function.Handler + `
     image: ` + function.Image + `
 `
+
+	if function.Requests != nil && (len(function.Requests.CPU) > 0 || len(function.Requests.Memory) > 0) {
+		yamlContent += "    requests:\n"
+		if len(function.Requests.CPU) > 0 {
+			yamlContent += `      cpu: ` + function.Requests.CPU + "\n"
+		}
+
+		if len(function.Requests.Memory) > 0 {
+			yamlContent += `      memory: ` + function.Requests.Memory + "\n"
+		}
+	}
+
+	if function.Limits != nil && (len(function.Limits.CPU) > 0 || len(function.Limits.Memory) > 0) {
+		yamlContent += "    limits:\n"
+		if len(function.Limits.CPU) > 0 {
+			yamlContent += `      cpu: ` + function.Limits.CPU + "\n"
+		}
+
+		if len(function.Limits.Memory) > 0 {
+			yamlContent += `      memory: ` + function.Limits.Memory + "\n"
+		}
+	}
+
+	yamlContent += "\n"
 	if !appendMode {
 
 		yamlContent = `version: ` + defaultSchemaVersion + `
