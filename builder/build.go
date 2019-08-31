@@ -38,8 +38,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 		}
 
-		tempPath = createBuildTemplate(functionName, handler, language, isLanguageTemplate(language))
+		tempPath, buildErr := createBuildTemplate(functionName, handler, language, isLanguageTemplate(language))
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
+		if buildErr != nil {
+			return buildErr
+		}
 
 		if shrinkwrap {
 			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
@@ -132,13 +135,14 @@ type dockerBuild struct {
 }
 
 // createBuildTemplate creates temporary build folder to perform a Docker build with language template
-func createBuildTemplate(functionName string, handler string, language string, useFunction bool) string {
+func createBuildTemplate(functionName string, handler string, language string, useFunction bool) (string, error) {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
 	clearErr := os.RemoveAll(tempPath)
 	if clearErr != nil {
 		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
+		return tempPath, clearErr
 	}
 
 	functionPath := tempPath
@@ -151,10 +155,15 @@ func createBuildTemplate(functionName string, handler string, language string, u
 	mkdirErr := os.MkdirAll(functionPath, 0700)
 	if mkdirErr != nil {
 		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
+		return tempPath, mkdirErr
 	}
 
 	if useFunction {
-		CopyFiles("./template/"+language, tempPath)
+		copyErr := CopyFiles("./template/"+language, tempPath)
+		if copyErr != nil {
+			fmt.Printf("Error copying template directory %s.\n", copyErr.Error())
+			return tempPath, copyErr
+		}
 	}
 
 	// Overlay in user-function
@@ -162,6 +171,7 @@ func createBuildTemplate(functionName string, handler string, language string, u
 	infos, readErr := ioutil.ReadDir(handler)
 	if readErr != nil {
 		fmt.Printf("Error reading the handler %s - %s.\n", handler, readErr.Error())
+		return tempPath, readErr
 	}
 
 	for _, info := range infos {
@@ -176,12 +186,12 @@ func createBuildTemplate(functionName string, handler string, language string, u
 			)
 
 			if copyErr != nil {
-				log.Fatal(copyErr)
+				return tempPath, copyErr
 			}
 		}
 	}
 
-	return tempPath
+	return tempPath, nil
 }
 
 func dockerBuildFolder(functionName string, handler string, language string) string {
