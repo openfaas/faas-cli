@@ -19,7 +19,7 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
-	pushCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
+	pushCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha', 'branch', 'describe'")
 	pushCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 }
@@ -39,7 +39,8 @@ These container images must already be present in your local image cache.`,
   faas-cli push -f ./stack.yml --filter "*gif*"
   faas-cli push -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli push -f ./stack.yml --tag sha
-  faas-cli push -f ./stack.yml --tag branch`,
+  faas-cli push -f ./stack.yml --tag branch
+  faas-cli push -f ./stack.yml --tag describe`,
 	RunE: runPush,
 }
 
@@ -88,19 +89,10 @@ func pushStack(services *stack.Services, queueDepth int, tag string) {
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
 			for function := range workChannel {
-				tagMode := schema.DefaultFormat
-				var sha string
-				if strings.ToLower(tag) == "sha" {
-					sha = builder.GetGitSHA()
-					tagMode = schema.SHAFormat
+				tagMode, branch, sha, err := builder.GetImageTagConfig(tag)
+				if err != nil {
+					tagMode = schema.DefaultFormat
 				}
-				var branch string
-				if strings.ToLower(tag) == "branch" {
-					branch = builder.GetGitBranch()
-					sha = builder.GetGitSHA()
-					tagMode = schema.BranchAndSHAFormat
-				}
-
 				imageName := schema.BuildImageName(tagMode, function.Image, sha, branch)
 
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s [%s].\n"), index, function.Name, imageName)

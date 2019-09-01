@@ -24,33 +24,9 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 	if stack.IsValidTemplate(language) {
 
-		format := schema.DefaultFormat
-
-		var version string
-
-		if strings.ToLower(tag) == "sha" {
-			version = GetGitSHA()
-			if len(version) == 0 {
-				return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
-
-			}
-			format = schema.SHAFormat
-		}
-
-		var branch string
-
-		if strings.ToLower(tag) == "branch" {
-			branch = GetGitBranch()
-			if len(branch) == 0 {
-				return fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
-
-			}
-			version = GetGitSHA()
-			if len(version) == 0 {
-				return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
-
-			}
-			format = schema.BranchAndSHAFormat
+		format, branch, version, err := GetImageTagConfig(tag)
+		if err != nil {
+			return err
 		}
 
 		imageName := schema.BuildImageName(format, image, version, branch)
@@ -97,6 +73,45 @@ func BuildImage(image string, handler string, functionName string, language stri
 	}
 
 	return nil
+}
+
+// GetImageTagConfig returns the image tag format and component information determined via GIT
+func GetImageTagConfig(tagType string) (format schema.BuildFormat, branch, version string, err error) {
+	switch strings.ToLower(tagType) {
+	case "sha":
+		version = GetGitSHA()
+		if len(version) == 0 {
+			err = fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
+			return
+		}
+		format = schema.SHAFormat
+	case "branch":
+		branch = GetGitBranch()
+		if len(branch) == 0 {
+			err = fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
+			return
+
+		}
+
+		version = GetGitSHA()
+		if len(version) == 0 {
+			err = fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
+			return
+
+		}
+		format = schema.BranchAndSHAFormat
+	case "describe":
+		version = GetGitDescribe()
+		if len(version) == 0 {
+			err = fmt.Errorf("cannot tag image with Git Tag and SHA as this is not a Git repository")
+			return
+		}
+		format = schema.SHAFormat
+	default:
+		format = schema.DefaultFormat
+	}
+
+	return format, branch, version, nil
 }
 
 func getDockerBuildCommand(build dockerBuild) []string {

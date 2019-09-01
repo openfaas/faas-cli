@@ -37,6 +37,26 @@ func ExecCommandWithOutput(builder []string, skipFailure bool) string {
 	return string(output)
 }
 
+// GetGitDescribe returns the human readable name for the current commit using `git-describe`
+func GetGitDescribe() string {
+	// git-describe - Give an object a human readable name based on an available ref
+	// --tags                use any tag, even unannotated
+	// --always              show abbreviated commit object as fallback
+
+	// using --tags, means that the output should look like v1.2.2-1-g3443110 where the last
+	// <most-recent-parent-tag>-<number-of-commits-to-that-tag>-g<short-sha>
+	// using --always, means that if the repo does not use tags, then we will still get the <short-sha>
+	// as output, similar to GetGitSHA
+	getDescribeCommand := []string{"git", "describe", "--tags", "--always"}
+	sha := ExecCommandWithOutput(getDescribeCommand, true)
+	if strings.Contains(sha, "Not a git repository") {
+		return ""
+	}
+	sha = strings.TrimSuffix(sha, "\n")
+
+	return sha
+}
+
 // GetGitSHA returns the short Git commit SHA from local repo
 func GetGitSHA() string {
 	getShaCommand := []string{"git", "rev-parse", "--short", "HEAD"}

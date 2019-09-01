@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
@@ -36,7 +35,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1alpha2, serving.knative.dev/v1alpha1")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
-	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
+	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(generateCmd)
@@ -123,31 +122,9 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	format := schema.DefaultFormat
-	var version string
-	var branch string
-
-	if strings.ToLower(tag) == "sha" {
-		version = builder.GetGitSHA()
-		if len(version) == 0 {
-			return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
-
-		}
-		format = schema.SHAFormat
-	}
-
-	if strings.ToLower(tag) == "branch" {
-		branch = builder.GetGitBranch()
-		if len(branch) == 0 {
-			return fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
-
-		}
-		version = builder.GetGitSHA()
-		if len(version) == 0 {
-			return fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
-
-		}
-		format = schema.BranchAndSHAFormat
+	format, branch, version, err := builder.GetImageTagConfig(tag)
+	if err != nil {
+		return err
 	}
 
 	objectsString, err := generateCRDYAML(services, format, api, functionNamespace, branch, version)

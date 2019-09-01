@@ -46,7 +46,7 @@ func init() {
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 	buildCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
 	buildCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
-	buildCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
+	buildCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha', 'branch', or 'describe'")
 	buildCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
 
 	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
@@ -70,7 +70,7 @@ var buildCmd = &cobra.Command{
 				 [--parallel PARALLEL_DEPTH]
 				 [--build-arg KEY=VALUE]
 				 [--build-option VALUE]
-				 [--tag <sha|branch>]`,
+				 [--tag <sha|branch|describe>]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
@@ -80,6 +80,7 @@ via flags.`,
   faas-cli build -f ./stack.yml --build-option dev
   faas-cli build -f ./stack.yml --tag sha
   faas-cli build -f ./stack.yml --tag branch
+  faas-cli build -f ./stack.yml --tag describe
   faas-cli build -f ./stack.yml --filter "*gif*"
   faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
