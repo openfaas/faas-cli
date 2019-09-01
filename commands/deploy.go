@@ -69,7 +69,7 @@ func init() {
 	deployCmd.Flags().BoolVar(&deployFlags.readOnlyRootFilesystem, "readonly", false, "Force the root container filesystem to be read only")
 
 	deployCmd.Flags().BoolVarP(&deployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
-	deployCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha' or 'branch'")
+	deployCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', or 'describe'")
 
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	deployCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
@@ -135,10 +135,10 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 }
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tag)
+	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tagFormat)
 }
 
-func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tag string) error {
+func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tagMode schema.BuildFormat) error {
 	if deployFlags.update && deployFlags.replace {
 		fmt.Println(`Cannot specify --update and --replace at the same time. One of --update or --replace must be false.
   --replace    removes an existing deployment before re-creating it
@@ -254,7 +254,7 @@ Error: %s`, fprocessErr.Error())
 
 			allAnnotations := mergeMap(annotations, annotationArgs)
 
-			tagMode, branch, sha, err := builder.GetImageTagConfig(tag)
+			branch, sha, err := builder.GetImageTagValues(tagMode)
 			if err != nil {
 				return err
 			}

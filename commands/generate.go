@@ -35,7 +35,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1alpha2, serving.knative.dev/v1alpha1")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
-	generateCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha', 'branch', 'describe'")
+	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	faasCmd.AddCommand(generateCmd)
@@ -122,12 +122,12 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	format, branch, version, err := builder.GetImageTagConfig(tag)
+	branch, version, err := builder.GetImageTagValues(tagFormat)
 	if err != nil {
 		return err
 	}
 
-	objectsString, err := generateCRDYAML(services, format, api, functionNamespace, branch, version)
+	objectsString, err := generateCRDYAML(services, tagFormat, api, functionNamespace, branch, version)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ var upCmd = &cobra.Command{
 	Short: "Builds, pushes and deploys OpenFaaS function containers",
 	Long: `Build, Push, and Deploy OpenFaaS function containers either via the
 supplied YAML config using the "--yaml" flag (which may contain multiple function
-definitions), or directly via flags. 
+definitions), or directly via flags.
 
 The push step may be skipped by setting the --skip-push flag
 and the deploy step with --skip-deploy.
