@@ -11,8 +11,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/openfaas/faas-cli/exec"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	vcs "github.com/openfaas/faas-cli/versioncontrol"
 )
 
 // AdditionalPackageBuildArg holds the special build-arg keyname for use with build-opts.
@@ -20,16 +22,15 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tag string, buildLabelMap map[string]string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string) error {
 
 	if stack.IsValidTemplate(language) {
-
-		format, branch, version, err := GetImageTagConfig(tag)
+		branch, version, err := GetImageTagValues(tagMode)
 		if err != nil {
 			return err
 		}
 
-		imageName := schema.BuildImageName(format, image, version, branch)
+		imageName := schema.BuildImageName(tagMode, image, version, branch)
 
 		var tempPath string
 
@@ -65,7 +66,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		spaceSafeCmdLine := getDockerBuildCommand(dockerBuildVal)
 
-		ExecCommand(tempPath, spaceSafeCmdLine)
+		exec.Command(tempPath, spaceSafeCmdLine)
 		fmt.Printf("Image: %s built.\n", imageName)
 
 	} else {
@@ -75,43 +76,38 @@ func BuildImage(image string, handler string, functionName string, language stri
 	return nil
 }
 
-// GetImageTagConfig returns the image tag format and component information determined via GIT
-func GetImageTagConfig(tagType string) (format schema.BuildFormat, branch, version string, err error) {
-	switch strings.ToLower(tagType) {
-	case "sha":
-		version = GetGitSHA()
+// GetImageTagValues returns the image tag format and component information determined via GIT
+func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err error) {
+	switch tagType {
+	case schema.SHAFormat:
+		version = vcs.GetGitSHA()
 		if len(version) == 0 {
 			err = fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
 			return
 		}
-		format = schema.SHAFormat
-	case "branch":
-		branch = GetGitBranch()
+	case schema.BranchAndSHAFormat:
+		branch = vcs.GetGitBranch()
 		if len(branch) == 0 {
 			err = fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
 			return
 
 		}
 
-		version = GetGitSHA()
+		version = vcs.GetGitSHA()
 		if len(version) == 0 {
 			err = fmt.Errorf("cannot tag image with Git SHA as this is not a Git repository")
 			return
 
 		}
-		format = schema.BranchAndSHAFormat
-	case "describe":
-		version = GetGitDescribe()
+	case schema.DescribeFormat:
+		version = vcs.GetGitDescribe()
 		if len(version) == 0 {
 			err = fmt.Errorf("cannot tag image with Git Tag and SHA as this is not a Git repository")
 			return
 		}
-		format = schema.SHAFormat
-	default:
-		format = schema.DefaultFormat
 	}
 
-	return format, branch, version, nil
+	return branch, version, nil
 }
 
 func getDockerBuildCommand(build dockerBuild) []string {

@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/openfaas/faas-cli/exec"
+
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/schema"
@@ -19,7 +21,7 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
-	pushCmd.Flags().StringVar(&tag, "tag", "", "Override latest tag on function Docker image, takes 'sha', 'branch', 'describe'")
+	pushCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	pushCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 }
@@ -69,7 +71,7 @@ Unable to push one or more of your functions to Docker Hub:
 You must provide a username or registry prefix to the Function's image such as user1/function1`)
 		}
 
-		pushStack(&services, parallel, tag)
+		pushStack(&services, parallel, tagFormat)
 	} else {
 		return fmt.Errorf("you must supply a valid YAML file")
 	}
@@ -77,10 +79,10 @@ You must provide a username or registry prefix to the Function's image such as u
 }
 
 func pushImage(image string) {
-	builder.ExecCommand("./", []string{"docker", "push", image})
+	exec.Command("./", []string{"docker", "push", image})
 }
 
-func pushStack(services *stack.Services, queueDepth int, tag string) {
+func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFormat) {
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
@@ -89,7 +91,7 @@ func pushStack(services *stack.Services, queueDepth int, tag string) {
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
 			for function := range workChannel {
-				tagMode, branch, sha, err := builder.GetImageTagConfig(tag)
+				branch, sha, err := builder.GetImageTagValues(tagMode)
 				if err != nil {
 					tagMode = schema.DefaultFormat
 				}
