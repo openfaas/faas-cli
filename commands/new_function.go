@@ -115,7 +115,8 @@ Download templates:
 		return nil
 	}
 
-	PullTemplates(DefaultTemplateRepository)
+	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
+	PullTemplates(templateAddress)
 
 	if !stack.IsValidTemplate(language) {
 		return fmt.Errorf("%s is unavailable or not supported", language)

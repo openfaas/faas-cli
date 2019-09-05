@@ -149,7 +149,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if pullErr := PullTemplates(DefaultTemplateRepository); pullErr != nil {
+	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
+	if pullErr := PullTemplates(templateAddress); pullErr != nil {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 

@@ -8,6 +8,8 @@ import (
 )
 
 func Test_build(t *testing.T) {
+	templatePullLocalTemplateRepo(t)
+	defer tearDownFetchTemplates(t)
 
 	aTests := [][]string{
 		{"build"},
