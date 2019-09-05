@@ -341,6 +341,31 @@ func Test_duplicateFunctionName(t *testing.T) {
 	}
 }
 
+func Test_backfillTemplates(t *testing.T) {
+	resetForTest()
+	const functionName = "samplefunc"
+	const functionLang = "ruby"
+
+	// Delete cached templates
+	localTemplateRepository := setupLocalTemplateRepo(t)
+	defer os.RemoveAll(localTemplateRepository)
+	defer tearDownNewFunction(t, functionName)
+
+	os.Setenv(templateURLEnvironment, localTemplateRepository)
+	defer os.Unsetenv(templateURLEnvironment)
+
+	parameters := []string{
+		"new",
+		functionName,
+		"--lang=" + functionLang,
+	}
+	faasCmd.SetArgs(parameters)
+	err := faasCmd.Execute()
+	if err != nil {
+		t.Fatalf("Failed to create function with custom template dir: %s\n", err.Error())
+	}
+}
+
 func tearDownNewFunction(t *testing.T, functionName string) {
 	if _, err := os.Stat(".gitignore"); err == nil {
 		if err := os.Remove(".gitignore"); err != nil {
