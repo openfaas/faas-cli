@@ -8,30 +8,27 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"path"
 
 	types "github.com/openfaas/faas-provider/types"
 )
 
 //GetFunctionInfo get an OpenFaaS function information
-func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool) (types.FunctionStatus, error) {
-	return GetFunctionInfoToken(gateway, functionName, tlsInsecure, "")
+func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool, namespace string) (types.FunctionStatus, error) {
+	return GetFunctionInfoToken(gateway, functionName, tlsInsecure, "", namespace)
 }
 
 //GetFunctionInfoToken get a function information with a token as auth
-func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string) (types.FunctionStatus, error) {
+func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string, namespace string) (types.FunctionStatus, error) {
 	var result types.FunctionStatus
 
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
 
-	gatewayURL, err := url.Parse(gateway)
+	gatewayURL, err := createFunctionEndpoint(gateway, functionName, namespace)
 	if err != nil {
-		return result, fmt.Errorf("invalid gateway URL: %s", gateway)
+		return result, err
 	}
-	gatewayURL.Path = path.Join(gatewayURL.Path, "/system/function/", functionName)
 
-	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL.String(), nil)
+	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL, nil)
 	if err != nil {
 		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}

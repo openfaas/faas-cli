@@ -53,6 +53,7 @@ func init() {
 	deployCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
 	deployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
 	deployCmd.Flags().StringVar(&network, "network", defaultNetwork, "Name of the network")
+	deployCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&deployFlags.envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
@@ -284,6 +285,7 @@ Error: %s`, fprocessErr.Error())
 				ReadOnlyRootFilesystem:  function.ReadOnlyRootFilesystem,
 				TLSInsecure:             tlsInsecure,
 				Token:                   token,
+				Namespace:               function.Namespace,
 			}
 
 			if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
@@ -315,7 +317,8 @@ Error: %s`, fprocessErr.Error())
 		// default to a readable filesystem until we get more input about the expected behavior
 		// and if we want to add another flag for this case
 		defaultReadOnlyRFS := false
-		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags, tlsInsecure, defaultReadOnlyRFS, token)
+		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags,
+			tlsInsecure, defaultReadOnlyRFS, token, functionNamespace)
 		if err != nil {
 			return err
 		}
@@ -342,6 +345,7 @@ func deployImage(
 	tlsInsecure bool,
 	readOnlyRootFilesystem bool,
 	token string,
+	namespace string,
 ) (int, error) {
 
 	var statusCode int
@@ -383,6 +387,7 @@ func deployImage(
 		ReadOnlyRootFilesystem:  readOnlyRFS,
 		TLSInsecure:             tlsInsecure,
 		Token:                   token,
+		Namespace:               namespace,
 	}
 
 	if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {

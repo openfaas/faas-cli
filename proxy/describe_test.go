@@ -22,7 +22,7 @@ func Test_GetFunctionInfo(t *testing.T) {
 	})
 
 	defer s.Close()
-	result, err := GetFunctionInfo(s.URL, "func-test1", !tlsNoVerify)
+	result, err := GetFunctionInfo(s.URL, "func-test1", !tlsNoVerify, "")
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
 	}
@@ -34,7 +34,7 @@ func Test_GetFunctionInfo(t *testing.T) {
 func Test_GetFunctionInfo_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := GetFunctionInfo(s.URL, "func-test1", tlsNoVerify)
+	_, err := GetFunctionInfo(s.URL, "func-test1", tlsNoVerify, "")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -47,7 +47,7 @@ func Test_GetFunctionInfo_Not200(t *testing.T) {
 }
 
 func Test_GetFunctionInfo_MissingURLPrefix(t *testing.T) {
-	_, err := GetFunctionInfo("127.0.0.1:8080", "func-test", tlsNoVerify)
+	_, err := GetFunctionInfo("127.0.0.1:8080", "func-test", tlsNoVerify, "")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -64,7 +64,7 @@ func Test_GetFunctionInfo_NotFound(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusNotFound)
 	functionName := "funct-test"
 
-	_, err := GetFunctionInfo(s.URL, functionName, tlsNoVerify)
+	_, err := GetFunctionInfo(s.URL, functionName, tlsNoVerify, "")
 	if err == nil {
 		t.Fatalf("Error was not returned")
 	}

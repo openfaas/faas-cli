@@ -15,12 +15,12 @@ import (
 )
 
 // ListFunctions list deployed functions
-func ListFunctions(gateway string, tlsInsecure bool) ([]types.FunctionStatus, error) {
-	return ListFunctionsToken(gateway, tlsInsecure, "")
+func ListFunctions(gateway string, tlsInsecure bool, namespace string) ([]types.FunctionStatus, error) {
+	return ListFunctionsToken(gateway, tlsInsecure, "", namespace)
 }
 
 // ListFunctionsToken list deployed functions with a token as auth
-func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]types.FunctionStatus, error) {
+func ListFunctionsToken(gateway string, tlsInsecure bool, token string, namespace string) ([]types.FunctionStatus, error) {
 	var results []types.FunctionStatus
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -29,7 +29,12 @@ func ListFunctionsToken(gateway string, tlsInsecure bool, token string) ([]types
 		return http.ErrUseLastResponse
 	}
 
-	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/functions", nil)
+	getEndpoint, err := createSystemEndpoint(gateway, namespace)
+	if err != nil {
+		return results, err
+	}
+
+	getRequest, err := http.NewRequest(http.MethodGet, getEndpoint, nil)
 
 	if len(token) > 0 {
 		SetToken(getRequest, token)

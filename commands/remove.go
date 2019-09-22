@@ -18,6 +18,7 @@ func init() {
 	removeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	removeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	removeCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	removeCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 
 	faasCmd.AddCommand(removeCmd)
 }
@@ -44,6 +45,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 	var gatewayAddress string
 	var yamlGateway string
+
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
@@ -67,7 +69,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 			function.Name = k
 			fmt.Printf("Deleting: %s.\n", function.Name)
 
-			proxy.DeleteFunctionToken(gatewayAddress, function.Name, tlsInsecure, token)
+			proxy.DeleteFunctionToken(gatewayAddress, function.Name, tlsInsecure, token, functionNamespace)
 		}
 	} else {
 		if len(args) < 1 {
@@ -76,7 +78,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxy.DeleteFunctionToken(gatewayAddress, functionName, tlsInsecure, token)
+		proxy.DeleteFunctionToken(gatewayAddress, functionName, tlsInsecure, token, functionNamespace)
 	}
 
 	return nil
