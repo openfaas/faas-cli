@@ -17,6 +17,7 @@ func init() {
 	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	storeDeployCmd.Flags().StringVar(&network, "network", "", "Name of the network")
 	storeDeployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function (overriding name from the store)")
+	storeDeployCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	// Setup flags that are used only by deploy command (variables defined above)
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.envvarOpts, "env", "e", []string{}, "Adds one or more environment variables to the defined ones by store (ENVVAR=VALUE)")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
@@ -123,7 +124,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags, tlsInsecure, item.ReadOnlyRootFilesystem, token)
+	statusCode, err := deployImage(item.Image, item.Fprocess, itemName, registryAuth, storeDeployFlags,
+		tlsInsecure, item.ReadOnlyRootFilesystem, token, functionNamespace)
 
 	if badStatusCode(statusCode) {
 		failedStatusCode := map[string]int{itemName: statusCode}

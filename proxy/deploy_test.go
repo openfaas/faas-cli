@@ -51,6 +51,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 			false,
 			tlsNoVerify,
 			"",
+			"",
 		})
 	})
 
@@ -113,6 +114,7 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 			FunctionResourceRequest{},
 			false,
 			tlsNoVerify,
+			"",
 			"",
 		})
 	})

@@ -19,7 +19,7 @@ func Test_DeleteFunction(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete", false)
+		DeleteFunction(s.URL, "function-to-delete", false, "")
 	})
 
 	r := regexp.MustCompile(`(?m:Removing old function.)`)
@@ -33,7 +33,7 @@ func Test_DeleteFunction_404(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete", false)
+		DeleteFunction(s.URL, "function-to-delete", false, "")
 	})
 
 	r := regexp.MustCompile(`(?m:No existing function to remove)`)
@@ -47,7 +47,7 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 	defer s.Close()
 
 	stdout := test.CaptureStdout(func() {
-		DeleteFunction(s.URL, "function-to-delete", false)
+		DeleteFunction(s.URL, "function-to-delete", false, "")
 	})
 
 	r := regexp.MustCompile(`(?m:Server returned unexpected status code)`)
@@ -59,13 +59,11 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 func Test_DeleteFunction_MissingURLPrefix(t *testing.T) {
 	url := "127.0.0.1:8080"
 
-	stdout := test.CaptureStdout(func() {
-		DeleteFunction(url, "function-to-delete", false)
-	})
+	err := DeleteFunction(url, "function-to-delete", false, "")
 
 	expectedErrMsg := "first path segment in URL cannot contain colon"
 	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
-	if !r.MatchString(stdout) {
-		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
+	if !r.MatchString(err.Error()) {
+		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
 	}
 }

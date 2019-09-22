@@ -47,6 +47,7 @@ type DeployFunctionSpec struct {
 	ReadOnlyRootFilesystem  bool
 	TLSInsecure             bool
 	Token                   string
+	Namespace               string
 }
 
 // DeployFunction first tries to deploy a function and if it exists will then attempt
@@ -83,7 +84,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	gateway := strings.TrimRight(spec.Gateway, "/")
 
 	if spec.Replace {
-		DeleteFunction(gateway, spec.FunctionName, spec.TLSInsecure)
+		DeleteFunction(gateway, spec.FunctionName, spec.TLSInsecure, "")
 	}
 
 	req := types.FunctionDeployment{
@@ -98,6 +99,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 		Labels:                 &spec.Labels,
 		Annotations:            &spec.Annotations,
 		ReadOnlyRootFilesystem: spec.ReadOnlyRootFilesystem,
+		Namespace:              spec.Namespace,
 	}
 
 	hasLimits := false
