@@ -13,7 +13,10 @@ var shell string
 var completionCmd = &cobra.Command{
 	Use:   "completion SHELL",
 	Short: "Generates shell auto completion",
-	Long:  "Generates shell auto completion for Bash or ZSH.",
+	Long: `Generates shell auto completion for Bash or ZSH.
+
+Please follow the instructions in the link below to activate the shell auto completion in your environment:
+https://docs.openfaas.com/cli/completion/`,
 	Example: `  faas-cli completion --shell bash
   faas-cli completion --shell zsh`,
 	RunE: runCompletion,
