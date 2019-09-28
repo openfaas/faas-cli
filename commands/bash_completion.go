@@ -22,8 +22,9 @@ var bashcompletionCmd = &cobra.Command{
 
 This currently only works on Bash version 4, and is hidden
 pending a merge of https://github.com/spf13/cobra/pull/520.`,
-	Hidden: true,
-	RunE:   runBashcompletion,
+	Hidden:     true,
+	Deprecated: "please use the `completion` command",
+	RunE:       runBashcompletion,
 }
 
 func runBashcompletion(cmd *cobra.Command, args []string) error {
