@@ -70,6 +70,13 @@ type Configuration struct {
 // StackConfiguration for the overall stack.yml
 type StackConfiguration struct {
 	TemplateConfigs []TemplateSource `yaml:"templates"`
+	// CopyExtraPaths specifies additional paths (relative to the stack file) that will be copied
+	// into the functions build context, e.g. specifying `"common"` will look for and copy the
+	// "common/" folder of file in the same root as the stack file.  All paths must be contained
+	// within the project root defined by the location of the stack file.
+	//
+	// The yaml uses the shorter name `copy` to make it easier for developers to read and use
+	CopyExtraPaths []string `yaml:"copy"`
 }
 
 // TemplateSource for build templates

@@ -28,6 +28,7 @@ var (
 	buildArgs        []string
 	buildArgMap      map[string]string
 	buildOptions     []string
+	copyExtra        []string
 	tagFormat        schema.BuildFormat
 	buildLabels      []string
 	buildLabelMap    map[string]string
@@ -52,6 +53,7 @@ func init() {
 	buildCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
 	buildCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', or 'describe'")
 	buildCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
+	buildCmd.Flags().StringArrayVar(&copyExtra, "copy-extra", []string{}, "Extra paths that will be copied into the function build context")
 	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	buildCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
 	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
@@ -75,6 +77,7 @@ var buildCmd = &cobra.Command{
 				 [--parallel PARALLEL_DEPTH]
 				 [--build-arg KEY=VALUE]
 				 [--build-option VALUE]
+				 [--copy-extra PATH]
 				 [--tag <sha|branch|describe>]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
@@ -185,8 +188,9 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			buildOptions,
 			tagFormat,
 			buildLabelMap,
-			quietBuild)
-
+			quietBuild,
+			copyExtra,
+		)
 		if err != nil {
 			return err
 		}
@@ -230,8 +234,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
-
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
+					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
 					err := builder.BuildImage(function.Image,
 						function.Handler,
 						function.Name,
@@ -243,7 +247,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						combinedBuildOptions,
 						tagFormat,
 						buildLabelMap,
-						quietBuild)
+						quietBuild,
+						combinedExtraPaths,
+					)
 
 					if err != nil {
 						errors = append(errors, err)

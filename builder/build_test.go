@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -467,6 +468,69 @@ func Test_deDuplicate(t *testing.T) {
 
 				if found == false {
 					t.Errorf("Slices differ in values  - wanted: %s, found %s", strings.Join(test.expectedStrings, " "), strings.Join(uniqueStrings, " "))
+				}
+			}
+		})
+	}
+}
+
+func Test_pathInScope(t *testing.T) {
+	root, err := filepath.Abs(".")
+	if err != nil {
+		t.Fatalf("unexpected error during test setup: %s", err)
+	}
+
+	cases := []struct {
+		name         string
+		path         string
+		expectedPath string
+		err          bool
+	}{
+		{
+			name:         "can copy folders without any relative path prefix",
+			path:         "common/models/prebuilt",
+			expectedPath: filepath.Join(root, "common/models/prebuilt"),
+		},
+		{
+			name:         "can copy folders with relative path prefix",
+			path:         "./common/data/cleaned",
+			expectedPath: filepath.Join(root, "./common/data/cleaned"),
+		},
+		{
+			name: "error if path equals the current directory",
+			path: "./",
+			err:  true,
+		},
+		{
+			name: "error if relative path moves out of the current directory",
+			path: "../private",
+			err:  true,
+		},
+		{
+			name: "error if absolute path is outside of the current directory",
+			path: "/private/common",
+			err:  true,
+		},
+		{
+			name: "error if relative path moves out of the current directory, even when hidden in the middle of the path",
+			path: "./common/../../private",
+			err:  true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			abs, err := pathInScope(tc.path, root)
+			switch {
+			case tc.err && err == nil:
+				t.Fatalf("expected error but got none")
+			case tc.err && !strings.HasPrefix(err.Error(), "forbidden path"):
+				t.Fatalf("expected forbidden path error, got \"%s\"", err)
+			case !tc.err && err != nil:
+				t.Fatalf("unexpected err \"%s\"", err)
+			default:
+				if abs != tc.expectedPath {
+					t.Fatalf("expected path %s, got %s", tc.expectedPath, abs)
 				}
 			}
 		})
