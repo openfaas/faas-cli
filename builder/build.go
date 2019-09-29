@@ -23,7 +23,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -47,7 +47,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 		}
 
-		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder)
+		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 		if buildErr != nil {
 			return buildErr
@@ -164,7 +164,7 @@ type dockerBuild struct {
 const defaultHandlerFolder = "function"
 
 // createBuildContext creates temporary build folder to perform a Docker build with language template
-func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string) (string, error) {
+func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string, copyExtraPaths []string) (string, error) {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
@@ -225,9 +225,53 @@ func createBuildContext(functionName string, handler string, language string, us
 		}
 	}
 
+	for _, extraPath := range copyExtraPaths {
+		extraPathAbs, err := pathInScope(extraPath, ".")
+		if err != nil {
+			return tempPath, err
+		}
+		// Note that if useFunction is false, ie is a `dockerfile` template, then
+		// functionPath == tempPath, the docker build context, not the `function` handler folder
+		// inside the docker build context
+		copyErr := CopyFiles(
+			extraPathAbs,
+			filepath.Clean(path.Join(functionPath, extraPath)),
+		)
+
+		if copyErr != nil {
+			return tempPath, copyErr
+		}
+	}
+
 	return tempPath, nil
 }
 
+// pathInScope returns the absolute path to `path` and ensures that it is located within the
+// provided scope. An error will be returned, if the path is outside of the provided scope.
+func pathInScope(path string, scope string) (string, error) {
+	scope, err := filepath.Abs(filepath.FromSlash(scope))
+	if err != nil {
+		return "", err
+	}
+
+	abs, err := filepath.Abs(filepath.FromSlash(path))
+	if err != nil {
+		return "", err
+	}
+
+	if abs == scope {
+		return "", fmt.Errorf("forbidden path appears to equal the entire project: %s (%s)", path, abs)
+	}
+
+	if strings.HasPrefix(abs, scope) {
+		return abs, nil
+	}
+
+	// default return is an error
+	return "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
+}
+
+// appears to be unused???
 func dockerBuildFolder(functionName string, handler string, language string) string {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
