@@ -216,32 +216,3 @@ Generate a personal access token in GitHub and use it to update the CHANGELOG.md
 $ export CHANGELOG_GITHUB_TOKEN=TOKEN_VALUE
 $ github_changelog_generator
 ```
-
-## Misc
-
-**Bash Auto-completion [experimental]**
-
-An experimental initial Bash auto-completion script for `faas-cli` is available at `contrib/bash/faas-cli`.
-
-Please raise issues with feedback and suggestions on improvements to the auto-completion support.
-
-This may be enabled it as follows.
-
-*Enabling Bash auto-completion on OSX*
-
-Brew install the `bash_completions` package.
-```
-$ brew install bash-completion
-```
-Add the following line to your `~/.bash_profile` if not already present.
-```
-[ -f /usr/local/etc/bash_completion ] && . /usr/local/etc/bash_completion
-```
-Copy the provided `faas-cli` bash completion script from this repo.
-```
-cp contrib/bash/faas-cli /usr/local/etc/bash_completion.d/
-```
-
-*Enabling Bash auto-completion on Linux*
-
-Refer to your distributions instructions on installing and enabling `bash-completion`, then copy the `faas-cli` completion script from `contrib/bash/` into the appropriate completion directory.
