@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/schema"
+	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +68,7 @@ func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 }
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name: args[0],
 	}
 

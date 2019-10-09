@@ -11,9 +11,3 @@ type KubernetesSecretMetadata struct {
 	Name      string `json:"name"`
 	Namespace string `json:"namespace"`
 }
-
-//Secret secret type
-type Secret struct {
-	Name  string `json:"name"`
-	Value string `json:"value,omitempty"`
-}

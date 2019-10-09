@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/schema"
+	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +61,7 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func renderSecretList(secrets []schema.Secret) string {
+func renderSecretList(secrets []types.Secret) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)

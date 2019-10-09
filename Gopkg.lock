@@ -93,7 +93,7 @@
   version = "0.16.0"
 
 [[projects]]
-  digest = "1:30dd53fb3e50077a707e4fb79a909251b5829e19fee4fe6c6a1273f2d19ecc27"
+  digest = "1:690dfc3640e08c64ef54f044d92029e4bbd19cb6dd5d738c1a776ce0c37756d7"
   name = "github.com/openfaas/faas-provider"
   packages = [
     "httputil",
@@ -101,8 +101,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "eafd85a3b360d8e0982c3a1db43e6d5fee9b85e2"
-  version = "0.10.2"
+  revision = "478f741b64cbcfaaee852156b060514be56623b3"
+  version = "0.12.0"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
