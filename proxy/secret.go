@@ -8,17 +8,17 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/openfaas/faas-cli/schema"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 // GetSecretList get secrets list
-func GetSecretList(gateway string, tlsInsecure bool) ([]schema.Secret, error) {
+func GetSecretList(gateway string, tlsInsecure bool) ([]types.Secret, error) {
 	return GetSecretListToken(gateway, tlsInsecure, "")
 }
 
 // GetSecretListToken get secrets lists with taken as auth
-func GetSecretListToken(gateway string, tlsInsecure bool, token string) ([]schema.Secret, error) {
-	var results []schema.Secret
+func GetSecretListToken(gateway string, tlsInsecure bool, token string) ([]types.Secret, error) {
+	var results []types.Secret
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
@@ -70,12 +70,12 @@ func GetSecretListToken(gateway string, tlsInsecure bool, token string) ([]schem
 }
 
 // UpdateSecret update a secret via the OpenFaaS API by name
-func UpdateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
+func UpdateSecret(gateway string, secret types.Secret, tlsInsecure bool) (int, string) {
 	return UpdateSecretToken(gateway, secret, tlsInsecure, "")
 }
 
 // UpdateSecretToken update a secret with token as auth
-func UpdateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) (int, string) {
+func UpdateSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) (int, string) {
 	var output string
 
 	gateway = strings.TrimRight(gateway, "/")
@@ -127,12 +127,12 @@ func UpdateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, t
 }
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
-func RemoveSecret(gateway string, secret schema.Secret, tlsInsecure bool) error {
+func RemoveSecret(gateway string, secret types.Secret, tlsInsecure bool) error {
 	return RemoveSecretToken(gateway, secret, tlsInsecure, "")
 }
 
 // RemoveSecretToken remove a secret with token as auth
-func RemoveSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) error {
+func RemoveSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) error {
 
 	gateway = strings.TrimRight(gateway, "/")
 	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
@@ -179,12 +179,12 @@ func RemoveSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, t
 }
 
 // CreateSecret create secret
-func CreateSecret(gateway string, secret schema.Secret, tlsInsecure bool) (int, string) {
+func CreateSecret(gateway string, secret types.Secret, tlsInsecure bool) (int, string) {
 	return CreateSecretToken(gateway, secret, tlsInsecure, "")
 }
 
 // CreateSecretToken create secret with token as auth
-func CreateSecretToken(gateway string, secret schema.Secret, tlsInsecure bool, token string) (int, string) {
+func CreateSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) (int, string) {
 	var output string
 
 	gateway = strings.TrimRight(gateway, "/")

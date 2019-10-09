@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/test"
+	types "github.com/openfaas/faas-provider/types"
 )
 
 func Test_GetSecretList_200OK(t *testing.T) {
@@ -81,7 +81,7 @@ func Test_GetSecretList_Unauthorized401(t *testing.T) {
 	}
 }
 
-var expectedSecretList = []schema.Secret{
+var expectedSecretList = []types.Secret{
 	{
 		Name: "Secret1",
 	},
@@ -92,7 +92,7 @@ var expectedSecretList = []schema.Secret{
 
 func Test_CreateSecret_200OK(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusOK)
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
@@ -106,7 +106,7 @@ func Test_CreateSecret_200OK(t *testing.T) {
 
 func Test_CreateSecret_201Created(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusCreated)
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
@@ -120,7 +120,7 @@ func Test_CreateSecret_201Created(t *testing.T) {
 
 func Test_CreateSecret_202Accepted(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusAccepted)
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
@@ -135,7 +135,7 @@ func Test_CreateSecret_202Accepted(t *testing.T) {
 func Test_CreateSecret_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
@@ -154,7 +154,7 @@ func Test_CreateSecret_Not200(t *testing.T) {
 func Test_CreateSecret_Unauthorized401(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusUnauthorized)
 
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
@@ -173,7 +173,7 @@ func Test_CreateSecret_Unauthorized401(t *testing.T) {
 func Test_CreateSecret_Conflict409(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusConflict)
 
-	secret := schema.Secret{
+	secret := types.Secret{
 		Name:  "secret-name",
 		Value: "secret-value",
 	}
