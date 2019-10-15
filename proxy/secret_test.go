@@ -18,7 +18,7 @@ func Test_GetSecretList_200OK(t *testing.T) {
 	})
 	defer s.Close()
 
-	secrets, err := GetSecretList(s.URL, true)
+	secrets, err := GetSecretList(s.URL, true, "openfaas-fn")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
 	}
@@ -39,7 +39,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 	})
 	defer s.Close()
 
-	secrets, err := GetSecretList(s.URL, true)
+	secrets, err := GetSecretList(s.URL, true, "")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
 	}
@@ -54,7 +54,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 func Test_GetSecretList_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := GetSecretList(s.URL, true)
+	_, err := GetSecretList(s.URL, true, "openfaas-fn")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -69,7 +69,7 @@ func Test_GetSecretList_Not200(t *testing.T) {
 func Test_GetSecretList_Unauthorized401(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusUnauthorized)
 
-	_, err := GetSecretList(s.URL, true)
+	_, err := GetSecretList(s.URL, true, "fn")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -93,8 +93,9 @@ var expectedSecretList = []types.Secret{
 func Test_CreateSecret_200OK(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusOK)
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 
 	status, _ := CreateSecret(s.URL, secret, true)
@@ -107,8 +108,9 @@ func Test_CreateSecret_200OK(t *testing.T) {
 func Test_CreateSecret_201Created(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusCreated)
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 
 	status, _ := CreateSecret(s.URL, secret, true)
@@ -121,8 +123,9 @@ func Test_CreateSecret_201Created(t *testing.T) {
 func Test_CreateSecret_202Accepted(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusAccepted)
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 
 	status, _ := CreateSecret(s.URL, secret, true)
@@ -136,8 +139,9 @@ func Test_CreateSecret_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 	status, output := CreateSecret(s.URL, secret, true)
 
@@ -155,8 +159,9 @@ func Test_CreateSecret_Unauthorized401(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusUnauthorized)
 
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 	status, output := CreateSecret(s.URL, secret, true)
 
@@ -174,8 +179,9 @@ func Test_CreateSecret_Conflict409(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusConflict)
 
 	secret := types.Secret{
-		Name:  "secret-name",
-		Value: "secret-value",
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "openfaas-fn",
 	}
 	status, output := CreateSecret(s.URL, secret, true)
 

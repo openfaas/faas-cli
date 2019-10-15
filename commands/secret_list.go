@@ -30,6 +30,7 @@ func init() {
 	secretListCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretListCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretListCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	secretListCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 
 	secretCmd.AddCommand(secretListCmd)
 }
@@ -46,7 +47,7 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		fmt.Println(msg)
 	}
 
-	secrets, err := proxy.GetSecretListToken(gatewayAddress, tlsInsecure, token)
+	secrets, err := proxy.GetSecretListToken(gatewayAddress, tlsInsecure, token, functionNamespace)
 	if err != nil {
 		return err
 	}

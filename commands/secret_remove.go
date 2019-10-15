@@ -27,6 +27,7 @@ func init() {
 	secretRemoveCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretRemoveCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretRemoveCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	secretRemoveCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	secretCmd.AddCommand(secretRemoveCmd)
 }
 
@@ -50,7 +51,8 @@ func runSecretRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	secret := types.Secret{
-		Name: args[0],
+		Name:      args[0],
+		Namespace: functionNamespace,
 	}
 	err := proxy.RemoveSecretToken(gatewayAddress, secret, tlsInsecure, token)
 	if err != nil {
