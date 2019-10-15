@@ -6,24 +6,40 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
+	"path"
 	"strings"
 
 	types "github.com/openfaas/faas-provider/types"
 )
 
+const (
+	secretEndpoint = "/system/secrets"
+)
+
 // GetSecretList get secrets list
-func GetSecretList(gateway string, tlsInsecure bool) ([]types.Secret, error) {
-	return GetSecretListToken(gateway, tlsInsecure, "")
+func GetSecretList(gateway string, tlsInsecure bool, namespace string) ([]types.Secret, error) {
+	return GetSecretListToken(gateway, tlsInsecure, "", namespace)
 }
 
 // GetSecretListToken get secrets lists with taken as auth
-func GetSecretListToken(gateway string, tlsInsecure bool, token string) ([]types.Secret, error) {
+func GetSecretListToken(gateway string, tlsInsecure bool, token, namespace string) ([]types.Secret, error) {
 	var results []types.Secret
 
 	gateway = strings.TrimRight(gateway, "/")
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+	gatewayURL, err := url.Parse(gateway)
+	if err != nil {
+		return results, fmt.Errorf("invalid gateway URL: %s", gateway)
+	}
+	gatewayURL.Path = path.Join(gatewayURL.Path, secretEndpoint)
+	if len(namespace) > 0 {
+		q := gatewayURL.Query()
+		q.Set("namespace", namespace)
+		gatewayURL.RawQuery = q.Encode()
+	}
 
-	getRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/secrets", nil)
+	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
+	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL.String(), nil)
 	if len(token) > 0 {
 		SetToken(getRequest, token)
 	} else {

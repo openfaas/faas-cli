@@ -34,6 +34,7 @@ func init() {
 	secretUpdateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretUpdateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
 	secretUpdateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	secretUpdateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	secretCmd.AddCommand(secretUpdateCmd)
 }
 
@@ -61,7 +62,8 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	secret := types.Secret{
-		Name: args[0],
+		Name:      args[0],
+		Namespace: functionNamespace,
 	}
 
 	switch {

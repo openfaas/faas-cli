@@ -43,6 +43,7 @@ func init() {
 	secretCreateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretCreateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	secretCreateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	secretCmd.AddCommand(secretCreateCmd)
 }
 
@@ -69,7 +70,8 @@ func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
 	secret := types.Secret{
-		Name: args[0],
+		Name:      args[0],
+		Namespace: functionNamespace,
 	}
 
 	switch {
