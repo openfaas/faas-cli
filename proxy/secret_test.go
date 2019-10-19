@@ -194,3 +194,23 @@ func Test_CreateSecret_Conflict409(t *testing.T) {
 		t.Fatalf("Error not matched: %s", output)
 	}
 }
+
+func Test_CreateSecret_ForbiddenNamespace(t *testing.T) {
+	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
+
+	secret := types.Secret{
+		Name:      "secret-name",
+		Value:     "secret-value",
+		Namespace: "kube-system",
+	}
+	status, output := CreateSecret(s.URL, secret, true)
+
+	if status != http.StatusBadRequest {
+		t.Errorf("want: %d, got: %d", http.StatusBadRequest, status)
+	}
+
+	r := regexp.MustCompile(`(?m:server returned unexpected status code: 400)`)
+	if !r.MatchString(output) {
+		t.Fatalf("Error not matched: %s", output)
+	}
+}
