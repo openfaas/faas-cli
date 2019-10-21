@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/openfaas/faas-cli/schema"
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 )
 
-func matchFilteredOutout(t *testing.T, expectedOuputFunctions, filteredFunctions []schema.StoreFunction, platform string) {
+func matchFilteredOutout(t *testing.T, expectedOuputFunctions, filteredFunctions []v2.StoreFunction, platform string) {
 	if len(expectedOuputFunctions) != len(filteredFunctions) {
 		t.Errorf("Length did not match, expected: %v, got: %v", len(expectedOuputFunctions), len(filteredFunctions))
 	}
@@ -29,7 +29,7 @@ func matchFilteredOutout(t *testing.T, expectedOuputFunctions, filteredFunctions
 	}
 }
 
-func getInputStoreFunctions(t *testing.T) []schema.StoreFunction {
+func getInputStoreFunctions(t *testing.T) []v2.StoreFunction {
 	inputJSONBytes := []byte(`[{
         "title": "NodeInfo",
         "name": "nodeinfo",
@@ -66,7 +66,7 @@ func getInputStoreFunctions(t *testing.T) []schema.StoreFunction {
         "repo_url": "https://github.com/openfaas/faas/tree/master/sample-functions/figlet"
 	}]`)
 
-	var inputFunctions []schema.StoreFunction
+	var inputFunctions []v2.StoreFunction
 	err := json.Unmarshal(inputJSONBytes, &inputFunctions)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -101,7 +101,7 @@ func Test_filterStoreList_x86_64(t *testing.T) {
 	}]`)
 
 	inputFunctions := getInputStoreFunctions(t)
-	var expectedOuputFunctions []schema.StoreFunction
+	var expectedOuputFunctions []v2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -138,7 +138,7 @@ func Test_filterStoreList_armhf(t *testing.T) {
 	}]`)
 
 	inputFunctions := getInputStoreFunctions(t)
-	var expectedOuputFunctions []schema.StoreFunction
+	var expectedOuputFunctions []v2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -175,7 +175,7 @@ func Test_filterStoreList_arm64(t *testing.T) {
     }]`)
 
 	inputFunctions := getInputStoreFunctions(t)
-	var expectedOuputFunctions []schema.StoreFunction
+	var expectedOuputFunctions []v2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
 		t.Errorf(err.Error())
@@ -190,7 +190,7 @@ func Test_filterStoreList_other(t *testing.T) {
 	outputJSONBytes := []byte(`[]`)
 
 	inputFunctions := getInputStoreFunctions(t)
-	var expectedOuputFunctions []schema.StoreFunction
+	var expectedOuputFunctions []v2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
 		t.Errorf(err.Error())

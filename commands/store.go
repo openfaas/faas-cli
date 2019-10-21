@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/schema"
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -44,9 +44,9 @@ var storeCmd = &cobra.Command{
 	Long:  "Allows browsing and deploying OpenFaaS functions from a store",
 }
 
-func storeList(store string) ([]schema.StoreFunction, error) {
+func storeList(store string) ([]v2.StoreFunction, error) {
 
-	var storeData schema.StoreV2
+	var storeData v2.Store
 
 	store = strings.TrimRight(store, "/")
 
@@ -85,8 +85,8 @@ func storeList(store string) ([]schema.StoreFunction, error) {
 	return storeData.Functions, nil
 }
 
-func filterStoreList(functions []schema.StoreFunction, platform string) []schema.StoreFunction {
-	var filteredList []schema.StoreFunction
+func filterStoreList(functions []v2.StoreFunction, platform string) []v2.StoreFunction {
+	var filteredList []v2.StoreFunction
 
 	for _, function := range functions {
 
@@ -110,8 +110,8 @@ func getValueIgnoreCase(kv map[string]string, key string) (string, bool) {
 	return "", false
 }
 
-func storeFindFunction(functionName string, storeItems []schema.StoreFunction) *schema.StoreFunction {
-	var item schema.StoreFunction
+func storeFindFunction(functionName string, storeItems []v2.StoreFunction) *v2.StoreFunction {
+	var item v2.StoreFunction
 
 	for _, item = range storeItems {
 		if item.Name == functionName || item.Title == functionName {
@@ -136,7 +136,7 @@ func getTargetPlatform(inputPlatform string) string {
 	return inputPlatform
 }
 
-func getStorePlatforms(functions []schema.StoreFunction) []string {
+func getStorePlatforms(functions []v2.StoreFunction) []string {
 	var distinctPlatformMap = make(map[string]bool)
 	var result []string
 
