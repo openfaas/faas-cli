@@ -23,6 +23,13 @@ var (
 	DefaultFile = "config.yml"
 )
 
+const (
+	//BasicAuthType basic authentication type
+	BasicAuthType = "basic"
+	//Oauth2AuthType oauth2 authentication type
+	Oauth2AuthType = "oauth2"
+)
+
 // ConfigFile for OpenFaaS CLI exclusively.
 type ConfigFile struct {
 	AuthConfigs []AuthConfig `yaml:"auths"`
@@ -149,18 +156,10 @@ func DecodeAuth(input string) (string, string, error) {
 }
 
 // UpdateAuthConfig creates or updates the username and password for a given gateway
-func UpdateAuthConfig(gateway string, username string, password string) error {
+func UpdateAuthConfig(gateway, token, authType string) error {
 	_, err := url.ParseRequestURI(gateway)
 	if err != nil || len(gateway) < 1 {
 		return fmt.Errorf("invalid gateway URL")
-	}
-
-	if len(username) < 1 {
-		return fmt.Errorf("username can't be an empty string")
-	}
-
-	if len(password) < 1 {
-		return fmt.Errorf("password can't be an empty string")
 	}
 
 	configPath, err := EnsureFile()
@@ -179,8 +178,8 @@ func UpdateAuthConfig(gateway string, username string, password string) error {
 
 	auth := AuthConfig{
 		Gateway: gateway,
-		Auth:    "basic",
-		Token:   EncodeAuth(username, password),
+		Auth:    authType,
+		Token:   token,
 	}
 
 	index := -1
@@ -205,36 +204,35 @@ func UpdateAuthConfig(gateway string, username string, password string) error {
 }
 
 // LookupAuthConfig returns the username and password for a given gateway
-func LookupAuthConfig(gateway string) (string, string, error) {
+func LookupAuthConfig(gateway string) (AuthConfig, error) {
+	var authConfig AuthConfig
+
 	if !fileExists() {
-		return "", "", fmt.Errorf("config file not found")
+		return authConfig, fmt.Errorf("config file not found")
 	}
 
 	configPath, err := EnsureFile()
 	if err != nil {
-		return "", "", err
+		return authConfig, err
 	}
 
 	cfg, err := New(configPath)
 	if err != nil {
-		return "", "", err
+		return authConfig, err
 	}
 
 	if err := cfg.load(); err != nil {
-		return "", "", err
+		return authConfig, err
 	}
 
 	for _, v := range cfg.AuthConfigs {
 		if gateway == v.Gateway {
-			user, pass, err := DecodeAuth(v.Token)
-			if err != nil {
-				return "", "", err
-			}
-			return user, pass, nil
+			authConfig = v
+			return authConfig, nil
 		}
 	}
 
-	return "", "", fmt.Errorf("no auth config found for %s", gateway)
+	return authConfig, fmt.Errorf("no auth config found for %s", gateway)
 }
 
 // RemoveAuthConfig deletes the username and password for a given gateway

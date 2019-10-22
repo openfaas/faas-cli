@@ -4,6 +4,7 @@
 package config
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -14,7 +15,7 @@ import (
 func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
 	DefaultDir, _ = ioutil.TempDir("", "faas-cli-file-test")
 	DefaultFile = "test1.yml"
-	_, _, err := LookupAuthConfig("http://openfaas.test1")
+	_, err := LookupAuthConfig("http://openfaas.test1")
 	if err == nil {
 		t.Errorf("Error was not returned")
 	}
@@ -31,9 +32,17 @@ func Test_UpdateAuthConfig_Insert(t *testing.T) {
 	u := "admin"
 	p := "some pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	UpdateAuthConfig(gatewayURL, u, p)
+	token := EncodeAuth(u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
-	user, pass, err := LookupAuthConfig(gatewayURL)
+	authConfig, err := LookupAuthConfig(gatewayURL)
+	if err != nil {
+		t.Errorf("got error %s", err.Error())
+		t.Errorf(authConfig.Token)
+	}
+
+	user, pass, err := DecodeAuth(authConfig.Token)
+	fmt.Println(user, pass)
 	if err != nil {
 		t.Errorf("got error %s", err.Error())
 	}
@@ -49,22 +58,33 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 	u := "admin"
 	p := "pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	UpdateAuthConfig(gatewayURL, u, p)
+	token := EncodeAuth(u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
-	user, pass, err := LookupAuthConfig(gatewayURL)
+	authConfig, err := LookupAuthConfig(gatewayURL)
 	if err != nil {
 		t.Errorf("got error %s", err.Error())
 	}
 
+	user, pass, err := DecodeAuth(authConfig.Token)
+	if err != nil {
+		t.Errorf("got error %s", err.Error())
+	}
 	if user != u || pass != p {
 		t.Errorf("got user %s and pass %s, expected %s %s", user, pass, u, p)
 	}
 
 	u = "admin2"
 	p = "pass2"
-	UpdateAuthConfig(gatewayURL, u, p)
+	token = EncodeAuth(u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
-	user, pass, err = LookupAuthConfig(gatewayURL)
+	authConfig, err = LookupAuthConfig(gatewayURL)
+	if err != nil {
+		t.Errorf("got error %s", err.Error())
+	}
+
+	user, pass, err = DecodeAuth(authConfig.Token)
 	if err != nil {
 		t.Errorf("got error %s", err.Error())
 	}
@@ -95,30 +115,6 @@ func Test_UpdateAuthConfig_EmptyGatewayURL(t *testing.T) {
 	}
 
 	r := regexp.MustCompile(`(?m:invalid gateway)`)
-	if !r.MatchString(err.Error()) {
-		t.Errorf("Error not matched: %s", err.Error())
-	}
-}
-
-func Test_UpdateAuthConfig_EmptyUsername(t *testing.T) {
-	err := UpdateAuthConfig("http://test.test", "", "b")
-	if err == nil {
-		t.Errorf("Error was not returned")
-	}
-
-	r := regexp.MustCompile(`(?m:username)`)
-	if !r.MatchString(err.Error()) {
-		t.Errorf("Error not matched: %s", err.Error())
-	}
-}
-
-func Test_UpdateAuthConfig_EmptyPassword(t *testing.T) {
-	err := UpdateAuthConfig("http://test.test", "a", "")
-	if err == nil {
-		t.Errorf("Error was not returned")
-	}
-
-	r := regexp.MustCompile(`(?m:password)`)
 	if !r.MatchString(err.Error()) {
 		t.Errorf("Error not matched: %s", err.Error())
 	}
@@ -163,8 +159,9 @@ func Test_RemoveAuthConfig(t *testing.T) {
 
 	u := "admin"
 	p := "pass"
+	token := EncodeAuth(u, p)
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	UpdateAuthConfig(gatewayURL, u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
 	gatewayURL2 := strings.TrimRight("http://openfaas.test2/", "/")
 	UpdateAuthConfig(gatewayURL2, u, p)
@@ -174,7 +171,7 @@ func Test_RemoveAuthConfig(t *testing.T) {
 		t.Errorf("got error %s", err.Error())
 	}
 
-	_, _, err = LookupAuthConfig(gatewayURL)
+	_, err = LookupAuthConfig(gatewayURL)
 	if err == nil {
 		t.Fatal("Error was not returned")
 	}
@@ -204,8 +201,9 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 
 	u := "admin"
 	p := "pass"
+	token := EncodeAuth(u, p)
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	UpdateAuthConfig(gatewayURL, u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
 	err := RemoveAuthConfig("http://openfaas.test1")
 	if err == nil {

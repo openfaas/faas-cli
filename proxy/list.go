@@ -39,7 +39,7 @@ func ListFunctionsToken(gateway string, tlsInsecure bool, token string, namespac
 	if len(token) > 0 {
 		SetToken(getRequest, token)
 	} else {
-		SetAuth(getRequest, gateway)
+		AddAuth(getRequest, gateway)
 	}
 
 	if err != nil {

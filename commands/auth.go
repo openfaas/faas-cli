@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -187,6 +188,10 @@ func authClientCredentials() error {
 			return errors.Wrapf(tokenErr, "unable to unmarshal token: %s", string(tokenData))
 		}
 
+		if err := config.UpdateAuthConfig(gateway, token.AccessToken, config.Oauth2AuthType); err != nil {
+			return err
+		}
+		fmt.Println("credentials saved for", gateway)
 		printExampleTokenUsage(gateway, token.AccessToken)
 	}
 
@@ -226,6 +231,11 @@ func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, 
 			}
 
 			if token := q.Get("access_token"); len(token) > 0 {
+
+				if err := config.UpdateAuthConfig(gateway, token, config.Oauth2AuthType); err != nil {
+					fmt.Printf("error while saving authentication token: %s", err.Error())
+				}
+				fmt.Println("credentials saved for", gateway)
 				printExampleTokenUsage(gateway, token)
 			} else {
 				fmt.Printf("Unable to detect a valid access_token in URL fragment. Check your credentials or contact your administrator.\n")
