@@ -11,16 +11,50 @@ import (
 
 //SetAuth sets basic auth for the given gateway
 func SetAuth(req *http.Request, gateway string) {
-	username, password, err := config.LookupAuthConfig(gateway)
+	authConfig, err := config.LookupAuthConfig(gateway)
 	if err != nil {
 		// no auth info found
 		return
 	}
-
+	username, password, err := config.DecodeAuth(authConfig.Token)
+	if err != nil {
+		// no auth info found
+		return
+	}
 	req.SetBasicAuth(username, password)
 }
 
 //SetToken sets authentication token
 func SetToken(req *http.Request, token string) {
 	req.Header.Set("Authorization", "Bearer "+token)
+}
+
+//SetBasicAuth set basic authentication
+func SetBasicAuth(req *http.Request, authConfig config.AuthConfig) {
+	username, password, err := config.DecodeAuth(authConfig.Token)
+	if err != nil {
+		// no auth info found
+		return
+	}
+	req.SetBasicAuth(username, password)
+}
+
+//SetOauth2 set oauth2 token
+func SetOauth2(req *http.Request, authConfig config.AuthConfig) {
+	SetToken(req, authConfig.Token)
+}
+
+//AddAuth add authentication
+func AddAuth(req *http.Request, gateway string) {
+	authConfig, err := config.LookupAuthConfig(gateway)
+	if err != nil {
+		// no auth info found
+		return
+	}
+
+	if authConfig.Auth == config.BasicAuthType {
+		SetBasicAuth(req, authConfig)
+	} else if authConfig.Auth == config.Oauth2AuthType {
+		SetOauth2(req, authConfig)
+	}
 }
