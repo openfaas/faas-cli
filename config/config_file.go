@@ -23,6 +23,9 @@ var (
 	DefaultFile = "config.yml"
 )
 
+//AuthType auth type
+type AuthType string
+
 const (
 	//BasicAuthType basic authentication type
 	BasicAuthType = "basic"
@@ -37,9 +40,9 @@ type ConfigFile struct {
 }
 
 type AuthConfig struct {
-	Gateway string `yaml:"gateway,omitempty"`
-	Auth    string `yaml:"auth,omitempty"`
-	Token   string `yaml:"token,omitempty"`
+	Gateway string   `yaml:"gateway,omitempty"`
+	Auth    AuthType `yaml:"auth,omitempty"`
+	Token   string   `yaml:"token,omitempty"`
 }
 
 // New initializes a config file for the given file path
@@ -156,7 +159,7 @@ func DecodeAuth(input string) (string, string, error) {
 }
 
 // UpdateAuthConfig creates or updates the username and password for a given gateway
-func UpdateAuthConfig(gateway, token, authType string) error {
+func UpdateAuthConfig(gateway, token string, authType AuthType) error {
 	_, err := url.ParseRequestURI(gateway)
 	if err != nil || len(gateway) < 1 {
 		return fmt.Errorf("invalid gateway URL")

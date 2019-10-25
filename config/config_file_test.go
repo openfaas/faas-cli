@@ -164,7 +164,7 @@ func Test_RemoveAuthConfig(t *testing.T) {
 	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
 
 	gatewayURL2 := strings.TrimRight("http://openfaas.test2/", "/")
-	UpdateAuthConfig(gatewayURL2, u, p)
+	UpdateAuthConfig(gatewayURL2, token, BasicAuthType)
 
 	err := RemoveAuthConfig(gatewayURL)
 	if err != nil {
@@ -213,5 +213,23 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 	r := regexp.MustCompile(`(?m:gateway)`)
 	if !r.MatchString(err.Error()) {
 		t.Errorf("Error not matched: %s", err.Error())
+	}
+}
+
+func Test_UpdateAuthConfig_Oauth2Insert(t *testing.T) {
+	DefaultDir, _ = ioutil.TempDir("", "faas-cli-file-test")
+	DefaultFile = "test2.yml"
+	token := "somebase64encodedstring"
+	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
+	UpdateAuthConfig(gatewayURL, token, Oauth2AuthType)
+
+	authConfig, err := LookupAuthConfig(gatewayURL)
+	if err != nil {
+		t.Errorf("got error %s", err.Error())
+		t.Errorf(authConfig.Token)
+	}
+
+	if authConfig.Token != token {
+		t.Errorf("got token %s, expected %s", authConfig.Token, token)
 	}
 }

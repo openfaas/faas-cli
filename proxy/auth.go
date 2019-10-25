@@ -52,9 +52,12 @@ func AddAuth(req *http.Request, gateway string) {
 		return
 	}
 
-	if authConfig.Auth == config.BasicAuthType {
+	switch authConfig.Auth {
+	case config.BasicAuthType:
 		SetBasicAuth(req, authConfig)
-	} else if authConfig.Auth == config.Oauth2AuthType {
+		return
+	case config.Oauth2AuthType:
 		SetOauth2(req, authConfig)
+		return
 	}
 }
