@@ -45,8 +45,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	var services stack.Services
 	var gatewayAddress string
 	var yamlGateway string
-
-	if len(yamlFile) > 0 {
+	if len(yamlFile) > 0 && len(args) == 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
 			return err
