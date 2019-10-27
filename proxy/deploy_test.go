@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -31,9 +32,12 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	)
 	defer s.Close()
 
+	cliAuth := NewTestAuth("", "")
+	proxyClient := NewClient(cliAuth)
+
 	stdout := test.CaptureStdout(func() {
-		DeployFunction(&DeployFunctionSpec{
-			"fproces",
+		proxyClient.DeployFunction(context.TODO(), &DeployFunctionSpec{
+			"fprocess",
 			s.URL,
 			"function",
 			"image",
@@ -95,8 +99,11 @@ func Test_RunDeployProxyTests(t *testing.T) {
 func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 	url := "127.0.0.1:8080"
 
+	cliAuth := NewTestAuth("", "")
+	proxyClient := NewClient(cliAuth)
+
 	stdout := test.CaptureStdout(func() {
-		DeployFunction(&DeployFunctionSpec{
+		proxyClient.DeployFunction(context.TODO(), &DeployFunctionSpec{
 			"fprocess",
 			url,
 			"function",
@@ -124,4 +131,23 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 	if !r.MatchString(stdout) {
 		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
 	}
+}
+
+type TestAuth struct {
+	Username string
+	Password string
+	Token    string
+}
+
+func NewTestAuth(token string, gateway string) ClientAuth {
+	return &TestAuth{
+		Username: "",
+		Password: "",
+		Token:    "",
+	}
+}
+
+func (c *TestAuth) Set(req *http.Request) error {
+
+	return nil
 }
