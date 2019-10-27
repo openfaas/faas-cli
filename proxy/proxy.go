@@ -10,6 +10,11 @@ import (
 	"time"
 )
 
+// MakeHTTPClient makes a HTTP client with good defaults for timeouts.
+func MakeHTTPClient(timeout *time.Duration, tlsInsecure bool) http.Client {
+	return makeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, false)
+}
+
 // makeHTTPClientWithDisableKeepAlives makes a HTTP client with good defaults for timeouts.
 func makeHTTPClientWithDisableKeepAlives(timeout *time.Duration, tlsInsecure bool, disableKeepAlives bool) http.Client {
 	client := http.Client{}
@@ -40,9 +45,4 @@ func makeHTTPClientWithDisableKeepAlives(timeout *time.Duration, tlsInsecure boo
 	}
 
 	return client
-}
-
-// MakeHTTPClient makes a HTTP client with good defaults for timeouts.
-func MakeHTTPClient(timeout *time.Duration, tlsInsecure bool) http.Client {
-	return makeHTTPClientWithDisableKeepAlives(timeout, tlsInsecure, false)
 }
