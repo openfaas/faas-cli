@@ -292,7 +292,9 @@ Error: %s`, fprocessErr.Error())
 				fmt.Println(msg)
 			}
 
-			statusCode := proxy.DeployFunction(deploySpec)
+			auth := GetProxyAuth(token)
+			proxyClient := proxy.NewClient(auth)
+			statusCode := proxyClient.DeployFunction(deploySpec)
 
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
@@ -394,7 +396,9 @@ func deployImage(
 		fmt.Println(msg)
 	}
 
-	statusCode = proxy.DeployFunction(deploySpec)
+	auth := GetProxyAuth(token)
+	proxyClient := proxy.NewClient(auth)
+	statusCode = proxyClient.DeployFunction(deploySpec)
 
 	return statusCode, nil
 }
