@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -294,7 +295,7 @@ Error: %s`, fprocessErr.Error())
 
 			auth := GetProxyAuth(token)
 			proxyClient := proxy.NewClient(auth)
-			statusCode := proxyClient.DeployFunction(deploySpec)
+			statusCode := proxyClient.DeployFunction(context.TODO(), deploySpec)
 
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
@@ -398,7 +399,7 @@ func deployImage(
 
 	auth := GetProxyAuth(token)
 	proxyClient := proxy.NewClient(auth)
-	statusCode = proxyClient.DeployFunction(deploySpec)
+	statusCode = proxyClient.DeployFunction(context.TODO(), deploySpec)
 
 	return statusCode, nil
 }

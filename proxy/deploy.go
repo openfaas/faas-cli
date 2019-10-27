@@ -5,6 +5,7 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -52,17 +53,17 @@ type DeployFunctionSpec struct {
 
 // DeployFunction first tries to deploy a function and if it exists will then attempt
 // a rolling update. Warnings are suppressed for the second API call (if required.)
-func (c *Client) DeployFunction(spec *DeployFunctionSpec) int {
+func (c *Client) DeployFunction(context context.Context, spec *DeployFunctionSpec) int {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", spec.FunctionName)
 	warnInsecureGateway := true
-	statusCode, deployOutput := c.Deploy(spec, spec.Update, warnInsecureGateway)
+	statusCode, deployOutput := c.Deploy(context, spec, spec.Update, warnInsecureGateway)
 
 	warnInsecureGateway = false
 	if spec.Update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		statusCode, deployOutput = c.Deploy(spec, false, warnInsecureGateway)
+		statusCode, deployOutput = c.Deploy(context, spec, false, warnInsecureGateway)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -72,7 +73,7 @@ func (c *Client) DeployFunction(spec *DeployFunctionSpec) int {
 }
 
 // Deploy a function to an OpenFaaS gateway over REST
-func (c *Client) Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (int, string) {
+func (c *Client) Deploy(context context.Context, spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
@@ -156,7 +157,7 @@ func (c *Client) Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGatew
 		return http.StatusInternalServerError, deployOutput
 	}
 
-	res, err := client.Do(request)
+	res, err := client.Do(request.WithContext(context))
 	if err != nil {
 		deployOutput += fmt.Sprintln("Is OpenFaaS deployed? Do you need to specify the --gateway flag?")
 		deployOutput += fmt.Sprintln(err)
