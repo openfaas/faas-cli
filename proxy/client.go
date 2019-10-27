@@ -5,20 +5,24 @@ import (
 	"net/http"
 )
 
+type Client struct {
+	ClientAuth ClientAuth
+}
+
+type ClientAuth interface {
+	Set(req *http.Request) error
+}
+
+func NewClient(auth ClientAuth) *Client {
+	return &Client{
+		ClientAuth: auth,
+	}
+}
+
 type Auth struct {
 	Username string
 	Password string
 	Token    string
-}
-
-type Client struct {
-	Auth *Auth
-}
-
-func NewClient(auth Auth) *Client {
-	return &Client{
-		Auth: &auth,
-	}
 }
 
 func (c *Client) NewRequest(method, url string, body io.Reader) (*http.Request, error) {
@@ -26,12 +30,7 @@ func (c *Client) NewRequest(method, url string, body io.Reader) (*http.Request, 
 	if err != nil {
 		return nil, err
 	}
-
-	if len(c.Auth.Token) > 0 {
-		req.Header.Set("Authorization", "Bearer "+c.Auth.Token)
-	} else {
-		req.SetBasicAuth(c.Auth.Username, c.Auth.Password)
-	}
+	c.ClientAuth.Set(req)
 
 	return req, err
 }

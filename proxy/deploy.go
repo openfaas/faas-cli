@@ -158,6 +158,7 @@ func (c *Client) Deploy(context context.Context, spec *DeployFunctionSpec, updat
 	}
 
 	res, err := client.Do(request.WithContext(context))
+
 	if err != nil {
 		deployOutput += fmt.Sprintln("Is OpenFaaS deployed? Do you need to specify the --gateway flag?")
 		deployOutput += fmt.Sprintln(err)
@@ -176,12 +177,7 @@ func (c *Client) Deploy(context context.Context, spec *DeployFunctionSpec, updat
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
 		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
-		/*
-			case http.StatusNotFound:
-				if replace && !update {
-					deployOutput += fmt.Sprintln("Could not delete-and-replace function because it is not found (404)")
-				}
-		*/
+
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {
