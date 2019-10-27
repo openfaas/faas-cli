@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -63,14 +64,18 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		}
 	}
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	ctx := context.Background()
 
-	function, err := proxy.GetFunctionInfoToken(gatewayAddress, functionName, tlsInsecure, token, functionNamespace)
+	function, err := cliClient.GetFunctionInfo(ctx, functionName, functionNamespace)
 	if err != nil {
 		return err
 	}
 
 	//To get correct value for invocation count from /system/functions endpoint
-	functionList, err := proxy.ListFunctionsToken(gatewayAddress, tlsInsecure, token, functionNamespace)
+	functionList, err := cliClient.ListFunctions(ctx, functionNamespace)
 	if err != nil {
 		return err
 	}

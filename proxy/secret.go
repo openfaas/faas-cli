@@ -2,13 +2,11 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
-	"path"
-	"strings"
 
 	types "github.com/openfaas/faas-provider/types"
 )
@@ -18,41 +16,26 @@ const (
 )
 
 // GetSecretList get secrets list
-func GetSecretList(gateway string, tlsInsecure bool, namespace string) ([]types.Secret, error) {
-	return GetSecretListToken(gateway, tlsInsecure, "", namespace)
-}
+func (c *Client) GetSecretList(ctx context.Context, namespace string) ([]types.Secret, error) {
+	var (
+		results    []types.Secret
+		err        error
+		secretPath = secretEndpoint
+	)
 
-// GetSecretListToken get secrets lists with taken as auth
-func GetSecretListToken(gateway string, tlsInsecure bool, token, namespace string) ([]types.Secret, error) {
-	var results []types.Secret
-
-	gateway = strings.TrimRight(gateway, "/")
-	gatewayURL, err := url.Parse(gateway)
-	if err != nil {
-		return results, fmt.Errorf("invalid gateway URL: %s", gateway)
-	}
-	gatewayURL.Path = path.Join(gatewayURL.Path, secretEndpoint)
 	if len(namespace) > 0 {
-		q := gatewayURL.Query()
-		q.Set("namespace", namespace)
-		gatewayURL.RawQuery = q.Encode()
+		secretPath, err = addQueryParams(secretPath, map[string]string{namespaceKey: namespace})
 	}
 
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL.String(), nil)
-	if len(token) > 0 {
-		SetToken(getRequest, token)
-	} else {
-		SetAuth(getRequest, gateway)
-	}
+	getRequest, err := c.newRequest(http.MethodGet, secretPath, nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
-	res, err := client.Do(getRequest)
+	res, err := c.doRequest(ctx, getRequest)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	if res.Body != nil {
@@ -64,12 +47,12 @@ func GetSecretListToken(gateway string, tlsInsecure bool, token, namespace strin
 
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", gateway)
+			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
 
 		jsonErr := json.Unmarshal(bytesOut, &results)
 		if jsonErr != nil {
-			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
+			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", c.GatewayURL.String(), jsonErr.Error())
 		}
 
 	case http.StatusUnauthorized:
@@ -86,34 +69,20 @@ func GetSecretListToken(gateway string, tlsInsecure bool, token, namespace strin
 }
 
 // UpdateSecret update a secret via the OpenFaaS API by name
-func UpdateSecret(gateway string, secret types.Secret, tlsInsecure bool) (int, string) {
-	return UpdateSecretToken(gateway, secret, tlsInsecure, "")
-}
-
-// UpdateSecretToken update a secret with token as auth
-func UpdateSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) (int, string) {
+func (c *Client) UpdateSecret(ctx context.Context, secret types.Secret) (int, string) {
 	var output string
-
-	gateway = strings.TrimRight(gateway, "/")
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-
 	reqBytes, _ := json.Marshal(&secret)
 
-	putRequest, err := http.NewRequest(http.MethodPut, gateway+"/system/secrets", bytes.NewBuffer(reqBytes))
-	if len(token) > 0 {
-		SetToken(putRequest, token)
-	} else {
-		SetAuth(putRequest, gateway)
-	}
+	putRequest, err := c.newRequest(http.MethodPut, secretEndpoint, bytes.NewBuffer(reqBytes))
 
 	if err != nil {
-		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 		return http.StatusInternalServerError, output
 	}
 
-	res, err := client.Do(putRequest)
+	res, err := c.doRequest(ctx, putRequest)
 	if err != nil {
-		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 		return http.StatusInternalServerError, output
 	}
 
@@ -143,33 +112,16 @@ func UpdateSecretToken(gateway string, secret types.Secret, tlsInsecure bool, to
 }
 
 // RemoveSecret remove a secret via the OpenFaaS API by name
-func RemoveSecret(gateway string, secret types.Secret, tlsInsecure bool) error {
-	return RemoveSecretToken(gateway, secret, tlsInsecure, "")
-}
-
-// RemoveSecretToken remove a secret with token as auth
-func RemoveSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) error {
-
-	gateway = strings.TrimRight(gateway, "/")
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-
+func (c *Client) RemoveSecret(ctx context.Context, secret types.Secret) error {
 	body, _ := json.Marshal(secret)
-
-	getRequest, err := http.NewRequest(http.MethodDelete, gateway+"/system/secrets", bytes.NewBuffer(body))
-
-	if len(token) > 0 {
-		SetToken(getRequest, token)
-	} else {
-		SetAuth(getRequest, gateway)
+	req, err := c.newRequest(http.MethodDelete, secretEndpoint, bytes.NewBuffer(body))
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
+	res, err := c.doRequest(ctx, req)
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
-	}
-
-	res, err := client.Do(getRequest)
-	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	if res.Body != nil {
@@ -195,36 +147,21 @@ func RemoveSecretToken(gateway string, secret types.Secret, tlsInsecure bool, to
 }
 
 // CreateSecret create secret
-func CreateSecret(gateway string, secret types.Secret, tlsInsecure bool) (int, string) {
-	return CreateSecretToken(gateway, secret, tlsInsecure, "")
-}
-
-// CreateSecretToken create secret with token as auth
-func CreateSecretToken(gateway string, secret types.Secret, tlsInsecure bool, token string) (int, string) {
+func (c *Client) CreateSecret(ctx context.Context, secret types.Secret) (int, string) {
 	var output string
-
-	gateway = strings.TrimRight(gateway, "/")
-
 	reqBytes, _ := json.Marshal(&secret)
 	reader := bytes.NewReader(reqBytes)
 
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-	request, err := http.NewRequest(http.MethodPost, gateway+"/system/secrets", reader)
-
-	if len(token) > 0 {
-		SetToken(request, token)
-	} else {
-		SetAuth(request, gateway)
-	}
+	request, err := c.newRequest(http.MethodPost, secretEndpoint, reader)
 
 	if err != nil {
-		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", c.GatewayURL.String())
 		return http.StatusInternalServerError, output
 	}
 
-	res, err := client.Do(request)
+	res, err := c.doRequest(ctx, request)
 	if err != nil {
-		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", gateway)
+		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", c.GatewayURL.String())
 		return http.StatusInternalServerError, output
 	}
 

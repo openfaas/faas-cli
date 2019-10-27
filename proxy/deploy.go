@@ -5,11 +5,11 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/openfaas/faas-cli/stack"
@@ -30,7 +30,6 @@ type FunctionResourceRequest struct {
 // DeployFunctionSpec defines the spec used when deploying a function
 type DeployFunctionSpec struct {
 	FProcess                string
-	Gateway                 string
 	FunctionName            string
 	Image                   string
 	RegistryAuth            string
@@ -60,17 +59,15 @@ func generateFuncStr(spec *DeployFunctionSpec) string {
 
 // DeployFunction first tries to deploy a function and if it exists will then attempt
 // a rolling update. Warnings are suppressed for the second API call (if required.)
-func DeployFunction(spec *DeployFunctionSpec) int {
+func (c *Client) DeployFunction(context context.Context, spec *DeployFunctionSpec) int {
 
 	rollingUpdateInfo := fmt.Sprintf("Function %s already exists, attempting rolling-update.", spec.FunctionName)
-	warnInsecureGateway := true
-	statusCode, deployOutput := Deploy(spec, spec.Update, warnInsecureGateway)
+	statusCode, deployOutput := c.deploy(context, spec, spec.Update)
 
-	warnInsecureGateway = false
 	if spec.Update == true && statusCode == http.StatusNotFound {
 		// Re-run the function with update=false
 
-		statusCode, deployOutput = Deploy(spec, false, warnInsecureGateway)
+		statusCode, deployOutput = c.deploy(context, spec, false)
 	} else if statusCode == http.StatusOK {
 		fmt.Println(rollingUpdateInfo)
 	}
@@ -79,8 +76,8 @@ func DeployFunction(spec *DeployFunctionSpec) int {
 	return statusCode
 }
 
-// Deploy a function to an OpenFaaS gateway over REST
-func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (int, string) {
+// deploy a function to an OpenFaaS gateway over REST
+func (c *Client) deploy(context context.Context, spec *DeployFunctionSpec, update bool) (int, string) {
 
 	var deployOutput string
 	// Need to alter Gateway to allow nil/empty string as fprocess, to avoid this repetition.
@@ -89,10 +86,8 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 		fprocessTemplate = spec.FProcess
 	}
 
-	gateway := strings.TrimRight(spec.Gateway, "/")
-
 	if spec.Replace {
-		DeleteFunction(gateway, spec.FunctionName, spec.TLSInsecure, "")
+		c.DeleteFunction(context, spec.FunctionName, spec.Namespace)
 	}
 
 	req := types.FunctionDeployment{
@@ -143,8 +138,6 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	reader := bytes.NewReader(reqBytes)
 	var request *http.Request
 
-	client := MakeHTTPClient(&defaultCommandTimeout, spec.TLSInsecure)
-
 	method := http.MethodPost
 	// "application/json"
 	if update {
@@ -152,19 +145,15 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	}
 
 	var err error
-	request, err = http.NewRequest(method, gateway+"/system/functions", reader)
-	if len(spec.Token) > 0 {
-		SetToken(request, spec.Token)
-	} else {
-		SetAuth(request, gateway)
-	}
+	request, err = c.newRequest(method, "/system/functions", reader)
 
 	if err != nil {
 		deployOutput += fmt.Sprintln(err)
 		return http.StatusInternalServerError, deployOutput
 	}
 
-	res, err := client.Do(request)
+	res, err := c.doRequest(context, request)
+
 	if err != nil {
 		deployOutput += fmt.Sprintln("Is OpenFaaS deployed? Do you need to specify the --gateway flag?")
 		deployOutput += fmt.Sprintln(err)
@@ -179,16 +168,11 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		deployOutput += fmt.Sprintf("Deployed. %s.\n", res.Status)
 
-		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, generateFuncStr(spec))
+		deployedURL := fmt.Sprintf("URL: %s/function/%s", c.GatewayURL.String(), generateFuncStr(spec))
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
 		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
-		/*
-			case http.StatusNotFound:
-				if replace && !update {
-					deployOutput += fmt.Sprintln("Could not delete-and-replace function because it is not found (404)")
-				}
-		*/
+
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

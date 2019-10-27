@@ -4,7 +4,7 @@
 package proxy
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 
 	"testing"
@@ -31,10 +31,12 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	)
 	defer s.Close()
 
+	cliAuth := NewTestAuth(nil)
+	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+
 	stdout := test.CaptureStdout(func() {
-		DeployFunction(&DeployFunctionSpec{
-			"fproces",
-			s.URL,
+		proxyClient.DeployFunction(context.TODO(), &DeployFunctionSpec{
+			"fprocess",
 			"function",
 			"image",
 			"dXNlcjpwYXNzd29yZA==",
@@ -92,40 +94,6 @@ func Test_RunDeployProxyTests(t *testing.T) {
 	}
 }
 
-func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
-	url := "127.0.0.1:8080"
-
-	stdout := test.CaptureStdout(func() {
-		DeployFunction(&DeployFunctionSpec{
-			"fprocess",
-			url,
-			"function",
-			"image",
-			"dXNlcjpwYXNzd29yZA==",
-			"language",
-			false,
-			nil,
-			"network",
-			[]string{},
-			false,
-			[]string{},
-			map[string]string{},
-			map[string]string{},
-			FunctionResourceRequest{},
-			false,
-			tlsNoVerify,
-			"",
-			"",
-		})
-	})
-
-	expectedErrMsg := "first path segment in URL cannot contain colon"
-	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
-	if !r.MatchString(stdout) {
-		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
-	}
-}
-
 func Test_DeployFunction_generateFuncStr(t *testing.T) {
 
 	testCases := []struct {
@@ -138,7 +106,6 @@ func Test_DeployFunction_generateFuncStr(t *testing.T) {
 			name: "No Namespace",
 			spec: &DeployFunctionSpec{
 				"fprocess",
-				"",
 				"funcName",
 				"image",
 				"dXNlcjpwYXNzd29yZA==",
@@ -162,7 +129,6 @@ func Test_DeployFunction_generateFuncStr(t *testing.T) {
 		{name: "With Namespace",
 			spec: &DeployFunctionSpec{
 				"fprocess",
-				"",
 				"funcName",
 				"image",
 				"dXNlcjpwYXNzd29yZA==",
@@ -192,5 +158,18 @@ func Test_DeployFunction_generateFuncStr(t *testing.T) {
 			t.Fatalf("generateFuncStr %s\nwant: %s, got: %s", testCase.name, testCase.expectedStr, funcStr)
 		}
 	}
+}
 
+type testAuth struct {
+	err error
+}
+
+func (c *testAuth) Set(req *http.Request) error {
+	return c.err
+}
+
+func NewTestAuth(err error) ClientAuth {
+	return &testAuth{
+		err: err,
+	}
 }

@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -54,9 +55,12 @@ func runList(cmd *cobra.Command, args []string) error {
 			yamlGateway = services.Provider.GatewayURL
 		}
 	}
-
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
-	functions, err := proxy.ListFunctionsToken(gatewayAddress, tlsInsecure, token, functionNamespace)
+
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	proxyClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	functions, err := proxyClient.ListFunctions(context.Background(), functionNamespace)
 	if err != nil {
 		return err
 	}

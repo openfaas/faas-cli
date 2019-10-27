@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -9,35 +10,24 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/openfaas/faas-provider/logs"
 )
 
-// GetLogs list deployed functions
-func GetLogs(gateway string, tlsInsecure bool, params logs.Request, token string) (<-chan logs.Message, error) {
+// GetLogs return stream for the logs
+func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.Message, error) {
 
-	gateway = strings.TrimRight(gateway, "/")
-	// replace with a client that allows keep alive, Default?
-	client := makeStreamingHTTPClient(tlsInsecure)
-
-	logRequest, err := http.NewRequest(http.MethodGet, gateway+"/system/logs", nil)
+	logRequest, err := c.newRequest(http.MethodGet, "/system/logs", nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
-	}
-
-	if len(token) > 0 {
-		SetToken(logRequest, token)
-	} else {
-		SetAuth(logRequest, gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	logRequest.URL.RawQuery = reqAsQueryValues(params).Encode()
 
-	res, err := client.Do(logRequest)
+	res, err := c.doRequest(ctx, logRequest)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	logStream := make(chan logs.Message, 1000)

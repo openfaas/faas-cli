@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,15 @@ import (
 	"github.com/openfaas/faas-cli/test"
 	"github.com/openfaas/faas-provider/logs"
 )
+
+type testTokenAuth struct {
+	Token string
+}
+
+func (t *testTokenAuth) Set(req *http.Request) error {
+	req.Header.Set("Authorization", "Bearer "+t.Token)
+	return nil
+}
 
 func Test_GetLogs_TokenAuth(t *testing.T) {
 	expectedToken := "abc123"
@@ -25,7 +35,8 @@ func Test_GetLogs_TokenAuth(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	_, err := GetLogs(srv.URL, true, params, expectedToken)
+	client := NewClient(&testTokenAuth{expectedToken}, srv.URL, nil, nil)
+	_, err := client.GetLogs(context.Background(), params)
 	if err != nil {
 		t.Fatalf("Error returned: %s", err.Error())
 	}
@@ -49,7 +60,9 @@ func Test_GetLogs_200OK(t *testing.T) {
 	})
 	defer s.Close()
 
-	logs, err := GetLogs(s.URL, true, params, "")
+	testAuth := NewTestAuth(nil)
+	client := NewClient(testAuth, s.URL, nil, nil)
+	logs, err := client.GetLogs(context.Background(), params)
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
 	}
@@ -75,7 +88,10 @@ func Test_GetLogs_401Unauthorized(t *testing.T) {
 	defer s.Close()
 
 	params := logs.Request{Name: "test"}
-	_, err := GetLogs(s.URL, true, params, "")
+
+	testAuth := NewTestAuth(nil)
+	client := NewClient(testAuth, s.URL, nil, nil)
+	_, err := client.GetLogs(context.Background(), params)
 	if err == nil {
 		t.Fatal("Expected error, got: nil")
 	}
@@ -100,7 +116,9 @@ func Test_GetLogs_UnexpectedStatus(t *testing.T) {
 		})
 		defer s.Close()
 
-		_, err := GetLogs(s.URL, true, logs.Request{Name: "test"}, "")
+		testAuth := NewTestAuth(nil)
+		client := NewClient(testAuth, s.URL, nil, nil)
+		_, err := client.GetLogs(context.Background(), logs.Request{Name: "test"})
 		if err == nil {
 			t.Fatal("Expected error, got: nil")
 		}

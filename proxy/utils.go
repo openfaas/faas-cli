@@ -10,6 +10,7 @@ const (
 	systemPath     = "/system/functions"
 	functionPath   = "/system/function"
 	namespacesPath = "/system/namespaces"
+	namespaceKey   = "namespace"
 )
 
 func createSystemEndpoint(gateway, namespace string) (string, error) {

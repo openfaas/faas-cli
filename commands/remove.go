@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -59,6 +60,11 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	proxyclient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	ctx := context.Background()
+
 	if len(services.Functions) > 0 {
 		if len(services.Provider.Network) == 0 {
 			services.Provider.Network = defaultNetwork
@@ -68,7 +74,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 			function.Name = k
 			fmt.Printf("Deleting: %s.\n", function.Name)
 
-			proxy.DeleteFunctionToken(gatewayAddress, function.Name, tlsInsecure, token, functionNamespace)
+			proxyclient.DeleteFunction(ctx, function.Name, functionNamespace)
 		}
 	} else {
 		if len(args) < 1 {
@@ -77,7 +83,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxy.DeleteFunctionToken(gatewayAddress, functionName, tlsInsecure, token, functionNamespace)
+		proxyclient.DeleteFunction(ctx, functionName, functionNamespace)
 	}
 
 	return nil

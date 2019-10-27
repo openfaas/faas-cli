@@ -4,8 +4,10 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"runtime"
+	"time"
 
 	"os"
 
@@ -92,7 +94,11 @@ func printServerVersions() {
 
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	info, err := proxy.GetSystemInfo(gatewayAddress, tlsInsecure, token)
+	versionTimeout := 5 * time.Second
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &versionTimeout)
+	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &versionTimeout)
+	info, err := cliClient.GetSystemInfo(context.Background())
 	if err != nil {
 		return
 	}

@@ -5,6 +5,7 @@ package commands
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -47,7 +48,10 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		fmt.Println(msg)
 	}
 
-	secrets, err := proxy.GetSecretListToken(gatewayAddress, tlsInsecure, token, functionNamespace)
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	secrets, err := client.GetSecretList(context.Background(), functionNamespace)
 	if err != nil {
 		return err
 	}

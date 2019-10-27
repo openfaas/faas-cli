@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"context"
 	"net/http"
 	"regexp"
 	"testing"
@@ -17,8 +18,8 @@ func Test_GetSecretList_200OK(t *testing.T) {
 		},
 	})
 	defer s.Close()
-
-	secrets, err := GetSecretList(s.URL, true, "openfaas-fn")
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	secrets, err := client.GetSecretList(context.Background(), "openfaas-fn")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
 	}
@@ -38,8 +39,8 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 		},
 	})
 	defer s.Close()
-
-	secrets, err := GetSecretList(s.URL, true, "")
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	secrets, err := client.GetSecretList(context.Background(), "")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
 	}
@@ -53,8 +54,8 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 
 func Test_GetSecretList_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
-
-	_, err := GetSecretList(s.URL, true, "openfaas-fn")
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	_, err := client.GetSecretList(context.Background(), "openfaas-fn")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -68,8 +69,8 @@ func Test_GetSecretList_Not200(t *testing.T) {
 
 func Test_GetSecretList_Unauthorized401(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusUnauthorized)
-
-	_, err := GetSecretList(s.URL, true, "fn")
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	_, err := client.GetSecretList(context.Background(), "fn")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -97,8 +98,8 @@ func Test_CreateSecret_200OK(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-
-	status, _ := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusOK {
 		t.Errorf("expected: %d, got: %d", http.StatusOK, status)
@@ -112,8 +113,8 @@ func Test_CreateSecret_201Created(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-
-	status, _ := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusCreated {
 		t.Errorf("expected: %d, got: %d", http.StatusCreated, status)
@@ -127,8 +128,8 @@ func Test_CreateSecret_202Accepted(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-
-	status, _ := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusAccepted {
 		t.Errorf("expected: %d, got: %d", http.StatusAccepted, status)
@@ -143,7 +144,8 @@ func Test_CreateSecret_Not200(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	status, output := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusBadRequest {
 		t.Errorf("expected: %d, got: %d", http.StatusBadRequest, status)
@@ -163,7 +165,8 @@ func Test_CreateSecret_Unauthorized401(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	status, output := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusUnauthorized {
 		t.Errorf("expected: %d, got: %d", http.StatusUnauthorized, status)
@@ -183,7 +186,8 @@ func Test_CreateSecret_Conflict409(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	status, output := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusConflict {
 		t.Errorf("want: %d, got: %d", http.StatusConflict, status)
@@ -203,7 +207,8 @@ func Test_CreateSecret_ForbiddenNamespace(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "kube-system",
 	}
-	status, output := CreateSecret(s.URL, secret, true)
+	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusBadRequest {
 		t.Errorf("want: %d, got: %d", http.StatusBadRequest, status)

@@ -4,7 +4,7 @@
 package proxy
 
 import (
-	"fmt"
+	"context"
 	"net/http"
 	"regexp"
 
@@ -23,7 +23,9 @@ func Test_ListFunctions(t *testing.T) {
 	})
 	defer s.Close()
 
-	result, err := ListFunctions(s.URL, !tlsNoVerify, "")
+	cliAuth := NewTestAuth(nil)
+	client := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	result, err := client.ListFunctions(context.Background(), "")
 
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
@@ -38,7 +40,9 @@ func Test_ListFunctions(t *testing.T) {
 func Test_ListFunctions_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := ListFunctions(s.URL, tlsNoVerify, "")
+	cliAuth := NewTestAuth(nil)
+	client := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	_, err := client.ListFunctions(context.Background(), "")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -47,20 +51,6 @@ func Test_ListFunctions_Not200(t *testing.T) {
 	r := regexp.MustCompile(`(?m:server returned unexpected status code)`)
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Error not matched: %s", err)
-	}
-}
-
-func Test_ListFunctions_MissingURLPrefix(t *testing.T) {
-	_, err := ListFunctions("127.0.0.1:8080", tlsNoVerify, "")
-
-	if err == nil {
-		t.Fatalf("Error was not returned")
-	}
-
-	expectedErrMsg := "first path segment in URL cannot contain colon"
-	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
-	if !r.MatchString(err.Error()) {
-		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, err.Error())
 	}
 }
 

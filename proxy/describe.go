@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,35 +14,28 @@ import (
 )
 
 //GetFunctionInfo get an OpenFaaS function information
-func GetFunctionInfo(gateway string, functionName string, tlsInsecure bool, namespace string) (types.FunctionStatus, error) {
-	return GetFunctionInfoToken(gateway, functionName, tlsInsecure, "", namespace)
-}
+func (c *Client) GetFunctionInfo(ctx context.Context, functionName string, namespace string) (types.FunctionStatus, error) {
+	var (
+		result types.FunctionStatus
+		err    error
+	)
 
-//GetFunctionInfoToken get a function information with a token as auth
-func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool, token string, namespace string) (types.FunctionStatus, error) {
-	var result types.FunctionStatus
-
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-
-	gatewayURL, err := createFunctionEndpoint(gateway, functionName, namespace)
-	if err != nil {
-		return result, err
+	functionPath := fmt.Sprintf("%s/%s", functionPath, functionName)
+	if len(namespace) > 0 {
+		functionPath, err = addQueryParams(functionPath, map[string]string{namespaceKey: namespace})
+		if err != nil {
+			return result, err
+		}
 	}
 
-	getRequest, err := http.NewRequest(http.MethodGet, gatewayURL, nil)
+	getRequest, err := c.newRequest(http.MethodGet, functionPath, nil)
 	if err != nil {
-		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
-	if len(token) > 0 {
-		SetToken(getRequest, token)
-	} else {
-		SetAuth(getRequest, gateway)
-	}
-
-	res, err := client.Do(getRequest)
+	res, err := c.doRequest(ctx, getRequest)
 	if err != nil {
-		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 
 	}
 
@@ -53,12 +47,12 @@ func GetFunctionInfoToken(gateway string, functionName string, tlsInsecure bool,
 	case http.StatusOK:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return result, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", gateway)
+			return result, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
 
 		jsonErr := json.Unmarshal(bytesOut, &result)
 		if jsonErr != nil {
-			return result, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
+			return result, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", c.GatewayURL.String(), jsonErr.Error())
 		}
 	case http.StatusUnauthorized:
 		return result, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")

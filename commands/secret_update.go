@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -96,8 +97,11 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")
 	}
 
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	fmt.Println("Updating secret: " + secret.Name)
-	_, output := proxy.UpdateSecretToken(gatewayAddress, secret, tlsInsecure, token)
+	_, output := client.UpdateSecret(context.Background(), secret)
 	fmt.Printf(output)
 
 	return nil

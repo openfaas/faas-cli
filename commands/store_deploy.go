@@ -4,10 +4,12 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -127,8 +129,11 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	cliAuth := NewCLIAuth(token, gateway)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	proxyClient := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 
-	statusCode, err := deployImage(imageName, item.Fprocess, itemName, registryAuth, storeDeployFlags,
+	statusCode, err := deployImage(context.Background(), proxyClient, imageName, item.Fprocess, itemName, registryAuth, storeDeployFlags,
 		tlsInsecure, item.ReadOnlyRootFilesystem, token, functionNamespace)
 
 	if badStatusCode(statusCode) {
