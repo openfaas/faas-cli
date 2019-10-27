@@ -5,51 +5,38 @@ package proxy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 
 	"github.com/openfaas/faas/gateway/requests"
 )
 
 // DeleteFunction delete a function from the OpenFaaS server
-func DeleteFunction(gateway string, functionName string, tlsInsecure bool, namespace string) error {
-	return DeleteFunctionToken(gateway, functionName, tlsInsecure, "", namespace)
-}
-
-//DeleteFunctionToken delete a function with token as auth
-func DeleteFunctionToken(gateway string, functionName string, tlsInsecure bool, token string, namespace string) error {
-	gateway = strings.TrimRight(gateway, "/")
+func (c *Client) DeleteFunction(ctx context.Context, functionName string, namespace string) error {
+	var err error
 	delReq := requests.DeleteFunctionRequest{FunctionName: functionName}
 	reqBytes, _ := json.Marshal(&delReq)
 	reader := bytes.NewReader(reqBytes)
-
-	c := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-
-	deleteEndpoint, err := createSystemEndpoint(gateway, namespace)
-	if err != nil {
-		return err
+	deleteEndpoint := "/system/functions"
+	if len(namespace) > 0 {
+		deleteEndpoint, err = addQueryParams(deleteEndpoint, map[string]string{namespaceKey: namespace})
+		if err != nil {
+			return err
+		}
 	}
 
-	req, err := http.NewRequest("DELETE", deleteEndpoint, reader)
+	req, err := c.newRequest(http.MethodDelete, deleteEndpoint, reader)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	req.Header.Set("Content-Type", "application/json")
-
-	if len(token) > 0 {
-		SetToken(req, token)
-	} else {
-		SetAuth(req, gateway)
-	}
-
-	delRes, delErr := c.Do(req)
+	delRes, delErr := c.doRequest(ctx, req)
 
 	if delErr != nil {
-		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), gateway, functionName)
+		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), c.GatewayURL.String(), functionName)
 		return delErr
 	}
 

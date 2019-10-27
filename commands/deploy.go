@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -166,12 +167,18 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		}
 	}
 
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	ctx := context.Background()
+
 	var failedStatusCodes = make(map[string]int)
 	if len(services.Functions) > 0 {
 
 		if len(services.Provider.Network) == 0 {
 			services.Provider.Network = defaultNetwork
 		}
+
+		cliAuth := NewCLIAuth(token, services.Provider.GatewayURL)
+		proxyClient := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
 
 		for k, function := range services.Functions {
 
@@ -268,7 +275,6 @@ Error: %s`, fprocessErr.Error())
 
 			deploySpec := &proxy.DeployFunctionSpec{
 				FProcess:                function.FProcess,
-				Gateway:                 services.Provider.GatewayURL,
 				FunctionName:            function.Name,
 				Image:                   function.Image,
 				RegistryAuth:            function.RegistryAuth,
@@ -288,12 +294,10 @@ Error: %s`, fprocessErr.Error())
 				Namespace:               function.Namespace,
 			}
 
-			if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
+			if msg := checkTLSInsecure(services.Provider.GatewayURL, deploySpec.TLSInsecure); len(msg) > 0 {
 				fmt.Println(msg)
 			}
-
-			statusCode := proxy.DeployFunction(deploySpec)
-
+			statusCode := proxyClient.DeployFunction(ctx, deploySpec)
 			if badStatusCode(statusCode) {
 				failedStatusCodes[k] = statusCode
 			}
@@ -303,6 +307,8 @@ Error: %s`, fprocessErr.Error())
 			return fmt.Errorf("To deploy a function give --yaml/-f or a --image and --name flag")
 		}
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+		cliAuth := NewCLIAuth(token, gateway)
+		proxyClient := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 
 		var registryAuth string
 		if deployFlags.sendRegistryAuth {
@@ -317,7 +323,7 @@ Error: %s`, fprocessErr.Error())
 		// default to a readable filesystem until we get more input about the expected behavior
 		// and if we want to add another flag for this case
 		defaultReadOnlyRFS := false
-		statusCode, err := deployImage(image, fprocess, functionName, registryAuth, deployFlags,
+		statusCode, err := deployImage(ctx, proxyClient, image, fprocess, functionName, registryAuth, deployFlags,
 			tlsInsecure, defaultReadOnlyRFS, token, functionNamespace)
 		if err != nil {
 			return err
@@ -337,6 +343,8 @@ Error: %s`, fprocessErr.Error())
 
 // deployImage deploys a function with the given image
 func deployImage(
+	ctx context.Context,
+	client *proxy.Client,
 	image string,
 	fprocess string,
 	functionName string,
@@ -370,7 +378,6 @@ func deployImage(
 
 	deploySpec := &proxy.DeployFunctionSpec{
 		FProcess:                fprocess,
-		Gateway:                 gateway,
 		FunctionName:            functionName,
 		Image:                   image,
 		RegistryAuth:            registryAuth,
@@ -390,11 +397,11 @@ func deployImage(
 		Namespace:               namespace,
 	}
 
-	if msg := checkTLSInsecure(deploySpec.Gateway, deploySpec.TLSInsecure); len(msg) > 0 {
+	if msg := checkTLSInsecure(gateway, deploySpec.TLSInsecure); len(msg) > 0 {
 		fmt.Println(msg)
 	}
 
-	statusCode = proxy.DeployFunction(deploySpec)
+	statusCode = client.DeployFunction(ctx, deploySpec)
 
 	return statusCode, nil
 }

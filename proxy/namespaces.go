@@ -1,49 +1,30 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
 )
 
 // ListNamespaces lists available function namespaces
-func ListNamespaces(gateway string, tlsInsecure bool) ([]string, error) {
-	return ListNamespacesToken(gateway, tlsInsecure, "")
-}
-
-// ListNamespacesToken lists available function namespaces with a token as auth
-func ListNamespacesToken(gateway string, tlsInsecure bool, token string) ([]string, error) {
+func (c *Client) ListNamespaces(ctx context.Context) ([]string, error) {
 	var namespaces []string
-
-	gateway = strings.TrimRight(gateway, "/")
-	client := MakeHTTPClient(&defaultCommandTimeout, tlsInsecure)
-	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+	c.AddCheckRedirect(func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
-	}
+	})
 
-	getEndpoint, err := createNamespacesEndpoint(gateway)
-	if err != nil {
-		return namespaces, err
-	}
-
-	getRequest, err := http.NewRequest(http.MethodGet, getEndpoint, nil)
-
-	if len(token) > 0 {
-		SetToken(getRequest, token)
-	} else {
-		SetAuth(getRequest, gateway)
-	}
+	getRequest, err := c.newRequest(http.MethodGet, namespacesPath, nil)
 
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
-	res, err := client.Do(getRequest)
+	res, err := c.doRequest(ctx, getRequest)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	if res.Body != nil {
@@ -55,11 +36,11 @@ func ListNamespacesToken(gateway string, tlsInsecure bool, token string) ([]stri
 
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read namespaces from OpenFaaS on URL: %s", gateway)
+			return nil, fmt.Errorf("cannot read namespaces from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
 		jsonErr := json.Unmarshal(bytesOut, &namespaces)
 		if jsonErr != nil {
-			return nil, fmt.Errorf("cannot parse namespaces from OpenFaaS on URL: %s\n%s", gateway, jsonErr.Error())
+			return nil, fmt.Errorf("cannot parse namespaces from OpenFaaS on URL: %s\n%s", c.GatewayURL.String(), jsonErr.Error())
 		}
 	case http.StatusUnauthorized:
 		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")

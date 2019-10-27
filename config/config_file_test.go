@@ -26,6 +26,26 @@ func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
 	}
 }
 
+func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
+	DefaultDir, _ = ioutil.TempDir("", "faas-cli-file-test")
+	DefaultFile = "test2.yml"
+	u := "admin"
+	p := "some pass"
+	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
+	token := EncodeAuth(u, p)
+	UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+
+	_, err := LookupAuthConfig("http://openfaas.com")
+	if err == nil {
+		t.Errorf("Error was not returned")
+	}
+
+	r := regexp.MustCompile(`(?m:no auth config found for)`)
+	if !r.MatchString(err.Error()) {
+		t.Errorf("Error not matched: %s", err.Error())
+	}
+}
+
 func Test_UpdateAuthConfig_Insert(t *testing.T) {
 	DefaultDir, _ = ioutil.TempDir("", "faas-cli-file-test")
 	DefaultFile = "test2.yml"

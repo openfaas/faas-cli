@@ -4,7 +4,10 @@
 package commands
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
+	"net/http"
 	"os"
 	"time"
 
@@ -90,7 +93,10 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	logRequest := logRequestFromFlags(cmd, args)
-	logEvents, err := proxy.GetLogs(gatewayAddress, tlsInsecure, logRequest, logFlagValues.token)
+	cliAuth := NewCLIAuth(logFlagValues.token, gatewayAddress)
+	transport := getLogStreamingTransport(tlsInsecure)
+	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, nil)
+	logEvents, err := cliClient.GetLogs(context.Background(), logRequest)
 	if err != nil {
 		return err
 	}
@@ -120,6 +126,18 @@ func sinceValue(t time.Time, d time.Duration) *time.Time {
 	if d.String() != "0s" {
 		ts := nowFunc().Add(-1 * d)
 		return &ts
+	}
+	return nil
+}
+
+func getLogStreamingTransport(tlsInsecure bool) http.RoundTripper {
+	if tlsInsecure {
+		tr := &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+		}
+		tr.TLSClientConfig = &tls.Config{InsecureSkipVerify: tlsInsecure}
+
+		return tr
 	}
 	return nil
 }

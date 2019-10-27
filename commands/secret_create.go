@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -109,9 +110,11 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
 		fmt.Println(msg)
 	}
-
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	fmt.Println("Creating secret: " + secret.Name)
-	_, output := proxy.CreateSecretToken(gatewayAddress, secret, tlsInsecure, token)
+	_, output := client.CreateSecret(context.Background(), secret)
 	fmt.Printf(output)
 
 	return nil

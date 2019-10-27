@@ -4,6 +4,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -22,7 +23,10 @@ func Test_GetFunctionInfo(t *testing.T) {
 	})
 
 	defer s.Close()
-	result, err := GetFunctionInfo(s.URL, "func-test1", !tlsNoVerify, "")
+	cliAuth := NewTestAuth(nil)
+	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+
+	result, err := proxyClient.GetFunctionInfo(context.Background(), "func-test1", "")
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
 	}
@@ -34,7 +38,10 @@ func Test_GetFunctionInfo(t *testing.T) {
 func Test_GetFunctionInfo_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
-	_, err := GetFunctionInfo(s.URL, "func-test1", tlsNoVerify, "")
+	cliAuth := NewTestAuth(nil)
+	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+
+	_, err := proxyClient.GetFunctionInfo(context.Background(), "func-test1", "")
 
 	if err == nil {
 		t.Fatalf("Error was not returned")
@@ -46,25 +53,13 @@ func Test_GetFunctionInfo_Not200(t *testing.T) {
 	}
 }
 
-func Test_GetFunctionInfo_MissingURLPrefix(t *testing.T) {
-	_, err := GetFunctionInfo("127.0.0.1:8080", "func-test", tlsNoVerify, "")
-
-	if err == nil {
-		t.Fatalf("Error was not returned")
-	}
-
-	expectedErrMsg := "invalid gateway URL:"
-	r := regexp.MustCompile(fmt.Sprintf("(?m:%s)", expectedErrMsg))
-	if !r.MatchString(err.Error()) {
-		t.Fatalf("Want: %s, Got: %s", expectedErrMsg, err.Error())
-	}
-}
-
 func Test_GetFunctionInfo_NotFound(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusNotFound)
-	functionName := "funct-test"
+	cliAuth := NewTestAuth(nil)
+	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
-	_, err := GetFunctionInfo(s.URL, functionName, tlsNoVerify, "")
+	functionName := "funct-test"
+	_, err := proxyClient.GetFunctionInfo(context.Background(), functionName, "")
 	if err == nil {
 		t.Fatalf("Error was not returned")
 	}

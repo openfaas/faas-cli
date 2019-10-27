@@ -4,31 +4,24 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 )
 
 //GetSystemInfo get system information from /system/info endpoint
-func GetSystemInfo(gateway string, tlsInsecure bool, token string) (map[string]interface{}, error) {
-	infoEndPoint := gateway + "/system/info"
-	timeout := 5 * time.Second
-
-	client := MakeHTTPClient(&timeout, tlsInsecure)
-	req, err := http.NewRequest(http.MethodGet, infoEndPoint, nil)
+func (c *Client) GetSystemInfo(ctx context.Context) (map[string]interface{}, error) {
+	infoEndPoint := "/system/info"
+	req, err := c.newRequest(http.MethodGet, infoEndPoint, nil)
 	if err != nil {
 		return nil, fmt.Errorf("invalid HTTP method or invalid URL")
 	}
-	if len(token) > 0 {
-		SetToken(req, token)
-	} else {
-		SetAuth(req, gateway)
-	}
-	response, err := client.Do(req)
+
+	response, err := c.doRequest(ctx, req)
 	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
 
 	if response.Body != nil {
@@ -40,11 +33,11 @@ func GetSystemInfo(gateway string, tlsInsecure bool, token string) (map[string]i
 	case http.StatusOK:
 		bytesOut, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", gateway)
+			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
 		err = json.Unmarshal(bytesOut, &info)
 		if err != nil {
-			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", gateway, err.Error())
+			return nil, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", c.GatewayURL.String(), err.Error())
 		}
 
 	case http.StatusUnauthorized:

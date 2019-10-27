@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"os"
 
@@ -54,7 +55,11 @@ func runSecretRemove(cmd *cobra.Command, args []string) error {
 		Name:      args[0],
 		Namespace: functionNamespace,
 	}
-	err := proxy.RemoveSecretToken(gatewayAddress, secret, tlsInsecure, token)
+
+	cliAuth := NewCLIAuth(token, gatewayAddress)
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	err := client.RemoveSecret(context.Background(), secret)
 	if err != nil {
 		return err
 	}
