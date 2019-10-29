@@ -14,7 +14,8 @@ type CLIAuth struct {
 }
 
 func NewCLIAuth(token string, gateway string) proxy.ClientAuth {
-	username, password, _ := config.LookupAuthConfig(gateway)
+	authConfig, _ := config.LookupAuthConfig(gateway)
+	username, password, _ := config.DecodeAuth(authConfig.Token)
 
 	return &CLIAuth{
 		Username: username,
