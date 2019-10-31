@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"text/tabwriter"
 
-	v2 "github.com/openfaas/faas-cli/schema/store/v2"
+	storeV2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -52,7 +52,7 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func storeRenderItem(item *v2.StoreFunction, platform string) string {
+func storeRenderItem(item *storeV2.StoreFunction, platform string) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
