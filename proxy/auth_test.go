@@ -48,7 +48,7 @@ func Test_SetAuth_SkipAuthorization(t *testing.T) {
 	}
 }
 
-func Test_AddAuth_Oauth2(t *testing.T) {
+func Test_SetAuth_Oauth2(t *testing.T) {
 	//setup store
 	config.DefaultDir, _ = ioutil.TempDir("", "faas-cli-auth-test")
 	config.DefaultFile = "authtest2.yml"
@@ -57,7 +57,7 @@ func Test_AddAuth_Oauth2(t *testing.T) {
 	config.UpdateAuthConfig(basicAuthURL, token, config.Oauth2AuthType)
 
 	req, _ := http.NewRequest("GET", basicAuthURL, nil)
-	AddAuth(req, basicAuthURL)
+	SetAuth(req, basicAuthURL)
 	header := req.Header.Get("Authorization")
 	expectedValue := "Bearer " + token
 	if header != expectedValue {
@@ -65,7 +65,7 @@ func Test_AddAuth_Oauth2(t *testing.T) {
 	}
 }
 
-func Test_AddAuth_BasicAuth(t *testing.T) {
+func Test_SetAuth_BasicAuth(t *testing.T) {
 	//setup store
 	config.DefaultDir, _ = ioutil.TempDir("", "faas-cli-auth-test")
 	config.DefaultFile = "authtest2.yml"
@@ -74,7 +74,7 @@ func Test_AddAuth_BasicAuth(t *testing.T) {
 	config.UpdateAuthConfig(basicAuthURL, token, config.BasicAuthType)
 
 	req, _ := http.NewRequest("GET", basicAuthURL, nil)
-	AddAuth(req, basicAuthURL)
+	SetAuth(req, basicAuthURL)
 	header := req.Header.Get("Authorization")
 	expectedValue := "Basic " + token
 	if header != expectedValue {
@@ -82,7 +82,7 @@ func Test_AddAuth_BasicAuth(t *testing.T) {
 	}
 }
 
-func Test_AddAuth_SkipAuthorization(t *testing.T) {
+func Test_SetAuth_SkipAuthorizationHeader(t *testing.T) {
 	//setup store
 	config.DefaultDir, _ = ioutil.TempDir("", "faas-cli-auth-test")
 	config.DefaultFile = "authtest2.yml"
