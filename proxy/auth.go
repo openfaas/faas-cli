@@ -16,12 +16,15 @@ func SetAuth(req *http.Request, gateway string) {
 		// no auth info found
 		return
 	}
-	username, password, err := config.DecodeAuth(authConfig.Token)
-	if err != nil {
-		// no auth info found
+
+	switch authConfig.Auth {
+	case config.BasicAuthType:
+		SetBasicAuth(req, authConfig)
+		return
+	case config.Oauth2AuthType:
+		SetOauth2(req, authConfig)
 		return
 	}
-	req.SetBasicAuth(username, password)
 }
 
 //SetToken sets authentication token
@@ -42,22 +45,4 @@ func SetBasicAuth(req *http.Request, authConfig config.AuthConfig) {
 //SetOauth2 set oauth2 token
 func SetOauth2(req *http.Request, authConfig config.AuthConfig) {
 	SetToken(req, authConfig.Token)
-}
-
-//AddAuth add authentication
-func AddAuth(req *http.Request, gateway string) {
-	authConfig, err := config.LookupAuthConfig(gateway)
-	if err != nil {
-		// no auth info found
-		return
-	}
-
-	switch authConfig.Auth {
-	case config.BasicAuthType:
-		SetBasicAuth(req, authConfig)
-		return
-	case config.Oauth2AuthType:
-		SetOauth2(req, authConfig)
-		return
-	}
 }
