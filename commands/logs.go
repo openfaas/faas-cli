@@ -78,8 +78,8 @@ func initLogCmdFlags(cmd *cobra.Command) {
 	logFlagValues.timeFormat = flags.TimeFormat(time.RFC3339)
 	cmd.Flags().Var(&logFlagValues.logFormat, "format", "output format.  Note that JSON format will always include all log message keys (plain|key-value|json)")
 	cmd.Flags().Var(&logFlagValues.timeFormat, "time-format", "string format for the timestamp, any value go time format string is allowed, empty will not print the timestamp")
-	cmd.Flags().BoolVar(&logFlagValues.includeName, "name", true, "print the function name")
-	cmd.Flags().BoolVar(&logFlagValues.includeInstance, "instance", true, "print the function instance name/id")
+	cmd.Flags().BoolVar(&logFlagValues.includeName, "name", false, "print the function name")
+	cmd.Flags().BoolVar(&logFlagValues.includeInstance, "instance", false, "print the function instance name/id")
 }
 
 func runLogs(cmd *cobra.Command, args []string) error {
