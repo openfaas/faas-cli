@@ -39,7 +39,7 @@ $ brew install faas-cli
 
 Note: The `brew` release may not run the latest minor release but is updated regularly.
 
-Via npm:
+Via npm (coming soon):
 
 ```
 $ npm install --global @openfaas/faas-cli
