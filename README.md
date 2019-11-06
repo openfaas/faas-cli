@@ -343,7 +343,7 @@ sudo install -m 755 kubeseal-$GOOS-$GOARCH /usr/local/bin/kubeseal
 Now grab your pub-cert.pem file from your cluster, or use the official [OpenFaaS Cloud certificate](https://github.com/openfaas/cloud-functions/blob/master/pub-cert.pem).
 
 ```
-$ kubeseal --fetch-cert > pub-cert.pem
+$ kubeseal --fetch-cert --controller-name ofc-sealedsecrets-sealed-secrets > pub-cert.pem
 ```
 
 Then seal a secret using the OpenFaaS CLI:
