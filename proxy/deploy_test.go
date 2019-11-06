@@ -125,3 +125,72 @@ func Test_DeployFunction_MissingURLPrefix(t *testing.T) {
 		t.Fatalf("Want: %s\nGot: %s", expectedErrMsg, stdout)
 	}
 }
+
+func Test_DeployFunction_generateFuncStr(t *testing.T) {
+
+	testCases := []struct {
+		name        string
+		spec        *DeployFunctionSpec
+		expectedStr string
+		shouldErr   bool
+	}{
+		{
+			name: "No Namespace",
+			spec: &DeployFunctionSpec{
+				"fprocess",
+				"",
+				"funcName",
+				"image",
+				"dXNlcjpwYXNzd29yZA==",
+				"language",
+				false,
+				nil,
+				"network",
+				[]string{},
+				false,
+				[]string{},
+				map[string]string{},
+				map[string]string{},
+				FunctionResourceRequest{},
+				false,
+				tlsNoVerify,
+				"",
+				"",
+			},
+			expectedStr: "funcName",
+		},
+		{name: "With Namespace",
+			spec: &DeployFunctionSpec{
+				"fprocess",
+				"",
+				"funcName",
+				"image",
+				"dXNlcjpwYXNzd29yZA==",
+				"language",
+				false,
+				nil,
+				"network",
+				[]string{},
+				false,
+				[]string{},
+				map[string]string{},
+				map[string]string{},
+				FunctionResourceRequest{},
+				false,
+				tlsNoVerify,
+				"",
+				"nameSpace",
+			},
+			expectedStr: "funcName.nameSpace",
+		},
+	}
+
+	for _, testCase := range testCases {
+		funcStr := generateFuncStr(testCase.spec)
+		fmt.Println(funcStr)
+		if funcStr != testCase.expectedStr {
+			t.Fatalf("generateFuncStr %s\nwant: %s, got: %s", testCase.name, testCase.expectedStr, funcStr)
+		}
+	}
+
+}

@@ -50,6 +50,14 @@ type DeployFunctionSpec struct {
 	Namespace               string
 }
 
+func generateFuncStr(spec *DeployFunctionSpec) string {
+
+	if len(spec.Namespace) > 0 {
+		return fmt.Sprintf("%s.%s", spec.FunctionName, spec.Namespace)
+	}
+	return spec.FunctionName
+}
+
 // DeployFunction first tries to deploy a function and if it exists will then attempt
 // a rolling update. Warnings are suppressed for the second API call (if required.)
 func DeployFunction(spec *DeployFunctionSpec) int {
@@ -171,7 +179,7 @@ func Deploy(spec *DeployFunctionSpec, update bool, warnInsecureGateway bool) (in
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		deployOutput += fmt.Sprintf("Deployed. %s.\n", res.Status)
 
-		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, spec.FunctionName)
+		deployedURL := fmt.Sprintf("URL: %s/function/%s", gateway, generateFuncStr(spec))
 		deployOutput += fmt.Sprintln(deployedURL)
 	case http.StatusUnauthorized:
 		deployOutput += fmt.Sprintln("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
