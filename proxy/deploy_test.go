@@ -187,7 +187,7 @@ func Test_DeployFunction_generateFuncStr(t *testing.T) {
 
 	for _, testCase := range testCases {
 		funcStr := generateFuncStr(testCase.spec)
-		fmt.Println(funcStr)
+
 		if funcStr != testCase.expectedStr {
 			t.Fatalf("generateFuncStr %s\nwant: %s, got: %s", testCase.name, testCase.expectedStr, funcStr)
 		}
