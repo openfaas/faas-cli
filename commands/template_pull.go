@@ -4,6 +4,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -42,7 +43,7 @@ func runTemplatePull(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		repository = args[0]
 	}
-
+	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
 	return pullTemplate(repository)
 }
 
