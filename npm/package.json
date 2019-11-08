@@ -8,7 +8,9 @@
     "faas-cli": "./cli.js"
   },
   "scripts": {
-    "postinstall": "node install.js"
+    "test": "node test.js",
+    "test:install": "node install-test.js",
+    "postinstall": "node install.js main"
   },
   "repository": {
     "type": "git",
