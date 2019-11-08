@@ -354,6 +354,11 @@ $ faas-cli cloud seal --name alexellis-github --literal hmac-secret=1234 --cert=
 
 You can then place the `secrets.yml` file in any public Git repo without others being able to read the contents.
 
+When SealedSecrets is installed by ofc-bootstrap
+
+The [scripts/export-sealed-secret-pubcert.sh](https://github.com/openfaas-incubator/ofc-bootstrap/blob/master/scripts/export-sealed-secret-pubcert.sh) does everything automatically.
+
+
 ### Environment variable overrides
 
 * `OPENFAAS_TEMPLATE_URL` - to set the default URL to pull templates from
