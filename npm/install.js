@@ -7,13 +7,11 @@ const mkdirp = require('mkdirp');
 
 const lib = require('./lib');
 
-async function main() {
+module.exports.install = async () => {
   const type = os.type();
   const arch = os.arch();
-  let suffix = lib.getSuffix(type, arch);
-  let name = `faas-cli${suffix}`;
-  let extname = suffix === '.exe' ? '.exe' : '';
-  let dest = path.join(__dirname, `bin/faas-cli${extname}`);
+  let binaryName = lib.getBinaryName(type, arch);
+  let dest = path.join(__dirname, `bin/${binaryName}`);
   mkdirp.sync(path.dirname(dest));
   del.sync(dest, { force: true });
 
@@ -29,15 +27,18 @@ async function main() {
   }
 
   // Don't use `chmod` on Windows
-  if (suffix !== '.exe') {
+  if (binaryName.endsWith('.exe')) {
     await lib.cmd(`chmod +x ${dest}`);
   }
   console.log('Download complete.');
 }
 
-main()
-  .then(() => process.exit())
-  .catch(err => {
-    console.error(err.message);
-    process.exit(1);
-  });
+
+module.exports.init = () => {
+  this.install()
+    .then(() => process.exit())
+    .catch(err => {
+      console.error(err.message);
+      process.exit(1);
+    });
+}

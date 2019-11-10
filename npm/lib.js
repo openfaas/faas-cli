@@ -30,6 +30,11 @@ module.exports = {
 
         throw new Error(`Unsupported platform: ${type} ${arch}`);
     },
+    getBinaryName(type, arch) {
+        let suffix = this.getSuffix(type, arch);
+        let extname = suffix === '.exe' ? '.exe' : '';
+        return `faas-cli${extname}`;
+    },
     download(url, dest) {
         return new Promise(async (resolve, reject) => {
             let ws = fs.createWriteStream(dest);

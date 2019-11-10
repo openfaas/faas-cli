@@ -10,7 +10,7 @@
   "scripts": {
     "test": "node test.js",
     "test:install": "node install-test.js",
-    "postinstall": "node install.js main"
+    "postinstall": "node -e 'require(\"./install.js\").init()'"
   },
   "repository": {
     "type": "git",

@@ -12,7 +12,6 @@ const tests = {
             let expect = '.exe';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         LinuxX64() {
             let type = 'Linux';
@@ -20,7 +19,6 @@ const tests = {
             let expect = '';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         LinuxArm64() {
             let type = 'Linux';
@@ -28,7 +26,6 @@ const tests = {
             let expect = '-arm64';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         LinuxArmhf6() {
             let type = 'Linux';
@@ -36,7 +33,6 @@ const tests = {
             let expect = '-armhf';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         LinuxArmhf7() {
             let type = 'Linux';
@@ -44,7 +40,6 @@ const tests = {
             let expect = '-armhf';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         MacOS() {
             let type = 'Darwin';
@@ -52,21 +47,41 @@ const tests = {
             let expect = '-darwin';
             let result = lib.getSuffix(type, arch);
             assert.ok(result == expect, `Expected [${expect}], but got [${result}]`);
-            console.log(greenCheck);
         },
         Unsupported() {
             let type = 'BadType';
             let arch = 'BadArch';
             assert.throws(() => lib.getSuffix(type, arch), `Should throw error on unexpected type (${type}) and arch ${arch}`);
-            console.log(greenCheck);
+        }
+    },
+    BinaryNameTests: {
+        Windows() {
+            let type = 'Windows_NT';
+            let arch = '';
+            let expected = 'faas-cli.exe'
+            let binary = lib.getBinaryName(type, arch);
+            assert.ok(binary == expected, `Expected [${expected}], but got [${binary}]`);
+        },
+        Linux() {
+            let type = 'Linux';
+            let arch = 'x64';
+            let expected = 'faas-cli'
+            let binary = lib.getBinaryName(type, arch);
+            assert.ok(binary == expected, `Expected [${expected}], but got [${binary}]`);
+        },
+        MacOS() {
+            let type = 'Darwin';
+            let arch = '';
+            let expected = 'faas-cli'
+            let binary = lib.getBinaryName(type, arch);
+            assert.ok(binary == expected, `Expected [${expected}], but got [${binary}]`);
         }
     },
     ReleasesTests: {
         async GetReleases() {
             let result = await lib.getReleases();
             assert.ok(result, 'Releases response was empty');
-            assert.ok(result.length > 1);
-            console.log(greenCheck);
+            assert.ok(result.length > 1);            
         }
     }
 }
@@ -81,6 +96,7 @@ for (var suite in tests) {
             process.stdout.write(`\t${test} `);
             try {
                 testFunc();
+                console.log(greenCheck);
             } catch (error) {
                 console.log(redNoSign, error.message);
             }
