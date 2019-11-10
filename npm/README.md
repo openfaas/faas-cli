@@ -12,7 +12,7 @@ Install with [npm](https://www.npmjs.com/) as a global module:
 $ npm install --global @openfaas/faas-cli
 ```
 
-> This will install the `faas-cli` binary alongside other npm global packages in `~/.npm-global/bin/`
+> This will install the `faas-cli` binary alongside other npm global packages
 
 ```sh
 $ faas
