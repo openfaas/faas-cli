@@ -330,14 +330,11 @@ Commands:
 
 You can use the CLI to seal a secret for usage on public Git repo. The pre-requisite is that you have installed [SealedSecrets](https://github.com/bitnami-labs/sealed-secrets) and exported your public key from your cluster as `pub-cert.pem`.
 
-Install `kubeseal`:
+Download and Install `kubeseal`:
 
 ```
-release=$(curl --silent "https://api.github.com/repos/bitnami-labs/sealed-secrets/releases/latest" | sed -n 's/.*"tag_name": *"\([^"]*\)".*/\1/p')
-GOOS=$(go env GOOS)
-GOARCH=$(go env GOARCH)
-wget https://github.com/bitnami/sealed-secrets/releases/download/$release/kubeseal-$GOOS-$GOARCH
-sudo install -m 755 kubeseal-$GOOS-$GOARCH /usr/local/bin/kubeseal
+faas-cli download kubeseal
+export PATH=$PATH:$HOME/.openfaas/bin
 ```
 
 Now grab your pub-cert.pem file from your cluster, or use the official [OpenFaaS Cloud certificate](https://github.com/openfaas/cloud-functions/blob/master/pub-cert.pem).
