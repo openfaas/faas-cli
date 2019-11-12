@@ -18,7 +18,6 @@ var (
 func init() {
 	templatePullStackCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
 	templatePullStackCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
-	templatePullStackCmd.PersistentFlags().StringVarP(&customRepoName, "repo", "r", "", "The custom name of the template repo")
 
 	templatePullCmd.AddCommand(templatePullStackCmd)
 }
@@ -41,10 +40,7 @@ func runTemplatePullStack(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	if len(customRepoName) > 0 {
-		return pullSpecificTemplate(templatesConfig, customRepoName, cmd)
-	}
-	return pullAllTemplates(templatesConfig, cmd)
+	return pullStackTemplates(templatesConfig, cmd)
 }
 
 func loadTemplateConfig() ([]stack.TemplateSource, error) {
@@ -72,7 +68,7 @@ func readStackConfig() (stack.Configuration, error) {
 	return configField, nil
 }
 
-func pullAllTemplates(templateInfo []stack.TemplateSource, cmd *cobra.Command) error {
+func pullStackTemplates(templateInfo []stack.TemplateSource, cmd *cobra.Command) error {
 	for _, val := range templateInfo {
 		fmt.Printf("Pulling template: %s from configuration file: %s\n", val.Name, yamlFile)
 		if len(val.Source) == 0 {
@@ -97,15 +93,4 @@ func findTemplate(templateInfo []stack.TemplateSource, customName string) (speci
 		}
 	}
 	return nil
-}
-
-func pullSpecificTemplate(templateInfo []stack.TemplateSource, customName string, cmd *cobra.Command) error {
-	desiredTemplate := findTemplate(templateInfo, customName)
-	if desiredTemplate == nil {
-		return fmt.Errorf("Unable to find template repo with name: `%s`", customName)
-	}
-	if len(desiredTemplate.Source) == 0 {
-		return runTemplateStorePull(cmd, []string{desiredTemplate.Name})
-	}
-	return pullTemplate(desiredTemplate.Source)
 }

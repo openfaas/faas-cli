@@ -21,18 +21,19 @@ import (
 
 // Flags that are to be added to commands.
 var (
-	nocache       bool
-	squash        bool
-	parallel      int
-	shrinkwrap    bool
-	buildArgs     []string
-	buildArgMap   map[string]string
-	buildOptions  []string
-	tagFormat     schema.BuildFormat
-	buildLabels   []string
-	buildLabelMap map[string]string
-	envsubst      bool
-	quietBuild    bool
+	nocache          bool
+	squash           bool
+	parallel         int
+	shrinkwrap       bool
+	buildArgs        []string
+	buildArgMap      map[string]string
+	buildOptions     []string
+	tagFormat        schema.BuildFormat
+	buildLabels      []string
+	buildLabelMap    map[string]string
+	envsubst         bool
+	quietBuild       bool
+	disableStackPull bool
 )
 
 func init() {
@@ -55,6 +56,8 @@ func init() {
 	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 
 	buildCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
+
+	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -179,6 +182,13 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		return nil
+	}
+
+	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
+		err := pullStackTemplates(services.StackConfiguration.TemplateConfigs, cmd)
+		if err != nil {
+			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
+		}
 	}
 
 	errors := build(&services, parallel, shrinkwrap, quietBuild)
