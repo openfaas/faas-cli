@@ -87,9 +87,10 @@ type EnvironmentFile struct {
 
 // Services root level YAML file to define FaaS function-set
 type Services struct {
-	Version   string              `yaml:"version,omitempty"`
-	Functions map[string]Function `yaml:"functions,omitempty"`
-	Provider  Provider            `yaml:"provider,omitempty"`
+	Version            string              `yaml:"version,omitempty"`
+	Functions          map[string]Function `yaml:"functions,omitempty"`
+	Provider           Provider            `yaml:"provider,omitempty"`
+	StackConfiguration StackConfiguration  `yaml:"configuration,omitempty"`
 }
 
 // LanguageTemplate read from template.yml within root of a language template folder

@@ -98,68 +98,7 @@ func Test_pullAllTemplates(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.title, func(t *testing.T) {
-			actualError := pullAllTemplates(test.existingTemplates, templatePullStackCmd)
-			if actualError != nil && test.expectedError == false {
-				t.Errorf("Unexpected error: %s", actualError.Error())
-			}
-		})
-	}
-}
-
-func Test_pullSpecificTemplate(t *testing.T) {
-	tests := []struct {
-		title             string
-		desiredTemplate   string
-		existingTemplates []stack.TemplateSource
-		expectedError     bool
-	}{
-		{
-			title:           "Pull custom named template",
-			desiredTemplate: "my_powershell",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "my_powershell", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
-				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
-			},
-			expectedError: false,
-		},
-		{
-			title:           "Pull missing template",
-			desiredTemplate: "my_perl",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "my_powershell", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
-				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
-			},
-			expectedError: true,
-		},
-		{
-			title:           "Pull custom template from store",
-			desiredTemplate: "perl-alpine",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "perl-alpine"},
-				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
-			},
-			expectedError: false,
-		},
-		{
-			title:           "Pull specific template with invalid URL",
-			desiredTemplate: "my_powershell",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "my_powershell", Source: "invalidURL"},
-			},
-			expectedError: true,
-		},
-		{
-			title:           "Pull template missing from store",
-			desiredTemplate: "my_powershell",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "my_powershell"},
-			},
-			expectedError: true,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.title, func(t *testing.T) {
-			actualError := pullSpecificTemplate(test.existingTemplates, test.desiredTemplate, templatePullStackCmd)
+			actualError := pullStackTemplates(test.existingTemplates, templatePullStackCmd)
 			if actualError != nil && test.expectedError == false {
 				t.Errorf("Unexpected error: %s", actualError.Error())
 			}
