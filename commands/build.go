@@ -20,6 +20,7 @@ import (
 
 // Flags that are to be added to commands.
 var (
+	ssh           string
 	nocache       bool
 	squash        bool
 	parallel      int
@@ -41,6 +42,7 @@ func init() {
 	buildCmd.Flags().StringVar(&language, "lang", "", "Programming language template")
 
 	// Setup flags that are used only by this command (variables defined above)
+	buildCmd.Flags().StringVar(&ssh, "ssh", "", `(Experimental) The value to be passed to the '--ssh' flag of 'docker build'.`)
 	buildCmd.Flags().BoolVar(&nocache, "no-cache", false, "Do not use Docker's build cache")
 	buildCmd.Flags().BoolVar(&squash, "squash", false, `Use Docker's squash flag for smaller images [experimental] `)
 	buildCmd.Flags().IntVar(&parallel, "parallel", 1, "Build in parallel to depth specified.")
@@ -170,7 +172,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tagFormat, buildLabelMap)
+		err := builder.BuildImage(image, handler, functionName, language, ssh, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tagFormat, buildLabelMap)
 		if err != nil {
 			return err
 		}
@@ -194,7 +196,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 				} else {
 
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tagFormat, buildLabelMap)
+					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, ssh, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tagFormat, buildLabelMap)
 					if err != nil {
 						log.Println(err)
 					}

@@ -33,6 +33,7 @@ func Test_isLanguageTemplate_Node(t *testing.T) {
 func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 	dockerBuildVal := dockerBuild{
 		Image:            "imagename:latest",
+		SSH:              "",
 		NoCache:          false,
 		Squash:           false,
 		HTTPProxy:        "",
@@ -51,9 +52,32 @@ func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 	}
 }
 
+func Test_getDockerBuildCommand_WithSSH(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:            "imagename:latest",
+		SSH:              "default",
+		NoCache:          false,
+		Squash:           false,
+		HTTPProxy:        "",
+		HTTPSProxy:       "",
+		BuildArgMap:      make(map[string]string),
+		BuildOptPackages: []string{},
+	}
+
+	values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	want := "docker build --ssh default -t imagename:latest ."
+
+	if joined != want {
+		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+}
+
 func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 	dockerBuildVal := dockerBuild{
 		Image:            "imagename:latest",
+		SSH:              "",
 		NoCache:          true,
 		Squash:           false,
 		HTTPProxy:        "",
@@ -75,6 +99,7 @@ func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 	dockerBuildVal := dockerBuild{
 		Image:            "imagename:latest",
+		SSH:              "",
 		NoCache:          false,
 		Squash:           false,
 		HTTPProxy:        "http://127.0.0.1:3128",
@@ -96,6 +121,7 @@ func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 	dockerBuildVal := dockerBuild{
 		Image:   "imagename:latest",
+		SSH:     "",
 		NoCache: false,
 		Squash:  false,
 		BuildArgMap: map[string]string{
@@ -123,6 +149,7 @@ func Test_buildFlagSlice(t *testing.T) {
 
 	var buildFlagOpts = []struct {
 		title         string
+		ssh           string
 		nocache       bool
 		squash        bool
 		httpProxy     string
@@ -133,7 +160,19 @@ func Test_buildFlagSlice(t *testing.T) {
 		buildLabelMap map[string]string
 	}{
 		{
+			title:         "ssh only",
+			ssh:           "default",
+			nocache:       false,
+			squash:        false,
+			httpProxy:     "",
+			httpsProxy:    "",
+			buildArgMap:   make(map[string]string),
+			buildPackages: []string{},
+			expectedSlice: []string{"--ssh", "default"},
+		},
+		{
 			title:         "no cache only",
+			ssh:           "",
 			nocache:       true,
 			squash:        false,
 			httpProxy:     "",
@@ -144,6 +183,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:         "no cache & squash only",
+			ssh:           "",
 			nocache:       true,
 			squash:        true,
 			httpProxy:     "",
@@ -154,6 +194,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:         "no cache & squash & http proxy only",
+			ssh:           "",
 			nocache:       true,
 			squash:        true,
 			httpProxy:     "192.168.0.1",
@@ -164,6 +205,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:         "no cache & squash & https-proxy only",
+			ssh:           "",
 			nocache:       true,
 			squash:        true,
 			httpProxy:     "",
@@ -174,6 +216,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:         "no cache & squash & http-proxy & https-proxy only",
+			ssh:           "",
 			nocache:       true,
 			squash:        true,
 			httpProxy:     "192.168.0.1",
@@ -184,6 +227,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:         "http-proxy & https-proxy only",
+			ssh:           "",
 			nocache:       false,
 			squash:        false,
 			httpProxy:     "192.168.0.1",
@@ -194,6 +238,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "build arg map no spaces",
+			ssh:        "",
 			nocache:    false,
 			squash:     false,
 			httpProxy:  "",
@@ -206,6 +251,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "build arg map with spaces",
+			ssh:        "",
 			nocache:    false,
 			squash:     false,
 			httpProxy:  "",
@@ -218,6 +264,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "multiple build arg map with spaces",
+			ssh:        "",
 			nocache:    false,
 			squash:     false,
 			httpProxy:  "",
@@ -231,6 +278,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "no-cache and squash with multiple build arg map with spaces",
+			ssh:        "",
 			nocache:    true,
 			squash:     true,
 			httpProxy:  "",
@@ -244,6 +292,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "single build-label value",
+			ssh:        "",
 			nocache:    false,
 			squash:     false,
 			httpProxy:  "",
@@ -260,6 +309,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		},
 		{
 			title:      "multiple build-label values",
+			ssh:        "",
 			nocache:    false,
 			squash:     false,
 			httpProxy:  "",
@@ -281,7 +331,7 @@ func Test_buildFlagSlice(t *testing.T) {
 
 		t.Run(test.title, func(t *testing.T) {
 
-			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap)
+			flagSlice := buildFlagSlice(test.ssh, test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap)
 			fmt.Println(flagSlice)
 			if len(flagSlice) != len(test.expectedSlice) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))

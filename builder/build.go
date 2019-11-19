@@ -22,7 +22,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string) error {
+func BuildImage(image string, handler string, functionName string, language string, ssh string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string) error {
 
 	if stack.IsValidTemplate(language) {
 		branch, version, err := GetImageTagValues(tagMode)
@@ -58,6 +58,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		dockerBuildVal := dockerBuild{
 			Image:            imageName,
+			SSH:              ssh,
 			NoCache:          nocache,
 			Squash:           squash,
 			HTTPProxy:        os.Getenv("http_proxy"),
@@ -114,7 +115,7 @@ func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err 
 }
 
 func getDockerBuildCommand(build dockerBuild) []string {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
+	flagSlice := buildFlagSlice(build.SSH, build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
 	command := []string{"docker", "build"}
 	command = append(command, flagSlice...)
 	command = append(command, "-t", build.Image, ".")
@@ -125,6 +126,7 @@ func getDockerBuildCommand(build dockerBuild) []string {
 type dockerBuild struct {
 	Image            string
 	Version          string
+	SSH              string
 	NoCache          bool
 	Squash           bool
 	HTTPProxy        string
@@ -236,10 +238,13 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 	return tempPath
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
+func buildFlagSlice(ssh string, nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
 
 	var spaceSafeBuildFlags []string
 
+	if ssh != "" {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--ssh", ssh)
+	}
 	if nocache {
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--no-cache")
 	}
