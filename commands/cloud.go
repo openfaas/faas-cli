@@ -49,10 +49,12 @@ var cloudCmd = &cobra.Command{
 }
 
 var cloudSealCmd = &cobra.Command{
-	Use:     `seal [--name secret-name] [--literal k=v] [--namespace openfaas-fn]`,
-	Short:   "Seal a secret for usage with OpenFaaS Cloud",
-	Example: `  faas-cli cloud seal --name alexellis-github --literal hmac-secret=c4488af0c158e8c`,
-	RunE:    runCloudSeal,
+	Use:   `seal [--name secret-name] [--literal k=v] [--from-file] [--namespace openfaas-fn]`,
+	Short: "Seal a secret for usage with OpenFaaS Cloud",
+	Example: `  faas-cli cloud seal --name alexellis-github --literal hmac-secret=c4488af0c158e8c
+  faas-cli cloud seal --name alexellis-token --from-file api-key.txt
+  faas-cli cloud seal --name alexellis-token --literal a=b --literal c=d --cert pub-cert.pem`,
+	RunE: runCloudSeal,
 }
 
 func runCloudSeal(cmd *cobra.Command, args []string) error {
