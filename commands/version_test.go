@@ -18,7 +18,10 @@ func Test_addVersionDev(t *testing.T) {
 	version.GitCommit = "sha-test"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version"})
+		faasCmd.SetArgs([]string{
+			"version",
+			"--warn-update=false",
+		})
 		faasCmd.Execute()
 	})
 
@@ -38,7 +41,10 @@ func Test_addVersion(t *testing.T) {
 	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version"})
+		faasCmd.SetArgs([]string{
+			"version",
+			"--warn-update=false",
+		})
 		faasCmd.Execute()
 	})
 
@@ -57,7 +63,11 @@ func Test_addVersion_short_version(t *testing.T) {
 	version.Version = "version.tag"
 
 	stdOut := test.CaptureStdout(func() {
-		faasCmd.SetArgs([]string{"version", "--short-version"})
+		faasCmd.SetArgs([]string{
+			"version",
+			"--warn-update=false",
+			"--short-version",
+		})
 		faasCmd.Execute()
 	})
 
@@ -165,6 +175,7 @@ func executeVersionCmd(t *testing.T, responseBody string) (versionInfo string, g
 		faasCmd.SetArgs([]string{
 			"version",
 			"--gateway=" + s.URL,
+			"--warn-update=false",
 		})
 		faasCmd.Execute()
 	})

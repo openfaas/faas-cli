@@ -19,6 +19,7 @@ import (
 // GitCommit injected at build-time
 var (
 	shortVersion bool
+	warnUpdate   bool
 )
 
 func init() {
@@ -26,6 +27,9 @@ func init() {
 	versionCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	versionCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	versionCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+
+	versionCmd.Flags().BoolVar(&warnUpdate, "warn-update", true, "Check for new version and warn about updating")
+
 	versionCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	faasCmd.AddCommand(versionCmd)
 }
@@ -40,12 +44,15 @@ This currently consists of the GitSHA from which the client was built.
 - https://github.com/openfaas/faas-cli/tree/%s`, version.GitCommit),
 	Example: `  faas-cli version
   faas-cli version --short-version`,
-	Run: runVersion,
+	RunE: runVersionE,
 }
 
-func runVersion(cmd *cobra.Command, args []string) {
+func runVersionE(cmd *cobra.Command, args []string) error {
+	releases := "https://github.com/openfaas/faas-cli/releases/latest"
+
 	if shortVersion {
 		fmt.Println(version.BuildVersion())
+
 	} else {
 		printFiglet()
 		fmt.Printf(`CLI:
@@ -54,6 +61,20 @@ func runVersion(cmd *cobra.Command, args []string) {
 `, version.GitCommit, version.BuildVersion())
 		printServerVersions()
 	}
+
+	if warnUpdate {
+		version := version.Version
+		latest, err := findRelease(releases)
+		if err != nil {
+			return fmt.Errorf("unable to find latest version online error: %s", err.Error())
+		}
+
+		if version != "" && version != latest {
+			fmt.Printf("Your faas-cli version (%s) may be out of date. Version: %s is now available on GitHub.\n", version, latest)
+		}
+	}
+
+	return nil
 }
 
 func printServerVersions() {
@@ -77,6 +98,7 @@ func printServerVersions() {
 	}
 
 	version, sha, commit := getGatewayDetails(info)
+
 	printGatewayDetails(gatewayAddress, version, sha, commit)
 
 	name, orchestration, sha, version := getProviderDetails(info)
