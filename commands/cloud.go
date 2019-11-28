@@ -44,7 +44,7 @@ func init() {
 	cloudSealCmd.Flags().StringVarP(&outputFile, "output-file", "o", "secrets.yml", "Output file for secrets")
 
 	cloudSealCmd.Flags().BoolVar(&download, "download", false, "Download the kubeseal binary required for this command, see also --download-version")
-	cloudSealCmd.Flags().StringVar(&downloadVersion, "download-version", "", "Specifiy a kubeseal version to download")
+	cloudSealCmd.Flags().StringVar(&downloadVersion, "download-version", "", "Specify a kubeseal version to download")
 
 	literal = cloudSealCmd.Flags().StringArrayP("literal", "l", []string{}, "Secret literal key-value data")
 
@@ -149,7 +149,6 @@ func runCloudSeal(cmd *cobra.Command, args []string) error {
 	fmt.Printf("%s written.\n", outputFile)
 
 	return nil
-
 }
 
 func downloadKubeSeal() error {
@@ -183,10 +182,10 @@ func downloadKubeSeal() error {
 	fmt.Printf(`Download completed, please run:
 
   chmod +x %s
+  %s --version
   sudo install %s /usr/local/bin/
-  /usr/local/bin/kubeseal --version
 
-  `, output, output)
+  `, output, output, output)
 
 	return nil
 }
