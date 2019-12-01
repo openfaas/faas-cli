@@ -18,8 +18,8 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-const providerName = "faas"
-const providerNameLong = "openfaas"
+const legacyProviderName = "faas"
+const providerName = "openfaas"
 const defaultSchemaVersion = "1.0"
 
 // ValidSchemaVersions available schema versions
@@ -94,8 +94,8 @@ func ParseYAMLData(fileData []byte, regex string, filter string, envsubst bool) 
 		}
 	}
 
-	if services.Provider.Name != providerName && services.Provider.Name != providerNameLong {
-		return nil, fmt.Errorf("['%s', '%s'] is the only valid provider for this tool - found: %s", providerName, providerNameLong, services.Provider.Name)
+	if services.Provider.Name != providerName {
+		return nil, fmt.Errorf(`['%s'] is the only valid "provider.name" for the OpenFaaS CLI, but you gave: %s`, providerName, services.Provider.Name)
 	}
 
 	if len(services.Version) > 0 && !IsValidSchemaVersion(services.Version) {
