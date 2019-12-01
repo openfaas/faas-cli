@@ -335,8 +335,8 @@ func Test_ParseYAMLData_ProviderValues(t *testing.T) {
 		file          string
 	}{
 		{
-			title:         "Provider is faas and gives no error",
-			provider:      "faas",
+			title:         "Provider is openfaas and gives no error",
+			provider:      "openfaas",
 			expectedError: "",
 			file: `version: 1.0
 provider:
@@ -347,7 +347,7 @@ provider:
 		},
 		{
 			title:         "Provider is openfaas and gives no error",
-			provider:      "faas",
+			provider:      "openfaas",
 			expectedError: "",
 			file: `version: 1.0
 provider:
@@ -357,12 +357,23 @@ provider:
 `,
 		},
 		{
-			title:         "Provider is serverless-openfaas and gives error",
+			title:         "Provider is faas and gives error",
 			provider:      "faas",
-			expectedError: "['faas', 'openfaas'] is the only valid provider for this tool - found: serverless-openfaas",
+			expectedError: `['openfaas'] is the only valid "provider.name" for the OpenFaaS CLI, but you gave: faas`,
 			file: `version: 1.0
 provider:
-  name: serverless-openfaas
+  name: faas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"
+`,
+		},
+		{
+			title:         "Provider is serverless and gives error",
+			provider:      "faas",
+			expectedError: `['openfaas'] is the only valid "provider.name" for the OpenFaaS CLI, but you gave: serverless`,
+			file: `version: 1.0
+provider:
+  name: serverless
   gateway: http://127.0.0.1:8080
   network: "func_functions"
 `,
