@@ -372,5 +372,5 @@ func deDuplicate(buildOptPackages []string) []string {
 }
 
 func isLanguageTemplate(language string) bool {
-	return strings.ToLower(language) != "dockerfile"
+	return !strings.HasPrefix(strings.ToLower(language), "dockerfile")
 }

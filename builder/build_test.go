@@ -19,6 +19,17 @@ func Test_isLanguageTemplate_Dockerfile(t *testing.T) {
 	}
 }
 
+func Test_isLanguageTemplate_Dockerfile_armhf(t *testing.T) {
+
+	language := "Dockerfile-armhf"
+
+	want := false
+	got := isLanguageTemplate(language)
+	if got != want {
+		t.Errorf("language: %s got %v, want %v", language, got, want)
+	}
+}
+
 func Test_isLanguageTemplate_Node(t *testing.T) {
 
 	language := "node"
