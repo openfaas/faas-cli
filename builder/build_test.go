@@ -41,13 +41,19 @@ func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	values := getDockerBuildCommand(dockerBuildVal)
+	want := "build -t imagename:latest ."
+	wantCommand := "docker"
 
-	joined := strings.Join(values, " ")
-	want := "docker build -t imagename:latest ."
+	command, args := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(args, " ")
 
 	if joined != want {
 		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+
+	if command != wantCommand {
+		t.Errorf("getDockerBuildCommand want command: \"%s\", got: \"%s\"", wantCommand, command)
 	}
 }
 
@@ -62,13 +68,20 @@ func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	values := getDockerBuildCommand(dockerBuildVal)
+	want := "build --no-cache -t imagename:latest ."
 
-	joined := strings.Join(values, " ")
-	want := "docker build --no-cache -t imagename:latest ."
+	wantCommand := "docker"
+
+	command, args := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(args, " ")
 
 	if joined != want {
 		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+
+	if command != wantCommand {
+		t.Errorf("getDockerBuildCommand want command: \"%s\", got: \"%s\"", wantCommand, command)
 	}
 }
 
@@ -83,13 +96,20 @@ func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	values := getDockerBuildCommand(dockerBuildVal)
+	want := "build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 -t imagename:latest ."
 
-	joined := strings.Join(values, " ")
-	want := "docker build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 -t imagename:latest ."
+	wantCommand := "docker"
+
+	command, args := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(args, " ")
 
 	if joined != want {
 		t.Errorf("getDockerBuildCommand want: \"%s\", got: \"%s\"", want, joined)
+	}
+
+	if command != wantCommand {
+		t.Errorf("getDockerBuildCommand want command: \"%s\", got: \"%s\"", wantCommand, command)
 	}
 }
 
@@ -105,7 +125,7 @@ func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	values := getDockerBuildCommand(dockerBuildVal)
+	_, values := getDockerBuildCommand(dockerBuildVal)
 
 	joined := strings.Join(values, " ")
 	wantArg1 := "--build-arg USERNAME=admin"

@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/openfaas/faas-cli/exec"
+	v1execute "github.com/alexellis/go-execute/pkg/v1"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	vcs "github.com/openfaas/faas-cli/versioncontrol"
@@ -22,7 +22,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool) error {
 
 	if stack.IsValidTemplate(language) {
 		branch, version, err := GetImageTagValues(tagMode)
@@ -67,9 +67,25 @@ func BuildImage(image string, handler string, functionName string, language stri
 			BuildLabelMap:    buildLabelMap,
 		}
 
-		spaceSafeCmdLine := getDockerBuildCommand(dockerBuildVal)
+		command, args := getDockerBuildCommand(dockerBuildVal)
 
-		exec.Command(tempPath, spaceSafeCmdLine)
+		task := v1execute.ExecTask{
+			Cwd:         tempPath,
+			Command:     command,
+			Args:        args,
+			StreamStdio: !quietBuild,
+		}
+
+		res, err := task.Execute()
+
+		if err != nil {
+			return err
+		}
+
+		if res.ExitCode != 0 {
+			return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", functionName, res.Stderr)
+		}
+
 		fmt.Printf("Image: %s built.\n", imageName)
 
 	} else {
@@ -113,13 +129,15 @@ func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err 
 	return branch, version, nil
 }
 
-func getDockerBuildCommand(build dockerBuild) []string {
+func getDockerBuildCommand(build dockerBuild) (string, []string) {
 	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
-	command := []string{"docker", "build"}
-	command = append(command, flagSlice...)
-	command = append(command, "-t", build.Image, ".")
+	args := []string{"build"}
+	args = append(args, flagSlice...)
+	args = append(args, "-t", build.Image, ".")
 
-	return command
+	command := "docker"
+
+	return command, args
 }
 
 type dockerBuild struct {

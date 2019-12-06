@@ -18,6 +18,7 @@ func Command(tempPath string, builder []string) {
 	targetCmd.Dir = tempPath
 	targetCmd.Stdout = os.Stdout
 	targetCmd.Stderr = os.Stderr
+
 	targetCmd.Start()
 	err := targetCmd.Wait()
 	if err != nil {

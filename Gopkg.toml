@@ -49,3 +49,9 @@
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "v0.8.1"
+
+[[constraint]]
+  name = "github.com/alexellis/go-execute"
+  version = "0.3.0"
+
+
