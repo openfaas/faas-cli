@@ -109,7 +109,7 @@ func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFor
 				}
 			}
 
-			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
+			fmt.Printf(aec.YellowF.Apply("[%d] Worker done.\n"), index)
 			wg.Done()
 		}(i)
 	}

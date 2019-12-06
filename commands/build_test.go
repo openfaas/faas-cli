@@ -26,6 +26,21 @@ func Test_build(t *testing.T) {
 	}
 }
 
+func Test_preRunBuild_ParallelOverZero(t *testing.T) {
+	buildCmd.ParseFlags([]string{"--parallel=0"})
+	got := buildCmd.PreRunE(buildCmd, nil)
+
+	if got == nil {
+		t.Error("Parallel should have errored about being over zero")
+		t.Fail()
+		return
+	}
+	want := "the --parallel flag must be great than 0"
+	if got.Error() != want {
+		t.Errorf("parsing error, want %s, got %s", want, got.Error())
+	}
+}
+
 func Test_parseBuildArgs_ValidParts(t *testing.T) {
 	mapped, err := parseBuildArgs([]string{"k=v"})
 

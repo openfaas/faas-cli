@@ -21,6 +21,14 @@
   version = "v1.4.2"
 
 [[projects]]
+  digest = "1:74860eb071d52337d67e9ffd6893b29affebd026505aa917ec23131576a91a77"
+  name = "github.com/alexellis/go-execute"
+  packages = ["pkg/v1"]
+  pruneopts = "UT"
+  revision = "961405ea754427780f2151adff607fa740d377f7"
+  version = "0.3.0"
+
+[[projects]]
   digest = "1:871b7cfa5fe18bfdbd4bf117c166c3cff8d3b61c8afe4e998b5b8ac0c160ca24"
   name = "github.com/alexellis/hmac"
   packages = ["."]
@@ -166,6 +174,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/alexellis/go-execute/pkg/v1",
     "github.com/alexellis/hmac",
     "github.com/docker/docker-credential-helpers/client",
     "github.com/docker/docker/pkg/term",

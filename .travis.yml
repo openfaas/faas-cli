@@ -1,14 +1,11 @@
 sudo: required
-
 language: generic
- 
-services:
-  - docker
 
-addons:
-  apt:
-    packages:
-      - docker-ce
+services:
+- docker
+
+before_script:
+- curl -sSLf https://get.docker.com | sed s/sleep\ 20/sleep\ 0/g | sudo -E sh
 
 script:
   - make build
@@ -55,3 +52,5 @@ deploy:
   on:
     tags: true
 
+env:
+  - GO111MODULE=off

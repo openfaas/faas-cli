@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
@@ -31,6 +32,7 @@ var (
 	buildLabels   []string
 	buildLabelMap map[string]string
 	envsubst      bool
+	quietBuild    bool
 )
 
 func init() {
@@ -51,6 +53,8 @@ func init() {
 	buildCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
 
 	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+
+	buildCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -102,6 +106,10 @@ func preRunBuild(cmd *cobra.Command, args []string) error {
 	}
 
 	buildLabelMap, err = parseMap(buildLabels, "build-label")
+
+	if parallel < 1 {
+		return fmt.Errorf("the --parallel flag must be great than 0")
+	}
 
 	return err
 }
@@ -156,11 +164,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
-	if len(services.Functions) > 0 {
-
-		build(&services, parallel, shrinkwrap)
-
-	} else {
+	if len(services.Functions) == 0 {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
 		}
@@ -170,16 +174,29 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tagFormat, buildLabelMap)
+		err := builder.BuildImage(image, handler, functionName, language, nocache, squash, shrinkwrap, buildArgMap, buildOptions, tagFormat, buildLabelMap, quietBuild)
 		if err != nil {
 			return err
 		}
+		return nil
 	}
 
+	errors := build(&services, parallel, shrinkwrap, quietBuild)
+	if len(errors) > 0 {
+		errorSummary := "Errors received during build:\n"
+		for _, err := range errors {
+			errorSummary = errorSummary + "- " + err.Error() + "\n"
+		}
+		return fmt.Errorf("%s", aec.Apply(errorSummary, aec.RedF))
+	}
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
+func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool) []error {
+	startOuter := time.Now()
+
+	errors := []error{}
+
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
@@ -188,23 +205,28 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
 			for function := range workChannel {
+				start := time.Now()
+
 				fmt.Printf(aec.YellowF.Apply("[%d] > Building %s.\n"), index, function.Name)
 				if len(function.Language) == 0 {
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
 
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tagFormat, buildLabelMap)
+					err := builder.BuildImage(function.Image, function.Handler, function.Name, function.Language, nocache, squash, shrinkwrap, buildArgMap, combinedBuildOptions, tagFormat, buildLabelMap, quietBuild)
 					if err != nil {
-						log.Println(err)
+						errors = append(errors, err)
 					}
 				}
-				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done.\n"), index, function.Name)
+
+				duration := time.Since(start)
+				fmt.Printf(aec.YellowF.Apply("[%d] < Building %s done in %1.2fs.\n"), index, function.Name, duration.Seconds())
 			}
 
-			fmt.Printf(aec.YellowF.Apply("[%d] worker done.\n"), index)
+			fmt.Printf(aec.YellowF.Apply("[%d] Worker done.\n"), index)
 			wg.Done()
 		}(i)
+
 	}
 
 	for k, function := range services.Functions {
@@ -220,6 +242,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap bool) {
 
 	wg.Wait()
 
+	duration := time.Since(startOuter)
+	fmt.Printf("\n%s\n", aec.Apply(fmt.Sprintf("Total build time: %1.2f", duration.Seconds()), aec.YellowF))
+	return errors
 }
 
 // PullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.

@@ -1,5 +1,8 @@
 # Build stage
-FROM golang:1.11 as builder
+FROM golang:1.12 as builder
+
+ENV GO111MODULE=off
+ENV CGO_ENABLED=0
 
 WORKDIR /usr/bin/
 RUN curl -sLSf https://raw.githubusercontent.com/teamserverless/license-check/master/get.sh | sh
@@ -13,8 +16,10 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 # ldflags "-s -w" strips binary
 # ldflags -X injects commit version into binary
 RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Author(s)"
-RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/) -cover \
-    && VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
+
+RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/|grep -v /sample/) -cover
+
+RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
     && GIT_COMMIT=$(git rev-list -1 HEAD) \
     && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
     -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
@@ -23,7 +28,7 @@ RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /bui
     -a -installsuffix cgo -o faas-cli
 
 # Release stage
-FROM alpine:3.9
+FROM alpine:3.10
 
 RUN apk --no-cache add ca-certificates git
 
