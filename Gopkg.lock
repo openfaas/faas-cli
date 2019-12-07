@@ -107,8 +107,8 @@
   name = "github.com/openfaas/faas"
   packages = ["gateway/requests"]
   pruneopts = "UT"
-  revision = "b46be5a4d9d9d55da9c4b1e50d86346e0afccf2d"
-  version = "0.18.1"
+  revision = "4d4ecc6bbf985095e64cb2bf0ab7003ea2b54776"
+  version = "0.18.4"
 
 [[projects]]
   digest = "1:690dfc3640e08c64ef54f044d92029e4bbd19cb6dd5d738c1a776ce0c37756d7"
@@ -156,19 +156,19 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3e7ac264ca261c2d429880bfd6c3121c36a0f12b6a050d8a747aa29f6f6b2be0"
+  digest = "1:ba6d732e405a774883c0bf5d4fc977a1606968bd0b518552645160d50b73a69c"
   name = "golang.org/x/sys"
   packages = ["unix"]
   pruneopts = "UT"
-  revision = "543471e840be449c53d44b32c7adf1261ad67e37"
+  revision = "eeba5f6aabab6d6594a9191d6bfeaca5fa6a8248"
 
 [[projects]]
-  digest = "1:59f10c1537d2199d9115d946927fe31165959a95190849c82ff11e05803528b0"
+  digest = "1:b75b3deb2bce8bc079e16bb2aecfe01eb80098f5650f9e93e5643ca8b7b73737"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f221b8435cfb71e54062f6c6e99e9ade30b124d5"
-  version = "v2.2.4"
+  revision = "1f64d6156d11335c3f22d9330b0ad14fc1e789ce"
+  version = "v2.2.7"
 
 [solve-meta]
   analyzer-name = "dep"
