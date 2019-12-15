@@ -7,8 +7,9 @@ import (
 )
 
 const (
-	systemPath   = "/system/functions"
-	functionPath = "/system/function"
+	systemPath     = "/system/functions"
+	functionPath   = "/system/function"
+	namespacesPath = "/system/namespaces"
 )
 
 func createSystemEndpoint(gateway, namespace string) (string, error) {
@@ -36,5 +37,14 @@ func createFunctionEndpoint(gateway, functionName, namespace string) (string, er
 		q.Set("namespace", namespace)
 		gatewayURL.RawQuery = q.Encode()
 	}
+	return gatewayURL.String(), nil
+}
+
+func createNamespacesEndpoint(gateway string) (string, error) {
+	gatewayURL, err := url.Parse(gateway)
+	if err != nil {
+		return "", fmt.Errorf("invalid gateway URL: %s", err.Error())
+	}
+	gatewayURL.Path = path.Join(gatewayURL.Path, namespacesPath)
 	return gatewayURL.String(), nil
 }
