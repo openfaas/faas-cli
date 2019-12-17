@@ -16,18 +16,21 @@ import (
 )
 
 var (
-	contentType string
-	query       []string
-	headers     []string
-	invokeAsync bool
-	httpMethod  string
-	sigHeader   string
-	key         string
+	contentType             string
+	query                   []string
+	headers                 []string
+	invokeAsync             bool
+	httpMethod              string
+	sigHeader               string
+	key                     string
+	functionInvokeNamespace string
 )
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	invokeCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function")
+	invokeCmd.Flags().StringVarP(&functionInvokeNamespace, "namespace", "n", "", "Namespace of the deployed function")
+
 	invokeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
@@ -54,7 +57,7 @@ var invokeCmd = &cobra.Command{
   faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
   faas-cli invoke resize-img --async -H "X-Callback-Url=http://gateway:8080/function/send2slack" < image.png
   faas-cli invoke env -H X-Ping-Url=http://request.bin/etc
-  faas-cli invoke flask --method GET
+  faas-cli invoke flask --method GET --namespace dev
   faas-cli invoke env --sign X-GitHub-Event --key yoursecret`,
 	RunE: runInvoke,
 }
@@ -105,7 +108,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		headers = append(headers, signedHeader)
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod, tlsInsecure)
+	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod, tlsInsecure, functionInvokeNamespace)
 	if err != nil {
 		return err
 	}

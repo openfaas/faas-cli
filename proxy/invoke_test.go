@@ -29,6 +29,7 @@ func Test_InvokeFunction(t *testing.T) {
 		false,
 		http.MethodPost,
 		tlsNoVerify,
+		"",
 	)
 
 	if err != nil {
@@ -51,6 +52,7 @@ func Test_InvokeFunction_Async(t *testing.T) {
 		true,
 		http.MethodPost,
 		tlsNoVerify,
+		"",
 	)
 
 	if err != nil {
@@ -73,6 +75,7 @@ func Test_InvokeFunction_Not2xx(t *testing.T) {
 		false,
 		http.MethodPost,
 		tlsNoVerify,
+		"",
 	)
 
 	if err == nil {
@@ -98,6 +101,7 @@ func Test_InvokeFunction_MissingURLPrefix(t *testing.T) {
 		false,
 		http.MethodPost,
 		tlsNoVerify,
+		"",
 	)
 
 	if err == nil {
