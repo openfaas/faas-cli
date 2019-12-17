@@ -46,16 +46,16 @@ func (i *BuildFormat) String() string {
 }
 
 // Set implements pflag.Value
-func (l *BuildFormat) Set(value string) error {
+func (i *BuildFormat) Set(value string) error {
 	switch strings.ToLower(value) {
 	case "", "default", "latest":
-		*l = DefaultFormat
+		*i = DefaultFormat
 	case "sha":
-		*l = SHAFormat
+		*i = SHAFormat
 	case "branch":
-		*l = BranchAndSHAFormat
+		*i = BranchAndSHAFormat
 	case "describe":
-		*l = DescribeFormat
+		*i = DescribeFormat
 	default:
 		return fmt.Errorf("unknown image tag format: '%s'", value)
 	}

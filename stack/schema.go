@@ -13,7 +13,8 @@ type Provider struct {
 // Function as deployed or built on FaaS
 type Function struct {
 	// Name of deployed function
-	Name     string `yaml:"-"`
+	Name string `yaml:"-"`
+
 	Language string `yaml:"lang"`
 
 	// Handler Local folder to use for function
@@ -61,14 +62,17 @@ type Function struct {
 	Namespace string `yaml:"namespace,omitempty"`
 }
 
+// Configuration for the stack.yml file
 type Configuration struct {
 	StackConfig StackConfiguration `yaml:"configuration"`
 }
 
+// StackConfiguration for the overall stack.yml
 type StackConfiguration struct {
 	TemplateConfigs []TemplateSource `yaml:"templates"`
 }
 
+// TemplateSource for build templates
 type TemplateSource struct {
 	Name   string `yaml:"name"`
 	Source string `yaml:"source,omitempty"`
@@ -102,6 +106,7 @@ type LanguageTemplate struct {
 	WelcomeMessage string `yaml:"welcome_message"`
 }
 
+// BuildOption a named build option for one or more packages
 type BuildOption struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
