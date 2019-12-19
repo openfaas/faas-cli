@@ -35,6 +35,19 @@ module.exports = {
         let extname = suffix === '.exe' ? '.exe' : '';
         return `faas-cli${extname}`;
     },
+    getRelease() {
+        return new Promise(async (resolve, reject)=> {
+            let latestURL = "https://github.com/openfaas/faas-cli/releases/latest"
+            let location = ""
+            try {
+                await axios({url:latestURL, maxRedirects:0});
+            }catch (e){
+                location = e.response.headers.location;
+            }
+
+            return resolve(location);
+        })
+    },
     download(url, dest) {
         return new Promise(async (resolve, reject) => {
             let ws = fs.createWriteStream(dest);
@@ -46,10 +59,6 @@ module.exports = {
                     resolve();
                 });
         });
-    },
-    getReleases() {
-        return axios.get(`https://api.github.com/repos/openfaas/faas-cli/releases/tags/${pkg.version}`)
-            .then(res => res.data.assets);
     },
     async cmd(...args) {
         let { stdout, stderr } = await exec(...args);

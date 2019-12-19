@@ -16,9 +16,11 @@ module.exports.install = async () => {
   del.sync(dest, { force: true });
 
   try {
-    let releases = await lib.getReleases();
-    let release = releases.find(release => release.name === name);
-    let url = release && release.browser_download_url;
+
+    let releaseURL = await lib.getRelease()
+    let downloadURL = releaseURL.replace("tag", "download") +"/"+ binaryName;
+
+    let url = downloadURL;
 
     console.log(`Downloading package ${url} to ${dest}`);
     await lib.download(url, dest);
