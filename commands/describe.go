@@ -88,7 +88,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		status = "Ready"
 	}
 
-	url, asyncURL := getFunctionURLs(gatewayAddress, functionName)
+	url, asyncURL := getFunctionURLs(gatewayAddress, functionName, functionNamespace)
 
 	funcDesc := schema.FunctionDescription{
 		Name:              function.Name,
@@ -109,9 +109,18 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func getFunctionURLs(gateway string, functionName string) (string, string) {
+func getFunctionURLs(gateway string, functionName string, functionNamespace string) (string, string) {
 	gateway = strings.TrimRight(gateway, "/")
-	return gateway + "/function/" + functionName, gateway + "/async-function/" + functionName
+
+	url := gateway + "/function/" + functionName
+	asyncURL := gateway + "/async-function/" + functionName
+
+	if functionNamespace != "" {
+		url += "." + functionNamespace
+		asyncURL += "." + functionNamespace
+	}
+
+	return url, asyncURL
 }
 
 func printFunctionDescription(funcDesc schema.FunctionDescription) {
