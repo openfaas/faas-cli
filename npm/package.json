@@ -8,8 +8,8 @@
     "faas-cli": "./cli.js"
   },
   "scripts": {
-    "test": "node test.js",
-    "test:install": "node install-test.js",
+    "test": "mocha \"./test.js\"",
+    "test:install": "mocha \"./test-install.js\"",
     "postinstall": "node -e 'require(\"./install.js\").init()'"
   },
   "repository": {
@@ -29,6 +29,7 @@
   "dependencies": {
     "axios": "^0.19.0",
     "delete": "^1.1.0",
-    "mkdirp": "^0.5.1"
+    "mkdirp": "^0.5.1",
+    "mocha": "^6.2.2"
   }
 }

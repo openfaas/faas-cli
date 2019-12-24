@@ -11,7 +11,7 @@ module.exports.install = async () => {
   const type = os.type();
   const arch = os.arch();
   let binaryName = lib.getBinaryName(type, arch);
-  let dest = path.join(__dirname, `bin/${binaryName}`);
+  let dest = path.join(__dirname, "bin", binaryName);
   mkdirp.sync(path.dirname(dest));
   del.sync(dest, { force: true });
 
