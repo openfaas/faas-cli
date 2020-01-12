@@ -6,6 +6,7 @@ package commands
 import (
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -228,8 +229,12 @@ func downloadBinary(client *http.Client, url, name string) (string, error) {
 	}
 
 	res, err := client.Do(req)
+
 	if err != nil {
 		return "", err
+	}
+	if res.StatusCode != http.StatusOK {
+		return "", errors.New(fmt.Sprintf("could not find release, http status code was %d, release may not exist for this architecture", res.StatusCode))
 	}
 	tempDir := os.TempDir()
 	outputPath := path.Join(tempDir, name)
