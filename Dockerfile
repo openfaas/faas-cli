@@ -28,7 +28,7 @@ RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags 
     -a -installsuffix cgo -o faas-cli
 
 # Release stage
-FROM alpine:3.10
+FROM alpine:3.11 as release
 
 RUN apk --no-cache add ca-certificates git
 
