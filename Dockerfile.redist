@@ -47,11 +47,15 @@ RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Autho
         -a -installsuffix cgo -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.10
+FROM alpine:3.11
 
 RUN apk --no-cache add ca-certificates git
 
-WORKDIR /root/
+RUN addgroup -S app \
+    && adduser -S -g app app \
+    && apk add --no-cache ca-certificates
+
+WORKDIR /home/app
 
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli                .
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli-darwin         .
@@ -59,7 +63,10 @@ COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli-armhf         
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli.exe            .
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli-arm64          .
 
-ENV PATH=$PATH:/root/
+RUN chown -R app:app ./
+
+ENV PATH=$PATH:/home/app/
+
+USER app
 
 CMD ["faas-cli"]
-

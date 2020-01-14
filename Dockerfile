@@ -32,9 +32,16 @@ FROM alpine:3.11 as release
 
 RUN apk --no-cache add ca-certificates git
 
-WORKDIR /root/
+RUN addgroup -S app \
+    && adduser -S -g app app \
+    && apk add --no-cache ca-certificates
+
+WORKDIR /home/app
 
 COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               /usr/bin/
+RUN chown -R app:app ./
+
+USER app
 
 ENV PATH=$PATH:/usr/bin/
 
