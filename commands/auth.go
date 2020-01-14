@@ -41,6 +41,7 @@ func init() {
 	authCmd.Flags().StringVar(&audience, "audience", "", "OAuth2 audience")
 	authCmd.Flags().BoolVar(&launchBrowser, "launch-browser", true, "Launch browser for OAuth2 redirect")
 
+	authCmd.Flags().StringVar(&scope, "scope", "openid profile", "scope for OAuth2 flow - i.e. \"openid profile\"")
 	authCmd.Flags().StringVar(&grant, "grant", "implicit", "grant for OAuth2 flow - either implicit or client_credentials")
 	authCmd.Flags().StringVar(&clientSecret, "client-secret", "", "OAuth2 client_secret, for use with client_credentials grant")
 
@@ -218,7 +219,14 @@ func launchURL(serverURL string) error {
 }
 
 func printExampleTokenUsage(gateway, token string) {
-	fmt.Printf("Example:\n\t./faas-cli list --gateway \"%s\" --token \"%s\"\n", gateway, token)
+	fmt.Printf(`Example usage:
+  # Use an explicit token
+  faas-cli list --gateway "%s" --token "%s"
+
+  # Use the saved token
+  faas-cli list --gateway "%s"
+`, gateway, token, gateway)
+
 }
 
 func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, r *http.Request) {

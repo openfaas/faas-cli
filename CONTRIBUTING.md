@@ -28,7 +28,7 @@ This CLI can build and deploy templated functions, so it's best if you have FaaS
 
 > Here's how to install Go in 60 seconds.
 
-* Grab Go 1.8.3 or 1.9.x from https://golang.org/dl/
+* Download Go 1.13 from https://golang.org/dl/
 
 Then after installing run this command or place it in your `$HOME/.bash_profile`
 
