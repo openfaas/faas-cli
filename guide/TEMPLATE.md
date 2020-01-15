@@ -38,6 +38,25 @@ template
     └── template.yml
 ```
 
+## template.yml schema
+
+* `language` - template name i.e. `node`
+* `fprocess` - optional, fprocess for watchdog
+* `build_options` - array, optional to define a slice of `string, []string` to provide a number of build options and package installed for the named package
+
+    Example:
+
+    ```yaml
+    build_options:
+      - name: curl-tls
+        packages:
+        - curl
+        - ca-certificates
+    ```
+* `welcome_message` - printed after `faas-cli new`, populate with a link to the user guide or how to add a module for package manager
+* `handler_folder` - where to copy the function's build context into the Docker image, usually just `function`
+
+
 ## Download external repository
 
 In order to build functions using 3rd party templates, you need to add 3rd templates before the build step, with the following command:
