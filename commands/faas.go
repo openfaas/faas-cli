@@ -101,6 +101,6 @@ Manage your OpenFaaS functions from the command line`,
 
 // runFaas TODO
 func runFaas(cmd *cobra.Command, args []string) {
-	printFiglet()
+	printLogo()
 	cmd.Help()
 }
