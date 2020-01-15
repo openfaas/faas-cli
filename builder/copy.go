@@ -15,6 +15,7 @@ func CopyFiles(src, dest string) error {
 	if err != nil {
 		return err
 	}
+
 	if info.IsDir() {
 		debugPrint(fmt.Sprintf("Creating directory: %s at %s", info.Name(), dest))
 		return copyDir(src, dest)
