@@ -54,7 +54,7 @@ func runVersionE(cmd *cobra.Command, args []string) error {
 		fmt.Println(version.BuildVersion())
 
 	} else {
-		printFiglet()
+		printLogo()
 		fmt.Printf(`CLI:
  commit:  %s
  version: %s
@@ -127,7 +127,8 @@ Gateway
 	fmt.Println()
 }
 
-func printFiglet() {
+// printLogo prints an ASCII logo, which was generated with figlet
+func printLogo() {
 	figletColoured := aec.BlueF.Apply(figletStr)
 	if runtime.GOOS == "windows" {
 		figletColoured = aec.GreenF.Apply(figletStr)

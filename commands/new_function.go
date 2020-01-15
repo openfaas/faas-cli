@@ -201,7 +201,7 @@ Download templates:
 
 	// Create function directory from template.
 	builder.CopyFiles(fromTemplateHandler, handlerDir)
-	printFiglet()
+	printLogo()
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
 	imageName := fmt.Sprintf("%s:latest", functionName)
