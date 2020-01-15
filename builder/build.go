@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,16 @@ const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool) error {
 
 	if stack.IsValidTemplate(language) {
+		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
+		if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+			return err
+		}
+
+		langTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
+		if err != nil {
+			return fmt.Errorf("error reading language template: %s", err.Error())
+		}
+
 		branch, version, err := GetImageTagValues(tagMode)
 		if err != nil {
 			return err
@@ -32,13 +43,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		imageName := schema.BuildImageName(tagMode, image, version, branch)
 
-		var tempPath string
-
 		if err := ensureHandlerPath(handler); err != nil {
 			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 		}
 
-		tempPath, buildErr := createBuildTemplate(functionName, handler, language, isLanguageTemplate(language))
+		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder)
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 		if buildErr != nil {
 			return buildErr
@@ -49,7 +58,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return nil
 		}
 
-		buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language)
+		buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
 
 		if buildPackageErr != nil {
 			return buildPackageErr
@@ -152,34 +161,41 @@ type dockerBuild struct {
 	BuildLabelMap    map[string]string
 }
 
-// createBuildTemplate creates temporary build folder to perform a Docker build with language template
-func createBuildTemplate(functionName string, handler string, language string, useFunction bool) (string, error) {
+const defaultHandlerFolder = "function"
+
+// createBuildContext creates temporary build folder to perform a Docker build with language template
+func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string) (string, error) {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
 	clearErr := os.RemoveAll(tempPath)
 	if clearErr != nil {
-		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
+		fmt.Printf("Error clearing temporary build folder: %s\n", tempPath)
 		return tempPath, clearErr
 	}
 
 	functionPath := tempPath
+
 	if useFunction {
-		functionPath += "/function"
+		if handlerFolder == "" {
+			functionPath = path.Join(functionPath, defaultHandlerFolder)
+		} else {
+			functionPath = path.Join(functionPath, handlerFolder)
+		}
 	}
 
-	fmt.Printf("Preparing %s %s\n", handler+"/", functionPath)
+	fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
 
 	mkdirErr := os.MkdirAll(functionPath, 0700)
 	if mkdirErr != nil {
-		fmt.Printf("Error creating path %s - %s.\n", functionPath, mkdirErr.Error())
+		fmt.Printf("Error creating path: %s - %s.\n", functionPath, mkdirErr.Error())
 		return tempPath, mkdirErr
 	}
 
 	if useFunction {
-		copyErr := CopyFiles("./template/"+language, tempPath)
+		copyErr := CopyFiles(path.Join("./template/", language), tempPath)
 		if copyErr != nil {
-			fmt.Printf("Error copying template directory %s.\n", copyErr.Error())
+			fmt.Printf("Error copying template directory: %s.\n", copyErr.Error())
 			return tempPath, copyErr
 		}
 	}
@@ -188,7 +204,7 @@ func createBuildTemplate(functionName string, handler string, language string, u
 	// CopyFiles(handler, functionPath)
 	infos, readErr := ioutil.ReadDir(handler)
 	if readErr != nil {
-		fmt.Printf("Error reading the handler %s - %s.\n", handler, readErr.Error())
+		fmt.Printf("Error reading the handler: %s - %s.\n", handler, readErr.Error())
 		return tempPath, readErr
 	}
 
@@ -199,8 +215,8 @@ func createBuildTemplate(functionName string, handler string, language string, u
 			continue
 		default:
 			copyErr := CopyFiles(
-				filepath.Clean(handler+"/"+info.Name()),
-				filepath.Clean(functionPath+"/"+info.Name()),
+				filepath.Clean(path.Join(handler, info.Name())),
+				filepath.Clean(path.Join(functionPath, info.Name())),
 			)
 
 			if copyErr != nil {
@@ -218,10 +234,10 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 
 	clearErr := os.RemoveAll(tempPath)
 	if clearErr != nil {
-		fmt.Printf("Error clearing temporary build folder %s\n", tempPath)
+		fmt.Printf("Error clearing temporary build folder: %s\n", tempPath)
 	}
 
-	fmt.Printf("Preparing %s %s\n", handler+"/", tempPath)
+	fmt.Printf("Preparing: %s %s\n", handler+"/", tempPath)
 
 	// Both Dockerfile and dockerfile are accepted
 	if language == "Dockerfile" {
@@ -231,7 +247,7 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 	// CopyFiles(handler, tempPath)
 	infos, readErr := ioutil.ReadDir(handler)
 	if readErr != nil {
-		fmt.Printf("Error reading the handler %s - %s.\n", handler, readErr.Error())
+		fmt.Printf("Error reading the handler: %s - %s.\n", handler, readErr.Error())
 	}
 
 	for _, info := range infos {
@@ -241,8 +257,8 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 			continue
 		default:
 			copyErr := CopyFiles(
-				filepath.Clean(handler+"/"+info.Name()),
-				filepath.Clean(tempPath+"/"+info.Name()),
+				filepath.Clean(path.Join(handler, info.Name())),
+				filepath.Clean(path.Join(tempPath, info.Name())),
 			)
 
 			if copyErr != nil {
@@ -301,7 +317,7 @@ func ensureHandlerPath(handler string) error {
 	return nil
 }
 
-func getBuildOptionPackages(requestedBuildOptions []string, language string) ([]string, error) {
+func getBuildOptionPackages(requestedBuildOptions []string, language string, availableBuildOptions []stack.BuildOption) ([]string, error) {
 
 	var buildPackages []string
 
@@ -309,17 +325,13 @@ func getBuildOptionPackages(requestedBuildOptions []string, language string) ([]
 
 		var allFound bool
 
-		availableBuildOptions, err := getBuildOptionsFor(language)
-
-		if err != nil {
-			return nil, err
-		}
-
 		buildPackages, allFound = getPackages(availableBuildOptions, requestedBuildOptions)
 
 		if !allFound {
-			err = fmt.Errorf("Error: You're using a build option unavailable for %s. Please check /template/%s/template.yml for supported build options", language, language)
-			return nil, err
+
+			return nil, fmt.Errorf(
+				`Error: You're using a build option unavailable for %s.
+Please check /template/%s/template.yml for supported build options`, language, language)
 		}
 
 	}
@@ -330,7 +342,8 @@ func getBuildOptionsFor(language string) ([]stack.BuildOption, error) {
 
 	var buildOptions = []stack.BuildOption{}
 
-	pathToTemplateYAML := "./template/" + language + "/template.yml"
+	pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
+
 	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 		return buildOptions, err
 	}
