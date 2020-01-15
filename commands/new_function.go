@@ -182,8 +182,25 @@ Download templates:
 		return fmt.Errorf("got unexpected error while updating .gitignore file: %s", err)
 	}
 
+	pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
+	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+		return err
+	}
+
+	langTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
+	if err != nil {
+		return fmt.Errorf("error reading language template: %s", err.Error())
+	}
+
+	templateHandlerFolder := "function"
+	if len(langTemplate.HandlerFolder) > 0 {
+		templateHandlerFolder = langTemplate.HandlerFolder
+	}
+
+	fromTemplateHandler := filepath.Join("template", language, templateHandlerFolder)
+
 	// Create function directory from template.
-	builder.CopyFiles(filepath.Join("template", language, "function"), handlerDir)
+	builder.CopyFiles(fromTemplateHandler, handlerDir)
 	printFiglet()
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 
