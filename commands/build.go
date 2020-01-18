@@ -274,7 +274,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 	wg.Wait()
 
 	duration := time.Since(startOuter)
-	fmt.Printf("\n%s\n", aec.Apply(fmt.Sprintf("Total build time: %1.2f", duration.Seconds()), aec.YellowF))
+	fmt.Printf("\n%s\n", aec.Apply(fmt.Sprintf("Total build time: %1.2fs", duration.Seconds()), aec.YellowF))
 	return errors
 }
 
