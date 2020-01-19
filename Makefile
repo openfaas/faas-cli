@@ -30,14 +30,14 @@ local-goimports:
 
 .PHONY: local-install
 local-install:
-	CGO_ENABLED=0 go install --ldflags "-s -w \
+	GOFLAGS=-mod=vendor CGO_ENABLED=0 go install --ldflags "-s -w \
 	   -X github.com/openfaas/faas-cli/version.GitCommit=${.GIT_COMMIT} \
 	   -X github.com/openfaas/faas-cli/version.Version=${.GIT_VERSION}" \
 	   -a -installsuffix cgo
 
 .PHONY: test-unit
 test-unit:
-	go test $(shell go list ./... | grep -v /vendor/ | grep -v /template/ | grep -v build) -cover
+	GOFLAGS=-mod=vendor go test $(shell go list ./... | grep -v /vendor/ | grep -v /template/ | grep -v build) -cover
 
 .PHONY: ci-armhf-push
 ci-armhf-push:
