@@ -2,7 +2,7 @@ module github.com/openfaas/faas-cli
 
 go 1.13
 
-replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.2
+replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20190717161051-705d9623b7c1
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
@@ -11,7 +11,6 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/docker-credential-helpers v0.6.3
 	github.com/drone/envsubst v1.0.2
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/morikuni/aec v1.0.0
 	github.com/openfaas/faas v0.0.0-20191128202628-4d4ecc6bbf98
@@ -22,6 +21,6 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	go.uber.org/goleak v1.0.0 // indirect
-	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab // indirect
 	gopkg.in/yaml.v2 v2.2.7
+	gotest.tools v2.2.0+incompatible // indirect
 )
