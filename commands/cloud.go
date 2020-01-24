@@ -6,7 +6,6 @@ package commands
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -32,6 +31,7 @@ var (
 	certFile        string
 	download        bool
 	downloadVersion string
+	downloadTo      string
 )
 
 func init() {
@@ -46,7 +46,7 @@ func init() {
 
 	cloudSealCmd.Flags().BoolVar(&download, "download", false, "Download the kubeseal binary required for this command, see also --download-version")
 	cloudSealCmd.Flags().StringVar(&downloadVersion, "download-version", "", "Specify a kubeseal version to download")
-
+	cloudSealCmd.Flags().StringVar(&downloadTo, "download-to", "", "Specify download path for kubeseal, leave empty for a temp dir")
 	literal = cloudSealCmd.Flags().StringArrayP("literal", "l", []string{}, "Secret literal key-value data")
 
 	fromFile = cloudSealCmd.Flags().StringArrayP("from-file", "i", []string{}, "Read a secret from a from file")
@@ -174,7 +174,7 @@ func downloadKubeSeal() error {
 	downloadURL := "https://github.com/bitnami/sealed-secrets/releases/download/" + releaseVersion + "/kubeseal-" + osVal + "-" + arch
 
 	fmt.Printf("Starting download of kubeseal %s, this could take a few moments.\n", releaseVersion)
-	output, err := downloadBinary(http.DefaultClient, downloadURL, "kubeseal")
+	output, err := downloadBinary(http.DefaultClient, downloadURL, "kubeseal", downloadTo)
 
 	if err != nil {
 		return err
@@ -222,7 +222,7 @@ func findRelease(url string) (string, error) {
 	return version, nil
 }
 
-func downloadBinary(client *http.Client, url, name string) (string, error) {
+func downloadBinary(client *http.Client, url, name, downloadTo string) (string, error) {
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return "", err
@@ -233,10 +233,18 @@ func downloadBinary(client *http.Client, url, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	if res.StatusCode != http.StatusOK {
-		return "", errors.New(fmt.Sprintf("could not find release, http status code was %d, release may not exist for this architecture", res.StatusCode))
+		return "", fmt.Errorf("could not find release, http status code was %d, release may not exist for this architecture", res.StatusCode)
 	}
-	tempDir := os.TempDir()
+
+	var tempDir string
+	if len(downloadTo) == 0 {
+		tempDir = os.TempDir()
+	} else {
+		tempDir = downloadTo
+	}
+
 	outputPath := path.Join(tempDir, name)
 	if res.Body != nil {
 		defer res.Body.Close()
