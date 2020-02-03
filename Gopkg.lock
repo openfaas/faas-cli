@@ -37,7 +37,7 @@
   version = "1.2"
 
 [[projects]]
-  digest = "1:53e99d883df3e940f5f0223795f300eb32b8c044f226132bfc0e74930f24ea4b"
+  digest = "1:54ebeaf9c3bea790a6bd7e04ecf4c05a5c91b0f494cfd0b9921e823c744c12ed"
   name = "github.com/docker/docker"
   packages = [
     "pkg/term",
@@ -69,6 +69,14 @@
   pruneopts = "UT"
   revision = "5a78055244d6b899c2a2eb158c8454f548af9ab2"
   version = "v1.0.2"
+
+[[projects]]
+  digest = "1:abeb38ade3f32a92943e5be54f55ed6d6e3b6602761d74b4aab4c9dd45c18abd"
+  name = "github.com/fsnotify/fsnotify"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c2828203cd70a50dcccfb2761f8b1f8ceef9a8e9"
+  version = "v1.4.7"
 
 [[projects]]
   digest = "1:870d441fe217b8e689d7949fef6e43efbc787e50f200cb1e70dbca9204a1d6be"
@@ -179,6 +187,7 @@
     "github.com/docker/docker-credential-helpers/client",
     "github.com/docker/docker/pkg/term",
     "github.com/drone/envsubst",
+    "github.com/fsnotify/fsnotify",
     "github.com/mitchellh/go-homedir",
     "github.com/morikuni/aec",
     "github.com/openfaas/faas-provider/logs",

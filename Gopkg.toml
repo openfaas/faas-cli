@@ -53,3 +53,7 @@
 [[constraint]]
   name = "github.com/alexellis/go-execute"
   version = "0.3.0"
+  
+[[constraint]]
+  name = "github.com/fsnotify/fsnotify"
+  version = "1.4.7"
