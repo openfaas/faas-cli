@@ -9,9 +9,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"time"
 
+	"github.com/bep/debounce"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -20,7 +20,7 @@ import (
 var (
 	skipPush   bool
 	skipDeploy bool
-	watch    bool
+	watch      bool
 )
 
 func init() {
@@ -28,7 +28,7 @@ func init() {
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
-	upFlagset.BoolVar(&watch, "watch", false, "Watch for filesystem changes")
+	upFlagset.BoolVar(&watch, "watch", false, "Watch for file changes and trigger up")
 
 	upCmd.Flags().AddFlagSet(upFlagset)
 
@@ -75,7 +75,14 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 
 func upHandler(cmd *cobra.Command, args []string) error {
 
+	ignoredDirs := []string{"build", ".git", "template"}
+	ignoredSuffixes := []string{"~", "build", ".git", "template"}
+
 	if watch {
+		buildCount := 0
+
+		debounced := debounce.New(500 * time.Millisecond)
+
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
 			log.Fatal(err)
@@ -88,27 +95,21 @@ func upHandler(cmd *cobra.Command, args []string) error {
 				select {
 				case event := <-watcher.Events:
 
-					log.Printf("event: %s", event)
+					log.Printf("changed: %s", event)
 
-					if strings.HasSuffix(event.Name, "~") {
+					if skipIgnoredSuffix(event, ignoredSuffixes) {
 						break
 					}
 
-					windowsBuildDir := "\\build"
-					// linuxBuildDir := "/build"
-
-					if strings.Contains(event.Name, windowsBuildDir) {
-						break
-					}
-					if event.Op&fsnotify.Write == fsnotify.Write {
-						log.Printf("WRITE detected, sleeping")
-						time.Sleep(100 * time.Millisecond)
-						if err := doUp(cmd, args); err != nil {
-							log.Printf("Error detecting change: %v", err)
-						}
-					}
-					if event.Op&fsnotify.Create == fsnotify.Create {
-						log.Printf("CREATE detected, sleeping")
+					switch event.Op & fsnotify.Write {
+					case fsnotify.Create, fsnotify.Write:
+						debounced(func() {
+							buildCount++
+							if err := doUp(cmd, args); err != nil {
+								log.Printf("Error detecting change: %v", err)
+							}
+							log.Printf("Completed Builds: %d", buildCount)
+						})
 					}
 				case err := <-watcher.Errors:
 					fmt.Println("error:", err)
@@ -130,12 +131,11 @@ func upHandler(cmd *cobra.Command, args []string) error {
 					return err
 				}
 
-				if info.IsDir() && info.Name() == ".git" {
+				if skipIgnoredDir(info, ignoredDirs) {
 					return filepath.SkipDir
 				}
 
 				if info.IsDir() {
-					fmt.Printf("watching: %s", path)
 					err = watcher.Add(path)
 					if err != nil {
 						log.Fatal(err)
@@ -156,10 +156,6 @@ func upHandler(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-type runSingleton struct {
-	sync.Mutex
-}
-
 func doUp(cmd *cobra.Command, args []string) error {
 	if err := runBuild(cmd, args); err != nil {
 		return err
@@ -177,4 +173,25 @@ func doUp(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func skipIgnoredDir(info os.FileInfo, ignoredDirs []string) bool {
+	if !info.IsDir() {
+		return false
+	}
+	for _, ignoredDir := range ignoredDirs {
+		if info.Name() == ignoredDir {
+			return true
+		}
+	}
+	return false
+}
+
+func skipIgnoredSuffix(event fsnotify.Event, ignoredSuffixes []string) bool {
+	for _, ignoredSuffix := range ignoredSuffixes {
+		if strings.HasSuffix(event.Name, ignoredSuffix) {
+			return true
+		}
+	}
+	return false
 }

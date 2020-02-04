@@ -37,6 +37,14 @@
   version = "1.2"
 
 [[projects]]
+  digest = "1:4ddade196c6099464522e35a4a88fe4a2a3e459c0b8c8f7e4b63ab2de7d5e0f2"
+  name = "github.com/bep/debounce"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bf07a0f9e25545ee1b5974845f70185f91b72a00"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:54ebeaf9c3bea790a6bd7e04ecf4c05a5c91b0f494cfd0b9921e823c744c12ed"
   name = "github.com/docker/docker"
   packages = [
@@ -184,6 +192,7 @@
   input-imports = [
     "github.com/alexellis/go-execute/pkg/v1",
     "github.com/alexellis/hmac",
+    "github.com/bep/debounce",
     "github.com/docker/docker-credential-helpers/client",
     "github.com/docker/docker/pkg/term",
     "github.com/drone/envsubst",
