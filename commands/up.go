@@ -18,11 +18,13 @@ import (
 )
 
 var (
-	skipPush        bool
-	skipDeploy      bool
-	watch           bool
-	ignoredDirs     []string
-	ignoredSuffixes []string
+	skipPush               bool
+	skipDeploy             bool
+	watch                  bool
+	ignoredDirs            []string
+	ignoredSuffixes        []string
+	ignoredDirsDefault     = []string{"build", ".git", "template"}
+	ignoredSuffixesDefault = []string{"~"}
 )
 
 func init() {
@@ -31,8 +33,8 @@ func init() {
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
 	upFlagset.BoolVar(&watch, "watch", false, "Watch for file changes and trigger up")
-	upFlagset.StringSliceVar(&ignoredDirs, "ignore-dir", []string{"build", ".git", "template"}, "Exclude directories from filesystem watch")
-	upFlagset.StringSliceVar(&ignoredSuffixes, "ignore-suffix", []string{"~"}, "Exclude files with matching suffix from filesystem watch")
+	upFlagset.StringSliceVar(&ignoredDirs, "ignore-dir", []string{}, "Exclude directories from filesystem watch")
+	upFlagset.StringSliceVar(&ignoredSuffixes, "ignore-suffix", []string{}, "Exclude files with matching suffix from filesystem watch")
 
 	upCmd.Flags().AddFlagSet(upFlagset)
 
@@ -83,6 +85,8 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		return doUp(cmd, args)
 	}
 
+	ignoredDirs = append(ignoredDirs, ignoredDirsDefault...)
+	ignoredSuffixes = append(ignoredSuffixes, ignoredSuffixesDefault...)
 	ignoredSuffixes = append(ignoredSuffixes, ignoredDirs...)
 
 	debounced := debounce.New(500 * time.Millisecond)
