@@ -18,9 +18,11 @@ import (
 )
 
 var (
-	skipPush   bool
-	skipDeploy bool
-	watch      bool
+	skipPush        bool
+	skipDeploy      bool
+	watch           bool
+	ignoredDirs     []string
+	ignoredSuffixes []string
 )
 
 func init() {
@@ -29,6 +31,8 @@ func init() {
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
 	upFlagset.BoolVar(&watch, "watch", false, "Watch for file changes and trigger up")
+	upFlagset.StringSliceVar(&ignoredDirs, "ignore-dir", []string{"build", ".git", "template"}, "Exclude directories from filesystem watch")
+	upFlagset.StringSliceVar(&ignoredSuffixes, "ignore-suffix", []string{"~"}, "Exclude files with matching suffix from filesystem watch")
 
 	upCmd.Flags().AddFlagSet(upFlagset)
 
@@ -75,85 +79,82 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 
 func upHandler(cmd *cobra.Command, args []string) error {
 
-	ignoredDirs := []string{"build", ".git", "template"}
-	ignoredSuffixes := []string{"~", "build", ".git", "template"}
+	if !watch {
+		return doUp(cmd, args)
+	}
 
-	if watch {
-		buildCount := 0
+	ignoredSuffixes = append(ignoredSuffixes, ignoredDirs...)
 
-		debounced := debounce.New(500 * time.Millisecond)
+	debounced := debounce.New(500 * time.Millisecond)
 
-		watcher, err := fsnotify.NewWatcher()
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer watcher.Close()
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
 
-		done := make(chan bool)
-		go func() {
-			for {
-				select {
-				case event := <-watcher.Events:
+	done := make(chan bool)
+	go func() {
+		for {
+			select {
+			case event := <-watcher.Events:
 
-					log.Printf("changed: %s", event)
+				log.Printf("changed: %s", event)
 
-					if skipIgnoredSuffix(event, ignoredSuffixes) {
-						break
-					}
-
-					switch event.Op & fsnotify.Write {
-					case fsnotify.Create, fsnotify.Write:
-						debounced(func() {
-							buildCount++
-							if err := doUp(cmd, args); err != nil {
-								log.Printf("Error detecting change: %v", err)
-							}
-							log.Printf("Completed Builds: %d", buildCount)
-						})
-					}
-				case err := <-watcher.Errors:
-					fmt.Println("error:", err)
+				if skipIgnoredSuffix(event, ignoredSuffixes) {
+					break
 				}
+
+				if opWrite(event) {
+					debounced(func() {
+						if err := doUp(cmd, args); err != nil {
+							log.Printf("Error detecting change: %v", err)
+						}
+					})
+				}
+
+			case err := <-watcher.Errors:
+				fmt.Println("error:", err)
 			}
-		}()
-
-		cwd, err := os.Getwd()
-		if err != nil {
-			fmt.Println("error:", err)
-			return err
 		}
-		log.Println("Watching: ", cwd)
+	}()
 
-		watchedDirs := []string{}
-		err = filepath.Walk(cwd,
-			func(path string, info os.FileInfo, err error) error {
-				if err != nil {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	log.Println("Watching: ", cwd)
+
+	watchedDirs := []string{}
+	err = filepath.Walk(cwd,
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if skipIgnoredDir(info, ignoredDirs) {
+				return filepath.SkipDir
+			}
+
+			if info.IsDir() {
+				if err = watcher.Add(path); err != nil {
 					return err
 				}
-
-				if skipIgnoredDir(info, ignoredDirs) {
-					return filepath.SkipDir
-				}
-
-				if info.IsDir() {
-					err = watcher.Add(path)
-					if err != nil {
-						log.Fatal(err)
-					}
-					watchedDirs = append(watchedDirs, path)
-				}
-				return nil
-			})
-		if err != nil {
-			log.Println(err)
-		}
-
-		<-done
-
-	} else {
-		doUp(cmd, args)
+				watchedDirs = append(watchedDirs, path)
+			}
+			return nil
+		})
+	if err != nil {
+		return err
 	}
+
+	<-done
+
 	return nil
+}
+
+func opWrite(event fsnotify.Event) bool {
+	return event.Op&fsnotify.Write == fsnotify.Write
 }
 
 func doUp(cmd *cobra.Command, args []string) error {
