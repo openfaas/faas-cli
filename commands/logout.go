@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/openfaas/faas-cli/config"
@@ -29,8 +30,9 @@ func runLogout(cmd *cobra.Command, args []string) error {
 	if len(gateway) == 0 {
 		return fmt.Errorf("gateway cannot be an empty string")
 	}
+	gateway = strings.TrimSpace(gateway)
+	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	gateway = strings.TrimRight(strings.TrimSpace(gateway), "/")
 	err := config.RemoveAuthConfig(gateway)
 	if err != nil {
 		return err
