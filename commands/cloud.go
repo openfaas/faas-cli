@@ -216,6 +216,10 @@ func findRelease(url string) (string, error) {
 
 	loc := res.Header.Get("Location")
 	if len(loc) == 0 {
+		// Github started sending different case for the location header. We should check both
+		loc = res.Header.Get("location")
+	}
+	if len(loc) == 0 {
 		return "", fmt.Errorf("unable to determine release of kubeseal")
 	}
 	version := loc[strings.LastIndex(loc, "/")+1:]
