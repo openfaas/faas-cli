@@ -55,6 +55,8 @@ type Function struct {
 	// BuildOptions to determine native packages
 	BuildOptions []string `yaml:"build_options"`
 
+	BuildConfig BuildConfig `yaml:"build_config,omitempty"`
+
 	// Annotations
 	Annotations *map[string]string `yaml:"annotations"`
 
@@ -119,4 +121,9 @@ type LanguageTemplate struct {
 type BuildOption struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
+}
+
+// BuildConfig for providing build-args
+type BuildConfig struct {
+	BuildArgMap *map[string]string `yaml:"build_args"`
 }
