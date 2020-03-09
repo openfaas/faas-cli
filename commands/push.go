@@ -82,6 +82,10 @@ func pushImage(image string) {
 	exec.Command("./", []string{"docker", "push", image})
 }
 
+func tagImage(source, target string) {
+	exec.Command("./", []string{"docker", "tag", source, target})
+}
+
 func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFormat) {
 	wg := sync.WaitGroup{}
 
@@ -106,9 +110,17 @@ func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFor
 
 					pushImage(imageName)
 					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s [%s] done.\n"), index, function.Name, imageName)
+
+					// Always push a latest image
+					if !strings.HasSuffix(imageName, ":latest") {
+						// get the current image name, strip all tags and add latest
+						latestImageName := strings.Split(function.Image, ":")[0] + ":latest"
+						tagImage(imageName, latestImageName)
+						pushImage(latestImageName)
+						fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s [%s] done.\n"), index, function.Name, latestImageName)
+					}
 				}
 			}
-
 			fmt.Printf(aec.YellowF.Apply("[%d] Worker done.\n"), index)
 			wg.Done()
 		}(i)
