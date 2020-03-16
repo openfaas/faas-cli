@@ -3,11 +3,11 @@ provider:
   gateway: http://127.0.0.1:8080
 
 functions:
-  hmac:
-    lang: golang
+  github-hmac:
+    lang: go
     fprocess: handler
-    handler: ./hmac
-    image: alexellis2/hmac
+    handler: ./github-hmac
+    image: alexellis2/github-hmac
     environment:
       secret_key: "keep-this-secret"
 
