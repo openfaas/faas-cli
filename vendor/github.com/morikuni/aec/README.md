@@ -1,6 +1,7 @@
 # aec
 
-[![GoDoc](https://godoc.org/github.com/morikuni/aec?status.svg)](https://godoc.org/github.com/morikuni/aec)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/morikuni/aec)
+
 
 Go wrapper for ANSI escape code.
 

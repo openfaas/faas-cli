@@ -28,7 +28,8 @@ etc.
 
 [![Build Status](https://travis-ci.org/spf13/cobra.svg "Travis CI status")](https://travis-ci.org/spf13/cobra)
 [![CircleCI status](https://circleci.com/gh/spf13/cobra.png?circle-token=:circle-token "CircleCI status")](https://circleci.com/gh/spf13/cobra)
-[![GoDoc](https://godoc.org/github.com/spf13/cobra?status.svg)](https://godoc.org/github.com/spf13/cobra)
+[![go.dev reference](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white&style=flat-square)](https://pkg.go.dev/github.com/spf13/cobra)
+
 
 # Table of Contents
 
@@ -108,7 +109,7 @@ have children commands and optionally run an action.
 
 In the example above, 'server' is the command.
 
-[More about cobra.Command](https://godoc.org/github.com/spf13/cobra#Command)
+[More about cobra.Command](https://pkg.go.dev/github.com/spf13/cobra#Command)
 
 ## Flags
 
