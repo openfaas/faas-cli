@@ -235,7 +235,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					combinedBuildArgMap := combineBuildArgMap(function.BuildConfig.BuildArgMap, buildArgMap)
+					combinedBuildArgMap := mergeMap(function.BuildConfig.BuildArgs, buildArgMap)
 					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
 					err := builder.BuildImage(function.Image,
 						function.Handler,
@@ -306,14 +306,4 @@ func combineBuildOpts(YAMLBuildOpts []string, buildFlagBuildOpts []string) []str
 
 	return mergeSlice(YAMLBuildOpts, buildFlagBuildOpts)
 
-}
-
-func combineBuildArgMap(YAMLBuildArgMap *map[string]string, buildFlagBuildArgMap map[string]string) map[string]string {
-
-	var buildArgMap map[string]string
-	if YAMLBuildArgMap != nil {
-		buildArgMap = *YAMLBuildArgMap
-	}
-
-	return mergeMap(buildArgMap, buildFlagBuildArgMap)
 }
