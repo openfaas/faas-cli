@@ -125,5 +125,5 @@ type BuildOption struct {
 
 // BuildConfig for providing build-args
 type BuildConfig struct {
-	BuildArgMap *map[string]string `yaml:"build_args"`
+	BuildArgs map[string]string `yaml:"build_args"`
 }
