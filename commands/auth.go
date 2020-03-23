@@ -31,6 +31,7 @@ var (
 	launchBrowser bool
 	grant         string
 	clientSecret  string
+	redirectHost  string
 )
 
 func init() {
@@ -40,6 +41,7 @@ func init() {
 	authCmd.Flags().IntVar(&listenPort, "listen-port", 31111, "OAuth2 local port for receiving cookie")
 	authCmd.Flags().StringVar(&audience, "audience", "", "OAuth2 audience")
 	authCmd.Flags().BoolVar(&launchBrowser, "launch-browser", true, "Launch browser for OAuth2 redirect")
+	authCmd.Flags().StringVar(&redirectHost, "redirect-host", "http://127.0.0.1", "Host for OAuth2 redirection in the implicit flow including URL scheme")
 
 	authCmd.Flags().StringVar(&scope, "scope", "openid profile", "scope for OAuth2 flow - i.e. \"openid profile\"")
 	authCmd.Flags().StringVar(&grant, "grant", "implicit", "grant for OAuth2 flow - either implicit, implicit-id or client_credentials")
@@ -137,7 +139,7 @@ func authImplicit(grant string) error {
 	q.Add("&response_mode", "fragment")
 	q.Add("audience", audience)
 
-	q.Add("redirect_uri", fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("http://localhost:%d", listenPort)))
+	q.Add("redirect_uri", fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("%s:%d", redirectHost, listenPort)))
 	authURLVal, _ := url.Parse(authURL)
 	authURLVal.RawQuery = q.Encode()
 
