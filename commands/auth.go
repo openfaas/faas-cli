@@ -139,7 +139,13 @@ func authImplicit(grant string) error {
 	q.Add("&response_mode", "fragment")
 	q.Add("audience", audience)
 
-	q.Add("redirect_uri", fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("%s:%d", redirectHost, listenPort)))
+	uri, err := makeRedirectURI(redirectHost, listenPort)
+	if err != nil {
+		return err
+	}
+
+	q.Add("redirect_uri", uri.String())
+
 	authURLVal, _ := url.Parse(authURL)
 	authURLVal.RawQuery = q.Encode()
 
@@ -156,6 +162,11 @@ func authImplicit(grant string) error {
 	<-context.Done()
 
 	return nil
+}
+
+func makeRedirectURI(host string, port int) (*url.URL, error) {
+	val := fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("%s:%d", redirectHost, listenPort))
+	return url.Parse(val)
 }
 
 func authClientCredentials() error {
