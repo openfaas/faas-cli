@@ -165,8 +165,17 @@ func authImplicit(grant string) error {
 }
 
 func makeRedirectURI(host string, port int) (*url.URL, error) {
-	val := fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("%s:%d", redirectHost, listenPort))
-	return url.Parse(val)
+	val := fmt.Sprintf("%s/oauth/callback", fmt.Sprintf("%s:%d", host, port))
+	res, err := url.Parse(val)
+
+	if err != nil {
+		return res, err
+	}
+
+	if st := res.String(); !(strings.HasPrefix(st, "http://") || strings.HasPrefix(st, "https://")) {
+		return res, fmt.Errorf("a scheme is required for the URL, i.e. http://")
+	}
+	return res, err
 }
 
 func authClientCredentials() error {
