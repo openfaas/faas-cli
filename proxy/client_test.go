@@ -34,7 +34,7 @@ func Test_NewClient(t *testing.T) {
 
 func Test_newRequest_URL(t *testing.T) {
 	auth := NewTestAuth(nil)
-	gatewayURL := "http://127.0.0.1:8080"
+	gatewayURL := "http://127.0.0.1:8080/base/path"
 	client := NewClient(auth, gatewayURL, nil, &defaultCommandTimeout)
 
 	testcases := []struct {
@@ -45,22 +45,22 @@ func Test_newRequest_URL(t *testing.T) {
 		{
 			Name:        "A valid path",
 			Path:        "/system/functions",
-			ExpectedURL: "http://127.0.0.1:8080/system/functions",
+			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions",
 		},
 		{
 			Name:        "Root Path",
 			Path:        "/",
-			ExpectedURL: "http://127.0.0.1:8080/",
+			ExpectedURL: "http://127.0.0.1:8080/base/path",
 		},
 		{
 			Name:        "Path without starting slash",
 			Path:        "system/functions",
-			ExpectedURL: "http://127.0.0.1:8080/system/functions",
+			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions",
 		},
 		{
 			Name:        "Path with querystring",
 			Path:        "system/functions?namespace=fn",
-			ExpectedURL: "http://127.0.0.1:8080/system/functions?namespace=fn",
+			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions?namespace=fn",
 		},
 	}
 
