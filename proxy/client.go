@@ -2,10 +2,14 @@ package proxy
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -57,10 +61,13 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
-	rel := &url.URL{Path: u.Path, RawQuery: u.RawQuery}
-	url := c.GatewayURL.ResolveReference(rel)
+	// deep copy gateway url and then add the supplied path  and args to the copy so that
+	// we preserve the original gateway URL as much as possible
+	endpoint, _ := url.Parse(c.GatewayURL.String())
+	endpoint.Path = filepath.Join(endpoint.Path, u.Path)
+	endpoint.RawQuery = u.RawQuery
 
-	req, err := http.NewRequest(method, url.String(), body)
+	req, err := http.NewRequest(method, endpoint.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +88,11 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 //doRequest perform an HTTP request with context
 func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
+
+	if os.Getenv("FAAS_CLI_DEBUG_HTTP") == "true" {
+		dump, _ := httputil.DumpRequest(req, true)
+		fmt.Println(string(dump))
+	}
 	resp, err := c.httpClient.Do(req)
 
 	if err != nil {
