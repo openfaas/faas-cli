@@ -92,8 +92,7 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
-	dump, foundDump := os.LookupEnv("OPENFAAS_DUMP_HTTP")
-	if foundDump && dump == "true" {
+	if val, ok := os.LookupEnv("OPENFAAS_DUMP_HTTP"); ok && val == "true" {
 		dump, err := httputil.DumpRequest(req, true)
 		if err != nil {
 			return nil, err
