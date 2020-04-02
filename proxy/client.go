@@ -63,7 +63,10 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 	}
 	// deep copy gateway url and then add the supplied path  and args to the copy so that
 	// we preserve the original gateway URL as much as possible
-	endpoint, _ := url.Parse(c.GatewayURL.String())
+	endpoint, err := url.Parse(c.GatewayURL.String())
+	if err != nil {
+		return nil, err
+	}
 	endpoint.Path = filepath.Join(endpoint.Path, u.Path)
 	endpoint.RawQuery = u.RawQuery
 
@@ -89,8 +92,12 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
-	if os.Getenv("FAAS_CLI_DEBUG_HTTP") == "true" {
-		dump, _ := httputil.DumpRequest(req, true)
+	dump, foundDump := os.LookupEnv("OPENFAAS_DUMP_HTTP")
+	if foundDump && dump == "true" {
+		dump, err := httputil.DumpRequest(req, true)
+		if err != nil {
+			return nil, err
+		}
 		fmt.Println(string(dump))
 	}
 	resp, err := c.httpClient.Do(req)
