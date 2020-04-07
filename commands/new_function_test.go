@@ -347,7 +347,7 @@ func Test_backfillTemplates(t *testing.T) {
 	const functionLang = "ruby"
 
 	// Delete cached templates
-	localTemplateRepository := setupLocalTemplateRepo(t)
+	localTemplateRepository := setupLocalTemplateRepo(t, "")
 	defer os.RemoveAll(localTemplateRepository)
 	defer tearDownNewFunction(t, functionName)
 

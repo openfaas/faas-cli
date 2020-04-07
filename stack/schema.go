@@ -83,6 +83,7 @@ type StackConfiguration struct {
 type TemplateSource struct {
 	Name   string `yaml:"name"`
 	Source string `yaml:"source,omitempty"`
+	Path   string `yaml:"path,omitempty"`
 }
 
 // FunctionResources Memory and CPU

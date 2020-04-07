@@ -166,6 +166,7 @@ type TemplateInfo struct {
 	Description  string `json:"description"`
 	Repository   string `json:"repo"`
 	Official     string `json:"official"`
+	TemplatePath string `json:"path"`
 }
 
 func filterTemplate(templates []TemplateInfo, platform string) []TemplateInfo {

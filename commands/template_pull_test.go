@@ -13,7 +13,7 @@ import (
 )
 
 func Test_templatePull(t *testing.T) {
-	localTemplateRepository := setupLocalTemplateRepo(t)
+	localTemplateRepository := setupLocalTemplateRepo(t, "")
 	defer os.RemoveAll(localTemplateRepository)
 
 	t.Run("ValidRepo", func(t *testing.T) {
@@ -124,7 +124,7 @@ func Test_templatePullPriority(t *testing.T) {
 
 // templatePullLocalTemplateRepo executes `template pull` on a local repository to get templates
 func templatePullLocalTemplateRepo(t *testing.T) {
-	localTemplateRepository := setupLocalTemplateRepo(t)
+	localTemplateRepository := setupLocalTemplateRepo(t, "")
 	defer os.RemoveAll(localTemplateRepository)
 
 	faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})

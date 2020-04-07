@@ -75,6 +75,9 @@ func formatTemplateOutput(storeTemplate TemplateInfo) string {
 	fmt.Fprintf(lineWriter, "Source:\t%s\n", storeTemplate.Source)
 	fmt.Fprintf(lineWriter, "Description:\t%s\n", storeTemplate.Description)
 	fmt.Fprintf(lineWriter, "Repository:\t%s\n", storeTemplate.Repository)
+	if storeTemplate.TemplatePath != "" {
+		fmt.Fprintf(lineWriter, "Path:\t%s\n", storeTemplate.TemplatePath)
+	}
 	fmt.Fprintf(lineWriter, "Official Template:\t%s\n", storeTemplate.Official)
 	fmt.Fprintln(lineWriter)
 

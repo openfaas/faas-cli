@@ -286,13 +286,19 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 
 // PullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
 func PullTemplates(templateURL string) error {
+	return PullTemplatesPath(templateURL, "")
+}
+
+// PullTemplatesPath pulls templates from specified git remote, located under a nested path
+// from the root of the repo. templateURL may be a pinned repository.
+func PullTemplatesPath(templateURL, path string) error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
 		log.Println("No templates found in current directory.")
 
 		templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
-		err = fetchTemplates(templateURL, refName, false)
+		err = fetchTemplatesPath(templateURL, refName, path, false)
 		if err != nil {
 			log.Println("Unable to download templates from Github.")
 			return err

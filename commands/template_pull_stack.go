@@ -77,7 +77,7 @@ func pullStackTemplates(templateInfo []stack.TemplateSource, cmd *cobra.Command)
 				return pullErr
 			}
 		} else {
-			pullErr := pullTemplate(val.Source)
+			pullErr := pullTemplatePath(val.Source, val.Path)
 			if pullErr != nil {
 				return pullErr
 			}

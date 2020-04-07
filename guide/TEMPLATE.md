@@ -2,8 +2,9 @@
 
 ## Repository structure
 
-The external repository must have a directory named ```template``` at the root directory, in which there are directories
-containing templates. The directory for each template can be freely named with alphanumeric characters and hyphen.
+The external repository must either have a directory named ```template``` at the root directory, or a nested sub-directory, 
+in which there are directories containing templates. The directory for each template can be freely named with alphanumeric 
+characters and hyphen.
 
 Example:
 
@@ -77,6 +78,14 @@ You can specify the template URL with `OPENFAAS_TEMPLATE_URL` environmental vari
 export OPENFAAS_TEMPLATE_URL="https://github.com/openfaas-incubator/golang-http-template"
 faas-cli template pull
 ```
+
+The previous commands assume that templates live within a directory named ```template``` at the root of the repo. 
+If the template directory lives under a nested path, you can specify the location to the template root:
+
+```bash
+faas-cli template pull https://github.com/group/template-project path/to/template
+```
+
 
 ## Pin the template repository version
 

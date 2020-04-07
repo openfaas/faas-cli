@@ -51,7 +51,7 @@ func runTemplateStorePull(cmd *cobra.Command, args []string) error {
 	for _, storeTemplate := range storeTemplates {
 		sourceName := fmt.Sprintf("%s/%s", storeTemplate.Source, storeTemplate.TemplateName)
 		if templateName == storeTemplate.TemplateName || templateName == sourceName {
-			err := runTemplatePull(cmd, []string{storeTemplate.Repository})
+			err := runTemplatePull(cmd, []string{storeTemplate.Repository, storeTemplate.TemplatePath})
 			if err != nil {
 				return fmt.Errorf("error while pulling template: %s : %s", storeTemplate.TemplateName, err.Error())
 			}

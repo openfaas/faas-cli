@@ -21,6 +21,10 @@ const templateDirectory = "./template/"
 
 // fetchTemplates fetch code templates using git clone.
 func fetchTemplates(templateURL string, refName string, overwrite bool) error {
+	return fetchTemplatesPath(templateURL, refName, templateDirectory, overwrite)
+}
+
+func fetchTemplatesPath(templateURL, refName, path string, overwrite bool) error {
 	if len(templateURL) == 0 {
 		return fmt.Errorf("pass valid templateURL")
 	}
@@ -40,7 +44,7 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 		return err
 	}
 
-	preExistingLanguages, fetchedLanguages, err := moveTemplates(dir, overwrite)
+	preExistingLanguages, fetchedLanguages, err := moveTemplatesPath(dir, path, overwrite)
 	if err != nil {
 		return err
 	}
@@ -81,6 +85,10 @@ func templateFolderExists(language string, overwrite bool) bool {
 }
 
 func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) {
+	return moveTemplatesPath(repoPath, templateDirectory, overwrite)
+}
+
+func moveTemplatesPath(repoPath, path string, overwrite bool) ([]string, []string, error) {
 	var (
 		existingLanguages []string
 		fetchedLanguages  []string
@@ -89,10 +97,10 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 
 	availableLanguages := make(map[string]bool)
 
-	templateDir := filepath.Join(repoPath, templateDirectory)
+	templateDir := filepath.Join(repoPath, path)
 	templates, err := ioutil.ReadDir(templateDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("can't find templates in: %s", repoPath)
+		return nil, nil, fmt.Errorf("can't find templates in: %s", templateDir)
 	}
 
 	for _, file := range templates {
@@ -118,6 +126,10 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 }
 
 func pullTemplate(repository string) error {
+	return pullTemplatePath(repository, "")
+}
+
+func pullTemplatePath(repository, path string) error {
 	if _, err := os.Stat(repository); err != nil {
 		if !versioncontrol.IsGitRemote(repository) && !versioncontrol.IsPinnedGitRemote(repository) {
 			return fmt.Errorf("The repository URL must be a valid git repo uri")
@@ -134,7 +146,7 @@ func pullTemplate(repository string) error {
 	}
 
 	fmt.Printf("Fetch templates from repository: %s at %s\n", repository, refName)
-	if err := fetchTemplates(repository, refName, overwrite); err != nil {
+	if err := fetchTemplatesPath(repository, refName, path, overwrite); err != nil {
 		return fmt.Errorf("error while fetching templates: %s", err)
 	}
 
