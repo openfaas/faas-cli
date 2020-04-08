@@ -50,6 +50,9 @@ func runTemplatePull(cmd *cobra.Command, args []string) error {
 		}
 	}
 	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
+	if path == "" {
+		return pullTemplate(repository)
+	}
 	return pullTemplatePath(repository, path)
 }
 

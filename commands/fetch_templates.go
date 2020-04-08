@@ -126,7 +126,7 @@ func moveTemplatesPath(repoPath, path string, overwrite bool) ([]string, []strin
 }
 
 func pullTemplate(repository string) error {
-	return pullTemplatePath(repository, "")
+	return pullTemplatePath(repository, templateDirectory)
 }
 
 func pullTemplatePath(repository, path string) error {

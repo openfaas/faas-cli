@@ -286,7 +286,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 
 // PullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
 func PullTemplates(templateURL string) error {
-	return PullTemplatesPath(templateURL, "")
+	return PullTemplatesPath(templateURL, templateDirectory)
 }
 
 // PullTemplatesPath pulls templates from specified git remote, located under a nested path
