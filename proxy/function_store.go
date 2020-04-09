@@ -11,9 +11,15 @@ import (
 	"github.com/openfaas/faas-cli/schema"
 )
 
+type StoreResult struct {
+	Version   string             `json:"version"`
+	Functions []schema.StoreItem `json:"functions"`
+}
+
 // FunctionStoreList returns functions from a store URL
 func FunctionStoreList(store string) ([]schema.StoreItem, error) {
-	var results []schema.StoreItem
+
+	var storeResults StoreResult
 
 	store = strings.TrimRight(store, "/")
 
@@ -38,7 +44,7 @@ func FunctionStoreList(store string) ([]schema.StoreItem, error) {
 			return nil, fmt.Errorf("cannot read result from OpenFaaS store at URL: %s", store)
 		}
 
-		jsonErr := json.Unmarshal(bytesOut, &results)
+		jsonErr := json.Unmarshal(bytesOut, &storeResults)
 		if jsonErr != nil {
 			return nil, fmt.Errorf("cannot parse result from OpenFaaS store at URL: %s\n%s", store, jsonErr.Error())
 		}
@@ -48,5 +54,5 @@ func FunctionStoreList(store string) ([]schema.StoreItem, error) {
 			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
 	}
-	return results, nil
+	return storeResults.Functions, nil
 }
