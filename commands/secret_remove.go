@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
@@ -56,7 +57,7 @@ func runSecretRemove(cmd *cobra.Command, args []string) error {
 		Namespace: functionNamespace,
 	}
 
-	cliAuth := NewCLIAuth(token, gatewayAddress)
+	cliAuth := config.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	err := client.RemoveSecret(context.Background(), secret)

@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
@@ -97,7 +98,7 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")
 	}
 
-	cliAuth := NewCLIAuth(token, gatewayAddress)
+	cliAuth := config.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	fmt.Println("Updating secret: " + secret.Name)

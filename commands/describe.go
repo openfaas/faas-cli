@@ -11,6 +11,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
@@ -64,7 +65,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		}
 	}
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
-	cliAuth := NewCLIAuth(token, gatewayAddress)
+	cliAuth := config.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	ctx := context.Background()

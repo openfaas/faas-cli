@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -58,7 +59,7 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	cliAuth := NewCLIAuth(token, gatewayAddress)
+	cliAuth := config.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	proxyClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	functions, err := proxyClient.ListFunctions(context.Background(), functionNamespace)
