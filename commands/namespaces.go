@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
@@ -30,7 +31,7 @@ var namespacesCmd = &cobra.Command{
 
 func runNamespaces(cmd *cobra.Command, args []string) error {
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	cliAuth := NewCLIAuth(token, gatewayAddress)
+	cliAuth := config.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	namespaces, err := client.ListNamespaces(context.Background())
