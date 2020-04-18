@@ -3,21 +3,20 @@ package proxy
 import (
 	"encoding/json"
 	"fmt"
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
-
-	"github.com/openfaas/faas-cli/schema"
 )
 
 type StoreResult struct {
 	Version   string             `json:"version"`
-	Functions []schema.StoreItem `json:"functions"`
+	Functions []v2.StoreFunction `json:"functions"`
 }
 
 // FunctionStoreList returns functions from a store URL
-func FunctionStoreList(store string) ([]schema.StoreItem, error) {
+func FunctionStoreList(store string) ([]v2.StoreFunction, error) {
 
 	var storeResults StoreResult
 

@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
@@ -27,6 +28,7 @@ var (
 	api               string
 	functionNamespace string
 	fromStore         string
+	desiredArch       string
 )
 
 func init() {
@@ -37,7 +39,7 @@ func init() {
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
-
+	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
 	faasCmd.AddCommand(generateCmd)
 }
 
@@ -61,8 +63,8 @@ func preRunGenerate(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func filterStoreItem(items []schema.StoreItem, fromStore string) (*schema.StoreItem, error) {
-	var item *schema.StoreItem
+func filterStoreItem(items []v2.StoreFunction, fromStore string) (*v2.StoreFunction, error) {
+	var item *v2.StoreFunction
 
 	for _, val := range items {
 		if val.Name == fromStore {
@@ -80,6 +82,7 @@ func filterStoreItem(items []schema.StoreItem, fromStore string) (*schema.StoreI
 
 func runGenerate(cmd *cobra.Command, args []string) error {
 
+	desiredArch, _ := cmd.Flags().GetString("arch")
 	var services stack.Services
 
 	if len(fromStore) > 0 {
@@ -102,9 +105,18 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			return err
 		}
 
+		_, ok := item.Images[desiredArch]
+		if !ok {
+			var keys []string
+			for k := range item.Images {
+				keys = append(keys, k)
+			}
+			return errors.New(fmt.Sprintf("image for %s not found in store. \noptions: %s", desiredArch, keys))
+		}
+
 		services.Functions[item.Name] = stack.Function{
 			Name:        item.Name,
-			Image:       item.Image,
+			Image:       item.Images[desiredArch],
 			Labels:      &item.Labels,
 			Annotations: &item.Annotations,
 			Environment: item.Environment,
