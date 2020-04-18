@@ -3,6 +3,7 @@
 package commands
 
 import (
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"testing"
 
 	"github.com/openfaas/faas-cli/schema"
@@ -208,8 +209,8 @@ func stringInSlice(a string, list []string) bool {
 
 func Test_filterStoreItem_Found(t *testing.T) {
 
-	items := []schema.StoreItem{
-		schema.StoreItem{
+	items := []v2.StoreFunction{
+		v2.StoreFunction{
 			Name: "figlet",
 		},
 	}
@@ -230,8 +231,8 @@ func Test_filterStoreItem_Found(t *testing.T) {
 
 func Test_filterStoreItem_NotFound(t *testing.T) {
 
-	items := []schema.StoreItem{
-		schema.StoreItem{
+	items := []v2.StoreFunction{
+		v2.StoreFunction{
 			Name: "figlets",
 		},
 	}
