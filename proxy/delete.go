@@ -48,17 +48,16 @@ func (c *Client) DeleteFunction(ctx context.Context, functionName string, namesp
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		fmt.Println("Removing old function.")
 	case http.StatusNotFound:
-		fmt.Println("No existing function to remove")
+		err = fmt.Errorf("No existing function to remove")
 	case http.StatusUnauthorized:
-		fmt.Println("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
+		err = fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		var bodyReadErr error
 		bytesOut, bodyReadErr := ioutil.ReadAll(delRes.Body)
 		if bodyReadErr != nil {
 			err = bodyReadErr
 		} else {
-			err = fmt.Errorf("server returned unexpected status code %d %s", delRes.StatusCode, string(bytesOut))
-			fmt.Println("Server returned unexpected status code", delRes.StatusCode, string(bytesOut))
+			err = fmt.Errorf("Server returned unexpected status code %d %s", delRes.StatusCode, string(bytesOut))
 		}
 	}
 

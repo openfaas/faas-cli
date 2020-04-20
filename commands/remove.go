@@ -83,7 +83,10 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 		functionName = args[0]
 		fmt.Printf("Deleting: %s.\n", functionName)
-		proxyclient.DeleteFunction(ctx, functionName, functionNamespace)
+		err := proxyclient.DeleteFunction(ctx, functionName, functionNamespace)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
