@@ -62,6 +62,9 @@ func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.
 func reqAsQueryValues(r logs.Request) url.Values {
 	query := url.Values{}
 	query.Add("name", r.Name)
+	if len(r.Namespace) > 0 {
+		query.Add("namespace", r.Namespace)
+	}
 	query.Add("follow", strconv.FormatBool(r.Follow))
 	if r.Instance != "" {
 		query.Add("instance", r.Instance)
