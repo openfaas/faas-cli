@@ -107,11 +107,11 @@
   name = "github.com/openfaas/faas"
   packages = ["gateway/requests"]
   pruneopts = "UT"
-  revision = "4d4ecc6bbf985095e64cb2bf0ab7003ea2b54776"
-  version = "0.18.4"
+  revision = "18f6c720b50db7da5f9c410f9fd3369ed7aff379"
+  version = "0.18.17"
 
 [[projects]]
-  digest = "1:690dfc3640e08c64ef54f044d92029e4bbd19cb6dd5d738c1a776ce0c37756d7"
+  digest = "1:f51aab92482c779a8445e1f51b7ceb5ef9fdc4eb2e39167ed4aa89364bd53102"
   name = "github.com/openfaas/faas-provider"
   packages = [
     "httputil",
@@ -119,8 +119,8 @@
     "types",
   ]
   pruneopts = "UT"
-  revision = "478f741b64cbcfaaee852156b060514be56623b3"
-  version = "0.12.0"
+  revision = "db19209aa27f42a9cf6a23448fc2b8c9cc4fbb5d"
+  version = "v0.15.1"
 
 [[projects]]
   digest = "1:cf31692c14422fa27c83a05292eb5cbe0fb2775972e8f1f8446a71549bd8980b"
@@ -139,12 +139,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:e096613fb7cf34743d49af87d197663cfccd61876e2219853005a57baedfa562"
+  digest = "1:1e80255eea46af2e2db7da90f95e4b5cfe84f3b58d9a8598ec35b0f2a75c60e4"
   name = "github.com/spf13/cobra"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f2b07da1e2c38d5f12845a4f607e2e1018cbb1f5"
-  version = "v0.0.5"
+  revision = "6607e6b8603f56adb027298ee6695e06ffb3a819"
+  version = "0.0.7"
 
 [[projects]]
   digest = "1:524b71991fc7d9246cc7dc2d9e0886ccb97648091c63e30eef619e6862c955dd"
@@ -163,12 +163,12 @@
   revision = "eeba5f6aabab6d6594a9191d6bfeaca5fa6a8248"
 
 [[projects]]
-  digest = "1:b75b3deb2bce8bc079e16bb2aecfe01eb80098f5650f9e93e5643ca8b7b73737"
+  digest = "1:55b110c99c5fdc4f14930747326acce56b52cfce60b24b1c03ef686ac0e46bb1"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1f64d6156d11335c3f22d9330b0ad14fc1e789ce"
-  version = "v2.2.7"
+  revision = "53403b58ad1b561927d19068c655246f2db79d48"
+  version = "v2.2.8"
 
 [solve-meta]
   analyzer-name = "dep"

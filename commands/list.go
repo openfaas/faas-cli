@@ -22,6 +22,7 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	listCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	listCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	listCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
