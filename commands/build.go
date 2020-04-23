@@ -235,7 +235,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					combinedBuildArgMap := mergeMap(function.BuildConfig.BuildArgs, buildArgMap)
+					combinedBuildArgMap := mergeMap(function.BuildArgs, buildArgMap)
 					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
 					err := builder.BuildImage(function.Image,
 						function.Handler,

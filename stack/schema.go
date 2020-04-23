@@ -31,37 +31,38 @@ type Function struct {
 	Environment map[string]string `yaml:"environment"`
 
 	// Secrets list of secrets to be made available to function
-	Secrets []string `yaml:"secrets"`
+	Secrets []string `yaml:"secrets,omitempty"`
 
-	SkipBuild bool `yaml:"skip_build"`
+	SkipBuild bool `yaml:"skip_build,omitempty"`
 
-	Constraints *[]string `yaml:"constraints"`
+	Constraints *[]string `yaml:"constraints,omitempty"`
 
 	// EnvironmentFile is a list of files to import and override environmental variables.
 	// These are overriden in order.
-	EnvironmentFile []string `yaml:"environment_file"`
+	EnvironmentFile []string `yaml:"environment_file,omitempty"`
 
-	Labels *map[string]string `yaml:"labels"`
+	Labels *map[string]string `yaml:"labels,omitempty"`
 
 	// Limits for function
-	Limits *FunctionResources `yaml:"limits"`
+	Limits *FunctionResources `yaml:"limits,omitempty"`
 
 	// Requests of resources requested by function
-	Requests *FunctionResources `yaml:"requests"`
+	Requests *FunctionResources `yaml:"requests,omitempty"`
 
 	// ReadOnlyRootFilesystem is used to set the container filesystem to read-only
-	ReadOnlyRootFilesystem bool `yaml:"readonly_root_filesystem"`
+	ReadOnlyRootFilesystem bool `yaml:"readonly_root_filesystem,omitempty"`
 
 	// BuildOptions to determine native packages
-	BuildOptions []string `yaml:"build_options"`
-
-	BuildConfig BuildConfig `yaml:"build_config,omitempty"`
+	BuildOptions []string `yaml:"build_options,omitempty"`
 
 	// Annotations
-	Annotations *map[string]string `yaml:"annotations"`
+	Annotations *map[string]string `yaml:"annotations,omitempty"`
 
 	// Namespace of the function
 	Namespace string `yaml:"namespace,omitempty"`
+
+	// BuildArgs for providing build-args
+	BuildArgs map[string]string `yaml:"build_args,omitempty"`
 }
 
 // Configuration for the stack.yml file
@@ -121,9 +122,4 @@ type LanguageTemplate struct {
 type BuildOption struct {
 	Name     string   `yaml:"name"`
 	Packages []string `yaml:"packages"`
-}
-
-// BuildConfig for providing build-args
-type BuildConfig struct {
-	BuildArgs map[string]string `yaml:"build_args"`
 }
