@@ -1,3 +1,5 @@
+FROM teamserverless/license-check:0.3.6 as license-check
+
 # Build stage
 FROM golang:1.13 as builder
 
@@ -5,7 +7,8 @@ ENV GO111MODULE=off
 ENV CGO_ENABLED=0
 
 WORKDIR /usr/bin/
-RUN curl -sLSf https://raw.githubusercontent.com/teamserverless/license-check/master/get.sh | sh
+
+COPY --from=license-check /license-check /usr/bin/
 
 WORKDIR /go/src/github.com/openfaas/faas-cli
 COPY . .

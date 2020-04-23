@@ -45,7 +45,7 @@ func Test_PlainLogFormatter(t *testing.T) {
 		Timestamp: ts,
 		Name:      "test-func",
 		Instance:  "123test",
-		Text:      "test message\n",
+		Text:      "test message",
 	}
 
 	cases := []struct {
@@ -53,7 +53,7 @@ func Test_PlainLogFormatter(t *testing.T) {
 		timeFormat      string
 		includeName     bool
 		includeInstance bool
-		expected        string
+		want            string
 	}{
 		{"default settings", time.RFC3339, true, true, "2009-11-10T23:00:00Z test-func (123test) test message"},
 		{"default can modify timestamp", "2006-01-02 15:04:05.999999999 -0700 MST", true, true, msg.String()},
@@ -61,11 +61,12 @@ func Test_PlainLogFormatter(t *testing.T) {
 		{"can hide instance", time.RFC3339, true, false, "2009-11-10T23:00:00Z test-func test message"},
 		{"can hide all metadata", "", false, false, "test message"},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			formatted := PlainFormatMessage(msg, tc.timeFormat, tc.includeName, tc.includeInstance)
-			if strings.TrimSpace(formatted) != strings.TrimSpace(tc.expected) {
-				t.Fatalf("incorrect message format:\n got %s\n expected %s\n", formatted, tc.expected)
+			got := PlainFormatMessage(msg, tc.timeFormat, tc.includeName, tc.includeInstance)
+			if strings.TrimSpace(got) != strings.TrimSpace(tc.want) {
+				t.Fatalf("incorrect message format:\n want %q\n got %q\n", tc.want, got)
 			}
 		})
 	}

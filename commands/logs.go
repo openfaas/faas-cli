@@ -7,6 +7,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -70,6 +71,8 @@ func initLogCmdFlags(cmd *cobra.Command) {
 	logFlagValues = logFlags{}
 
 	cmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
+	cmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+
 	cmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	cmd.Flags().DurationVar(&logFlagValues.since, "since", 0*time.Second, "return logs newer than a relative duration like 5s")
@@ -93,9 +96,11 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	logRequest := logRequestFromFlags(cmd, args)
+
 	cliAuth := NewCLIAuth(logFlagValues.token, gatewayAddress)
 	transport := getLogStreamingTransport(tlsInsecure)
 	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, nil)
+
 	logEvents, err := cliClient.GetLogs(context.Background(), logRequest)
 	if err != nil {
 		return err
@@ -110,11 +115,18 @@ func runLogs(cmd *cobra.Command, args []string) error {
 }
 
 func logRequestFromFlags(cmd *cobra.Command, args []string) logs.Request {
+
+	ns, err := cmd.Flags().GetString("namespace")
+	if err != nil {
+		log.Printf("error getting namespace flag %s\n", err.Error())
+	}
+
 	return logs.Request{
-		Name:   args[0],
-		Tail:   logFlagValues.tail,
-		Since:  sinceValue(logFlagValues.sinceTime.AsTime(), logFlagValues.since),
-		Follow: logFlagValues.follow,
+		Name:      args[0],
+		Namespace: ns,
+		Tail:      logFlagValues.tail,
+		Since:     sinceValue(logFlagValues.sinceTime.AsTime(), logFlagValues.since),
+		Follow:    logFlagValues.follow,
 	}
 }
 
