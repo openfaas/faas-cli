@@ -10,7 +10,6 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
@@ -49,7 +48,7 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		fmt.Println(msg)
 	}
 
-	cliAuth := config.NewCLIAuth(token, gatewayAddress)
+	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	secrets, err := client.GetSecretList(context.Background(), functionNamespace)

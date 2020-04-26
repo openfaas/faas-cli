@@ -18,7 +18,6 @@ import (
 	"github.com/docker/docker-credential-helpers/client"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/openfaas/faas-cli/builder"
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
@@ -178,7 +177,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			services.Provider.Network = defaultNetwork
 		}
 
-		cliAuth := config.NewCLIAuth(token, services.Provider.GatewayURL)
+		cliAuth := proxy.NewCLIAuth(token, services.Provider.GatewayURL)
 		proxyClient := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
 
 		for k, function := range services.Functions {
@@ -308,7 +307,7 @@ Error: %s`, fprocessErr.Error())
 			return fmt.Errorf("To deploy a function give --yaml/-f or a --image and --name flag")
 		}
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-		cliAuth := config.NewCLIAuth(token, gateway)
+		cliAuth := proxy.NewCLIAuth(token, gateway)
 		proxyClient := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 
 		var registryAuth string
