@@ -12,7 +12,6 @@ import (
 	"os"
 
 	"github.com/morikuni/aec"
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
@@ -96,7 +95,7 @@ func printServerVersions() {
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	versionTimeout := 5 * time.Second
-	cliAuth := config.NewCLIAuth(token, gatewayAddress)
+	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &versionTimeout)
 	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &versionTimeout)
 	info, err := cliClient.GetSystemInfo(context.Background())

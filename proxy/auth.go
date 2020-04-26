@@ -1,9 +1,9 @@
-package config
+package proxy
 
 import (
 	"net/http"
 
-	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/config"
 )
 
 //CLIAuth auth struct for the CLI
@@ -35,8 +35,8 @@ func (c *BearerToken) Set(req *http.Request) error {
 }
 
 //NewCLIAuth returns a new CLI Auth
-func NewCLIAuth(token string, gateway string) proxy.ClientAuth {
-	authConfig, _ := LookupAuthConfig(gateway)
+func NewCLIAuth(token string, gateway string) ClientAuth {
+	authConfig, _ := config.LookupAuthConfig(gateway)
 
 	var (
 		username    string
@@ -44,8 +44,8 @@ func NewCLIAuth(token string, gateway string) proxy.ClientAuth {
 		bearerToken string
 	)
 
-	if authConfig.Auth == BasicAuthType {
-		username, password, _ = DecodeAuth(authConfig.Token)
+	if authConfig.Auth == config.BasicAuthType {
+		username, password, _ = config.DecodeAuth(authConfig.Token)
 
 		return &BasicAuth{
 			username: username,

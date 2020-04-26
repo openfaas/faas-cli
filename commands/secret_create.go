@@ -11,7 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	types "github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
@@ -111,7 +110,7 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
 		fmt.Println(msg)
 	}
-	cliAuth := config.NewCLIAuth(token, gatewayAddress)
+	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	fmt.Println("Creating secret: " + secret.Name)

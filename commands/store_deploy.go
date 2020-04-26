@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
@@ -130,7 +129,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	cliAuth := config.NewCLIAuth(token, gateway)
+	cliAuth := proxy.NewCLIAuth(token, gateway)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	proxyClient := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 

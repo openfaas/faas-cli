@@ -12,7 +12,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/faas-cli/flags"
 	"github.com/openfaas/faas-provider/logs"
 
@@ -97,7 +96,7 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	logRequest := logRequestFromFlags(cmd, args)
-	cliAuth := config.NewCLIAuth(logFlagValues.token, gatewayAddress)
+	cliAuth := proxy.NewCLIAuth(logFlagValues.token, gatewayAddress)
 	transport := getLogStreamingTransport(tlsInsecure)
 	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, nil)
 
