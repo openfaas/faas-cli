@@ -9,7 +9,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
-	"path/filepath"
+	gopath "path"
 	"strings"
 	"time"
 )
@@ -67,7 +67,7 @@ func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request,
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = filepath.Join(endpoint.Path, u.Path)
+	endpoint.Path = gopath.Join(endpoint.Path, u.Path)
 	endpoint.RawQuery = u.RawQuery
 
 	req, err := http.NewRequest(method, endpoint.String(), body)
