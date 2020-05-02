@@ -37,3 +37,21 @@ func Test_BuildImageName_BranchAndSHAFormat(t *testing.T) {
 		t.Errorf("BuildImageName want: \"%s\", got: \"%s\"", want, got)
 	}
 }
+
+func Test_BuildImageName_RegistryWithPort(t *testing.T) {
+	want := "registry.domain:8080/image:latest"
+	got := BuildImageName(DefaultFormat, "registry.domain:8080/image", "ef384", "master")
+
+	if got != want {
+		t.Errorf("BuildImageName want: \"%s\", got: \"%s\"", want, got)
+	}
+}
+
+func Test_BuildImageName_RegistryWithPortAndTag(t *testing.T) {
+	want := "registry.domain:8080/image:foo"
+	got := BuildImageName(DefaultFormat, "registry.domain:8080/image:foo", "ef384", "master")
+
+	if got != want {
+		t.Errorf("BuildImageName want: \"%s\", got: \"%s\"", want, got)
+	}
+}
