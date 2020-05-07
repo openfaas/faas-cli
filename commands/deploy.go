@@ -177,7 +177,10 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			services.Provider.Network = defaultNetwork
 		}
 
-		cliAuth := proxy.NewCLIAuth(token, services.Provider.GatewayURL)
+		cliAuth, err := proxy.NewCLIAuth(token, services.Provider.GatewayURL)
+		if err != nil {
+			return err
+		}
 		proxyClient, err := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
 		if err != nil {
 			return err
@@ -310,7 +313,10 @@ Error: %s`, fprocessErr.Error())
 			return fmt.Errorf("To deploy a function give --yaml/-f or a --image and --name flag")
 		}
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-		cliAuth := proxy.NewCLIAuth(token, gateway)
+		cliAuth, err := proxy.NewCLIAuth(token, gateway)
+		if err != nil {
+			return err
+		}
 		proxyClient, err := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 		if err != nil {
 			return err

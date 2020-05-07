@@ -95,7 +95,10 @@ func printServerVersions() error {
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
 	versionTimeout := 5 * time.Second
-	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
+	cliAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
+	if err != nil {
+		return err
+	}
 	transport := GetDefaultCLITransport(tlsInsecure, &versionTimeout)
 	cliClient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &versionTimeout)
 	if err != nil {

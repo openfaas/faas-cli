@@ -58,7 +58,10 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 
-	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
+	cliAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
+	if err != nil {
+		return err
+	}
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	proxyClient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
 	if err != nil {
