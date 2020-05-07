@@ -19,7 +19,7 @@ func Test_DeleteFunction(t *testing.T) {
 	defer s.Close()
 
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	stdout := test.CaptureStdout(func() {
 		proxyClient.DeleteFunction(context.Background(), "function-to-delete", "")
@@ -36,7 +36,7 @@ func Test_DeleteFunction_404(t *testing.T) {
 	defer s.Close()
 
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	err := proxyClient.DeleteFunction(context.Background(), "function-to-delete", "")
 
@@ -51,7 +51,7 @@ func Test_DeleteFunction_Not2xxAnd404(t *testing.T) {
 	defer s.Close()
 
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	err := proxyClient.DeleteFunction(context.Background(), "function-to-delete", "")
 

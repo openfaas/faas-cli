@@ -60,7 +60,11 @@ func runList(cmd *cobra.Command, args []string) error {
 
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	proxyClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	proxyClient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
 	functions, err := proxyClient.ListFunctions(context.Background(), functionNamespace)
 	if err != nil {
 		return err

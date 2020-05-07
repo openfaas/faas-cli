@@ -99,7 +99,11 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("Updating secret: " + secret.Name)
 	_, output := client.UpdateSecret(context.Background(), secret)
 	fmt.Printf(output)

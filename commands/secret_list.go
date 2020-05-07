@@ -50,7 +50,11 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
 	secrets, err := client.GetSecretList(context.Background(), functionNamespace)
 	if err != nil {
 		return err

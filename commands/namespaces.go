@@ -32,7 +32,11 @@ func runNamespaces(cmd *cobra.Command, args []string) error {
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
 	namespaces, err := client.ListNamespaces(context.Background())
 	if err != nil {
 		return err

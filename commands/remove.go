@@ -62,7 +62,10 @@ func runDelete(cmd *cobra.Command, args []string) error {
 
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	proxyclient := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	proxyclient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
 	ctx := context.Background()
 
 	if len(services.Functions) > 0 {

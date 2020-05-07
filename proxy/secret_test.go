@@ -18,7 +18,7 @@ func Test_GetSecretList_200OK(t *testing.T) {
 		},
 	})
 	defer s.Close()
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	secrets, err := client.GetSecretList(context.Background(), "openfaas-fn")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
@@ -39,7 +39,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 		},
 	})
 	defer s.Close()
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	secrets, err := client.GetSecretList(context.Background(), "")
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
@@ -54,7 +54,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 
 func Test_GetSecretList_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	_, err := client.GetSecretList(context.Background(), "openfaas-fn")
 
 	if err == nil {
@@ -69,7 +69,7 @@ func Test_GetSecretList_Not200(t *testing.T) {
 
 func Test_GetSecretList_Unauthorized401(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusUnauthorized)
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	_, err := client.GetSecretList(context.Background(), "fn")
 
 	if err == nil {
@@ -98,7 +98,7 @@ func Test_CreateSecret_200OK(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusOK {
@@ -113,7 +113,7 @@ func Test_CreateSecret_201Created(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusCreated {
@@ -128,7 +128,7 @@ func Test_CreateSecret_202Accepted(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, _ := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusAccepted {
@@ -144,7 +144,7 @@ func Test_CreateSecret_Not200(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusBadRequest {
@@ -165,7 +165,7 @@ func Test_CreateSecret_Unauthorized401(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusUnauthorized {
@@ -186,7 +186,7 @@ func Test_CreateSecret_Conflict409(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "openfaas-fn",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusConflict {
@@ -207,7 +207,7 @@ func Test_CreateSecret_ForbiddenNamespace(t *testing.T) {
 		Value:     "secret-value",
 		Namespace: "kube-system",
 	}
-	client := NewClient(NewTestAuth(nil), s.URL, nil, nil)
+	client, _ := NewClient(NewTestAuth(nil), s.URL, nil, nil)
 	status, output := client.CreateSecret(context.Background(), secret)
 
 	if status != http.StatusBadRequest {

@@ -24,7 +24,7 @@ func Test_NewClient(t *testing.T) {
 	}
 
 	for _, test := range testcases {
-		newClient := NewClient(auth, test.Input, nil, &defaultCommandTimeout)
+		newClient, _ := NewClient(auth, test.Input, nil, &defaultCommandTimeout)
 		clientURL := newClient.GatewayURL.String()
 		if clientURL != test.Output {
 			t.Fatalf("Testcase %s failed. Expected: %s, Got: %s", test.Name, test.Output, clientURL)
@@ -35,7 +35,7 @@ func Test_NewClient(t *testing.T) {
 func Test_newRequest_URL(t *testing.T) {
 	auth := NewTestAuth(nil)
 	gatewayURL := "http://127.0.0.1:8080/base/path"
-	client := NewClient(auth, gatewayURL, nil, &defaultCommandTimeout)
+	client, _ := NewClient(auth, gatewayURL, nil, &defaultCommandTimeout)
 
 	testcases := []struct {
 		Name        string
