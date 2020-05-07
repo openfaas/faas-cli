@@ -35,22 +35,26 @@ func (c *BearerToken) Set(req *http.Request) error {
 }
 
 //NewCLIAuth returns a new CLI Auth
-func NewCLIAuth(token string, gateway string) ClientAuth {
+func NewCLIAuth(token string, gateway string) (ClientAuth, error) {
 	authConfig, _ := config.LookupAuthConfig(gateway)
 
 	var (
 		username    string
 		password    string
 		bearerToken string
+		err         error
 	)
 
 	if authConfig.Auth == config.BasicAuthType {
-		username, password, _ = config.DecodeAuth(authConfig.Token)
+		username, password, err = config.DecodeAuth(authConfig.Token)
+		if err != nil {
+			return nil, err
+		}
 
 		return &BasicAuth{
 			username: username,
 			password: password,
-		}
+		}, nil
 
 	}
 
@@ -63,5 +67,5 @@ func NewCLIAuth(token string, gateway string) ClientAuth {
 
 	return &BearerToken{
 		token: bearerToken,
-	}
+	}, nil
 }

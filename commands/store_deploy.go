@@ -129,7 +129,10 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	}
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	cliAuth := proxy.NewCLIAuth(token, gateway)
+	cliAuth, err := proxy.NewCLIAuth(token, gateway)
+	if err != nil {
+		return err
+	}
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	proxyClient, err := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
 	if err != nil {
