@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -32,11 +31,11 @@ type ClientAuth interface {
 }
 
 //NewClient initializes a new API client
-func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, timeout *time.Duration) *Client {
+func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, timeout *time.Duration) (*Client, error) {
 	gatewayURL = strings.TrimRight(gatewayURL, "/")
 	baseURL, err := url.Parse(gatewayURL)
 	if err != nil {
-		log.Fatalf("invalid gateway URL: %s", gatewayURL)
+		return nil, fmt.Errorf("invalid gateway URL: %s", gatewayURL)
 	}
 
 	client := &http.Client{}
@@ -52,7 +51,7 @@ func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, 
 		ClientAuth: auth,
 		httpClient: client,
 		GatewayURL: baseURL,
-	}
+	}, nil
 }
 
 //newRequest create a new HTTP request with authentication

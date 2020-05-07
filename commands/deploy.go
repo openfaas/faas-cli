@@ -178,7 +178,10 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		}
 
 		cliAuth := proxy.NewCLIAuth(token, services.Provider.GatewayURL)
-		proxyClient := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
+		proxyClient, err := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
+		if err != nil {
+			return err
+		}
 
 		for k, function := range services.Functions {
 
@@ -308,7 +311,10 @@ Error: %s`, fprocessErr.Error())
 		}
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 		cliAuth := proxy.NewCLIAuth(token, gateway)
-		proxyClient := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
+		proxyClient, err := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
+		if err != nil {
+			return err
+		}
 
 		var registryAuth string
 		if deployFlags.sendRegistryAuth {

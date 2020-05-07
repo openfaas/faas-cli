@@ -58,8 +58,12 @@ func runSecretRemove(cmd *cobra.Command, args []string) error {
 
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
-	err := client.RemoveSecret(context.Background(), secret)
+	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
+	err = client.RemoveSecret(context.Background(), secret)
 	if err != nil {
 		return err
 	}

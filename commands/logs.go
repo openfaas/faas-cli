@@ -98,7 +98,10 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	logRequest := logRequestFromFlags(cmd, args)
 	cliAuth := proxy.NewCLIAuth(logFlagValues.token, gatewayAddress)
 	transport := getLogStreamingTransport(tlsInsecure)
-	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, nil)
+	cliClient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, nil)
+	if err != nil {
+		return err
+	}
 
 	logEvents, err := cliClient.GetLogs(context.Background(), logRequest)
 	if err != nil {

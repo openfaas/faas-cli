@@ -79,7 +79,7 @@ func runVersionE(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func printServerVersions() {
+func printServerVersions() error {
 
 	var services stack.Services
 	var gatewayAddress string
@@ -97,10 +97,13 @@ func printServerVersions() {
 	versionTimeout := 5 * time.Second
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &versionTimeout)
-	cliClient := proxy.NewClient(cliAuth, gatewayAddress, transport, &versionTimeout)
+	cliClient, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &versionTimeout)
+	if err != nil {
+		return err
+	}
 	info, err := cliClient.GetSystemInfo(context.Background())
 	if err != nil {
-		return
+		return err
 	}
 
 	version, sha, commit := getGatewayDetails(info)
@@ -115,6 +118,7 @@ Provider
  version:       %s 
  sha:           %s
 `, name, orchestration, version, sha)
+	return nil
 }
 
 func printGatewayDetails(gatewayAddress, version, sha, commit string) {

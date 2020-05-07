@@ -112,7 +112,11 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 	cliAuth := proxy.NewCLIAuth(token, gatewayAddress)
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	if err != nil {
+		return err
+	}
+
 	fmt.Println("Creating secret: " + secret.Name)
 	_, output := client.CreateSecret(context.Background(), secret)
 	fmt.Printf(output)

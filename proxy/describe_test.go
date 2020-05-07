@@ -24,7 +24,7 @@ func Test_GetFunctionInfo(t *testing.T) {
 
 	defer s.Close()
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	result, err := proxyClient.GetFunctionInfo(context.Background(), "func-test1", "")
 	if err != nil {
@@ -39,7 +39,7 @@ func Test_GetFunctionInfo_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	_, err := proxyClient.GetFunctionInfo(context.Background(), "func-test1", "")
 
@@ -56,7 +56,7 @@ func Test_GetFunctionInfo_Not200(t *testing.T) {
 func Test_GetFunctionInfo_NotFound(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusNotFound)
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	functionName := "funct-test"
 	_, err := proxyClient.GetFunctionInfo(context.Background(), functionName, "")

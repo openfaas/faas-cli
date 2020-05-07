@@ -35,7 +35,7 @@ func Test_GetLogs_TokenAuth(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client := NewClient(&testTokenAuth{expectedToken}, srv.URL, nil, nil)
+	client, _ := NewClient(&testTokenAuth{expectedToken}, srv.URL, nil, nil)
 	_, err := client.GetLogs(context.Background(), params)
 	if err != nil {
 		t.Fatalf("Error returned: %s", err.Error())
@@ -61,7 +61,7 @@ func Test_GetLogs_200OK(t *testing.T) {
 	defer s.Close()
 
 	testAuth := NewTestAuth(nil)
-	client := NewClient(testAuth, s.URL, nil, nil)
+	client, _ := NewClient(testAuth, s.URL, nil, nil)
 	logs, err := client.GetLogs(context.Background(), params)
 	if err != nil {
 		t.Errorf("Error returned: %s", err.Error())
@@ -90,7 +90,7 @@ func Test_GetLogs_401Unauthorized(t *testing.T) {
 	params := logs.Request{Name: "test"}
 
 	testAuth := NewTestAuth(nil)
-	client := NewClient(testAuth, s.URL, nil, nil)
+	client, _ := NewClient(testAuth, s.URL, nil, nil)
 	_, err := client.GetLogs(context.Background(), params)
 	if err == nil {
 		t.Fatal("Expected error, got: nil")
@@ -117,7 +117,7 @@ func Test_GetLogs_UnexpectedStatus(t *testing.T) {
 		defer s.Close()
 
 		testAuth := NewTestAuth(nil)
-		client := NewClient(testAuth, s.URL, nil, nil)
+		client, _ := NewClient(testAuth, s.URL, nil, nil)
 		_, err := client.GetLogs(context.Background(), logs.Request{Name: "test"})
 		if err == nil {
 			t.Fatal("Expected error, got: nil")

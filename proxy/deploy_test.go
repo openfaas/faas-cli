@@ -32,7 +32,7 @@ func runDeployProxyTest(t *testing.T, deployTest deployProxyTest) {
 	defer s.Close()
 
 	cliAuth := NewTestAuth(nil)
-	proxyClient := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	proxyClient, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 
 	stdout := test.CaptureStdout(func() {
 		proxyClient.DeployFunction(context.TODO(), &DeployFunctionSpec{

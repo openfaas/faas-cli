@@ -24,7 +24,7 @@ func Test_ListFunctions(t *testing.T) {
 	defer s.Close()
 
 	cliAuth := NewTestAuth(nil)
-	client := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	client, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 	result, err := client.ListFunctions(context.Background(), "")
 
 	if err != nil {
@@ -41,7 +41,7 @@ func Test_ListFunctions_Not200(t *testing.T) {
 	s := test.MockHttpServerStatus(t, http.StatusBadRequest)
 
 	cliAuth := NewTestAuth(nil)
-	client := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
+	client, _ := NewClient(cliAuth, s.URL, nil, &defaultCommandTimeout)
 	_, err := client.ListFunctions(context.Background(), "")
 
 	if err == nil {
