@@ -49,3 +49,53 @@ func Test_getTemplateStoreURL(t *testing.T) {
 		})
 	}
 }
+
+func Test_getOverrideNamespace(t *testing.T) {
+	tests := []struct {
+		stack    string
+		flag     string
+		want     string
+		scenario string
+	}{
+		// Test cases
+		{
+			stack:    "",
+			flag:     "",
+			want:     "openfaas-fn",
+			scenario: "no namespace value set in flag and in namespace field of stack file",
+		},
+
+		{
+			stack:    "openfaas-fn",
+			flag:     "foo",
+			want:     "foo",
+			scenario: "both stack file and CLI flag provide namespace values",
+		},
+
+		{
+			stack:    "bar",
+			flag:     "",
+			want:     "bar",
+			scenario: "stack file provides namespace value whereas no namespace is provided by CLI",
+		},
+
+		{
+			stack:    "",
+			flag:     "foo",
+			want:     "foo",
+			scenario: "flag provides namespace value whereas no namespace is provided by stack file",
+		},
+	}
+
+	// Run the test for each test case defined in "tests"
+	for _, testCase := range tests {
+		testCase := testCase
+		functionNamespace := getNamespace(testCase.flag, testCase.stack)
+
+		t.Run(testCase.scenario, func(t *testing.T) {
+			if functionNamespace != testCase.want {
+				t.Fatalf("Namespace incorrect want: %q but got: %q\n", testCase.want, functionNamespace)
+			}
+		})
+	}
+}

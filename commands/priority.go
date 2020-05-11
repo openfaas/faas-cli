@@ -58,3 +58,19 @@ func getTemplateStoreURL(argumentURL, environmentURL, defaultURL string) string 
 		return defaultURL
 	}
 }
+
+func getNamespace(flagNamespace, stackNamespace string) string {
+	// If the namespace flag is passed use it
+	if len(flagNamespace) > 0 {
+		return flagNamespace
+	}
+
+	// if both the namespace flag in stack.yaml and the namespace flag are ommitted
+	// return the defaultNamespace (openfaas-fn)
+	if len(stackNamespace) == 0 && len(flagNamespace) == 0 {
+		return defaultFunctionNamespace
+	}
+
+	// Else return the namespace in stack.yaml
+	return stackNamespace
+}

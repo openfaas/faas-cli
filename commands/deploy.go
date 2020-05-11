@@ -204,6 +204,10 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				functionSecrets = mergeSlice(function.Secrets, functionSecrets)
 			}
 
+			// Check if there is a functionNamespace flag passed, if so, override the namespace value
+			// defined in the stack.yaml
+			function.Namespace = getNamespace(functionNamespace, function.Namespace)
+
 			if deployFlags.sendRegistryAuth {
 
 				dockerConfig := configFile{}
