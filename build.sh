@@ -8,7 +8,11 @@ fi
 
 echo Building openfaas/faas-cli:$eTAG
 
-docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy -t openfaas/faas-cli:$eTAG .
+docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --target release -t openfaas/faas-cli:$eTAG .
+
+echo Building openfaas/faas-cli:$eTAG-root
+
+docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --target root -t openfaas/faas-cli:$eTAG-root .
 
 if [ $? == 0 ] ; then
 

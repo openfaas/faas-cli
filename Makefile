@@ -41,7 +41,7 @@ test-unit:
 
 .PHONY: ci-armhf-push
 ci-armhf-push:
-	(docker push openfaas/faas-cli:$(TAG)-armhf)
+	(docker push openfaas/faas-cli:$(TAG)-armhf && docker push openfaas/faas-cli:$(TAG)-root-armhf)
 
 .PHONY: ci-armhf-build
 ci-armhf-build:
@@ -49,7 +49,7 @@ ci-armhf-build:
 
 .PHONY: ci-arm64-push
 ci-arm64-push:
-	(docker push openfaas/faas-cli:$(TAG)-arm64)
+	(docker push openfaas/faas-cli:$(TAG)-arm64 && docker push openfaas/faas-cli:$(TAG)-root-arm64)
 
 .PHONY: ci-arm64-build
 ci-arm64-build:

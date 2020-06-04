@@ -30,6 +30,21 @@ RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags 
     -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
     -a -installsuffix cgo -o faas-cli
 
+
+# CICD stage
+FROM alpine:3.11 as root
+
+RUN apk --no-cache add ca-certificates git
+
+WORKDIR /home/app
+
+COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               /usr/bin/
+
+ENV PATH=$PATH:/usr/bin/
+
+ENTRYPOINT [ "faas-cli" ]
+
+
 # Release stage
 FROM alpine:3.11 as release
 
@@ -48,4 +63,4 @@ USER app
 
 ENV PATH=$PATH:/usr/bin/
 
-CMD ["faas-cli"]
+ENTRYPOINT ["faas-cli"]
