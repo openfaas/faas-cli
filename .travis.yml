@@ -18,17 +18,25 @@ after_success:
           export DOCKER_NS=openfaas;
         fi;
 
-        docker tag $DOCKER_NS/faas-cli:latest-dev $DOCKER_NS/faas-cli:$TRAVIS_TAG;
-        docker tag $DOCKER_NS/faas-cli:latest-dev $DOCKER_NS/faas-cli:latest;
-        echo $DOCKER_PASSWORD | docker login -u=$DOCKER_USERNAME --password-stdin;
+        docker tag openfaas/faas-cli:latest-dev $DOCKER_NS/faas-cli:$TRAVIS_TAG;
+        docker tag openfaas/faas-cli:latest-dev $DOCKER_NS/faas-cli:latest;
+        docker tag openfaas/faas-cli:latest-dev-root $DOCKER_NS/faas-cli:${TRAVIS_TAG}-root;
+        docker tag openfaas/faas-cli:latest-dev-root $DOCKER_NS/faas-cli:latest-root;
+        echo $DOCKER_PASSWORD | docker login -u=$DOCKER_NS --password-stdin;
         docker push $DOCKER_NS/faas-cli:$TRAVIS_TAG;
         docker push $DOCKER_NS/faas-cli:latest;
+        docker push $DOCKER_NS/faas-cli:${TRAVIS_TAG}-root;
+        docker push $DOCKER_NS/faas-cli:latest-root;
 
         docker tag $DOCKER_NS/faas-cli:latest-dev quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
         docker tag $DOCKER_NS/faas-cli:latest-dev quay.io/$DOCKER_NS/faas-cli:latest;
+        docker tag $DOCKER_NS/faas-cli:latest-dev-root quay.io/$DOCKER_NS/faas-cli:${TRAVIS_TAG}latest-root;
+        docker tag $DOCKER_NS/faas-cli:latest-dev-root quay.io/$DOCKER_NS/faas-cli:latest-root;
         echo $QUAY_PASSWORD | docker login -u=$QUAY_USERNAME --password-stdin quay.io;
         docker push quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
         docker push quay.io/$DOCKER_NS/faas-cli:latest;
+        docker push quay.io/$DOCKER_NS/faas-cli:${TRAVIS_TAG}-root;
+        docker push quay.io/$DOCKER_NS/faas-cli:latest-root;
 
       fi;
 
