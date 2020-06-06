@@ -77,10 +77,11 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 
 		for k, function := range services.Functions {
+			function.Namespace = getNamespace(functionNamespace, function.Namespace)
 			function.Name = k
-			fmt.Printf("Deleting: %s.\n", function.Name)
+			fmt.Printf("Deleting: %s.%s\n", function.Name, function.Namespace)
 
-			proxyclient.DeleteFunction(ctx, function.Name, functionNamespace)
+			proxyclient.DeleteFunction(ctx, function.Name, function.Namespace)
 		}
 	} else {
 		if len(args) < 1 {
@@ -88,7 +89,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 
 		functionName = args[0]
-		fmt.Printf("Deleting: %s.\n", functionName)
+		fmt.Printf("Deleting: %s.%s\n", functionName, functionNamespace)
 		err := proxyclient.DeleteFunction(ctx, functionName, functionNamespace)
 		if err != nil {
 			return err
