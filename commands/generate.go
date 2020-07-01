@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 
 	"github.com/openfaas/faas-cli/builder"
@@ -29,6 +30,7 @@ var (
 	functionNamespace string
 	fromStore         string
 	desiredArch       string
+	annotationArgs    []string
 )
 
 func init() {
@@ -40,6 +42,8 @@ func init() {
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
+	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add")
+
 	faasCmd.AddCommand(generateCmd)
 }
 
@@ -114,11 +118,20 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			return errors.New(fmt.Sprintf("image for %s not found in store. \noptions: %s", desiredArch, keys))
 		}
 
+		var annotations map[string]string
+
+		annotations, annotationErr := parseMap(annotationArgs, "annotation")
+		if annotationErr != nil {
+			return fmt.Errorf("error parsing annotations: %v", annotationErr)
+		}
+
+		allAnnotations := mergeMap(item.Annotations, annotations)
+
 		services.Functions[item.Name] = stack.Function{
 			Name:        item.Name,
 			Image:       item.Images[desiredArch],
 			Labels:      &item.Labels,
-			Annotations: &item.Annotations,
+			Annotations: &allAnnotations,
 			Environment: item.Environment,
 			FProcess:    item.Fprocess,
 		}
@@ -235,11 +248,15 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 			},
 			APIVersion: apiVersion,
 			Kind:       "Service",
+
 			Spec: knativev1alpha1.ServingSpec{
 				RunLatest: knativev1alpha1.ServingSpecRunLatest{
 
 					Configuration: knativev1alpha1.ServingSpecRunLatestConfiguration{
 						RevisionTemplate: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplate{
+							Metadata: schema.Metadata{
+								Annotations: *function.Annotations,
+							},
 							Spec: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpec{
 								Container: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer{
 									Image: function.Image,
