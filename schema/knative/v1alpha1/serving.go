@@ -20,7 +20,7 @@ type ServingSpecRunLatestConfiguration struct {
 }
 
 type ServingSpecRunLatestConfigurationRevisionTemplate struct {
-	Metadata schema.Metadata                                       `yaml:"metadata"`
+	Metadata schema.Metadata                                       `yaml:"metadata,omitempty"`
 	Spec     ServingSpecRunLatestConfigurationRevisionTemplateSpec `yaml:"spec"`
 }
 
@@ -65,6 +65,6 @@ type ServingCRD struct {
 	APIVersion string `yaml:"apiVersion"`
 	//Kind kind of the object
 	Kind     string          `yaml:"kind"`
-	Metadata schema.Metadata `yaml:"metadata"`
+	Metadata schema.Metadata `yaml:"metadata,omitempty"`
 	Spec     ServingSpec     `yaml:"spec"`
 }

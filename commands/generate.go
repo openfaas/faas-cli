@@ -240,6 +240,11 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 		for k, v := range allEnvironment {
 			env = append(env, knativev1alpha1.EnvPair{Name: k, Value: v})
 		}
+		var annotations map[string]string
+
+		if function.Annotations != nil {
+			annotations = *function.Annotations
+		}
 
 		crd := knativev1alpha1.ServingCRD{
 			Metadata: schema.Metadata{
@@ -255,7 +260,7 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 					Configuration: knativev1alpha1.ServingSpecRunLatestConfiguration{
 						RevisionTemplate: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplate{
 							Metadata: schema.Metadata{
-								Annotations: *function.Annotations,
+								Annotations: annotations,
 							},
 							Spec: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpec{
 								Container: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer{
