@@ -20,7 +20,12 @@ type ServingSpecRunLatestConfiguration struct {
 }
 
 type ServingSpecRunLatestConfigurationRevisionTemplate struct {
-	Spec ServingSpecRunLatestConfigurationRevisionTemplateSpec `yaml:"spec"`
+	Metadata schema.Metadata                                       `yaml:"metadata"`
+	Spec     ServingSpecRunLatestConfigurationRevisionTemplateSpec `yaml:"spec"`
+}
+
+type ServingSpecRunLatestConfigurationRevisionTemplateMetadata struct {
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
 
 type ServingSpecRunLatestConfigurationRevisionTemplateSpec struct {

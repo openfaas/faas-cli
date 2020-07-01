@@ -5,6 +5,7 @@ package schema
 
 // Metadata metadata of the object
 type Metadata struct {
-	Name      string `yaml:"name"`
-	Namespace string `yaml:"namespace,omitempty"`
+	Name        string            `yaml:"name,omitempty"`
+	Namespace   string            `yaml:"namespace,omitempty"`
+	Annotations map[string]string `yaml:"annotations,omitempty"`
 }
