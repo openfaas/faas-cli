@@ -42,7 +42,7 @@ func init() {
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
-	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add")
+	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add (to store functions only)")
 
 	faasCmd.AddCommand(generateCmd)
 }
@@ -89,6 +89,13 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	desiredArch, _ := cmd.Flags().GetString("arch")
 	var services stack.Services
 
+	var annotations map[string]string
+
+	annotations, annotationErr := parseMap(annotationArgs, "annotation")
+	if annotationErr != nil {
+		return fmt.Errorf("error parsing annotations: %v", annotationErr)
+	}
+
 	if len(fromStore) > 0 {
 		services = stack.Services{
 			Provider: stack.Provider{
@@ -116,13 +123,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 				keys = append(keys, k)
 			}
 			return errors.New(fmt.Sprintf("image for %s not found in store. \noptions: %s", desiredArch, keys))
-		}
-
-		var annotations map[string]string
-
-		annotations, annotationErr := parseMap(annotationArgs, "annotation")
-		if annotationErr != nil {
-			return fmt.Errorf("error parsing annotations: %v", annotationErr)
 		}
 
 		allAnnotations := mergeMap(item.Annotations, annotations)
