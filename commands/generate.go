@@ -12,7 +12,7 @@ import (
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	knativev1alpha1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
-	openfaasv1alpha2 "github.com/openfaas/faas-cli/schema/openfaas/v1alpha2"
+	openfaasv1 "github.com/openfaas/faas-cli/schema/openfaas/v1"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ import (
 const (
 	defaultFunctionNamespace = "openfaas-fn"
 	resourceKind             = "Function"
-	defaultAPIVersion        = "openfaas.com/v1alpha2"
+	defaultAPIVersion        = "openfaas.com/v1"
 )
 
 var (
@@ -48,14 +48,14 @@ func init() {
 }
 
 var generateCmd = &cobra.Command{
-	Use:   "generate --api=openfaas.com/v1alpha2 --yaml stack.yml --tag sha --namespace=openfaas-fn",
+	Use:   "generate --api=openfaas.com/v1 --yaml stack.yml --tag sha --namespace=openfaas-fn",
 	Short: "Generate Kubernetes CRD YAML file",
 	Long:  `The generate command creates kubernetes CRD YAML file for functions`,
-	Example: `faas-cli generate --api=openfaas.com/v1alpha2 --yaml stack.yml | kubectl apply  -f -
-faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml
+	Example: `faas-cli generate --api=openfaas.com/v1 --yaml stack.yml | kubectl apply  -f -
+faas-cli generate --api=openfaas.com/v1 -f stack.yml
 faas-cli generate --api=serving.knative.dev/v1alpha1 -f stack.yml
-faas-cli generate --api=openfaas.com/v1alpha2 --namespace openfaas-fn -f stack.yml
-faas-cli generate --api=openfaas.com/v1alpha2 -f stack.yml --tag branch -n openfaas-fn`,
+faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yml
+faas-cli generate --api=openfaas.com/v1 -f stack.yml --tag branch -n openfaas-fn`,
 	PreRunE: preRunGenerate,
 	RunE:    runGenerate,
 }
@@ -94,6 +94,10 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	annotations, annotationErr := parseMap(annotationArgs, "annotation")
 	if annotationErr != nil {
 		return fmt.Errorf("error parsing annotations: %v", annotationErr)
+	}
+
+	if len(functionNamespace) == 0 {
+		functionNamespace = defaultFunctionNamespace
 	}
 
 	if len(fromStore) > 0 {
@@ -190,7 +194,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			metadata := schema.Metadata{Name: name, Namespace: namespace}
 			imageName := schema.BuildImageName(format, function.Image, version, branch)
 
-			spec := openfaasv1alpha2.Spec{
+			spec := openfaasv1.Spec{
 				Name:        name,
 				Image:       imageName,
 				Environment: allEnvironment,
@@ -201,7 +205,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				Secrets:     function.Secrets,
 			}
 
-			crd := openfaasv1alpha2.CRD{
+			crd := openfaasv1.CRD{
 				APIVersion: apiVersion,
 				Kind:       resourceKind,
 				Metadata:   metadata,
