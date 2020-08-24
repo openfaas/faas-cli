@@ -28,7 +28,7 @@ func init() {
 var removeCmd = &cobra.Command{
 	Use: `remove FUNCTION_NAME [--gateway GATEWAY_URL]
   faas-cli remove -f YAML_FILE [--regex "REGEX"] [--filter "WILDCARD"]`,
-	Aliases: []string{"rm"},
+	Aliases: []string{"rm", "delete"},
 	Short:   "Remove deployed OpenFaaS functions",
 	Long: `Removes/deletes deployed OpenFaaS functions either via the supplied YAML config
 using the "--yaml" flag (which may contain multiple function definitions), or by
