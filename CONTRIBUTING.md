@@ -45,7 +45,7 @@ $ mkdir -p $GOPATH/src/github.com/openfaas/
 $ cd $GOPATH/src/github.com/openfaas/
 $ git clone https://github.com/openfaas/faas-cli
 $ cd faas-cli
-$ go build
+$ make local-install
 ```
 
 * Build multi-arch binaries
@@ -58,15 +58,12 @@ To build the release binaries type in:
 
 This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
 
-* Get the vendoring tool called `dep`
+* The project manages dependencies using Go modules and the `vendor/` folder. When updating a dependency you must run
 
+```bash
+go mod tidy
+go mod vendor
 ```
-$ go get -u github.com/golang/dep/cmd/dep
-```
-
-Use the tool if you add new dependencies or want to update the existing ones.
-
-> See also: [dep docs](https://github.com/golang/dep)
 
 ### How to update the `brew` formula
 
@@ -118,7 +115,7 @@ Create a new branch and commit the manifest `faas-cli.json`, then create a PR to
 
 ## Update the utility-script
 
-The `get.sh` file is served from the [cli.openfaas.com](https://github.com/openfaas/cli.openfaas.com) repository. 
+The `get.sh` file is served from the [cli.openfaas.com](https://github.com/openfaas/cli.openfaas.com) repository.
 
 It's used when people install via `curl` and `cli.openfaas.com`. The updated file then has to be redeployed to the hosting server.
 
