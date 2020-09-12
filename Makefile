@@ -8,6 +8,8 @@ ifneq ($(.GIT_UNTRACKEDCHANGES),)
 	.GIT_COMMIT := $(.GIT_COMMIT)-dirty
 endif
 
+export GOFLAGS=-mod=vendor
+
 .PHONY: build
 build:
 	./build.sh
