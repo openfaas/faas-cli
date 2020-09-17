@@ -4,6 +4,8 @@ go 1.14
 
 // replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20190717161051-705d9623b7c1
 
+replace golang.org/x/sys => golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
+
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/alexellis/go-execute v0.0.0-20191207085904-961405ea7544
@@ -22,7 +24,6 @@ require (
 	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab // indirect
 	gopkg.in/yaml.v2 v2.2.8
 	gotest.tools v1.4.0 // indirect
 )
