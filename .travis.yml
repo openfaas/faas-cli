@@ -11,6 +11,7 @@ script:
   - make build
   - make build_samples
   - ./test/version.sh ./faas-cli
+  - make build_redist
 
 after_success:
     - if [ ! -z "$TRAVIS_TAG" ] ; then
@@ -41,7 +42,6 @@ after_success:
       fi;
 
 before_deploy:
-  - make build_redist
   - make test-templating
   - ./ci/hashgen.sh
 
