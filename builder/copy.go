@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 )
 
@@ -60,6 +61,11 @@ func copyFile(src, dest string) error {
 		return fmt.Errorf("error reading src file stats: %s", err.Error())
 	}
 
+	err = ensureBaseDir(dest)
+	if err != nil {
+		return fmt.Errorf("error creating dest base directory: %s", err.Error())
+	}
+
 	f, err := os.Create(dest)
 	if err != nil {
 		return fmt.Errorf("error creating dest file: %s", err.Error())
@@ -82,6 +88,18 @@ func copyFile(src, dest string) error {
 	}
 
 	return nil
+}
+
+// ensureBaseDir creates the base directory of the given file path, if needed.
+// For example, if fpath is 'build/extras/dictionary.txt`, ensureBaseDir will
+// make sure that the directory `buid/extras/` is created.
+func ensureBaseDir(fpath string) error {
+	baseDir := path.Dir(fpath)
+	info, err := os.Stat(baseDir)
+	if err == nil && info.IsDir() {
+		return nil
+	}
+	return os.MkdirAll(baseDir, 0755)
 }
 
 func debugPrint(message string) {

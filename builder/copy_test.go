@@ -28,11 +28,52 @@ func Test_CopyFiles(t *testing.T) {
 		}
 		defer os.RemoveAll(destDir)
 
-		CopyFiles(srcDir, destDir+"/")
-		err := checkDestinationFiles(destDir, 2, mode)
+		err := CopyFiles(srcDir, destDir+"/")
+		if err != nil {
+			t.Fatalf("Unexpected copy error\n%v", err)
+		}
+
+		err = checkDestinationFiles(destDir, 2, mode)
 		if err != nil {
 			t.Fatalf("Destination file mode differs from source file mode\n%v", err)
 		}
+	}
+}
+
+func Test_CopyFiles_ToDestinationWithIntermediateFolder(t *testing.T) {
+	dir := os.TempDir()
+	data := []byte("open faas")
+
+	// create a folder for source files
+	srcDir, dirError := ioutil.TempDir(dir, "openfaas-test-source-")
+	if dirError != nil {
+		t.Fatalf("Error creating source folder\n%v", dirError)
+	}
+	defer os.RemoveAll(srcDir)
+
+	// create a file inside the created folder
+	mode := 0600
+	srcFile := fmt.Sprintf("%s/test-file-1", srcDir)
+	fileErr := ioutil.WriteFile(srcFile, data, os.FileMode(mode))
+	if fileErr != nil {
+		t.Fatalf("Error creating source file\n%v", dirError)
+	}
+
+	// create a destination folder to copy the files to
+	destDir, destDirErr := ioutil.TempDir(dir, "openfaas-test-destination-")
+	if destDirErr != nil {
+		t.Fatalf("Error creating destination folder\n%v", destDirErr)
+	}
+	defer os.RemoveAll(destDir)
+
+	err := CopyFiles(srcFile, destDir+"/intermediate/test-file-1")
+	if err != nil {
+		t.Fatalf("Unexpected copy error\n%v", err)
+	}
+
+	err = checkDestinationFiles(destDir+"/intermediate/", 1, mode)
+	if err != nil {
+		t.Fatalf("Destination file mode differs from source file mode\n%v", err)
 	}
 }
 
