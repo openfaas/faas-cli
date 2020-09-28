@@ -19,8 +19,16 @@ import (
 )
 
 var (
-	DefaultDir  = "~/.openfaas"
-	DefaultFile = "config.yml"
+	DefaultDir         string      = "~/.openfaas"
+	DefaultFile        string      = "config.yml"
+	DefaultPermissions os.FileMode = 0700
+
+	// DefaultCIDir creates the 'openfaas' directory in the current directory
+	// if running in a CI environment.
+	DefaultCIDir string = ".openfaas"
+	// DefaultCIPermissions creates the config file with elevated permissions
+	// for it to be read by multiple users when running in a CI environment.
+	DefaultCIPermissions os.FileMode = 0744
 )
 
 //AuthType auth type
@@ -58,15 +66,31 @@ func New(filePath string) (*ConfigFile, error) {
 	return conf, nil
 }
 
+// isRunningInCI checks the ENV var CI and returns true if it's set to true or 1
+func isRunningInCI() bool {
+	if env, ok := os.LookupEnv("CI"); ok {
+		if env == "true" || env == "1" {
+			return true
+		}
+	}
+	return false
+}
+
 // EnsureFile creates the root dir and config file
 func EnsureFile() (string, error) {
-	dirPath, err := homedir.Expand(DefaultDir)
+	permission := DefaultPermissions
+	dir := DefaultDir
+	if isRunningInCI() {
+		permission = DefaultCIPermissions
+		dir = DefaultCIDir
+	}
+	dirPath, err := homedir.Expand(dir)
 	if err != nil {
 		return "", err
 	}
 
 	filePath := path.Clean(filepath.Join(dirPath, DefaultFile))
-	if err := os.MkdirAll(filepath.Dir(filePath), 0700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), permission); err != nil {
 		return "", err
 	}
 
@@ -83,7 +107,11 @@ func EnsureFile() (string, error) {
 
 // FileExists returns true if the config file is located at the default path
 func fileExists() bool {
-	dirPath, err := homedir.Expand(DefaultDir)
+	dir := DefaultDir
+	if isRunningInCI() {
+		dir = DefaultCIDir
+	}
+	dirPath, err := homedir.Expand(dir)
 	if err != nil {
 		return false
 	}
