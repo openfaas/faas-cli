@@ -252,6 +252,16 @@ Alternatively you can assign a secret to the node to allow it to pull from your 
 
 For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which will look up your registry credentials in your local credentials store and then transmit them over the wire to the deploy command on the API Gateway. Make sure HTTPS/TLS is enabled before attempting this.
 
+### Use faas-cli in CI environments
+
+If you're running faas-cli in a CI environment like [Github Actions](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables), [CircleCI](https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables), or [Travis](https://docs.travis-ci.com/user/environment-variables/#default-environment-variables), chances are you get the env var `CI` set to true.
+
+If the `CI` env var is set to `true` or `1`, faas-cli change the location of the OpenFaaS config from the default `~/.openfaas/config.yml` to `.openfaas/config.yml` with elevated permissions for the `config.yml` and the shrinkwrapped `build` dir (if there is one).
+
+This is really useful when running faas-cli as a container image. The recommended image type to use in a CI environment is the root variant, tagged with `-root` suffix.
+CI environments like Github Actions require you to use Docker images having a root user. Learn more about it [here](https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/dockerfile-support-for-github-actions#user).
+
+
 ### Use a YAML stack file
 
 Read the [YAML reference guide in the OpenFaaS docs](https://docs.openfaas.com/reference/yaml/).

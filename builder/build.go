@@ -161,7 +161,19 @@ type dockerBuild struct {
 	BuildLabelMap    map[string]string
 }
 
-const defaultHandlerFolder = "function"
+var defaultDirPermissions os.FileMode = 0700
+
+const defaultHandlerFolder string = "function"
+
+// isRunningInCI checks the ENV var CI and returns true if it's set to true or 1
+func isRunningInCI() bool {
+	if env, ok := os.LookupEnv("CI"); ok {
+		if env == "true" || env == "1" {
+			return true
+		}
+	}
+	return false
+}
 
 // createBuildContext creates temporary build folder to perform a Docker build with language template
 func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string, copyExtraPaths []string) (string, error) {
@@ -186,7 +198,11 @@ func createBuildContext(functionName string, handler string, language string, us
 
 	fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
 
-	mkdirErr := os.MkdirAll(functionPath, 0700)
+	if isRunningInCI() {
+		defaultDirPermissions = 0777
+	}
+
+	mkdirErr := os.MkdirAll(functionPath, defaultDirPermissions)
 	if mkdirErr != nil {
 		fmt.Printf("Error creating path: %s - %s.\n", functionPath, mkdirErr.Error())
 		return tempPath, mkdirErr
