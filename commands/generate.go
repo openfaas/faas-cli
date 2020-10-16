@@ -11,7 +11,7 @@ import (
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
-	knativev1alpha1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
+	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
 	openfaasv1 "github.com/openfaas/faas-cli/schema/openfaas/v1"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
@@ -37,7 +37,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 
-	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1alpha2, serving.knative.dev/v1alpha1")
+	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
 	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
@@ -174,8 +174,8 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 
 	if len(services.Functions) > 0 {
 
-		if apiVersion == knativev1alpha1.APIVersionLatest {
-			return generateknativev1alpha1ServingCRDYAML(services, format, api, functionNamespace, branch, version)
+		if apiVersion == knativev1.APIVersionLatest {
+			return generateknativev1ServingServiceCRDYAML(services, format, api, functionNamespace, branch, version)
 		}
 
 		for name, function := range services.Functions {
@@ -224,8 +224,8 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	return objectsString, nil
 }
 
-func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
-	crds := []knativev1alpha1.ServingCRD{}
+func generateknativev1ServingServiceCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+	crds := []knativev1.ServingServiceCRD{}
 
 	for name, function := range services.Functions {
 
@@ -240,9 +240,9 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 			return "", envErr
 		}
 
-		var env []knativev1alpha1.EnvPair
+		var env []knativev1.EnvPair
 		for k, v := range allEnvironment {
-			env = append(env, knativev1alpha1.EnvPair{Name: k, Value: v})
+			env = append(env, knativev1.EnvPair{Name: k, Value: v})
 		}
 		var annotations map[string]string
 
@@ -252,53 +252,48 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 
 		imageName := schema.BuildImageName(format, function.Image, version, branch)
 
-		crd := knativev1alpha1.ServingCRD{
+		crd := knativev1.ServingServiceCRD{
 			Metadata: schema.Metadata{
-				Name:      name,
-				Namespace: namespace,
+				Name:        name,
+				Namespace:   namespace,
+				Annotations: annotations,
 			},
 			APIVersion: apiVersion,
 			Kind:       "Service",
 
-			Spec: knativev1alpha1.ServingSpec{
-				RunLatest: knativev1alpha1.ServingSpecRunLatest{
-
-					Configuration: knativev1alpha1.ServingSpecRunLatestConfiguration{
-						RevisionTemplate: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplate{
-							Metadata: schema.Metadata{
-								Annotations: annotations,
-							},
-							Spec: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpec{
-								Container: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer{
-									Image: imageName,
-									Env:   env,
-								},
-							},
-						},
+			Spec: knativev1.ServingServiceSpec{
+				ServingServiceSpecTemplate: knativev1.ServingServiceSpecTemplate{
+					Template: knativev1.ServingServiceSpecTemplateSpec{
+						Containers: []knativev1.ServingSpecContainersContainerSpec{},
 					},
 				},
 			},
 		}
 
-		var mounts []knativev1alpha1.VolumeMount
-		var volumes []knativev1alpha1.Volume
+		crd.Spec.Template.Containers = append(crd.Spec.Template.Containers, knativev1.ServingSpecContainersContainerSpec{
+			Image: imageName,
+			Env:   env,
+		})
+
+		var mounts []knativev1.VolumeMount
+		var volumes []knativev1.Volume
 
 		for _, secret := range function.Secrets {
-			mounts = append(mounts, knativev1alpha1.VolumeMount{
+			mounts = append(mounts, knativev1.VolumeMount{
 				MountPath: "/var/openfaas/secrets/" + secret,
 				ReadOnly:  true,
 				Name:      secret,
 			})
-			volumes = append(volumes, knativev1alpha1.Volume{
+			volumes = append(volumes, knativev1.Volume{
 				Name: secret,
-				Secret: knativev1alpha1.Secret{
+				Secret: knativev1.Secret{
 					SecretName: secret,
 				},
 			})
 		}
 
-		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Container.VolumeMounts = mounts
-		crd.Spec.RunLatest.Configuration.RevisionTemplate.Spec.Volumes = volumes
+		crd.Spec.Template.Volumes = volumes
+		crd.Spec.Template.Containers[0].VolumeMounts = mounts
 
 		crds = append(crds, crd)
 	}

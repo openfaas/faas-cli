@@ -5,35 +5,31 @@ package v1alpha1
 
 import "github.com/openfaas/faas-cli/schema"
 
-const APIVersionLatest = "serving.knative.dev/v1alpha1"
+const APIVersionLatest = "serving.knative.dev/v1"
 
-//ServingSpec describe characteristics of the object
-type ServingSpec struct {
-	RunLatest ServingSpecRunLatest `yaml:"runLatest"`
+//ServingServiceCRD root level YAML definition for the object
+type ServingServiceCRD struct {
+	//APIVersion CRD API version
+	APIVersion string `yaml:"apiVersion"`
+	//Kind kind of the object
+	Kind     string             `yaml:"kind"`
+	Metadata schema.Metadata    `yaml:"metadata,omitempty"`
+	Spec     ServingServiceSpec `yaml:"spec"`
 }
 
-type ServingSpecRunLatest struct {
-	Configuration ServingSpecRunLatestConfiguration `yaml:"configuration"`
-}
-type ServingSpecRunLatestConfiguration struct {
-	RevisionTemplate ServingSpecRunLatestConfigurationRevisionTemplate `yaml:"revisionTemplate"`
+type ServingServiceSpec struct {
+	ServingServiceSpecTemplate `yaml:"template"`
 }
 
-type ServingSpecRunLatestConfigurationRevisionTemplate struct {
-	Metadata schema.Metadata                                       `yaml:"metadata,omitempty"`
-	Spec     ServingSpecRunLatestConfigurationRevisionTemplateSpec `yaml:"spec"`
+type ServingServiceSpecTemplateSpec struct {
+	Containers []ServingSpecContainersContainerSpec `yaml:"containers"`
+	Volumes    []Volume                             `yaml:"volumes,omitempty"`
+}
+type ServingServiceSpecTemplate struct {
+	Template ServingServiceSpecTemplateSpec `yaml:"spec"`
 }
 
-type ServingSpecRunLatestConfigurationRevisionTemplateMetadata struct {
-	Annotations map[string]string `yaml:"annotations,omitempty"`
-}
-
-type ServingSpecRunLatestConfigurationRevisionTemplateSpec struct {
-	Container ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer `yaml:"container"`
-	Volumes   []Volume                                                       `yaml:"volumes,omitempty"`
-}
-
-type ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer struct {
+type ServingSpecContainersContainerSpec struct {
 	Image        string        `yaml:"image"`
 	Env          []EnvPair     `yaml:"env,omitempty"`
 	VolumeMounts []VolumeMount `yaml:"volumeMounts,omitempty"`
@@ -57,14 +53,4 @@ type Secret struct {
 type EnvPair struct {
 	Name  string `yaml:"name"`
 	Value string `yaml:"value"`
-}
-
-//ServingCRD root level YAML definition for the object
-type ServingCRD struct {
-	//APIVersion CRD API version
-	APIVersion string `yaml:"apiVersion"`
-	//Kind kind of the object
-	Kind     string          `yaml:"kind"`
-	Metadata schema.Metadata `yaml:"metadata,omitempty"`
-	Spec     ServingSpec     `yaml:"spec"`
 }
