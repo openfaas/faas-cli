@@ -10,6 +10,8 @@ functions:
     lang: python
     handler: ./sample/url-ping
     image: ${DOCKER_USER:-alexellis}/faas-url-ping:0.2
+    environment:
+      debug: true
 #    limits:
 #      memory: 40m
 #    requests:
@@ -19,6 +21,8 @@ functions:
     skip_build: true
     image: functions/alpine:latest
     fprocess: "sha512sum"
+    environment:
+      fprocess: sha512sum
 #    limits:
 #      memory: 40m
 #    requests:

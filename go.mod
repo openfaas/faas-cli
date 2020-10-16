@@ -1,6 +1,6 @@
 module github.com/openfaas/faas-cli
 
-go 1.14
+go 1.13
 
 // replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20190717161051-705d9623b7c1
 
