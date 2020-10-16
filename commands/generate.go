@@ -185,7 +185,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				return "", err
 			}
 
-			//combine all environment variables
+			// combine all environment variables
 			allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
 			if envErr != nil {
 				return "", envErr
@@ -250,6 +250,8 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 			annotations = *function.Annotations
 		}
 
+		imageName := schema.BuildImageName(format, function.Image, version, branch)
+
 		crd := knativev1alpha1.ServingCRD{
 			Metadata: schema.Metadata{
 				Name:      name,
@@ -268,7 +270,7 @@ func generateknativev1alpha1ServingCRDYAML(services stack.Services, format schem
 							},
 							Spec: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpec{
 								Container: knativev1alpha1.ServingSpecRunLatestConfigurationRevisionTemplateSpecContainer{
-									Image: function.Image,
+									Image: imageName,
 									Env:   env,
 								},
 							},
