@@ -3,8 +3,9 @@
 package commands
 
 import (
-	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"testing"
+
+	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 
 	"github.com/openfaas/faas-cli/schema"
 
@@ -34,7 +35,7 @@ functions:
    handler: ./sample/url-ping
    image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
-apiVersion: openfaas.com/v1alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: url-ping
@@ -44,7 +45,7 @@ spec:
   image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
-		APIVersion: "openfaas.com/v1alpha2",
+		APIVersion: "openfaas.com/v1",
 		Namespace:  "openfaas-fn",
 		Branch:     "",
 		Version:    "",
@@ -63,7 +64,7 @@ functions:
   handler: ./sample/url-ping
   image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
-apiVersion: openfaas.com/v1alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: url-ping
@@ -72,7 +73,7 @@ spec:
   image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
-		APIVersion: "openfaas.com/v1alpha2",
+		APIVersion: "openfaas.com/v1",
 		Namespace:  "",
 		Branch:     "",
 		Version:    "",
@@ -90,7 +91,7 @@ functions:
   handler: ./sample/url-ping
   image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
-apiVersion: openfaas.com/v1alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: url-ping
@@ -100,7 +101,7 @@ spec:
   image: alexellis/faas-url-ping:0.2-master-6bgf36qd
 `},
 		Format:     schema.BranchAndSHAFormat,
-		APIVersion: "openfaas.com/v1alpha2",
+		APIVersion: "openfaas.com/v1",
 		Namespace:  "openfaas-function",
 		Branch:     "master",
 		Version:    "6bgf36qd",
