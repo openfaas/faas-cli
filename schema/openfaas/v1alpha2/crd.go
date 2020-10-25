@@ -1,7 +1,7 @@
 // Copyright (c) OpenFaaS Author(s) 2018. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-package v1alpha2
+package v1
 
 import (
 	"github.com/openfaas/faas-cli/schema"
@@ -9,7 +9,7 @@ import (
 )
 
 //APIVersionLatest latest API version of CRD
-const APIVersionLatest = "openfaas.com/v1alpha2"
+const APIVersionLatest = "openfaas.com/v1"
 
 //Spec describe characteristics of the object
 type Spec struct {

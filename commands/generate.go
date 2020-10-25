@@ -11,7 +11,7 @@ import (
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
-	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1alpha1"
+	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1"
 	openfaasv1 "github.com/openfaas/faas-cli/schema/openfaas/v1"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/pkg/errors"
