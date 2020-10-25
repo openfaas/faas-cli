@@ -29,16 +29,6 @@ after_success:
         docker push $DOCKER_NS/faas-cli:${TRAVIS_TAG}-root;
         docker push $DOCKER_NS/faas-cli:latest-root;
 
-        docker tag $DOCKER_NS/faas-cli:latest-dev quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
-        docker tag $DOCKER_NS/faas-cli:latest-dev quay.io/$DOCKER_NS/faas-cli:latest;
-        docker tag $DOCKER_NS/faas-cli:latest-dev-root quay.io/$DOCKER_NS/faas-cli:${TRAVIS_TAG}latest-root;
-        docker tag $DOCKER_NS/faas-cli:latest-dev-root quay.io/$DOCKER_NS/faas-cli:latest-root;
-        echo $QUAY_PASSWORD | docker login -u=$QUAY_USERNAME --password-stdin quay.io;
-        docker push quay.io/$DOCKER_NS/faas-cli:$TRAVIS_TAG;
-        docker push quay.io/$DOCKER_NS/faas-cli:latest;
-        docker push quay.io/$DOCKER_NS/faas-cli:${TRAVIS_TAG}-root;
-        docker push quay.io/$DOCKER_NS/faas-cli:latest-root;
-
       fi;
 
 before_deploy:
