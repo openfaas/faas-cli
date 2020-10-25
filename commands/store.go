@@ -20,8 +20,15 @@ var (
 	storeAddress     string
 	verbose          bool
 	storeDeployFlags DeployFlags
-	//Platform platform variable updated at build time
+	//Platform platform variable set at build time
 	Platform string
+	// if the CLI is built using buildx, then the Platform value needs to be mapped to
+	// one of the supported values used in the store.
+	shortPlatform = map[string]string{
+		"linux/arm/v6": "armhf",
+		"linux/amd64":  "x86_64",
+		"linux/arm64":  "arm64",
+	}
 )
 
 const (
@@ -129,9 +136,16 @@ func getPlatform() string {
 	return Platform
 }
 
+// getTargetPlatform parses the inputPlatform value, if it is empty, the current platform
+// is mapped to a standard value supported by the store API.
 func getTargetPlatform(inputPlatform string) string {
 	if len(inputPlatform) == 0 {
-		return getPlatform()
+		currentPlatform := getPlatform()
+		target, ok := shortPlatform[currentPlatform]
+		if ok {
+			return target
+		}
+		return currentPlatform
 	}
 	return inputPlatform
 }
