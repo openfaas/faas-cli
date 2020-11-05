@@ -3,6 +3,9 @@ FROM teamserverless/license-check:0.3.6 as license-check
 # Build stage
 FROM golang:1.13 as builder
 
+ARG GIT_COMMIT
+ARG VERSION
+
 ENV GO111MODULE=on
 ENV GOFLAGS=-mod=vendor
 ENV CGO_ENABLED=0
