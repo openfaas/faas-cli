@@ -1,6 +1,6 @@
 #!/bin/bash
 
-cli="./faas-cli"
+cli="./bin/faas-cli"
 template="python3"
 
 get_package() {

@@ -1,7 +1,15 @@
-FROM teamserverless/license-check:0.3.6 as license-check
+FROM teamserverless/license-check:0.3.9 as license-check
 
 # Build stage
-FROM golang:1.13 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.13-alpine as builder
+
+ARG TARGETPLATFORM
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
+
+ARG GIT_COMMIT
+ARG VERSION
 
 ENV GO111MODULE=on
 ENV GOFLAGS=-mod=vendor
@@ -9,6 +17,7 @@ ENV CGO_ENABLED=0
 
 WORKDIR /usr/bin/
 
+RUN apk --no-cache add git
 COPY --from=license-check /license-check /usr/bin/
 
 WORKDIR /go/src/github.com/openfaas/faas-cli
@@ -21,31 +30,39 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 # ldflags -X injects commit version into binary
 RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Author(s)"
 
-RUN go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/|grep -v /sample/) -cover
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
+    go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/|grep -v /sample/) -cover
 
-RUN VERSION=$(git describe --all --exact-match `git rev-parse HEAD` | grep tags | sed 's/tags\///') \
-    && GIT_COMMIT=$(git rev-list -1 HEAD) \
-    && CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 \
+    go build --ldflags "-s -w \
     -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
     -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
-    -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
+    -X github.com/openfaas/faas-cli/commands.Platform=${TARGETARCH}" \
     -a -installsuffix cgo -o faas-cli
 
 # CICD stage
-FROM alpine:3.12 as root
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.12 as root
+
+ARG REPO_URL
+
+LABEL org.opencontainers.image.source $REPO_URL
 
 RUN apk --no-cache add ca-certificates git
 
 WORKDIR /home/app
 
-COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               /usr/bin/
+COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli /usr/bin/
 
 ENV PATH=$PATH:/usr/bin/
 
 ENTRYPOINT [ "faas-cli" ]
 
 # Release stage
-FROM alpine:3.12 as release
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.12 as release
+
+ARG REPO_URL
+
+LABEL org.opencontainers.image.source $REPO_URL
 
 RUN apk --no-cache add ca-certificates git
 
@@ -55,7 +72,7 @@ RUN addgroup -S app \
 
 WORKDIR /home/app
 
-COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli               /usr/bin/
+COPY --from=builder /go/src/github.com/openfaas/faas-cli/faas-cli /usr/bin/
 RUN chown -R app:app ./
 
 USER app

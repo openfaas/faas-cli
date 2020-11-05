@@ -1,5 +1,5 @@
 ## faas-cli
-[![Build Status](https://travis-ci.com/openfaas/faas-cli.svg?branch=master)](https://travis-ci.com/openfaas/faas-cli)
+[![Build Status](https://github.com/openfaas/faas-cli/workflows/build/badge.svg?branch=master)](https://github.com/openfaas/faas-cli/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/faas-cli)](https://goreportcard.com/report/github.com/openfaas/faas-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenFaaS](https://img.shields.io/badge/openfaas-serverless-blue.svg)](https://www.openfaas.com)
