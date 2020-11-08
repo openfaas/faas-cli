@@ -378,6 +378,8 @@ The [scripts/export-sealed-secret-pubcert.sh](https://github.com/openfaas-incuba
 * `OPENFAAS_TEMPLATE_URL` - to set the default URL to pull templates from
 * `OPENFAAS_PREFIX` - for use with `faas-cli new` - this can act in place of `--prefix`
 * `OPENFAAS_URL` - to override the default gateway URL
+* `OPENFAAS_CONFIG` - to override the location of the configuration folder, which contains auth configuration.
+* `CI` - to override the location of the configuration folder, when true, the configuration folder is `.openfaas` in the current working directory. This value is ignored if `OPENFAAS_CONFIG` is set.
 
 ### FaaS-CLI Developers / Contributors
 
