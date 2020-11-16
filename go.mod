@@ -19,6 +19,7 @@ require (
 	github.com/morikuni/aec v1.0.0
 	github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d
 	github.com/openfaas/faas-provider v0.15.1
+	github.com/openfaas/templates-sdk v0.0.0-20200723110415-a699ec277c12 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sirupsen/logrus v1.4.2 // indirect

@@ -63,6 +63,9 @@ type Function struct {
 
 	// BuildArgs for providing build-args
 	BuildArgs map[string]string `yaml:"build_args,omitempty"`
+
+	// Platforms for use with buildx and faas-cli publish
+	Platforms string `yaml:"platforms,omitempty"`
 }
 
 // Configuration for the stack.yml file
@@ -73,6 +76,7 @@ type Configuration struct {
 // StackConfiguration for the overall stack.yml
 type StackConfiguration struct {
 	TemplateConfigs []TemplateSource `yaml:"templates"`
+
 	// CopyExtraPaths specifies additional paths (relative to the stack file) that will be copied
 	// into the functions build context, e.g. specifying `"common"` will look for and copy the
 	// "common/" folder of file in the same root as the stack file.  All paths must be contained
@@ -109,8 +113,9 @@ type Services struct {
 
 // LanguageTemplate read from template.yml within root of a language template folder
 type LanguageTemplate struct {
-	Language     string        `yaml:"language,omitempty"`
-	FProcess     string        `yaml:"fprocess,omitempty"`
+	Language string `yaml:"language,omitempty"`
+	FProcess string `yaml:"fprocess,omitempty"`
+
 	BuildOptions []BuildOption `yaml:"build_options,omitempty"`
 	// WelcomeMessage is printed to the user after generating a function
 	WelcomeMessage string `yaml:"welcome_message,omitempty"`
