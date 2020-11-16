@@ -73,12 +73,12 @@ var buildCmd = &cobra.Command{
                  [--lang <ruby|python|python3|node|csharp|dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
-				 [--filter "WILDCARD"]
-				 [--parallel PARALLEL_DEPTH]
-				 [--build-arg KEY=VALUE]
-				 [--build-option VALUE]
-				 [--copy-extra PATH]
-				 [--tag <sha|branch|describe>]`,
+                 [--filter "WILDCARD"]
+                 [--parallel PARALLEL_DEPTH]
+                 [--build-arg KEY=VALUE]
+                 [--build-option VALUE]
+                 [--copy-extra PATH]
+                 [--tag <sha|branch|describe>]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly

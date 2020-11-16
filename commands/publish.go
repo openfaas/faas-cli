@@ -59,13 +59,13 @@ var publishCmd = &cobra.Command{
                  [--lang <ruby|python|python3|node|csharp|dockerfile>]
                  [--no-cache] [--squash]
                  [--regex "REGEX"]
-				 [--filter "WILDCARD"]
-				 [--parallel PARALLEL_DEPTH]
-				 [--publish-arg KEY=VALUE]
-				 [--publish-option VALUE]
-				 [--copy-extra PATH]
-				 [--tag <sha|branch|describe>]
-				 [--platforms linux/arm/v7]`,
+                 [--filter "WILDCARD"]
+                 [--parallel PARALLEL_DEPTH]
+                 [--publish-arg KEY=VALUE]
+                 [--publish-option VALUE]
+                 [--copy-extra PATH]
+                 [--tag <sha|branch|describe>]
+                 [--platforms linux/arm/v7]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
