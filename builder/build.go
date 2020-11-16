@@ -142,7 +142,8 @@ func getDockerBuildCommand(build dockerBuild) (string, []string) {
 	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
 	args := []string{"build"}
 	args = append(args, flagSlice...)
-	args = append(args, "-t", build.Image, ".")
+
+	args = append(args, "--tag", build.Image, ".")
 
 	command := "docker"
 
@@ -159,6 +160,12 @@ type dockerBuild struct {
 	BuildArgMap      map[string]string
 	BuildOptPackages []string
 	BuildLabelMap    map[string]string
+
+	// Platforms for use with buildx and publish command
+	Platforms string
+
+	// ExtraTags for published images like :latest
+	ExtraTags []string
 }
 
 var defaultDirPermissions os.FileMode = 0700

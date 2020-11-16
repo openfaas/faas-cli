@@ -84,6 +84,7 @@ github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d h1:mlI37Hd4Htedk7iCd
 github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d/go.mod h1:E0m2rLup0Vvxg53BKxGgaYAGcZa3Xl+vvL7vSi5yQ14=
 github.com/openfaas/faas-provider v0.15.1 h1:5M+DrGbuKlZxhN3/otFgLgBUnPQcYm6XosQDSbKXh30=
 github.com/openfaas/faas-provider v0.15.1/go.mod h1:ChVioeB3snmfYxBTu7SrWGYLoYN9fZkQlnuEQ86a6l0=
+github.com/openfaas/templates-sdk v0.0.0-20200723110415-a699ec277c12/go.mod h1:JWcVHdzlHcR7nLuaDL88Mz68wOqDvOn0CLO6t27OMhk=
 github.com/pelletier/go-toml v1.2.0/go.mod h1:5z9KED0ma1S8pY6P1sdut58dfprrGBbd/94hg7ilaic=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
