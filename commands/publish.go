@@ -54,18 +54,18 @@ func init() {
 var publishCmd = &cobra.Command{
 	Use: `publish -f YAML_FILE [--no-cache] [--squash]
   faas-cli publish --image IMAGE_NAME
-                 --handler HANDLER_DIR
-                 --name FUNCTION_NAME
-                 [--lang <ruby|python|python3|node|csharp|dockerfile>]
-                 [--no-cache] [--squash]
-                 [--regex "REGEX"]
-                 [--filter "WILDCARD"]
-                 [--parallel PARALLEL_DEPTH]
-                 [--publish-arg KEY=VALUE]
-                 [--publish-option VALUE]
-                 [--copy-extra PATH]
-                 [--tag <sha|branch|describe>]
-                 [--platforms linux/arm/v7]`,
+                   --handler HANDLER_DIR
+                   --name FUNCTION_NAME
+                   [--lang <ruby|python|python3|node|csharp|dockerfile>]
+                   [--no-cache] [--squash]
+                   [--regex "REGEX"]
+                   [--filter "WILDCARD"]
+                   [--parallel PARALLEL_DEPTH]
+                   [--publish-arg KEY=VALUE]
+                   [--publish-option VALUE]
+                   [--copy-extra PATH]
+                   [--tag <sha|branch|describe>]
+                   [--platforms linux/arm/v7]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
@@ -79,7 +79,7 @@ via flags.`,
   faas-cli publish -f ./stack.yml --filter "*gif*"
   faas-cli publish -f ./stack.yml --regex "fn[0-9]_.*"
   faas-cli publish --image=my_image --lang=python --handler=/path/to/fn/
-                 --name=my_fn --squash
+                   --name=my_fn --squash
   faas-cli publish -f ./stack.yml --publish-label org.label-schema.label-name="value"`,
 	PreRunE: preRunBuild,
 	RunE:    runPublish,
