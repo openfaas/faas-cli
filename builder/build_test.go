@@ -42,7 +42,7 @@ func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	want := "build -t imagename:latest ."
+	want := "build --tag imagename:latest ."
 	wantCommand := "docker"
 
 	command, args := getDockerBuildCommand(dockerBuildVal)
@@ -69,7 +69,7 @@ func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	want := "build --no-cache -t imagename:latest ."
+	want := "build --no-cache --tag imagename:latest ."
 
 	wantCommand := "docker"
 
@@ -97,7 +97,7 @@ func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 		BuildOptPackages: []string{},
 	}
 
-	want := "build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 -t imagename:latest ."
+	want := "build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 --tag imagename:latest ."
 
 	wantCommand := "docker"
 
