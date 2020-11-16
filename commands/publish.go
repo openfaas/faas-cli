@@ -61,26 +61,23 @@ var publishCmd = &cobra.Command{
                    [--regex "REGEX"]
                    [--filter "WILDCARD"]
                    [--parallel PARALLEL_DEPTH]
-                   [--publish-arg KEY=VALUE]
-                   [--publish-option VALUE]
+                   [--build-arg KEY=VALUE]
+                   [--build-option VALUE]
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
                    [--platforms linux/arm/v7]`,
-	Short: "Builds OpenFaaS function containers",
-	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
-the "--yaml" flag (which may contain multiple function definitions), or directly
-via flags.`,
-	Example: `  faas-cli publish -f https://domain/path/myfunctions.yml
-  faas-cli publish -f ./stack.yml --no-cache --publish-arg NPM_VERSION=0.2.2
-  faas-cli publish -f ./stack.yml --publish-option dev
-  faas-cli publish -f ./stack.yml --tag sha
-  faas-cli publish -f ./stack.yml --tag branch
-  faas-cli publish -f ./stack.yml --tag describe
-  faas-cli publish -f ./stack.yml --filter "*gif*"
-  faas-cli publish -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli publish --image=my_image --lang=python --handler=/path/to/fn/
-                   --name=my_fn --squash
-  faas-cli publish -f ./stack.yml --publish-label org.label-schema.label-name="value"`,
+	Short: "Builds and pushes multi-arch OpenFaaS functions",
+	Long: `Builds and pushes multi-arch OpenFaaS functions using Docker buildx.
+A multi-arch template is required. Images will not be available in the 
+local Docker library. This command only works when a YAML file is specified.
+
+See also: faas-cli build`,
+	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64,linux/arm/7
+	faas-cli publish --platforms linux/arm/7 --filter webhook
+  faas-cli publish -f go.yml --no-cache --build-arg NPM_VERSION=0.2.2
+  faas-cli publish --build-option dev
+  faas-cli publish --tag sha
+  `,
 	PreRunE: preRunBuild,
 	RunE:    runPublish,
 }
