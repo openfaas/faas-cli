@@ -103,7 +103,10 @@ func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap,
 		build.BuildOptPackages, build.BuildLabelMap)
 
-	args := []string{"buildx", "build", "--progress=plain", "--platform=" + build.Platforms, "--output=type=registry,push=true"}
+	// pushOnly defined at https://github.com/docker/buildx
+	const pushOnly = "--output=type=registry,push=true"
+
+	args := []string{"buildx", "build", "--progress=plain", "--platform=" + build.Platforms, pushOnly}
 
 	args = append(args, flagSlice...)
 
