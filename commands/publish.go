@@ -66,10 +66,16 @@ var publishCmd = &cobra.Command{
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
                    [--platforms linux/arm/v7]`,
-	Short: "Builds and pushes multi-arch OpenFaaS functions",
-	Long: `Builds and pushes multi-arch OpenFaaS functions using Docker buildx.
-A multi-arch template is required. Images will not be available in the 
-local Docker library. This command only works when a YAML file is specified.
+	Short: "Builds and pushes multi-arch OpenFaaS container images",
+	Long: `Builds and pushes multi-arch OpenFaaS container images using Docker buildx.
+Most users will want faas-cli build or faas-cli up for development and testing.
+This command is designed to make releasing and publishing multi-arch container 
+images easier.
+
+A stack.yaml file is required, and any images that are built will not be 
+available in the local Docker library. This is due to technical constraints in 
+Docker and buildx. You must use a multi-arch template to use this command with 
+correctly configured TARGETPLATFORM and BUILDPLATFORM arguments.
 
 See also: faas-cli build`,
 	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64,linux/arm/7

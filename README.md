@@ -77,6 +77,8 @@ The main commands supported by the CLI are:
 * `faas-cli push` - pushes Docker images into a registry
 * `faas-cli deploy` - deploys the functions into a local or remote OpenFaaS gateway
 
+* `faas-cli publish` - build and push multi-arch images for CI and release artifacts
+
 * `faas-cli remove` - removes the functions from a local or remote OpenFaaS gateway
 * `faas-cli invoke` - invokes the functions and reads from STDIN for the body of the request
 * `faas-cli store` - allows browsing and deploying OpenFaaS store functions
