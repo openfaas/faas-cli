@@ -23,6 +23,7 @@ import (
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
+// TODO: refactor signature to a struct to simplify the length of the method header
 func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string) error {
 
 	if stack.IsValidTemplate(language) {
