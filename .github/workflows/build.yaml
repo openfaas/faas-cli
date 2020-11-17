@@ -40,20 +40,21 @@ jobs:
             REPO_URL=https://github.com/${{ env.USER_REPO }}
           load: true
           tags: openfaas/faas-cli:${{ github.sha }}
-      - 
-        name: Local docker build (root image)
+      -
+        name: Test for multi-arch build
         uses: docker/build-push-action@v2
         with:
           context: .
           file: ./Dockerfile
           push: false
-          platforms: linux/amd64
+          load: false
+          platforms: linux/amd64,linux/arm/v7,linux/arm64
           target: release
           build-args: |
             VERSION=latest-dev
             GIT_COMMIT=${{ github.sha }}
             REPO_URL=https://github.com/${{ env.USER_REPO }}
-          tags: openfaas/faas-cli:${{ github.sha }}-root
+          tags: openfaas/faas-cli:${{ github.sha }}
       - 
         name: Copy binary to host
         run: |
