@@ -42,7 +42,7 @@ func init() {
 	publishCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
 	publishCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
 	publishCmd.Flags().StringVar(&platforms, "platforms", "linux/amd64", "A set of platforms to publish")
-	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{""}, "Additional extra image tag")
+	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{}, "Additional extra image tag")
 
 	// Set bash-completion.
 	_ = publishCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -84,7 +84,7 @@ See also: faas-cli build`,
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
   `,
-	PreRunE: preRunBuild,
+	PreRunE: preRunPublish,
 	RunE:    runPublish,
 }
 
@@ -102,6 +102,10 @@ func preRunPublish(cmd *cobra.Command, args []string) error {
 
 	if parallel < 1 {
 		return fmt.Errorf("the --parallel flag must be great than 0")
+	}
+
+	if len(yamlFile) == 0 {
+		return fmt.Errorf("--yaml or -f is required")
 	}
 
 	return err
