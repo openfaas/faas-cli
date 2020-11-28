@@ -144,14 +144,14 @@ func Test_ParsePinnedRemote(t *testing.T) {
 
 		})
 
-		t.Run(fmt.Sprintf("can parse default refname from url with %s", scenario.name), func(t *testing.T) {
+		t.Run(fmt.Sprintf("can parse default empty refname from url with %s", scenario.name), func(t *testing.T) {
 			remote, refName := ParsePinnedRemote(scenario.url)
 			if remote != scenario.url {
 				t.Errorf("expected remote url: %s, got: %s", scenario.url, remote)
 			}
 
-			if refName != "master" {
-				t.Errorf("expected refName: master, got: %s", refName)
+			if refName != "" {
+				t.Errorf("expected emtpy refName, got: %s", refName)
 			}
 
 		})

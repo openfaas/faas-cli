@@ -14,7 +14,15 @@ var GitClone = &vcsCmd{
 	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
 }
 
-// GitCheckout defines the command to clone a repo into a directory
+// GitClone defines the command to clone the default branch of a repo into a directory
+var GitCloneDefault = &vcsCmd{
+	name:   "Git",
+	cmd:    "git",
+	cmds:   []string{"clone {repo} {dir} --depth=1 --config core.autocrlf=false"},
+	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
+}
+
+// GitCheckout defines the command to clone a specific REF of repo into a directory
 var GitCheckout = &vcsCmd{
 	name:   "Git",
 	cmd:    "git",
