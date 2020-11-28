@@ -35,8 +35,15 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 
 	log.Printf("Attempting to expand templates from %s\n", templateURL)
 	pullDebugPrint(fmt.Sprintf("Temp files in %s", dir))
-	args := map[string]string{"dir": dir, "repo": templateURL, "refname": refName}
-	if err := versioncontrol.GitClone.Invoke(".", args); err != nil {
+	args := map[string]string{"dir": dir, "repo": templateURL}
+	cmd := versioncontrol.GitCloneDefault
+
+	if refName != "" {
+		args["refname"] = refName
+		cmd = versioncontrol.GitClone
+	}
+
+	if err := cmd.Invoke(".", args); err != nil {
 		return err
 	}
 
@@ -126,11 +133,14 @@ func pullTemplate(repository string) error {
 
 	repository, refName := versioncontrol.ParsePinnedRemote(repository)
 
-	if err := versioncontrol.GitCheckRefName.Invoke("", map[string]string{"refname": refName}); err != nil {
-		fmt.Printf("Invalid tag or branch name `%s`\n", refName)
-		fmt.Println("See https://git-scm.com/docs/git-check-ref-format for more details of the rules Git enforces on branch and reference names.")
+	if refName != "" {
+		err := versioncontrol.GitCheckRefName.Invoke("", map[string]string{"refname": refName})
+		if err != nil {
+			fmt.Printf("Invalid tag or branch name `%s`\n", refName)
+			fmt.Println("See https://git-scm.com/docs/git-check-ref-format for more details of the rules Git enforces on branch and reference names.")
 
-		return err
+			return err
+		}
 	}
 
 	fmt.Printf("Fetch templates from repository: %s at %s\n", repository, refName)

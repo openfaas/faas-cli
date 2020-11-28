@@ -35,7 +35,10 @@ func IsPinnedGitRemote(repoURL string) bool {
 
 // ParsePinnedRemote returns the remote url and contraint value from repository url
 func ParsePinnedRemote(repoURL string) (remoteURL, refName string) {
-	refName = "master"
+	// default refName is empty
+	// the template fetcher can detect this and will pull the default when
+	// the ref is empty
+	refName = ""
 	remoteURL = repoURL
 
 	// If using a Regexp in multiple goroutines,
@@ -54,7 +57,7 @@ func ParsePinnedRemote(repoURL string) (remoteURL, refName string) {
 	}
 
 	if !IsGitRemote(remoteURL) {
-		return repoURL, "master"
+		return remoteURL, refName
 	}
 
 	return remoteURL, refName

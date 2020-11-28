@@ -33,6 +33,16 @@ func Test_PullTemplates(t *testing.T) {
 		}
 
 	})
+
+	t.Run("fetchTemplates with default ref", func(t *testing.T) {
+		defer tearDownFetchTemplates(t)
+
+		err := fetchTemplates(localTemplateRepository, "", false)
+		if err != nil {
+			t.Error(err)
+		}
+
+	})
 }
 
 // setupLocalTemplateRepo will create a local copy of the core OpenFaaS templates, this
