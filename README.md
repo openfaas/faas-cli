@@ -244,11 +244,9 @@ Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https:
 
 ### Private registries
 
-* For Kubernetes
+* For Kubernetes - [see here](https://docs.openfaas.com/deployment/kubernetes/#use-a-private-registry-with-kubernetes)
 
-Create a named image pull secret and add the secret name to the `secrets` section of your YAML file or your deployment arguments with `--secret`.
-
-Alternatively you can assign a secret to the node to allow it to pull from your private registry. In this case you do not need to assign the secret to your function.
+* For faasd - [see here](https://github.com/openfaas/faasd)
 
 * For Docker Swarm
 
@@ -262,7 +260,6 @@ If the `CI` env var is set to `true` or `1`, faas-cli change the location of the
 
 This is really useful when running faas-cli as a container image. The recommended image type to use in a CI environment is the root variant, tagged with `-root` suffix.
 CI environments like Github Actions require you to use Docker images having a root user. Learn more about it [here](https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/dockerfile-support-for-github-actions#user).
-
 
 ### Use a YAML stack file
 
@@ -373,7 +370,6 @@ You can then place the `secrets.yml` file in any public Git repo without others 
 When SealedSecrets is installed by ofc-bootstrap
 
 The [scripts/export-sealed-secret-pubcert.sh](https://github.com/openfaas-incubator/ofc-bootstrap/blob/master/scripts/export-sealed-secret-pubcert.sh) does everything automatically.
-
 
 ### Environment variable overrides
 
