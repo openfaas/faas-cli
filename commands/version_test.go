@@ -100,6 +100,21 @@ func Test_gateway_and_provider_information(t *testing.T) {
 			},
 		},
 		{
+			responseBody: gateway_response_0_8_4_onwards_nil_values,
+			params: []struct {
+				name  string
+				value string
+			}{
+				{"gateway version", "version: "},
+				{"gateway sha", "sha:     "},
+				{"gateway commit", "commit:  "},
+				{"provider name", "name:          "},
+				{"provider orchestration", "orchestration: "},
+				{"provider version", "version:       "},
+				{"provider sha", "sha:           "},
+			},
+		},
+		{
 			responseBody: gateway_response_prior_to_0_8_4,
 			params: []struct {
 				name  string
@@ -196,6 +211,15 @@ const gateway_response_0_8_4_onwards = `{
     "sha": "999a6669148c30adeb64400609953cf59db2fb64",
     "release": "gateway-0.4.3",
     "commit_message": "Bump faas-swarm to latest"
+  } 
+}`
+
+const gateway_response_0_8_4_onwards_nil_values = `{
+  "provider": {
+    "version": {
+    }
+  },
+  "version": {
   } 
 }`
 
