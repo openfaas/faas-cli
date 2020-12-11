@@ -152,9 +152,18 @@ func printLogo() {
 func getGatewayDetails(m map[string]interface{}) (version, sha, commit string) {
 	if _, ok := m["orchestration"]; !ok {
 		v := m["version"].(map[string]interface{})
-		version = v["release"].(string)
-		sha = v["sha"].(string)
-		commit = v["commit_message"].(string)
+		version, ok = v["release"].(string)
+		if !ok {
+			version = ""
+		}
+		sha, ok = v["sha"].(string)
+		if !ok {
+			sha = ""
+		}
+		commit, ok = v["commit_message"].(string)
+		if !ok {
+			commit = ""
+		}
 	}
 
 	return
@@ -184,10 +193,22 @@ func getProviderDetailsLegacy(m map[string]interface{}) (name, orchestration, sh
 
 func getProviderDetailsCurrent(m map[string]interface{}) (name, orchestration, sha, version string) {
 	v := m["version"].(map[string]interface{})
-	version = v["release"].(string)
-	sha = v["sha"].(string)
-	name = m["provider"].(string)
-	orchestration = m["orchestration"].(string)
+	version, ok := v["release"].(string)
+	if !ok {
+		version = ""
+	}
+	sha, ok = v["sha"].(string)
+	if !ok {
+		sha = ""
+	}
+	name, ok = m["provider"].(string)
+	if !ok {
+		name = ""
+	}
+	orchestration, ok = m["orchestration"].(string)
+	if !ok {
+		orchestration = ""
+	}
 
 	return
 }
