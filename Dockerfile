@@ -1,7 +1,7 @@
 FROM teamserverless/license-check:0.3.9 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.13-alpine as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.15 as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -17,7 +17,6 @@ ENV CGO_ENABLED=0
 
 WORKDIR /usr/bin/
 
-RUN apk --no-cache add git
 COPY --from=license-check /license-check /usr/bin/
 
 WORKDIR /go/src/github.com/openfaas/faas-cli
