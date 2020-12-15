@@ -7,19 +7,20 @@ go 1.13
 replace golang.org/x/sys => golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+	github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d
+	github.com/openfaas/faas-provider v0.15.4
 	github.com/alexellis/go-execute v0.0.0-20191207085904-961405ea7544
 	github.com/alexellis/hmac v0.0.0-20180624210714-d5d71edd7bc7
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3
+	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
+
 	github.com/drone/envsubst v1.0.2
 	github.com/gotestyourself/gotestyourself v1.4.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/morikuni/aec v1.0.0
-	github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d
-	github.com/openfaas/faas-provider v0.15.1
-	github.com/openfaas/templates-sdk v0.0.0-20200723110415-a699ec277c12 // indirect
+
 	github.com/pkg/errors v0.8.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sirupsen/logrus v1.4.2 // indirect
