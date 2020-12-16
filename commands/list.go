@@ -22,6 +22,7 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	listCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	listCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+	listCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "Quiet mode - print out only the function's ID")
 
 	listCmd.Flags().BoolVarP(&verboseList, "verbose", "v", false, "Verbose output for the function list")
 	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
@@ -73,7 +74,11 @@ func runList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if verboseList {
+	if quiet {
+		for _, function := range functions {
+			fmt.Printf("%s\n", function.Name)
+		}
+	} else if verboseList {
 		fmt.Printf("%-30s\t%-40s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
 		for _, function := range functions {
 			functionImage := function.Image
@@ -86,7 +91,6 @@ func runList(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%-30s\t%-15s\t%-5s\n", "Function", "Invocations", "Replicas")
 		for _, function := range functions {
 			fmt.Printf("%-30s\t%-15d\t%-5d\n", function.Name, int64(function.InvocationCount), function.Replicas)
-
 		}
 	}
 	return nil
