@@ -26,7 +26,7 @@ func Test_GetSecretList_200OK(t *testing.T) {
 
 	for k, v := range secrets {
 		if expectedSecretList[k] != v {
-			t.Fatalf("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
+			t.Fatalf("Expeceted: %#v - Actual: %#v", wantListFunctionsResponse[k], v)
 		}
 	}
 }
@@ -47,7 +47,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 
 	for k, v := range secrets {
 		if expectedSecretList[k] != v {
-			t.Fatalf("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
+			t.Fatalf("Expeceted: %#v - Actual: %#v", wantListFunctionsResponse[k], v)
 		}
 	}
 }

@@ -6,6 +6,7 @@ package proxy
 import (
 	"context"
 	"net/http"
+	"reflect"
 	"regexp"
 
 	"testing"
@@ -14,11 +15,29 @@ import (
 	types "github.com/openfaas/faas-provider/types"
 )
 
+var wantListFunctionsResponse = []types.FunctionStatus{
+	{
+		Name:            "func-test1",
+		Image:           "image-test1",
+		Replicas:        1,
+		InvocationCount: 1,
+		EnvProcess:      "env-process test1",
+	},
+	{
+		Name:            "func-test2",
+		Image:           "image-test2",
+		Replicas:        2,
+		InvocationCount: 2,
+		EnvProcess:      "env-process test2",
+	},
+}
+
 func Test_ListFunctions(t *testing.T) {
+
 	s := test.MockHttpServer(t, []test.Request{
 		{
 			ResponseStatusCode: http.StatusOK,
-			ResponseBody:       expectedListFunctionsResponse,
+			ResponseBody:       wantListFunctionsResponse,
 		},
 	})
 	defer s.Close()
@@ -31,8 +50,8 @@ func Test_ListFunctions(t *testing.T) {
 		t.Fatalf("Error returned: %s", err)
 	}
 	for k, v := range result {
-		if expectedListFunctionsResponse[k] != v {
-			t.Fatalf("Expeceted: %#v - Actual: %#v", expectedListFunctionsResponse[k], v)
+		if !reflect.DeepEqual(wantListFunctionsResponse[k], v) {
+			t.Fatalf("Want: %#v - Got: %#v", wantListFunctionsResponse[k], v)
 		}
 	}
 }
@@ -52,21 +71,4 @@ func Test_ListFunctions_Not200(t *testing.T) {
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Error not matched: %s", err)
 	}
-}
-
-var expectedListFunctionsResponse = []types.FunctionStatus{
-	{
-		Name:            "func-test1",
-		Image:           "image-test1",
-		Replicas:        1,
-		InvocationCount: 1,
-		EnvProcess:      "env-process test1",
-	},
-	{
-		Name:            "func-test2",
-		Image:           "image-test2",
-		Replicas:        2,
-		InvocationCount: 2,
-		EnvProcess:      "env-process test2",
-	},
 }

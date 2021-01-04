@@ -6,7 +6,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/openfaas/faas-cli/proxy"
@@ -26,7 +25,6 @@ func init() {
 	storeDeployCmd.Flags().BoolVar(&storeDeployFlags.update, "update", true, "Update existing functions")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.constraints, "constraint", []string{}, "Apply a constraint to the function")
 	storeDeployCmd.Flags().StringArrayVar(&storeDeployFlags.secrets, "secret", []string{}, "Give the function access to a secure secret")
-	storeDeployCmd.Flags().BoolVarP(&storeDeployFlags.sendRegistryAuth, "send-registry-auth", "a", false, "send registryAuth from Docker credentials manager with the request")
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
 	storeDeployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	storeDeployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
@@ -114,19 +112,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		itemName = functionName
 	}
 
-	var registryAuth string
 	imageName := item.GetImageName(targetPlatform)
-
-	if storeDeployFlags.sendRegistryAuth {
-
-		dockerConfig := configFile{}
-		err := readDockerConfig(&dockerConfig)
-		if err != nil {
-			log.Printf("Unable to read the docker config - %v\n", err.Error())
-		}
-
-		registryAuth = getRegistryAuth(&dockerConfig, imageName)
-	}
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 	cliAuth, err := proxy.NewCLIAuth(token, gateway)
@@ -139,7 +125,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	statusCode, err := deployImage(context.Background(), proxyClient, imageName, item.Fprocess, itemName, registryAuth, storeDeployFlags,
+	statusCode, err := deployImage(context.Background(), proxyClient, imageName, item.Fprocess, itemName, "", storeDeployFlags,
 		tlsInsecure, item.ReadOnlyRootFilesystem, token, functionNamespace)
 
 	if badStatusCode(statusCode) {
