@@ -248,10 +248,6 @@ Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https:
 
 * For faasd - [see here](https://github.com/openfaas/faasd)
 
-* For Docker Swarm
-
-For Docker Swarm use the `--send-registry-auth` flag or its shorthand `-a` which will look up your registry credentials in your local credentials store and then transmit them over the wire to the deploy command on the API Gateway. Make sure HTTPS/TLS is enabled before attempting this.
-
 ### Use faas-cli in CI environments
 
 If you're running faas-cli in a CI environment like [Github Actions](https://docs.github.com/en/free-pro-team@latest/actions/reference/environment-variables#default-environment-variables), [CircleCI](https://circleci.com/docs/2.0/env-vars/#built-in-environment-variables), or [Travis](https://docs.travis-ci.com/user/environment-variables/#default-environment-variables), chances are you get the env var `CI` set to true.
