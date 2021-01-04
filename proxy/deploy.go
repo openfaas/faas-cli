@@ -93,8 +93,6 @@ func (c *Client) deploy(context context.Context, spec *DeployFunctionSpec, updat
 	req := types.FunctionDeployment{
 		EnvProcess:             fprocessTemplate,
 		Image:                  spec.Image,
-		RegistryAuth:           spec.RegistryAuth,
-		Network:                spec.Network,
 		Service:                spec.FunctionName,
 		EnvVars:                spec.EnvVars,
 		Constraints:            spec.Constraints,

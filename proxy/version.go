@@ -27,6 +27,7 @@ func (c *Client) GetSystemInfo(ctx context.Context) (map[string]interface{}, err
 	if response.Body != nil {
 		defer response.Body.Close()
 	}
+
 	info := make(map[string]interface{})
 
 	switch response.StatusCode {

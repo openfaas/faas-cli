@@ -1,46 +1,64 @@
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
+## explicit
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
 # github.com/alexellis/go-execute v0.0.0-20191207085904-961405ea7544
+## explicit
 github.com/alexellis/go-execute/pkg/v1
 # github.com/alexellis/hmac v0.0.0-20180624210714-d5d71edd7bc7
+## explicit
 github.com/alexellis/hmac
 # github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
+## explicit
 github.com/docker/docker/pkg/term
 github.com/docker/docker/pkg/term/windows
-# github.com/docker/docker-credential-helpers v0.6.3
-github.com/docker/docker-credential-helpers/client
-github.com/docker/docker-credential-helpers/credentials
 # github.com/drone/envsubst v1.0.2
+## explicit
 github.com/drone/envsubst
 github.com/drone/envsubst/parse
 github.com/drone/envsubst/path
+# github.com/gotestyourself/gotestyourself v1.4.0
+## explicit
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/konsorten/go-windows-terminal-sequences v1.0.2
+## explicit
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/mitchellh/go-homedir v1.1.0
+## explicit
 github.com/mitchellh/go-homedir
 # github.com/morikuni/aec v1.0.0
+## explicit
 github.com/morikuni/aec
-# github.com/openfaas/faas v0.0.0-20200422142642-18f6c720b50d
+# github.com/openfaas/faas v0.0.0-20201210155854-272ae94b506c
+## explicit
 github.com/openfaas/faas/gateway/requests
-# github.com/openfaas/faas-provider v0.15.4
+# github.com/openfaas/faas-provider v0.16.1
+## explicit
 github.com/openfaas/faas-provider/httputil
 github.com/openfaas/faas-provider/logs
 github.com/openfaas/faas-provider/types
 # github.com/pkg/errors v0.8.1
+## explicit
 github.com/pkg/errors
 # github.com/ryanuber/go-glob v1.0.0
+## explicit
 github.com/ryanuber/go-glob
 # github.com/sirupsen/logrus v1.4.2
+## explicit
 github.com/sirupsen/logrus
 # github.com/spf13/cobra v0.0.7
+## explicit
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
+## explicit
 github.com/spf13/pflag
 # golang.org/x/sys v0.0.0-20190422165155-953cdadca894 => golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 # gopkg.in/yaml.v2 v2.2.8
+## explicit
 gopkg.in/yaml.v2
+# gotest.tools v1.4.0
+## explicit
+# golang.org/x/sys => golang.org/x/sys v0.0.0-20200826173525-f9321e4c35a6

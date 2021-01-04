@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"testing"
 
@@ -14,11 +15,22 @@ import (
 	types "github.com/openfaas/faas-provider/types"
 )
 
+func makeExpectedGetFunctionInfoResponse() types.FunctionStatus {
+
+	return types.FunctionStatus{
+		Name:            "func-test1",
+		Image:           "image-test1",
+		Replicas:        1,
+		InvocationCount: 1,
+		EnvProcess:      "env-process test1",
+	}
+}
+
 func Test_GetFunctionInfo(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
 		{
 			ResponseStatusCode: http.StatusOK,
-			ResponseBody:       expectedGetFunctionInfoResponse,
+			ResponseBody:       makeExpectedGetFunctionInfoResponse(),
 		},
 	})
 
@@ -30,8 +42,9 @@ func Test_GetFunctionInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Error returned: %s", err)
 	}
-	if expectedGetFunctionInfoResponse != result {
-		t.Fatalf("Want: %#v, Got: %#v", expectedGetFunctionInfoResponse, result)
+
+	if !reflect.DeepEqual(makeExpectedGetFunctionInfoResponse(), result) {
+		t.Fatalf("Want: %#v, Got: %#v", makeExpectedGetFunctionInfoResponse(), result)
 	}
 }
 
@@ -69,12 +82,4 @@ func Test_GetFunctionInfo_NotFound(t *testing.T) {
 		t.Fatalf("Want: %s, Got: %s", expectedErrMsg, err.Error())
 	}
 
-}
-
-var expectedGetFunctionInfoResponse = types.FunctionStatus{
-	Name:            "func-test1",
-	Image:           "image-test1",
-	Replicas:        1,
-	InvocationCount: 1,
-	EnvProcess:      "env-process test1",
 }

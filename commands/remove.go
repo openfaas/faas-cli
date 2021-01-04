@@ -72,9 +72,6 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	if len(services.Functions) > 0 {
-		if len(services.Provider.Network) == 0 {
-			services.Provider.Network = defaultNetwork
-		}
 
 		for k, function := range services.Functions {
 			function.Namespace = getNamespace(functionNamespace, function.Namespace)

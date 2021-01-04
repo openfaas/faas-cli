@@ -42,117 +42,6 @@ func Test_deploy(t *testing.T) {
 	}
 }
 
-func Test_getRegistryAuth_CustomRegistry_NotFound(t *testing.T) {
-	wantAuth := ""
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{},
-	}
-
-	result := getRegistryAuth(&configFile1, "my-custom-registry.com/alexellis2/tester")
-
-	if result != wantAuth {
-		t.Errorf("want %s (empty), got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_CustomRegistry_Found(t *testing.T) {
-	wantAuth := "alexellis2-auth-str"
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{
-			"my-custom-registry.com": authConfig{Auth: wantAuth},
-		},
-	}
-
-	result := getRegistryAuth(&configFile1, "my-custom-registry.com/alexellis2/tester")
-
-	if result != wantAuth {
-		t.Errorf("want %s, got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_NestedGitlabRegistry_Found(t *testing.T) {
-	wantAuth := "alexellis2-auth-str"
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{
-			"registry.gitlab.com": authConfig{Auth: wantAuth},
-		},
-	}
-
-	result := getRegistryAuth(&configFile1, "registry.gitlab.com/alexellis2/tester/function1")
-
-	if result != wantAuth {
-		t.Errorf("want %s, got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_CustomRegistry_NoUserPrefix(t *testing.T) {
-	hubAuth := "alexellis2-auth-str"
-	wantAuth := "alexellis2-registry-local"
-
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{
-			defaultDockerRegistry: authConfig{Auth: hubAuth},
-			"registry.local:5000": authConfig{Auth: wantAuth},
-		},
-	}
-
-	result := getRegistryAuth(&configFile1, "registry.local:5000/tester")
-
-	if result != wantAuth {
-		t.Errorf("registry auth without username - want %s, got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_DockerHub_Found(t *testing.T) {
-	wantAuth := "alexellis2-auth-str"
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{
-			defaultDockerRegistry: authConfig{Auth: wantAuth},
-		},
-	}
-
-	result := getRegistryAuth(&configFile1, "alexellis2/tester")
-
-	if result != wantAuth {
-		t.Errorf("want %s, got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_DockerHub_NotFound(t *testing.T) {
-	wantAuth := ""
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{},
-	}
-
-	result := getRegistryAuth(&configFile1, "alexellis2/tester")
-
-	if result != "" {
-		t.Errorf("want %s (empty), got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
-func Test_getRegistryAuth_NotRequiredForLocalImage(t *testing.T) {
-	wantAuth := ""
-	configFile1 := configFile{
-		AuthConfigs: map[string]authConfig{
-			defaultDockerRegistry: authConfig{Auth: "alexellis2-auth-str"},
-		},
-	}
-
-	result := getRegistryAuth(&configFile1, "tester:latest")
-
-	if result != "" {
-		t.Errorf("want %s (empty), got %s", wantAuth, result)
-		t.Fail()
-	}
-}
-
 func Test_deployFailed(t *testing.T) {
 
 	var failedDeploy = make(map[string]int)
@@ -176,6 +65,7 @@ func Test_deployFailed(t *testing.T) {
 		t.Fail()
 	}
 }
+
 func Test_deploySucceeded(t *testing.T) {
 	var succededDeploy = make(map[string]int)
 	if err := deployFailed(succededDeploy); err != nil {

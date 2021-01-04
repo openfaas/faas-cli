@@ -7,7 +7,6 @@ package stack
 type Provider struct {
 	Name       string `yaml:"name"`
 	GatewayURL string `yaml:"gateway"`
-	Network    string `yaml:"network"`
 }
 
 // Function as deployed or built on FaaS
@@ -22,9 +21,6 @@ type Function struct {
 
 	// Image Docker image name
 	Image string `yaml:"image"`
-
-	// Docker registry Authorization
-	RegistryAuth string `yaml:"registry_auth,omitempty"`
 
 	FProcess string `yaml:"fprocess"`
 
