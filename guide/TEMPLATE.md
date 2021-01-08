@@ -68,7 +68,7 @@ faas-cli template pull https://github.com/openfaas-incubator/golang-http-templat
 If you need to update the downloaded repository, just add the flag `--overwrite` to the download command:
 
 ```bash
-faas-cli template pull https://github.com/openfaas-incubator/golang-http-template --override
+faas-cli template pull https://github.com/openfaas-incubator/golang-http-template --overwrite
 ```
 
 You can specify the template URL with `OPENFAAS_TEMPLATE_URL` environmental variable. CLI overrides the environmental variable.
