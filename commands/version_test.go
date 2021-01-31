@@ -92,7 +92,6 @@ func Test_gateway_and_provider_information(t *testing.T) {
 			}{
 				{"gateway version", "version: gateway-0.4.3"},
 				{"gateway sha", "sha:     999a6669148c30adeb64400609953cf59db2fb64"},
-				{"gateway commit", "commit:  Bump faas-swarm to latest"},
 				{"provider name", "name:          faas-swarm"},
 				{"provider orchestration", "orchestration: swarm"},
 				{"provider version", "version:       provider-0.3.3"},
@@ -107,7 +106,6 @@ func Test_gateway_and_provider_information(t *testing.T) {
 			}{
 				{"gateway version", "version: "},
 				{"gateway sha", "sha:     "},
-				{"gateway commit", "commit:  "},
 				{"provider name", "name:          "},
 				{"provider orchestration", "orchestration: "},
 				{"provider version", "version:       "},

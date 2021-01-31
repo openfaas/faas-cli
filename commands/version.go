@@ -109,9 +109,9 @@ func printServerVersions() error {
 		return err
 	}
 
-	version, sha, commit := getGatewayDetails(info)
+	version, sha := getGatewayDetails(info)
 
-	printGatewayDetails(gatewayAddress, version, sha, commit)
+	printGatewayDetails(gatewayAddress, version, sha)
 
 	name, orchestration, sha, version := getProviderDetails(info)
 	fmt.Printf(`
@@ -124,7 +124,7 @@ Provider
 	return nil
 }
 
-func printGatewayDetails(gatewayAddress, version, sha, commit string) {
+func printGatewayDetails(gatewayAddress, version, sha string) {
 	fmt.Printf(`
 Gateway
  uri:     %s`, gatewayAddress)
@@ -133,8 +133,7 @@ Gateway
 		fmt.Printf(`
  version: %s
  sha:     %s
- commit:  %s
-`, version, sha, commit)
+`, version, sha)
 	}
 
 	fmt.Println()
@@ -149,7 +148,7 @@ func printLogo() {
 	fmt.Printf(figletColoured)
 }
 
-func getGatewayDetails(m map[string]interface{}) (version, sha, commit string) {
+func getGatewayDetails(m map[string]interface{}) (version, sha string) {
 	if _, ok := m["orchestration"]; !ok {
 		v := m["version"].(map[string]interface{})
 		version, ok = v["release"].(string)
@@ -159,10 +158,6 @@ func getGatewayDetails(m map[string]interface{}) (version, sha, commit string) {
 		sha, ok = v["sha"].(string)
 		if !ok {
 			sha = ""
-		}
-		commit, ok = v["commit_message"].(string)
-		if !ok {
-			commit = ""
 		}
 	}
 
