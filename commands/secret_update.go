@@ -23,6 +23,7 @@ var secretUpdateCmd = &cobra.Command{
 	Example: `faas-cli secret update NAME
 faas-cli secret update NAME --from-literal=secret-value
 faas-cli secret update NAME --from-file=/path/to/secret/file
+faas-cli secret update NAME --from-file=/path/to/secret/file --trim=false
 faas-cli secret update NAME --from-literal=secret-value --gateway=http://127.0.0.1:8080
 cat /path/to/secret/file | faas-cli secret update NAME`,
 	RunE:    runSecretUpdate,
@@ -34,6 +35,7 @@ func init() {
 	secretUpdateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretUpdateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretUpdateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
+	secretUpdateCmd.Flags().BoolVar(&trimSecret, "trim", true, "trim whitespace from the start and end of the secret value")
 	secretUpdateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretUpdateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	secretCmd.AddCommand(secretUpdateCmd)
@@ -91,7 +93,9 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 		secret.Value = string(secretStdin)
 	}
 
-	secret.Value = strings.TrimSpace(secret.Value)
+	if trimSecret {
+		secret.Value = strings.TrimSpace(secret.Value)
+	}
 
 	if len(secret.Value) == 0 {
 		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")

@@ -19,11 +19,13 @@ import (
 var (
 	literalSecret string
 	secretFile    string
+	trimSecret    bool
 )
 
 // secretCreateCmd represents the secretCreate command
 var secretCreateCmd = &cobra.Command{
-	Use: `create SECRET_NAME 
+	Use: `create SECRET_NAME
+			[--trim=false]
 			[--from-literal=SECRET_VALUE]
 			[--from-file=/path/to/secret/file]
 			[STDIN]
@@ -41,6 +43,7 @@ cat /path/to/secret/file | faas-cli secret create secret-name`,
 func init() {
 	secretCreateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
 	secretCreateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
+	secretCreateCmd.Flags().BoolVar(&trimSecret, "trim", true, "trim whitespace from the start and end of the secret value")
 	secretCreateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretCreateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
@@ -99,7 +102,9 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 		secret.Value = string(secretStdin)
 	}
 
-	secret.Value = strings.TrimSpace(secret.Value)
+	if trimSecret {
+		secret.Value = strings.TrimSpace(secret.Value)
+	}
 
 	if len(secret.Value) == 0 {
 		return fmt.Errorf("must provide a non empty secret via --from-literal, --from-file or STDIN")
