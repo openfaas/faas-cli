@@ -29,6 +29,7 @@ func init() {
 	loginCmd.Flags().StringVarP(&password, "password", "p", "", "Gateway password")
 	loginCmd.Flags().BoolVarP(&passwordStdin, "password-stdin", "s", false, "Reads the gateway password from stdin")
 	loginCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
+	loginCmd.Flags().Duration("timeout", time.Second*5, "Override the timeout for this API call")
 
 	faasCmd.AddCommand(loginCmd)
 }
@@ -44,6 +45,11 @@ var loginCmd = &cobra.Command{
 }
 
 func runLogin(cmd *cobra.Command, args []string) error {
+
+	timeout, err := cmd.Flags().GetDuration("timeout")
+	if err != nil {
+		return err
+	}
 
 	if len(username) == 0 {
 		return fmt.Errorf("must provide --username or -u")
@@ -82,7 +88,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	if err := validateLogin(gateway, username, password); err != nil {
+	if err := validateLogin(gateway, username, password, timeout); err != nil {
 		return err
 	}
 
@@ -105,10 +111,8 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func validateLogin(gatewayURL string, user string, pass string) error {
-	timeout := time.Duration(5 * time.Second)
+func validateLogin(gatewayURL string, user string, pass string, timeout time.Duration) error {
 	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
-
 	req, err := http.NewRequest("GET", gatewayURL+"/system/functions", nil)
 	if err != nil {
 		return fmt.Errorf("invalid URL: %s", gatewayURL)
