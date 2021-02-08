@@ -46,24 +46,33 @@ func runStoreInspect(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found for platform '%s'", functionName, targetPlatform)
 	}
 
-	content := storeRenderItem(item, targetPlatform)
+	verbose, err := cmd.Flags().GetBool("verbose")
+	if err != nil {
+		return err
+	}
+
+	content := storeRenderItem(item, targetPlatform, verbose)
 	fmt.Print(content)
 
 	return nil
 }
 
-func storeRenderItem(item *storeV2.StoreFunction, platform string) string {
+func storeRenderItem(item *storeV2.StoreFunction, platform string, verbose bool) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
-	fmt.Fprintln(w)
-	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION\tIMAGE\tPROCESS\tREPO")
-	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-		item.Title,
-		storeRenderDescription(item.Description),
-		item.GetImageName(platform),
-		item.Fprocess,
-		item.RepoURL,
-	)
+	fmt.Fprintf(w, "Info for: %s\n\n", item.Title)
+
+	fmt.Fprintf(w, "%s\t%s\n", "Name", item.Name)
+
+	desc := item.Description
+	if !verbose {
+		desc = storeRenderDescription(desc)
+	}
+
+	fmt.Fprintf(w, "%s\t%s\n", "Description", desc)
+	fmt.Fprintf(w, "%s\t%s\n", "Image", item.GetImageName(platform))
+	fmt.Fprintf(w, "%s\t%s\n", "Process", item.Fprocess)
+	fmt.Fprintf(w, "%s\t%s\n", "Repo URL", item.RepoURL)
 
 	fmt.Fprintln(w)
 	w.Flush()
