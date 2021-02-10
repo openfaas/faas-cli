@@ -112,18 +112,6 @@ func Test_gateway_and_provider_information(t *testing.T) {
 				{"provider sha", "sha:           "},
 			},
 		},
-		{
-			responseBody: gateway_response_prior_to_0_8_4,
-			params: []struct {
-				name  string
-				value string
-			}{
-				{"provider name", "name:          faas-swarm"},
-				{"provider orchestration", "orchestration: swarm"},
-				{"provider version", "version:       provider-0.3.3"},
-				{"provider sha", "sha:           c890cba302d059de8edbef3f3de7fe15444b1ecf"},
-			},
-		},
 	}
 
 	for _, testCase := range testCases {
@@ -141,14 +129,6 @@ func Test_gateway_and_provider_information(t *testing.T) {
 
 func Test_gateway_uri(t *testing.T) {
 	stdOut, gatewayUri := executeVersionCmd(t, gateway_response_0_8_4_onwards)
-
-	if found, err := regexp.MatchString(fmt.Sprintf(`(?m:uri:     %s)`, gatewayUri), stdOut); err != nil || !found {
-		t.Fatalf("Gateway uri is not as expected - want: %s, got:\n%s", gatewayUri, stdOut)
-	}
-}
-
-func Test_gateway_uri_prior_to_0_8_4(t *testing.T) {
-	stdOut, gatewayUri := executeVersionCmd(t, gateway_response_prior_to_0_8_4)
 
 	if found, err := regexp.MatchString(fmt.Sprintf(`(?m:uri:     %s)`, gatewayUri), stdOut); err != nil || !found {
 		t.Fatalf("Gateway uri is not as expected - want: %s, got:\n%s", gatewayUri, stdOut)

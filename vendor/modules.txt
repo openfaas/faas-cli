@@ -33,6 +33,7 @@ github.com/morikuni/aec
 # github.com/openfaas/faas v0.0.0-20201210155854-272ae94b506c
 ## explicit
 github.com/openfaas/faas/gateway/requests
+github.com/openfaas/faas/gateway/types
 # github.com/openfaas/faas-provider v0.16.1
 ## explicit
 github.com/openfaas/faas-provider/httputil
