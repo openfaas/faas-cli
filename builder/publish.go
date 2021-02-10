@@ -5,7 +5,6 @@ package builder
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -114,9 +113,8 @@ func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 
 	args = append(args, "--tag", build.Image, ".")
 
-	log.Println(build.ExtraTags, len(build.ExtraTags))
 	for _, t := range build.ExtraTags {
-		log.Println("Do", t)
+
 		var tag string
 		if i := strings.LastIndex(build.Image, ":"); i > -1 {
 			tag = applyTag(i, build.Image, t)
