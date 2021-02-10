@@ -104,23 +104,20 @@ func printServerVersions() error {
 	if err != nil {
 		return err
 	}
-	info, err := cliClient.GetSystemInfo(context.Background())
+	gatewayInfo, err := cliClient.GetSystemInfo(context.Background())
 	if err != nil {
 		return err
 	}
 
-	version, sha := getGatewayDetails(info)
+	printGatewayDetails(gatewayAddress, gatewayInfo.Version.Release, gatewayInfo.Version.SHA)
 
-	printGatewayDetails(gatewayAddress, version, sha)
-
-	name, orchestration, sha, version := getProviderDetails(info)
 	fmt.Printf(`
 Provider
  name:          %s
  orchestration: %s
  version:       %s 
  sha:           %s
-`, name, orchestration, version, sha)
+`, gatewayInfo.Provider.Name, gatewayInfo.Provider.Orchestration, gatewayInfo.Provider.Version.Release, gatewayInfo.Provider.Version.SHA)
 	return nil
 }
 
@@ -146,66 +143,6 @@ func printLogo() {
 		figletColoured = aec.GreenF.Apply(figletStr)
 	}
 	fmt.Printf(figletColoured)
-}
-
-func getGatewayDetails(m map[string]interface{}) (version, sha string) {
-	if _, ok := m["orchestration"]; !ok {
-		v := m["version"].(map[string]interface{})
-		version, ok = v["release"].(string)
-		if !ok {
-			version = ""
-		}
-		sha, ok = v["sha"].(string)
-		if !ok {
-			sha = ""
-		}
-	}
-
-	return
-}
-
-func getProviderDetails(m map[string]interface{}) (name, orchestration, sha, version string) {
-	if k, ok := m["provider"]; ok {
-		if kv, ok := k.(map[string]interface{}); ok {
-			name, orchestration, sha, version = getProviderDetailsCurrent(kv)
-		} else {
-			name, orchestration, sha, version = getProviderDetailsLegacy(m)
-		}
-	}
-
-	return
-}
-
-func getProviderDetailsLegacy(m map[string]interface{}) (name, orchestration, sha, version string) {
-	name = m["provider"].(string)
-	orchestration = m["orchestration"].(string)
-	v := m["version"].(map[string]interface{})
-	version = v["release"].(string)
-	sha = v["sha"].(string)
-
-	return
-}
-
-func getProviderDetailsCurrent(m map[string]interface{}) (name, orchestration, sha, version string) {
-	v := m["version"].(map[string]interface{})
-	version, ok := v["release"].(string)
-	if !ok {
-		version = ""
-	}
-	sha, ok = v["sha"].(string)
-	if !ok {
-		sha = ""
-	}
-	name, ok = m["provider"].(string)
-	if !ok {
-		name = ""
-	}
-	orchestration, ok = m["orchestration"].(string)
-	if !ok {
-		orchestration = ""
-	}
-
-	return
 }
 
 const figletStr = `  ___                   _____           ____
