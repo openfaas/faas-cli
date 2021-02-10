@@ -79,13 +79,21 @@ func runList(cmd *cobra.Command, args []string) error {
 			fmt.Printf("%s\n", function.Name)
 		}
 	} else if verboseList {
-		fmt.Printf("%-30s\t%-40s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
+
+		maxWidth := 40
+		for _, function := range functions {
+			if len(function.Image) > maxWidth {
+				maxWidth = len(function.Image)
+			}
+		}
+
+		fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
 		for _, function := range functions {
 			functionImage := function.Image
-			if len(function.Image) > 40 {
-				functionImage = functionImage[0:38] + ".."
-			}
-			fmt.Printf("%-30s\t%-40s\t%-15d\t%-5d\n", function.Name, functionImage, int64(function.InvocationCount), function.Replicas)
+			// if len(function.Image) > 40 {
+			// 	functionImage = functionImage[0:38] + ".."
+			// }
+			fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15d\t%-5d\n", function.Name, functionImage, int64(function.InvocationCount), function.Replicas)
 		}
 	} else {
 		fmt.Printf("%-30s\t%-15s\t%-5s\n", "Function", "Invocations", "Replicas")
