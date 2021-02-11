@@ -23,7 +23,7 @@ var storeDescribeCmd = &cobra.Command{
 	Use:   `describe (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
 	Short: "Show details of OpenFaaS function from a store",
 	Example: `  faas-cli store describe NodeInfo
-  faas-cli store describe NodeInfo --url https://domain:port/store.json`,
+  faas-cli store describe NodeInfo --url https://host:port/store.json`,
 	Aliases: []string{"inspect"},
 	RunE:    runStoreDescribe,
 }

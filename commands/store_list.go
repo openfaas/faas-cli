@@ -26,7 +26,7 @@ var storeListCmd = &cobra.Command{
 	Short:   "List available OpenFaaS functions in a store",
 	Example: `  faas-cli store list
   faas-cli store list --verbose
-  faas-cli store list --url https://domain:port/store.json`,
+  faas-cli store list --url https://host:port/store.json`,
 	RunE: runStoreList,
 }
 
