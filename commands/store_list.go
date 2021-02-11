@@ -15,7 +15,7 @@ import (
 
 func init() {
 	// Setup flags used by store command
-	storeListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output to ssee the full description of each function in the store")
+	storeListCmd.Flags().BoolVarP(&verbose, "verbose", "v", true, "Enable verbose output to see the full description of each function in the store")
 
 	storeCmd.AddCommand(storeListCmd)
 }
