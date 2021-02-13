@@ -22,8 +22,8 @@ func Test_logsCmdFlagParsing(t *testing.T) {
 		expected logs.Request
 	}{
 		{"name only passed, follow on by default", []string{"funcFoo"}, logs.Request{Name: "funcFoo", Follow: true, Tail: -1}},
-		{"can disable follow", []string{"funcFoo", "--follow=false"}, logs.Request{Name: "funcFoo", Follow: false, Tail: -1}},
-		{"can limit number of messages returned", []string{"funcFoo", "--tail=5"}, logs.Request{Name: "funcFoo", Follow: true, Tail: 5}},
+		{"can disable follow", []string{"funcFoo", "--tail=false"}, logs.Request{Name: "funcFoo", Follow: false, Tail: -1}},
+		{"can limit number of messages returned", []string{"funcFoo", "--lines=5"}, logs.Request{Name: "funcFoo", Follow: true, Tail: 5}},
 		{"can set timestamp to send logs since using duration", []string{"funcFoo", "--since=5m"}, logs.Request{Name: "funcFoo", Follow: true, Tail: -1, Since: &fiveMinAgo}},
 		{"can set timestamp to send logs since using timestamp", []string{"funcFoo", "--since-time=" + fiveMinAgoStr}, logs.Request{Name: "funcFoo", Follow: true, Tail: -1, Since: &fiveMinAgo}},
 	}

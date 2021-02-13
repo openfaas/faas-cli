@@ -28,8 +28,8 @@ type logFlags struct {
 	instance        string
 	since           time.Duration
 	sinceTime       flags.TimestampFlag
-	follow          bool
-	tail            int
+	tail            bool
+	lines           int
 	token           string
 	logFormat       flags.LogFormat
 	includeName     bool
@@ -44,15 +44,15 @@ func init() {
 }
 
 var functionLogsCmd = &cobra.Command{
-	Use:     `logs <NAME> [--tls-no-verify] [--gateway]`,
-	Aliases: []string{"ls"},
-	Short:   "Tail logs from your functions",
-	Long:    "Tail logs from your functions",
-	Example: `faas-cli logs echo
-faas-cli logs echo --tail=5
-faas-cli logs echo --follow=false
-faas-cli logs echo --follow=false --since=10m
-faas-cli logs echo --follow=false --since=2010-01-01T00:00:00Z`,
+	Use:   `logs <NAME> [--tls-no-verify] [--gateway] [--output=text/json]`,
+	Short: "Fetch logs for a functions",
+	Long:  "Fetch logs for a given function name in plain text or JSON format.",
+	Example: `  faas-cli logs FN
+  faas-cli logs FN --output=json
+  faas-cli logs FN --lines=5
+  faas-cli logs FN --tail=false --since=10m
+  faas-cli logs FN --tail=false --since=2010-01-01T00:00:00Z
+`,
 	Args:    cobra.MaximumNArgs(1),
 	RunE:    runLogs,
 	PreRunE: noopPreRunCmd,
@@ -77,12 +77,12 @@ func initLogCmdFlags(cmd *cobra.Command) {
 
 	cmd.Flags().DurationVar(&logFlagValues.since, "since", 0*time.Second, "return logs newer than a relative duration like 5s")
 	cmd.Flags().Var(&logFlagValues.sinceTime, "since-time", "include logs since the given timestamp (RFC3339)")
-	cmd.Flags().IntVar(&logFlagValues.tail, "tail", -1, "number of recent log lines file to display. Defaults to -1, unlimited if <=0")
-	cmd.Flags().BoolVar(&logFlagValues.follow, "follow", true, "continue printing new logs until the end of the request, up to 30s")
+	cmd.Flags().IntVar(&logFlagValues.lines, "lines", -1, "number of recent log lines file to display. Defaults to -1, unlimited if <=0")
+	cmd.Flags().BoolVarP(&logFlagValues.tail, "tail", "t", true, "tail logs and continue printing new logs until the end of the request, up to 30s")
 	cmd.Flags().StringVarP(&logFlagValues.token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	logFlagValues.timeFormat = flags.TimeFormat(time.RFC3339)
-	cmd.Flags().Var(&logFlagValues.logFormat, "format", "output format.  Note that JSON format will always include all log message keys (plain|key-value|json)")
+	cmd.Flags().VarP(&logFlagValues.logFormat, "output", "o", "output logs as (plain|keyvalue|json), JSON includes all available keys")
 	cmd.Flags().Var(&logFlagValues.timeFormat, "time-format", "string format for the timestamp, any value go time format string is allowed, empty will not print the timestamp")
 	cmd.Flags().BoolVar(&logFlagValues.includeName, "name", false, "print the function name")
 	cmd.Flags().BoolVar(&logFlagValues.includeInstance, "instance", false, "print the function instance name/id")
@@ -129,9 +129,9 @@ func logRequestFromFlags(cmd *cobra.Command, args []string) logs.Request {
 	return logs.Request{
 		Name:      args[0],
 		Namespace: ns,
-		Tail:      logFlagValues.tail,
+		Tail:      logFlagValues.lines,
 		Since:     sinceValue(logFlagValues.sinceTime.AsTime(), logFlagValues.since),
-		Follow:    logFlagValues.follow,
+		Follow:    logFlagValues.tail,
 	}
 }
 
