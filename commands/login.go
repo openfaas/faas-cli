@@ -88,7 +88,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 
 	gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
-	if err := validateLogin(gateway, username, password, timeout); err != nil {
+	if err := validateLogin(gateway, username, password, timeout, tlsInsecure); err != nil {
 		return err
 	}
 
@@ -111,7 +111,12 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func validateLogin(gatewayURL string, user string, pass string, timeout time.Duration) error {
+func validateLogin(gatewayURL string, user string, pass string, timeout time.Duration, insecureTLS bool) error {
+
+	if len(checkTLSInsecure(gatewayURL, insecureTLS)) > 0 {
+		fmt.Printf(NoTLSWarn)
+	}
+
 	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
 	req, err := http.NewRequest("GET", gatewayURL+"/system/functions", nil)
 	if err != nil {
@@ -126,10 +131,6 @@ func validateLogin(gatewayURL string, user string, pass string, timeout time.Dur
 
 	if res.Body != nil {
 		defer res.Body.Close()
-	}
-
-	if res.TLS == nil {
-		fmt.Println("WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates.")
 	}
 
 	switch res.StatusCode {
