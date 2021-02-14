@@ -1,20 +1,16 @@
 ## faas-cli
+
 [![Build Status](https://github.com/openfaas/faas-cli/workflows/build/badge.svg?branch=master)](https://github.com/openfaas/faas-cli/actions)
 [![Go Report Card](https://goreportcard.com/badge/github.com/openfaas/faas-cli)](https://goreportcard.com/report/github.com/openfaas/faas-cli)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenFaaS](https://img.shields.io/badge/openfaas-serverless-blue.svg)](https://www.openfaas.com)
 
-This is a CLI for use with [OpenFaaS](https://github.com/openfaas/faas) - a serverless functions framework for Docker & Kubernetes.
-
-> Before using this tool please setup OpenFaaS by following instructions over on the main repo.
+faas-cli is the official CLI for [OpenFaaS](https://github.com/openfaas/faas)
 
 The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/openfaas/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
-Demo: [ASCII cinema](https://asciinema.org/a/141284)
-
-### TL;DR - Introductory tutorial
-
-[Blog: Coffee with the FaaS-CLI](https://blog.alexellis.io/quickstart-openfaas-cli/)
+New user? See how it works: [Morning coffee with the faas-cli](https://blog.alexellis.io/quickstart-openfaas-cli/)
+Already an OpenFaaS user? Try [5 tips and tricks for the OpenFaaS CLI](https://www.openfaas.com/blog/five-cli-tips/)
 
 ### Get started: Install the CLI
 
@@ -245,13 +241,18 @@ Specify `lang: Dockerfile` if you want the faas-cli to execute a build or `skip_
 Read the blog post/tutorial: [Turn Any CLI into a Function with OpenFaaS](https://blog.alexellis.io/cli-functions-with-openfaas/)
 
 #### `faas-cli registry-login`
+
 This command allows to generate the registry auth file in the correct format in the location `./credentials/config.json`
+
 #### Prepare your Docker registry (if not using AWS ECR)
+
 If you are using Dockerhub you only need to supply your --username and --password-stdin (or --password, but this leaves the password in history).
-```
+
+```bash
 faas-cli registry-login --username <your-registry-username> --password-stdin
 (then enter your password and use ctrl+d to finish input)
 ```
+
 You could also have you password in a file, or environment variable and echo/cat this instead of entering interactively
 If you are using a different registry (that is not ECR) then also provide a `--server` as well.
 
@@ -374,7 +375,7 @@ $ kubeseal --fetch-cert --controller-name ofc-sealedsecrets-sealed-secrets > pub
 
 Then seal a secret using the OpenFaaS CLI:
 
-```
+```bash
 $ faas-cli cloud seal --name alexellis-github \
   --literal hmac-secret=1234 --cert=pub-cert.pem
 ```
@@ -393,7 +394,7 @@ The [scripts/export-sealed-secret-pubcert.sh](https://github.com/openfaas-incuba
 * `OPENFAAS_CONFIG` - to override the location of the configuration folder, which contains auth configuration.
 * `CI` - to override the location of the configuration folder, when true, the configuration folder is `.openfaas` in the current working directory. This value is ignored if `OPENFAAS_CONFIG` is set.
 
-### FaaS-CLI Developers / Contributors
+### Contributing
 
 See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRIBUTING.md).
 
