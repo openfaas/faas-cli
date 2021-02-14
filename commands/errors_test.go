@@ -14,14 +14,30 @@ func Test_checkTLSInsecure(t *testing.T) {
 		args args
 		want string
 	}{
-		{name: "secure gateway and tls secure", args: args{gateway: "https://127.0.0.1:8080", tlsInsecure: false}, want: ""},
-		{name: "secure gateway and tls insecure", args: args{gateway: "https://127.0.0.1:8080", tlsInsecure: true}, want: ""},
-		{name: "insecure gateway and tls secure", args: args{gateway: "http://127.0.0.1:8080", tlsInsecure: false}, want: "WARNING! Communication is not secure, please consider using HTTPS. Letsencrypt.org offers free SSL/TLS certificates."},
-		{name: "insecure gateway and tls insecure", args: args{gateway: "http://127.0.0.1:8080", tlsInsecure: true}, want: ""},
+		{name: "HTTPS gateway",
+			args: args{gateway: "https://192.168.0.101:8080", tlsInsecure: false},
+			want: ""},
+		{name: "HTTPS gateway with TLSInsecure",
+			args: args{gateway: "https://192.168.0.101:8080", tlsInsecure: true},
+			want: ""},
+		{name: "HTTP gateway without TLSInsecure",
+			args: args{gateway: "http://192.168.0.101:8080", tlsInsecure: false},
+			want: "WARNING! You are not using an encrypted connection to the gateway, consider using HTTPS."},
+		{name: "HTTP gateway to 127.0.0.1 without TLSInsecure",
+			args: args{gateway: "http://127.0.0.1:8080", tlsInsecure: false},
+			want: ""},
+		{name: "HTTP gateway to localhost without TLSInsecure",
+			args: args{gateway: "http://localhost:8080", tlsInsecure: false},
+			want: ""},
+		{name: "HTTP gateway to remote host with TLSInsecure", args: args{gateway: "http://192.168.0.101:8080", tlsInsecure: true},
+			want: ""},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := checkTLSInsecure(tt.args.gateway, tt.args.tlsInsecure); got != tt.want {
+			got := checkTLSInsecure(tt.args.gateway, tt.args.tlsInsecure)
+
+			if got != tt.want {
 				t.Errorf("checkTLSInsecure() = %v, want %v", got, tt.want)
 			}
 		})
