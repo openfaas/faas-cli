@@ -29,7 +29,8 @@ func Test_checkTLSInsecure(t *testing.T) {
 		{name: "HTTP gateway to localhost without TLSInsecure",
 			args: args{gateway: "http://localhost:8080", tlsInsecure: false},
 			want: ""},
-		{name: "HTTP gateway to remote host with TLSInsecure", args: args{gateway: "http://192.168.0.101:8080", tlsInsecure: true},
+		{name: "HTTP gateway to remote host with TLSInsecure",
+			args: args{gateway: "http://192.168.0.101:8080", tlsInsecure: true},
 			want: ""},
 	}
 
@@ -38,7 +39,7 @@ func Test_checkTLSInsecure(t *testing.T) {
 			got := checkTLSInsecure(tt.args.gateway, tt.args.tlsInsecure)
 
 			if got != tt.want {
-				t.Errorf("checkTLSInsecure() = %v, want %v", got, tt.want)
+				t.Errorf("[%s] want: %v, but got: %v", name, tt.want, got)
 			}
 		})
 	}
