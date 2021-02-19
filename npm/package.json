@@ -1,6 +1,6 @@
 {
   "name": "@openfaas/faas-cli",
-  "version": "0.11.3-2",
+  "version": "0.13.5-1",
   "description": "OpenFaaS CLI",
   "main": "index.js",
   "bin": {
@@ -29,7 +29,7 @@
   "dependencies": {
     "axios": ">=0.21.1",
     "delete": "^1.1.0",
-    "mkdirp": "^0.5.1",
-    "mocha": "^6.2.2"
+    "mkdirp": ">=1.0.4",
+    "mocha": "^8.3.0"
   }
 }
