@@ -53,7 +53,7 @@ func generateRegistryPreRun(command *cobra.Command, args []string) error {
 		return fmt.Errorf("error with --password usage: %s", err)
 	}
 
-	_, err = command.Flags().GetString("password-stdin")
+	_, err = command.Flags().GetBool("password-stdin")
 	if err != nil {
 		return fmt.Errorf("error with --password-stdin usage: %s", err)
 	}
@@ -83,7 +83,7 @@ func generateRegistryAuthFile(command *cobra.Command, _ []string) error {
 	username, _ := command.Flags().GetString("username")
 	password, _ := command.Flags().GetString("password")
 	server, _ := command.Flags().GetString("server")
-	passStdIn, _ := command.Flags().GetBool("password-stdin")
+	passStdin, _ := command.Flags().GetBool("password-stdin")
 
 	if len(username) == 0 {
 		return fmt.Errorf("you must give --username (-u)")
@@ -92,7 +92,7 @@ func generateRegistryAuthFile(command *cobra.Command, _ []string) error {
 	var generateErr error
 	if ecrEnabled {
 		generateErr = generateECRFile(accountID, region)
-	} else if passStdIn {
+	} else if passStdin {
 		fmt.Printf("Enter your password, hit enter then type Ctrl+D\n\nPassword: ")
 		passwordStdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
