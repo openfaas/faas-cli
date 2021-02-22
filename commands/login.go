@@ -114,7 +114,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 func validateLogin(gatewayURL string, user string, pass string, timeout time.Duration, insecureTLS bool) error {
 
 	if len(checkTLSInsecure(gatewayURL, insecureTLS)) > 0 {
-		fmt.Printf(NoTLSWarn)
+		fmt.Println(NoTLSWarn)
 	}
 
 	client := proxy.MakeHTTPClient(&timeout, tlsInsecure)
