@@ -7,15 +7,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-provider/types"
 	"github.com/spf13/cobra"
 )
 
 var (
 	verboseList bool
 	token       string
+	sortOrder   string
 )
 
 func init() {
@@ -28,6 +31,7 @@ func init() {
 	listCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	listCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	listCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	listCmd.Flags().StringVar(&sortOrder, "sort", "name", "Sort the functions by \"name\" or \"invocations\"")
 
 	faasCmd.AddCommand(listCmd)
 }
@@ -74,6 +78,12 @@ func runList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if sortOrder == "name" {
+		sort.Sort(byName(functions))
+	} else if sortOrder == "invocations" {
+		sort.Sort(byInvocations(functions))
+	}
+
 	if quiet {
 		for _, function := range functions {
 			fmt.Printf("%s\n", function.Name)
@@ -103,3 +113,15 @@ func runList(cmd *cobra.Command, args []string) error {
 	}
 	return nil
 }
+
+type byName []types.FunctionStatus
+
+func (a byName) Len() int           { return len(a) }
+func (a byName) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byName) Less(i, j int) bool { return a[i].Name < a[j].Name }
+
+type byInvocations []types.FunctionStatus
+
+func (a byInvocations) Len() int           { return len(a) }
+func (a byInvocations) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byInvocations) Less(i, j int) bool { return a[i].InvocationCount > a[j].InvocationCount }
