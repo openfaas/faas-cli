@@ -148,7 +148,12 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Created buildx node: %s\n", res.Stdout)
 
 	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
-		err := pullStackTemplates(services.StackConfiguration.TemplateConfigs, cmd)
+		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
+		if err != nil {
+			return fmt.Errorf("Already pulled templates directory has issue: %s", err.Error())
+		}
+
+		err = pullStackTemplates(newTemplateInfos, cmd)
 		if err != nil {
 			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
 		}

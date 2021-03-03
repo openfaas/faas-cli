@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
 
@@ -93,4 +94,17 @@ func findTemplate(templateInfo []stack.TemplateSource, customName string) (speci
 		}
 	}
 	return nil
+}
+
+// filter templates which are already available on filesystem
+func filterExistingTemplates(templateInfo []stack.TemplateSource, templatesDir string) ([]stack.TemplateSource, error) {
+	var newTemplates []stack.TemplateSource
+	for _, info := range templateInfo {
+		templatePath := fmt.Sprintf("%s/%s", templatesDir, info.Name)
+		if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+			newTemplates = append(newTemplates, info)
+		}
+	}
+
+	return newTemplates, nil
 }
