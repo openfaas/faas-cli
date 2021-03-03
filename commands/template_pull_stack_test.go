@@ -1,9 +1,12 @@
 package commands
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 
+	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 )
 
@@ -103,5 +106,33 @@ func Test_pullAllTemplates(t *testing.T) {
 				t.Errorf("Unexpected error: %s", actualError.Error())
 			}
 		})
+	}
+}
+
+func Test_filterExistingTemplates(t *testing.T) {
+	templatesDir := "./template"
+	defer os.RemoveAll(templatesDir)
+
+	templates := []stack.TemplateSource{
+		{Name: "dockerfile", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
+		{Name: "ruby", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
+		{Name: "perl", Source: "https://github.com/openfaas-incubator/perl-template"},
+	}
+
+	// Copy the submodule to temp directory to avoid altering it during tests
+	testRepoGit := filepath.Join("testdata", "templates", "template")
+	builder.CopyFiles(testRepoGit, templatesDir)
+
+	newTemplateInfos, err := filterExistingTemplates(templates, templatesDir)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+
+	if len(newTemplateInfos) != 1 {
+		t.Errorf("Wanted new templates: `%d` got `%d`", 1, len(newTemplateInfos))
+	}
+
+	if newTemplateInfos[0].Name != "perl" {
+		t.Errorf("Wanted template: `%s` got `%s`", "perl", newTemplateInfos[0].Name)
 	}
 }
