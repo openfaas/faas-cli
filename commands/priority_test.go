@@ -61,7 +61,7 @@ func Test_getOverrideNamespace(t *testing.T) {
 		{
 			stack:    "",
 			flag:     "",
-			want:     "openfaas-fn",
+			want:     "",
 			scenario: "no namespace value set in flag and in namespace field of stack file",
 		},
 

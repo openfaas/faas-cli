@@ -64,13 +64,11 @@ func getNamespace(flagNamespace, stackNamespace string) string {
 	if len(flagNamespace) > 0 {
 		return flagNamespace
 	}
-
-	// if both the namespace flag in stack.yaml and the namespace flag are ommitted
-	// return the defaultNamespace (openfaas-fn)
-	if len(stackNamespace) == 0 && len(flagNamespace) == 0 {
-		return defaultFunctionNamespace
+	// https://github.com/openfaas/faas-cli/issues/742#issuecomment-625746405
+	if len(stackNamespace) > 0 {
+		return stackNamespace
 	}
 
-	// Else return the namespace in stack.yaml
-	return stackNamespace
+	return defaultFunctionNamespace
+
 }
