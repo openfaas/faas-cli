@@ -23,7 +23,7 @@ var generateTestcases = []struct {
 	Version    string
 }{
 	{
-		Name: "Default Namespace and API Version",
+		Name: "Specified Namespace and API Version",
 		Input: `
 provider:
   name: openfaas

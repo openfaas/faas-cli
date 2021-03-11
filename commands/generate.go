@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	defaultFunctionNamespace = "openfaas-fn"
+	defaultFunctionNamespace = ""
 	resourceKind             = "Function"
 	defaultAPIVersion        = "openfaas.com/v1"
 )
