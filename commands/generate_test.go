@@ -256,3 +256,210 @@ func Test_filterStoreItem_NotFound(t *testing.T) {
 	}
 
 }
+
+var generateOrderedTestcases = []struct {
+	Name      string
+	Input     string
+	Output    []string
+	ExpectErr bool
+}{
+	{
+		Name: "Smae order in and out",
+		Input: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"      
+functions:
+ fn1:
+  lang: python3
+  handler: ./fn1
+  image: fn1:latest
+ fn2:
+  lang: python3
+  handler: ./fn2
+  image: fn2:latest
+ fn3:
+  lang: python3
+  handler: ./fn3
+  image: fn3:latest
+ fn4:
+  lang: python3
+  handler: ./fn4
+  image: fn4:latest
+ fn5:
+  lang: python3
+  handler: ./fn5
+  image: fn5:latest
+ fn6:
+  lang: python3
+  handler: ./fn6
+  image: fn6:latest
+ fn7:
+  lang: python3
+  handler: ./fn7
+  image: fn7:latest
+ fn8:
+  lang: python3
+  handler: ./fn8
+  image: fn8:latest
+ fn9:
+  lang: python3
+  handler: ./fn9
+  image: fn9:latest
+ fn10:
+  lang: python3
+  handler: ./fn10
+  image: fn10:latest`,
+		Output: []string{
+			"fn1", "fn10",
+			"fn2", "fn3",
+			"fn4", "fn5",
+			"fn6", "fn7",
+			"fn8", "fn9",
+		},
+		ExpectErr: false,
+	},
+	{
+		Name: "Different input order",
+		Input: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"      
+functions:
+ fn3:
+  lang: python3
+  handler: ./fn3
+  image: fn3:latest
+ fn7:
+  lang: python3
+  handler: ./fn7
+  image: fn7:latest
+ fn2:
+  lang: python3
+  handler: ./fn2
+  image: fn2:latest
+ fn10:
+  lang: python3
+  handler: ./fn10
+  image: fn10:latest
+ fn5:
+  lang: python3
+  handler: ./fn5
+  image: fn5:latest
+ fn1:
+  lang: python3
+  handler: ./fn1
+  image: fn1:latest
+ fn6:
+  lang: python3
+  handler: ./fn6
+  image: fn6:latest
+ fn9:
+  lang: python3
+  handler: ./fn9
+  image: fn9:latest
+ fn4:
+  lang: python3
+  handler: ./fn4
+  image: fn4:latest
+ fn8:
+  lang: python3
+  handler: ./fn8
+  image: fn8:latest`,
+		Output: []string{
+			"fn1", "fn10",
+			"fn2", "fn3",
+			"fn4", "fn5",
+			"fn6", "fn7",
+			"fn8", "fn9",
+		},
+		ExpectErr: false,
+	},
+	{
+		Name: "Different input order wrong output order - expect error",
+		Input: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+  network: "func_functions"      
+functions:
+ fn3:
+  lang: python3
+  handler: ./fn3
+  image: fn3:latest
+ fn7:
+  lang: python3
+  handler: ./fn7
+  image: fn7:latest
+ fn2:
+  lang: python3
+  handler: ./fn2
+  image: fn2:latest
+ fn10:
+  lang: python3
+  handler: ./fn10
+  image: fn10:latest
+ fn5:
+  lang: python3
+  handler: ./fn5
+  image: fn5:latest
+ fn1:
+  lang: python3
+  handler: ./fn1
+  image: fn1:latest
+ fn6:
+  lang: python3
+  handler: ./fn6
+  image: fn6:latest
+ fn9:
+  lang: python3
+  handler: ./fn9
+  image: fn9:latest
+ fn4:
+  lang: python3
+  handler: ./fn4
+  image: fn4:latest
+ fn8:
+  lang: python3
+  handler: ./fn8
+  image: fn8:latest`,
+		Output: []string{
+			"fn1",
+			"fn2", "fn3",
+			"fn4", "fn5",
+			"fn6", "fn7",
+			"fn8", "fn9",
+			"fn10",
+		},
+		ExpectErr: true,
+	},
+}
+
+func Test_generateFunctionOrder(t *testing.T) {
+	for _, testcase := range generateOrderedTestcases {
+		parsedServices, err := stack.ParseYAMLData([]byte(testcase.Input), "", "", true)
+		if err != nil {
+			t.Fatalf("%s failed: error while parsing the input data.", testcase.Name)
+		}
+
+		if parsedServices == nil {
+			t.Fatalf("%s failed: empty input file", testcase.Name)
+		}
+		services := *parsedServices
+		orderedSlice := generateFunctionOrder(services.Functions)
+
+		if len(orderedSlice) != len(testcase.Output) {
+			t.Errorf("Slice sizes do not match: %s", testcase.Name)
+			t.Fail()
+		}
+		for i, v := range testcase.Output {
+			if v != orderedSlice[i] && !testcase.ExpectErr {
+				t.Errorf("Exected %s got %s: %s", v, orderedSlice[i], testcase.Name)
+				t.Fail()
+			}
+		}
+
+	}
+}
