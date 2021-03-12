@@ -249,10 +249,8 @@ func generateknativev1ServingServiceCRDYAML(services stack.Services, format sche
 			return "", envErr
 		}
 
-		var env []knativev1.EnvPair
-		for k, v := range allEnvironment {
-			env = append(env, knativev1.EnvPair{Name: k, Value: v})
-		}
+		env := orderknativeEnv(allEnvironment)
+
 		var annotations map[string]string
 
 		if function.Annotations != nil {
@@ -331,4 +329,22 @@ func generateFunctionOrder(functions map[string]stack.Function) []string {
 	sort.Strings(functionNames)
 
 	return functionNames
+}
+
+func orderknativeEnv(environment map[string]string) []knativev1.EnvPair {
+
+	var orderedEnvironment []string
+	var envVars []knativev1.EnvPair
+
+	for k := range environment {
+		orderedEnvironment = append(orderedEnvironment, k)
+	}
+
+	sort.Strings(orderedEnvironment)
+
+	for _, envVar := range orderedEnvironment {
+		envVars = append(envVars, knativev1.EnvPair{Name: envVar, Value: environment[envVar]})
+	}
+
+	return envVars
 }
