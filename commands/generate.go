@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"sort"
 
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 
@@ -178,7 +179,11 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			return generateknativev1ServingServiceCRDYAML(services, format, api, functionNamespace, branch, version)
 		}
 
-		for name, function := range services.Functions {
+		orderedNames := generateFunctionOrder(services.Functions)
+
+		for _, name := range orderedNames {
+
+			function := services.Functions[name]
 			//read environment variables from the file
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
@@ -227,7 +232,11 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 func generateknativev1ServingServiceCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
 	crds := []knativev1.ServingServiceCRD{}
 
-	for name, function := range services.Functions {
+	orderedNames := generateFunctionOrder(services.Functions)
+
+	for _, name := range orderedNames {
+
+		function := services.Functions[name]
 
 		fileEnvironment, err := readFiles(function.EnvironmentFile)
 		if err != nil {
@@ -309,4 +318,17 @@ func generateknativev1ServingServiceCRDYAML(services stack.Services, format sche
 	}
 
 	return objectsString, nil
+}
+
+func generateFunctionOrder(functions map[string]stack.Function) []string {
+
+	var functionNames []string
+
+	for functionName := range functions {
+		functionNames = append(functionNames, functionName)
+	}
+
+	sort.Strings(functionNames)
+
+	return functionNames
 }
