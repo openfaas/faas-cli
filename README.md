@@ -7,6 +7,8 @@
 
 faas-cli is the official CLI for [OpenFaaS](https://github.com/openfaas/faas)
 
+Run a demo with `faas-cli --help`
+
 The CLI can be used to build and deploy functions to [OpenFaaS](https://github.com/openfaas/faas). You can build OpenFaaS functions from a set of supported language templates (such as Node.js, Python, CSharp and Ruby). That means you just write a handler file such as (handler.py/handler.js) and the CLI does the rest to create a Docker image.
 
 New user? See how it works: [Morning coffee with the faas-cli](https://blog.alexellis.io/quickstart-openfaas-cli/)
