@@ -82,6 +82,8 @@ func runList(cmd *cobra.Command, args []string) error {
 		sort.Sort(byName(functions))
 	} else if sortOrder == "invocations" {
 		sort.Sort(byInvocations(functions))
+	} else if sortOrder == "creation" {
+		sort.Sort(byCreation(functions))
 	}
 
 	if quiet {
@@ -97,13 +99,13 @@ func runList(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15s\t%-5s\n", "Function", "Image", "Invocations", "Replicas")
+		fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15s\t%-5s\t%-5s\n", "Function", "Image", "Invocations", "Replicas", "CreatedAt")
 		for _, function := range functions {
 			functionImage := function.Image
 			// if len(function.Image) > 40 {
 			// 	functionImage = functionImage[0:38] + ".."
 			// }
-			fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15d\t%-5d\n", function.Name, functionImage, int64(function.InvocationCount), function.Replicas)
+			fmt.Printf("%-30s\t%-"+fmt.Sprintf("%d", maxWidth)+"s\t%-15d\t%-5d\t\t%-5s\n", function.Name, functionImage, int64(function.InvocationCount), function.Replicas, function.CreatedAt.String())
 		}
 	} else {
 		fmt.Printf("%-30s\t%-15s\t%-5s\n", "Function", "Invocations", "Replicas")
@@ -125,3 +127,9 @@ type byInvocations []types.FunctionStatus
 func (a byInvocations) Len() int           { return len(a) }
 func (a byInvocations) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a byInvocations) Less(i, j int) bool { return a[i].InvocationCount > a[j].InvocationCount }
+
+type byCreation []types.FunctionStatus
+
+func (a byCreation) Len() int           { return len(a) }
+func (a byCreation) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a byCreation) Less(i, j int) bool { return a[i].CreatedAt.Before(a[j].CreatedAt) }
