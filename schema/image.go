@@ -65,7 +65,18 @@ func (i *BuildFormat) Set(value string) error {
 // BuildImageName builds a Docker image tag for build, push or deploy
 func BuildImageName(format BuildFormat, image string, version string, branch string) string {
 	imageVal := image
-	if strings.Contains(image, ":") == false {
+
+	colon_count := strings.Count(image, ":")
+	if colon_count > 0 {
+
+		slash_index := strings.Index(image, "/")
+		colon_index := strings.Index(image, ":")
+
+		if slash_index-colon_index > 0 && colon_count == 1 {
+			imageVal += ":latest"
+		}
+
+	} else {
 		imageVal += ":latest"
 	}
 
