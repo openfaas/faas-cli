@@ -79,7 +79,7 @@ correctly configured TARGETPLATFORM and BUILDPLATFORM arguments.
 
 See also: faas-cli build`,
 	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64,linux/arm/7
-	faas-cli publish --platforms linux/arm/7 --filter webhook
+  faas-cli publish --platforms linux/arm/7 --filter webhook
   faas-cli publish -f go.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
