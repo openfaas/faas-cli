@@ -40,7 +40,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 \
     -a -installsuffix cgo -o faas-cli
 
 # CICD stage
-FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.12 as root
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.13 as root
 
 ARG REPO_URL
 
@@ -57,7 +57,7 @@ ENV PATH=$PATH:/usr/bin/
 ENTRYPOINT [ "faas-cli" ]
 
 # Release stage
-FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.12 as release
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.13 as release
 
 ARG REPO_URL
 

@@ -62,7 +62,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w \
        -a -installsuffix cgo -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.12
+FROM alpine:3.13
 
 RUN apk --no-cache add ca-certificates git
 
