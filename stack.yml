@@ -7,6 +7,10 @@ provider:
 
 functions:
   url-ping:
+    annotations:
+      test: true
+    labels:
+      com.openfaas: 1
     lang: python
     handler: ./sample/url-ping
     image: ${DOCKER_USER:-alexellis}/faas-url-ping:0.2
