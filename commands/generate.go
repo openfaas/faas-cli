@@ -204,6 +204,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				Image:       imageName,
 				Environment: allEnvironment,
 				Labels:      function.Labels,
+				Annotations: function.Annotations,
 				Limits:      function.Limits,
 				Requests:    function.Requests,
 				Constraints: function.Constraints,

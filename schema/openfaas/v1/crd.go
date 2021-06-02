@@ -22,6 +22,8 @@ type Spec struct {
 
 	Labels *map[string]string `yaml:"labels,omitempty"`
 
+	Annotations *map[string]string `yaml:"annotations,omitempty"`
+
 	//Limits for the function
 	Limits *stack.FunctionResources `yaml:"limits,omitempty"`
 

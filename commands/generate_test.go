@@ -50,7 +50,38 @@ spec:
 		Branch:     "",
 		Version:    "",
 	},
-
+	{
+		Name: "Annotation present",
+		Input: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+ url-ping:
+   lang: python
+   handler: ./sample/url-ping
+   image: alexellis/faas-url-ping:0.2
+   annotations:
+     com.scale.zero: 1
+`,
+		Output: []string{`---
+apiVersion: openfaas.com/v1
+kind: Function
+metadata:
+  name: url-ping
+  namespace: openfaas-fn
+spec:
+  name: url-ping
+  image: alexellis/faas-url-ping:0.2
+  annotations:
+    com.scale.zero: "1"
+`},
+		Format:     schema.DefaultFormat,
+		APIVersion: "openfaas.com/v1",
+		Namespace:  "openfaas-fn",
+		Branch:     "",
+		Version:    "",
+	},
 	{
 		Name: "Blank namespace",
 		Input: `
@@ -179,7 +210,7 @@ func Test_generateCRDYAML(t *testing.T) {
 		parsedServices, err := stack.ParseYAMLData([]byte(testcase.Input), "", "", true)
 
 		if err != nil {
-			t.Fatalf("%s failed: error while parsing the input data.", testcase.Name)
+			t.Fatalf("%s failed: error while parsing the input data", testcase.Name)
 		}
 
 		if parsedServices == nil {
@@ -189,11 +220,11 @@ func Test_generateCRDYAML(t *testing.T) {
 
 		generatedYAML, err := generateCRDYAML(services, testcase.Format, testcase.APIVersion, testcase.Namespace, testcase.Branch, testcase.Version)
 		if err != nil {
-			t.Fatalf("%s failed: error while generating CRD YAML.", testcase.Name)
+			t.Fatalf("%s failed: error while generating CRD YAML", testcase.Name)
 		}
 
 		if !stringInSlice(generatedYAML, testcase.Output) {
-			t.Fatalf("%s failed: ouput is not as expected: %s", testcase.Name, generatedYAML)
+			t.Fatalf("%s failed: want:\n%q, but got:\n%q", testcase.Name, testcase.Output, generatedYAML)
 		}
 	}
 
