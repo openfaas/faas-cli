@@ -28,11 +28,12 @@ const (
 )
 
 var (
-	api               string
-	functionNamespace string
-	fromStore         string
-	desiredArch       string
-	annotationArgs    []string
+	api                  string
+	functionNamespace    string
+	crdFunctionNamespace string
+	fromStore            string
+	desiredArch          string
+	annotationArgs       []string
 )
 
 func init() {
@@ -40,7 +41,7 @@ func init() {
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
-	generateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", defaultFunctionNamespace, "Kubernetes namespace for functions")
+	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
@@ -96,10 +97,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	annotations, annotationErr := parseMap(annotationArgs, "annotation")
 	if annotationErr != nil {
 		return fmt.Errorf("error parsing annotations: %v", annotationErr)
-	}
-
-	if len(functionNamespace) == 0 {
-		functionNamespace = defaultFunctionNamespace
 	}
 
 	if len(fromStore) > 0 {
@@ -163,7 +160,7 @@ Use "--yaml" to pass a file or "--from-store" to generate using function store.`
 		return err
 	}
 
-	objectsString, err := generateCRDYAML(services, tagFormat, api, functionNamespace, branch, version)
+	objectsString, err := generateCRDYAML(services, tagFormat, api, crdFunctionNamespace, branch, version)
 	if err != nil {
 		return err
 	}
@@ -182,7 +179,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	if len(services.Functions) > 0 {
 
 		if apiVersion == knativev1.APIVersionLatest {
-			return generateknativev1ServingServiceCRDYAML(services, format, api, functionNamespace, branch, version)
+			return generateknativev1ServingServiceCRDYAML(services, format, api, crdFunctionNamespace, branch, version)
 		}
 
 		orderedNames := generateFunctionOrder(services.Functions)
