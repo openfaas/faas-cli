@@ -41,13 +41,14 @@ cat /path/to/secret/file | faas-cli secret create secret-name`,
 }
 
 func init() {
-	secretCreateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Value of the secret")
-	secretCreateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path to the secret file")
-	secretCreateCmd.Flags().BoolVar(&trimSecret, "trim", true, "trim whitespace from the start and end of the secret value")
+	secretCreateCmd.Flags().StringVar(&literalSecret, "from-literal", "", "Literal value for the secret")
+	secretCreateCmd.Flags().StringVar(&secretFile, "from-file", "", "Path and filename containing value for the secret")
+	secretCreateCmd.Flags().BoolVar(&trimSecret, "trim", true, "Trim whitespace from the start and end of the secret value")
 	secretCreateCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretCreateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretCreateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+
 	secretCmd.AddCommand(secretCreateCmd)
 }
 
@@ -83,11 +84,14 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 		secret.Value = literalSecret
 
 	case len(secretFile) > 0:
-		var err error
-		secret.Value, err = readSecretFromFile(secretFile)
+		fileData, err := ioutil.ReadFile(secretFile)
 		if err != nil {
 			return err
 		}
+
+		secret.RawValue = fileData
+		// Retained for backwards compatibility
+		secret.Value = string(fileData)
 
 	default:
 		stat, _ := os.Stdin.Stat()
@@ -130,11 +134,6 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	fmt.Printf(output)
 
 	return nil
-}
-
-func readSecretFromFile(secretFile string) (string, error) {
-	fileData, err := ioutil.ReadFile(secretFile)
-	return string(fileData), err
 }
 
 // Kubernetes DNS-1123 Subdomain Regex
