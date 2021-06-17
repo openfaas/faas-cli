@@ -6,9 +6,19 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/openfaas/faas-cli/test"
 	types "github.com/openfaas/faas-provider/types"
 )
+
+var expectedSecretList = []types.Secret{
+	{
+		Name: "Secret1",
+	},
+	{
+		Name: "Secret2",
+	},
+}
 
 func Test_GetSecretList_200OK(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
@@ -25,7 +35,8 @@ func Test_GetSecretList_200OK(t *testing.T) {
 	}
 
 	for k, v := range secrets {
-		if expectedSecretList[k] != v {
+
+		if equal := cmp.Equal(expectedSecretList[k], v); !equal {
 			t.Fatalf("Expeceted: %#v - Actual: %#v", wantListFunctionsResponse[k], v)
 		}
 	}
@@ -46,7 +57,7 @@ func Test_GetSecretList_202Accepted(t *testing.T) {
 	}
 
 	for k, v := range secrets {
-		if expectedSecretList[k] != v {
+		if equal := cmp.Equal(expectedSecretList[k], v); !equal {
 			t.Fatalf("Expeceted: %#v - Actual: %#v", wantListFunctionsResponse[k], v)
 		}
 	}
@@ -80,15 +91,6 @@ func Test_GetSecretList_Unauthorized401(t *testing.T) {
 	if !r.MatchString(err.Error()) {
 		t.Fatalf("Error not matched: %s", err)
 	}
-}
-
-var expectedSecretList = []types.Secret{
-	{
-		Name: "Secret1",
-	},
-	{
-		Name: "Secret2",
-	},
 }
 
 func Test_CreateSecret_200OK(t *testing.T) {

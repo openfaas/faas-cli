@@ -12,6 +12,7 @@ require (
 	github.com/alexellis/hmac v0.0.0-20180624210714-d5d71edd7bc7
 	github.com/docker/docker v17.12.0-ce-rc1.0.20200618181300-9dc6525e6118+incompatible
 	github.com/drone/envsubst v1.0.2
+	github.com/google/go-cmp v0.4.0
 	github.com/gotestyourself/gotestyourself v1.4.0 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/morikuni/aec v1.0.0

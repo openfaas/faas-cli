@@ -17,6 +17,13 @@ github.com/docker/docker/pkg/term/windows
 github.com/drone/envsubst
 github.com/drone/envsubst/parse
 github.com/drone/envsubst/path
+# github.com/google/go-cmp v0.4.0
+## explicit
+github.com/google/go-cmp/cmp
+github.com/google/go-cmp/cmp/internal/diff
+github.com/google/go-cmp/cmp/internal/flags
+github.com/google/go-cmp/cmp/internal/function
+github.com/google/go-cmp/cmp/internal/value
 # github.com/gotestyourself/gotestyourself v1.4.0
 ## explicit
 # github.com/inconshreveable/mousetrap v1.0.0
