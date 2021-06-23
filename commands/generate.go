@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"os"
 	"sort"
 
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
@@ -150,6 +151,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		if parsedServices != nil {
 			services = *parsedServices
 		}
+	} else {
+		fmt.Println(
+			`"stack.yml" file not found in the current directory.
+Use "--yaml" to pass a file or "--from-store" to generate using function store.`)
+		os.Exit(1)
 	}
 
 	branch, version, err := builder.GetImageTagValues(tagFormat)
