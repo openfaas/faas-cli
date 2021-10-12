@@ -258,12 +258,11 @@ func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, 
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		if v := r.URL.Query().Get("fragment"); len(v) > 0 {
+
 			q, err := url.ParseQuery(v)
 			if err != nil {
 				panic(errors.Wrap(err, "unable to parse fragment response from browser redirect"))
 			}
-
-			// log.Println("QueryString:", q)
 
 			key := "id_token"
 			if token := q.Get(key); len(token) > 0 {
@@ -300,7 +299,9 @@ func buildCaptureFragment() string {
 			console.log(xhttp.responseText)
 		}
 	};
-	xhttp.open("GET", "/oauth2/callback?fragment="+document.location.hash.slice(1), true);
+
+	// Encode the fragment data which could contain data that is query-string formatted
+	xhttp.open("GET", "/oauth2/callback?fragment="+encodeURIComponent(document.location.hash.slice(1)), true);
 	xhttp.send();
 </script>
 </head>
