@@ -146,19 +146,23 @@ func printFunctionDescription(funcDesc schema.FunctionDescription) {
 	fmt.Fprintln(w, "Function process:\t "+funcDesc.EnvProcess)
 	fmt.Fprintln(w, "URL:\t "+funcDesc.URL)
 	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
+	printMap(w, "Labels", *funcDesc.Labels)
+	printMap(w, "Annotations", *funcDesc.Annotations)
 
-	if funcDesc.Labels != nil {
-		fmt.Fprintf(w, "Labels:")
-		for key, value := range *funcDesc.Labels {
-			fmt.Fprintln(w, " \t "+key+" : "+value)
-		}
-	}
-
-	if funcDesc.Annotations != nil {
-		fmt.Fprintf(w, "Annotations:")
-		for key, value := range *funcDesc.Annotations {
-			fmt.Fprintln(w, " \t "+key+" : "+value)
-		}
-	}
 	w.Flush()
+}
+
+func printMap(w *tabwriter.Writer, name string, m map[string]string) {
+	fmt.Fprintf(w, name)
+
+	if len(m) == 0 {
+		fmt.Fprintln(w, " \t <none>")
+		return
+	}
+
+	for key, value := range m {
+		fmt.Fprintln(w, " \t "+key+" : "+value)
+	}
+
+	return
 }
