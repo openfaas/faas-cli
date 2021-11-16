@@ -117,6 +117,8 @@ type LanguageTemplate struct {
 	WelcomeMessage string `yaml:"welcome_message,omitempty"`
 	// HandlerFolder to copy the function code into
 	HandlerFolder string `yaml:"handler_folder,omitempty"`
+	// Annotations to add to function yaml
+	Annotations *map[string]string `yaml:"annotations,omitempty"`
 }
 
 // BuildOption a named build option for one or more packages

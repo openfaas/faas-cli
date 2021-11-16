@@ -213,10 +213,11 @@ Download templates:
 	}
 
 	function := stack.Function{
-		Name:     functionName,
-		Handler:  "./" + handlerDir,
-		Language: language,
-		Image:    imageName,
+		Name:        functionName,
+		Handler:     "./" + handlerDir,
+		Language:    language,
+		Image:       imageName,
+		Annotations: langTemplate.Annotations,
 	}
 
 	if len(memoryLimit) > 0 || len(cpuLimit) > 0 {
@@ -301,7 +302,15 @@ func prepareYAMLContent(appendMode bool, gateway string, function *stack.Functio
 		}
 	}
 
+	if function.Annotations != nil && len(*function.Annotations) > 0 {
+		yamlContent += "    annotations:\n"
+		for key, element := range *function.Annotations {
+			yamlContent += "      " + key + ": \"" + element + "\"\n"
+		}
+	}
+
 	yamlContent += "\n"
+
 	if !appendMode {
 
 		yamlContent = `version: ` + defaultSchemaVersion + `
