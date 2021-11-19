@@ -119,6 +119,8 @@ type LanguageTemplate struct {
 	HandlerFolder string `yaml:"handler_folder,omitempty"`
 	// Annotations to add to function yaml
 	Annotations *map[string]string `yaml:"annotations,omitempty"`
+	// Environment vars to add to function yaml
+	Environment *map[string]string `yaml:"environment,omitempty"`
 }
 
 // BuildOption a named build option for one or more packages

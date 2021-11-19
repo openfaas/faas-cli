@@ -218,6 +218,7 @@ Download templates:
 		Language:    language,
 		Image:       imageName,
 		Annotations: langTemplate.Annotations,
+		Environment: *langTemplate.Environment,
 	}
 
 	if len(memoryLimit) > 0 || len(cpuLimit) > 0 {
@@ -305,6 +306,13 @@ func prepareYAMLContent(appendMode bool, gateway string, function *stack.Functio
 	if function.Annotations != nil && len(*function.Annotations) > 0 {
 		yamlContent += "    annotations:\n"
 		for key, element := range *function.Annotations {
+			yamlContent += "      " + key + ": \"" + element + "\"\n"
+		}
+	}
+
+	if function.Environment != nil && len(function.Environment) > 0 {
+		yamlContent += "    environment:\n"
+		for key, element := range *&function.Environment {
 			yamlContent += "      " + key + ": \"" + element + "\"\n"
 		}
 	}
