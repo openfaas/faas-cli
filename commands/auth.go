@@ -1,11 +1,16 @@
-// Copyright (c) OpenFaaS Author(s) 2017. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Copyright (c) OpenFaaS Ltd 2021. All rights reserved.
+//
+// Licensed for use with OpenFaaS Pro only
+// See EULA: https://github.com/openfaas/faas/blob/master/pro/EULA.md
 
 package commands
 
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -23,12 +28,15 @@ import (
 )
 
 var (
-	scope         string
-	authURL       string
+	scope    string
+	authURL  string
+	tokenURL string
+
 	clientID      string
 	audience      string
 	listenPort    int
 	launchBrowser bool
+	eula          bool
 	grant         string
 	clientSecret  string
 	redirectHost  string
@@ -37,11 +45,14 @@ var (
 func init() {
 	authCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	authCmd.Flags().StringVar(&authURL, "auth-url", "", "OAuth2 Authorize URL i.e. http://idp/oauth/authorize")
+	authCmd.Flags().StringVar(&tokenURL, "token-url", "", "OAuth2 Token URL i.e. http://idp/oauth/token")
+
 	authCmd.Flags().StringVar(&clientID, "client-id", "", "OAuth2 client_id")
 	authCmd.Flags().IntVar(&listenPort, "listen-port", 31111, "OAuth2 local port for receiving cookie")
 	authCmd.Flags().StringVar(&audience, "audience", "", "OAuth2 audience")
 	authCmd.Flags().BoolVar(&launchBrowser, "launch-browser", true, "Launch browser for OAuth2 redirect")
 	authCmd.Flags().StringVar(&redirectHost, "redirect-host", "http://127.0.0.1", "Host for OAuth2 redirection in the implicit flow including URL scheme")
+	authCmd.Flags().BoolVar(&eula, "eula", false, "Agree to the EULA, for use with OpenFaaS Pro only")
 
 	authCmd.Flags().StringVar(&scope, "scope", "openid profile", "scope for OAuth2 flow - i.e. \"openid profile\"")
 	authCmd.Flags().StringVar(&grant, "grant", "implicit", "grant for OAuth2 flow - either implicit, implicit-id or client_credentials")
@@ -57,9 +68,20 @@ var authCmd = &cobra.Command{
   [--client-secret]
   [--grant GRANT]`,
 	Short: "Obtain a token for your OpenFaaS gateway",
-	Long:  "Authenticate to an OpenFaaS gateway using OAuth2.",
-	Example: `  faas-cli auth --client-id my-id --auth-url https://tenant.auth0.com/authorize --scope "oidc profile" --audience my-id
-  faas-cli auth --grant=client_credentials --client-id=id --client-secret=secret --auth-url=https://tenant.auth0.com/token`,
+	Long: `Authenticate to an OpenFaaS gateway using OIDC.
+
+Only licensed for use by OpenFaaS Pro customers.`,
+	Example: `  faas-cli auth \
+    --grant code \
+    --client-id my-id \
+    --auth-url https://tenant.auth0.com/authorize \
+    --token-url https://tenant.auth0.com/oauth/token \
+    --scope "oidc profile email"
+
+  faas-cli auth --grant=client_credentials \
+    --client-id=id \
+    --client-secret=secret \
+    --auth-url=https://tenant.auth0.com/oauth/token`,
 	RunE:    runAuth,
 	PreRunE: preRunAuth,
 }
@@ -67,10 +89,11 @@ var authCmd = &cobra.Command{
 func preRunAuth(cmd *cobra.Command, args []string) error {
 	return checkValues(authURL,
 		clientID,
+		eula,
 	)
 }
 
-func checkValues(authURL, clientID string) error {
+func checkValues(authURL, clientID string, eula bool) error {
 
 	if len(authURL) == 0 {
 		return fmt.Errorf("--auth-url is required and must be a valid OIDC URL")
@@ -88,6 +111,10 @@ func checkValues(authURL, clientID string) error {
 		return fmt.Errorf("--client-id is required")
 	}
 
+	if !eula {
+		return fmt.Errorf("the auth command is only licensed for OpenFaaS Pro customers, see: https://github.com/openfaas/faas/blob/master/pro/EULA.md")
+	}
+
 	return nil
 }
 
@@ -99,6 +126,94 @@ func runAuth(cmd *cobra.Command, args []string) error {
 	} else if grant == "client_credentials" {
 		return authClientCredentials()
 	}
+	if grant == "code" {
+		if len(tokenURL) == 0 {
+			return fmt.Errorf("--token-url is required for PKCE")
+		}
+		return authPkce("id_token")
+	}
+
+	return nil
+}
+
+func authPkce(grant string) error {
+
+	context, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
+	verifier := make([]byte, 32)
+
+	_, err := rand.Read(verifier)
+	if err != nil {
+		return err
+	}
+
+	verifierEncoded := base64.RawURLEncoding.EncodeToString(verifier[:])
+
+	challenge := sha256.Sum256([]byte(verifierEncoded))
+	challengeEncoded := base64.RawURLEncoding.EncodeToString(challenge[:])
+
+	q := url.Values{}
+	q.Add("client_id", clientID)
+
+	q.Add("state", fmt.Sprintf("%d", time.Now().UnixNano()))
+	q.Add("nonce", fmt.Sprintf("%d", time.Now().UnixNano()))
+	q.Add("scope", scope)
+	q.Add("response_type", "code")
+	q.Add("audience", audience)
+	q.Add("code_challenge", challengeEncoded)
+	q.Add("code_challenge_method", "S256")
+
+	uri, err := makeRedirectURI(redirectHost, listenPort)
+	if err != nil {
+		return err
+	}
+
+	q.Add("redirect_uri", uri.String())
+
+	authURLVal, _ := url.Parse(authURL)
+	authURLVal.RawQuery = q.Encode()
+
+	browserBase := authURLVal
+
+	errCh := make(chan error, 1)
+
+	server := &http.Server{
+		Addr:           fmt.Sprintf(":%d", listenPort),
+		ReadTimeout:    5 * time.Second,
+		WriteTimeout:   5 * time.Second,
+		MaxHeaderBytes: 1 << 20, // Max header of 1MB
+		Handler:        http.HandlerFunc(makeCodeCallbackHandler(cancel, errCh, verifierEncoded, clientID, uri.String())),
+	}
+
+	go func() {
+		fmt.Printf("Starting local token server on port %d\n", listenPort)
+		if err := server.ListenAndServe(); err != nil {
+			if err != http.ErrServerClosed {
+				panic(err)
+			}
+		}
+	}()
+
+	defer server.Shutdown(context)
+
+	fmt.Printf("Launching browser: %s\n", browserBase)
+	if launchBrowser {
+		err := launchURL(browserBase.String())
+		if err != nil {
+			return errors.Wrap(err, "unable to launch browser")
+		}
+	}
+
+	select {
+	case <-context.Done():
+		server.Shutdown(context)
+	case serverErr := <-errCh:
+		if serverErr != nil {
+			return serverErr
+		}
+	}
+
 	return nil
 }
 
@@ -208,7 +323,7 @@ func authClientCredentials() error {
 		if res.StatusCode != http.StatusOK {
 			return fmt.Errorf("cannot authenticate, code: %d.\nResponse: %s", res.StatusCode, string(tokenData))
 		}
-		token := ClientCredentialsToken{}
+		token := AuthToken{}
 		tokenErr := json.Unmarshal(tokenData, &token)
 		if tokenErr != nil {
 			return errors.Wrapf(tokenErr, "unable to unmarshal token: %s", string(tokenData))
@@ -252,6 +367,70 @@ func printExampleTokenUsage(gateway, token string) {
   faas-cli list --gateway "%s"
 `, gateway, token, gateway)
 
+}
+
+func makeCodeCallbackHandler(cancel context.CancelFunc, errCh chan error, verifierEncoded, clientID, redirectURI string) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println(r.URL)
+
+		if r.URL.Path == "/oauth/callback" {
+			code := r.URL.Query().Get("code")
+			state := r.URL.Query().Get("state")
+
+			v := url.Values{}
+			v.Add("code", code)
+			v.Add("state", state)
+			v.Add("code_verifier", verifierEncoded)
+			v.Add("grant_type", "authorization_code")
+			v.Add("client_id", clientID)
+			v.Add("redirect_uri", redirectURI)
+
+			u, err := url.Parse(tokenURL)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			buf := bytes.NewBufferString(v.Encode())
+			req, err := http.NewRequest(http.MethodPost, u.String(), buf)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+			res, err := http.DefaultClient.Do(req)
+			if err != nil {
+				errCh <- err
+				return
+			}
+
+			tokenData, _ := ioutil.ReadAll(res.Body)
+
+			if res.StatusCode != http.StatusOK {
+				errCh <- fmt.Errorf("cannot authenticate, code: %d.\nResponse: %s", res.StatusCode, string(tokenData))
+				return
+			}
+
+			token := AuthToken{}
+			tokenErr := json.Unmarshal(tokenData, &token)
+			if tokenErr != nil {
+				errCh <- errors.Wrapf(tokenErr, "unable to unmarshal token: %s", string(tokenData))
+				return
+			}
+
+			if err := config.UpdateAuthConfig(gateway, token.IDToken, config.Oauth2AuthType); err != nil {
+				errCh <- err
+				return
+			}
+			fmt.Println("credentials saved for", gateway)
+			printExampleTokenUsage(gateway, token.IDToken)
+
+			errCh <- nil
+		}
+
+	}
 }
 
 func makeCallbackHandler(cancel context.CancelFunc) func(w http.ResponseWriter, r *http.Request) {
@@ -318,9 +497,11 @@ type ClientCredentialsReq struct {
 	GrantType    string `json:"grant_type"`
 }
 
-type ClientCredentialsToken struct {
+type AuthToken struct {
 	AccessToken string `json:"access_token"`
-	Scope       string `json:"scope"`
-	ExpiresIn   int    `json:"expires_in"`
-	TokenType   string `json:"token_type"`
+	IDToken     string `json:"id_token"`
+
+	Scope     string `json:"scope"`
+	ExpiresIn int    `json:"expires_in"`
+	TokenType string `json:"token_type"`
 }
