@@ -1,7 +1,7 @@
 FROM teamserverless/license-check:0.3.9 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.15 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.17 as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
