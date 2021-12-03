@@ -83,7 +83,7 @@ The main commands supported by the CLI are:
 
 * `faas-cli secret` - manage secrets for your functions
 
-* `faas-cli auth` - (alpha) initiates an OAuth2 authorization flow to obtain a cookie
+* `faas-cli auth` - initiates an OAuth2 authorization flow to obtain a token
 
 * `faas-cli registry-login` - generate registry auth file in correct format by providing username and password for docker/ecr/self hosted registry
 
@@ -116,13 +116,15 @@ You can chose between using a [programming language template](https://github.com
 
 #### `faas-cli auth`
 
-The `auth` command is currently available for alpha testing. Use the `auth` command to obtain a JWT to use as a Bearer token.
+The `auth` command is only licensed for OpenFaaS Pro customers.
 
-Two flow-types are supported in the CLI.
+Use the `auth` command to obtain a JWT to use as a Bearer token.
 
 ##### `code` grant - default
 
-Use this flow to obtain a token.
+Use this flow to obtain a token for interactive use from your workstation.
+
+The code grant flow uses the PKCE extension.
 
 At this time the `token` cannot be saved or retained in your OpenFaaS config file. You can pass the token using a CLI flag of `--token=$TOKEN`.
 
@@ -131,6 +133,7 @@ Example:
 ```sh
 faas-cli auth \
   --auth-url https://tenant0.eu.auth0.com/authorize \
+  --token-url https://tenant0.eu.auth0.com/oauth/token \
   --audience http://gw.example.com \
   --client-id "${OAUTH_CLIENT_ID}"
 ```
@@ -402,4 +405,6 @@ See [contributing guide](https://github.com/openfaas/faas-cli/blob/master/CONTRI
 
 ### License
 
-This project is part of OpenFaaS and is licensed under the MIT License.
+Portions of this project are licensed under the OpenFaaS Pro EULA.
+
+The remaining source unless annotated is licensed under the MIT License.

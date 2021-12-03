@@ -1,6 +1,14 @@
+Annotated portions of this project are licensed under the OpenFaaS Pro
+commercial license, for which a license is required to use the software.
+
+EULA: https://github.com/openfaas/faas/blob/master/pro/EULA.md
+
+The remainder of the source code is licensed under the MIT license.
+
 MIT License
 
-Copyright (c) 2016-2017 Alex Ellis
+Copyright (c) 2016-2021 OpenFaaS Ltd
+Copyright (c) 2017-2021 OpenFaaS Author(s)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

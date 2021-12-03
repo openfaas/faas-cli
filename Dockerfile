@@ -27,7 +27,7 @@ RUN test -z "$(gofmt -l $(find . -type f -name '*.go' -not -path "./vendor/*"))"
 
 # ldflags "-s -w" strips binary
 # ldflags -X injects commit version into binary
-RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Author(s)"
+RUN /usr/bin/license-check -path ./ --verbose=false "Alex Ellis" "OpenFaaS Author(s)" "OpenFaaS Ltd"
 
 RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} \
     go test $(go list ./... | grep -v /vendor/ | grep -v /template/|grep -v /build/|grep -v /sample/) -cover
