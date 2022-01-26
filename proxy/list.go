@@ -6,6 +6,7 @@ package proxy
 import (
 	"context"
 	"encoding/json"
+	"path"
 
 	"fmt"
 	"io/ioutil"
@@ -17,24 +18,23 @@ import (
 // ListFunctions list deployed functions
 func (c *Client) ListFunctions(ctx context.Context, namespace string) ([]types.FunctionStatus, error) {
 	var (
-		results      []types.FunctionStatus
-		listEndpoint string
-		err          error
+		results []types.FunctionStatus
+		err     error
 	)
 
 	c.AddCheckRedirect(func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	})
 
-	listEndpoint = systemPath
+	u := c.GatewayURL
+	u.Path = path.Join(systemPath)
+	v := u.Query()
 	if len(namespace) > 0 {
-		listEndpoint, err = addQueryParams(listEndpoint, map[string]string{namespaceKey: namespace})
-		if err != nil {
-			return results, err
-		}
+		v.Set("namespace", namespace)
 	}
+	u.RawQuery = v.Encode()
 
-	getRequest, err := c.newRequest(http.MethodGet, listEndpoint, nil)
+	getRequest, err := c.newRequestByURL(http.MethodGet, u, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}

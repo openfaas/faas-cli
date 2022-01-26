@@ -54,6 +54,26 @@ func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, 
 	}, nil
 }
 
+func (c *Client) newRequestByURL(method string, uri *url.URL, body io.Reader) (*http.Request, error) {
+
+	req, err := http.NewRequest(method, uri.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	if c.UserAgent != "" {
+		req.Header.Set("User-Agent", c.UserAgent)
+	}
+
+	c.ClientAuth.Set(req)
+
+	return req, err
+}
+
 //newRequest create a new HTTP request with authentication
 func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(path)
