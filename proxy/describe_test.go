@@ -77,7 +77,7 @@ func Test_GetFunctionInfo_NotFound(t *testing.T) {
 		t.Fatalf("Error was not returned")
 	}
 
-	expectedErrMsg := fmt.Sprintf("No such function: %s", functionName)
+	expectedErrMsg := fmt.Sprintf("no such function: %s", functionName)
 	if err.Error() != expectedErrMsg {
 		t.Fatalf("Want: %s, Got: %s", expectedErrMsg, err.Error())
 	}

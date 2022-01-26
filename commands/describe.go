@@ -115,6 +115,9 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		Labels:            function.Labels,
 		Annotations:       function.Annotations,
 	}
+	if function.Usage != nil {
+		funcDesc.Usage = function.Usage
+	}
 
 	printFunctionDescription(funcDesc)
 
@@ -148,6 +151,17 @@ func printFunctionDescription(funcDesc schema.FunctionDescription) {
 	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
 	printMap(w, "Labels", *funcDesc.Labels)
 	printMap(w, "Annotations", *funcDesc.Annotations)
+	if funcDesc.Usage != nil {
+		fmt.Println()
+
+		fmt.Fprintf(w, "RAM:\t %.2f MB\n", (funcDesc.Usage.TotalMemoryBytes / 1024 / 1024))
+		cpu := funcDesc.Usage.CPU
+		if cpu < 0 {
+			cpu = 1
+		}
+		fmt.Fprintf(w, "CPU:\t %.0f Mi\n", (cpu))
+
+	}
 
 	w.Flush()
 }

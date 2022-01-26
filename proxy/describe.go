@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path"
 
 	types "github.com/openfaas/faas-provider/types"
 )
@@ -20,23 +21,26 @@ func (c *Client) GetFunctionInfo(ctx context.Context, functionName string, names
 		err    error
 	)
 
-	functionPath := fmt.Sprintf("%s/%s", functionPath, functionName)
+	u := c.GatewayURL
+	v := u.Query()
 	if len(namespace) > 0 {
-		functionPath, err = addQueryParams(functionPath, map[string]string{namespaceKey: namespace})
-		if err != nil {
-			return result, err
-		}
+		v.Set("namespace", namespace)
 	}
 
-	getRequest, err := c.newRequest(http.MethodGet, functionPath, nil)
+	// Request CPU/RAM usage if available
+	v.Set("usage", "1")
+
+	u.Path = path.Join(functionPath, functionName)
+	u.RawQuery = v.Encode()
+
+	req, err := c.newRequestByURL(http.MethodGet, u, nil)
 	if err != nil {
-		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
+		return result, fmt.Errorf("cannot create URL: %s, error: %w", u.String(), err)
 	}
 
-	res, err := c.doRequest(ctx, getRequest)
+	res, err := c.doRequest(ctx, req)
 	if err != nil {
-		return result, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
-
+		return result, fmt.Errorf("cannot connect to URL: %s, error: %w", c.GatewayURL.String(), err)
 	}
 
 	if res.Body != nil {
@@ -50,14 +54,15 @@ func (c *Client) GetFunctionInfo(ctx context.Context, functionName string, names
 			return result, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
 
-		jsonErr := json.Unmarshal(bytesOut, &result)
-		if jsonErr != nil {
-			return result, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%s", c.GatewayURL.String(), jsonErr.Error())
+		if err := json.Unmarshal(bytesOut, &result); err != nil {
+			return result, fmt.Errorf("cannot parse result from OpenFaaS on URL: %s\n%w",
+				c.GatewayURL.String(), err)
 		}
+
 	case http.StatusUnauthorized:
 		return result, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	case http.StatusNotFound:
-		return result, fmt.Errorf("No such function: %s", functionName)
+		return result, fmt.Errorf("no such function: %s", functionName)
 	default:
 		bytesOut, err := ioutil.ReadAll(res.Body)
 		if err == nil {

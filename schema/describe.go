@@ -3,6 +3,8 @@
 
 package schema
 
+import "github.com/openfaas/faas-provider/types"
+
 //FunctionDescription information related to a function
 type FunctionDescription struct {
 	Name              string
@@ -16,4 +18,5 @@ type FunctionDescription struct {
 	AsyncURL          string
 	Labels            *map[string]string
 	Annotations       *map[string]string
+	Usage             *types.FunctionUsage
 }
