@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path"
 
 	types "github.com/openfaas/faas-provider/types"
@@ -21,21 +22,19 @@ func (c *Client) GetFunctionInfo(ctx context.Context, functionName string, names
 		err    error
 	)
 
-	u := c.GatewayURL
-	v := u.Query()
+	values := url.Values{}
 	if len(namespace) > 0 {
-		v.Set("namespace", namespace)
+		values.Set("namespace", namespace)
 	}
 
 	// Request CPU/RAM usage if available
-	v.Set("usage", "1")
+	values.Set("usage", "1")
 
-	u.Path = path.Join(functionPath, functionName)
-	u.RawQuery = v.Encode()
+	queryPath := path.Join(functionPath, functionName)
 
-	req, err := c.newRequestByURL(http.MethodGet, u, nil)
+	req, err := c.newRequest(http.MethodGet, queryPath, values, nil)
 	if err != nil {
-		return result, fmt.Errorf("cannot create URL: %s, error: %w", u.String(), err)
+		return result, fmt.Errorf("cannot create URL: %s, error: %w", queryPath, err)
 	}
 
 	res, err := c.doRequest(ctx, req)

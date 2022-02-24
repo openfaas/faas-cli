@@ -6,11 +6,11 @@ package proxy
 import (
 	"context"
 	"encoding/json"
-	"path"
 
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	types "github.com/openfaas/faas-provider/types"
 )
@@ -26,15 +26,14 @@ func (c *Client) ListFunctions(ctx context.Context, namespace string) ([]types.F
 		return http.ErrUseLastResponse
 	})
 
-	u := c.GatewayURL
-	u.Path = path.Join(systemPath)
-	v := u.Query()
-	if len(namespace) > 0 {
-		v.Set("namespace", namespace)
-	}
-	u.RawQuery = v.Encode()
+	queryPath := systemPath
 
-	getRequest, err := c.newRequestByURL(http.MethodGet, u, nil)
+	values := url.Values{}
+	if len(namespace) > 0 {
+		values.Set("namespace", namespace)
+	}
+
+	getRequest, err := c.newRequest(http.MethodGet, queryPath, values, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
