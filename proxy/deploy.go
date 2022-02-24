@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/openfaas/faas-cli/stack"
@@ -142,8 +143,10 @@ func (c *Client) deploy(context context.Context, spec *DeployFunctionSpec, updat
 		method = http.MethodPut
 	}
 
+	query := url.Values{}
+
 	var err error
-	request, err = c.newRequest(method, "/system/functions", reader)
+	request, err = c.newRequest(method, "/system/functions", query, reader)
 
 	if err != nil {
 		deployOutput += fmt.Sprintln(err)

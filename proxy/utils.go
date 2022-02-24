@@ -10,7 +10,6 @@ const (
 	systemPath     = "/system/functions"
 	functionPath   = "/system/function"
 	namespacesPath = "/system/namespaces"
-	namespaceKey   = "namespace"
 	scalePath      = "/system/scale-function"
 )
 

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/openfaas/faas/gateway/types"
 )
@@ -17,8 +18,9 @@ import (
 func (c *Client) GetSystemInfo(ctx context.Context) (types.GatewayInfo, error) {
 	infoEndPoint := "/system/info"
 	var info types.GatewayInfo
+	query := url.Values{}
 
-	req, err := c.newRequest(http.MethodGet, infoEndPoint, nil)
+	req, err := c.newRequest(http.MethodGet, infoEndPoint, query, nil)
 	if err != nil {
 		return info, fmt.Errorf("invalid HTTP method or invalid URL")
 	}

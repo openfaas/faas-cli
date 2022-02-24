@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path/filepath"
 
 	types "github.com/openfaas/faas-provider/types"
@@ -26,14 +27,12 @@ func (c *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 	bodyReader := bytes.NewReader(bodyBytes)
 
 	functionPath := filepath.Join(scalePath, functionName)
+	query := url.Values{}
 	if len(namespace) > 0 {
-		functionPath, err = addQueryParams(functionPath, map[string]string{namespaceKey: namespace})
-		if err != nil {
-			return err
-		}
+		query.Add("namespace", namespace)
 	}
 
-	req, err := c.newRequest(http.MethodPost, functionPath, bodyReader)
+	req, err := c.newRequest(http.MethodPost, functionPath, query, bodyReader)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}

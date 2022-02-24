@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"net/url"
 	"testing"
 )
 
@@ -38,41 +39,46 @@ func Test_newRequest_URL(t *testing.T) {
 	client, _ := NewClient(auth, gatewayURL, nil, &defaultCommandTimeout)
 
 	testcases := []struct {
-		Name        string
-		Path        string
-		ExpectedURL string
+		Name    string
+		Path    string
+		WantURL string
+		Query   url.Values
 	}{
 		{
-			Name:        "A valid path",
-			Path:        "/system/functions",
-			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions",
+			Name:    "A valid path",
+			Path:    "/system/functions",
+			WantURL: "http://127.0.0.1:8080/base/path/system/functions",
+			Query:   url.Values{},
 		},
 		{
-			Name:        "Root Path",
-			Path:        "/",
-			ExpectedURL: "http://127.0.0.1:8080/base/path",
+			Name:    "Root Path",
+			Path:    "/",
+			WantURL: "http://127.0.0.1:8080/base/path",
+			Query:   url.Values{},
 		},
 		{
-			Name:        "Path without starting slash",
-			Path:        "system/functions",
-			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions",
+			Name:    "Path without starting slash",
+			Path:    "system/functions",
+			WantURL: "http://127.0.0.1:8080/base/path/system/functions",
+			Query:   url.Values{},
 		},
 		{
-			Name:        "Path with querystring",
-			Path:        "system/functions?namespace=fn",
-			ExpectedURL: "http://127.0.0.1:8080/base/path/system/functions?namespace=fn",
+			Name:    "Path with querystring",
+			Path:    "system/functions",
+			Query:   url.Values{"namespace": []string{"fn"}},
+			WantURL: "http://127.0.0.1:8080/base/path/system/functions?namespace=fn",
 		},
 	}
 
-	for _, test := range testcases {
-		request, err := client.newRequest("POST", test.Path, nil)
+	for _, testCase := range testcases {
+		request, err := client.newRequest("POST", testCase.Path, testCase.Query, nil)
 		if err != nil {
 			t.Fatalf("Got Error! %s", err.Error())
 		}
 
 		url := request.URL.String()
-		if url != test.ExpectedURL {
-			t.Fatalf("Testcase %s failed. Expected: %s, Got: %s", test.Name, test.ExpectedURL, url)
+		if url != testCase.WantURL {
+			t.Fatalf("%q failed, want: %q, but got: %q", testCase.Name, testCase.WantURL, url)
 		}
 	}
 

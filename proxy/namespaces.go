@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 // ListNamespaces lists available function namespaces
@@ -15,8 +16,9 @@ func (c *Client) ListNamespaces(ctx context.Context) ([]string, error) {
 	c.AddCheckRedirect(func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	})
+	query := url.Values{}
 
-	getRequest, err := c.newRequest(http.MethodGet, namespacesPath, nil)
+	getRequest, err := c.newRequest(http.MethodGet, namespacesPath, query, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())

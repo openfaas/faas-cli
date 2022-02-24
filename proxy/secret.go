@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	types "github.com/openfaas/faas-provider/types"
 )
@@ -23,11 +24,12 @@ func (c *Client) GetSecretList(ctx context.Context, namespace string) ([]types.S
 		secretPath = secretEndpoint
 	)
 
+	query := url.Values{}
 	if len(namespace) > 0 {
-		secretPath, err = addQueryParams(secretPath, map[string]string{namespaceKey: namespace})
+		query.Add("namespace", namespace)
 	}
 
-	getRequest, err := c.newRequest(http.MethodGet, secretPath, nil)
+	getRequest, err := c.newRequest(http.MethodGet, secretPath, query, nil)
 
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
@@ -73,7 +75,9 @@ func (c *Client) UpdateSecret(ctx context.Context, secret types.Secret) (int, st
 	var output string
 	reqBytes, _ := json.Marshal(&secret)
 
-	putRequest, err := c.newRequest(http.MethodPut, secretEndpoint, bytes.NewBuffer(reqBytes))
+	query := url.Values{}
+
+	putRequest, err := c.newRequest(http.MethodPut, secretEndpoint, query, bytes.NewBuffer(reqBytes))
 
 	if err != nil {
 		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
@@ -114,7 +118,10 @@ func (c *Client) UpdateSecret(ctx context.Context, secret types.Secret) (int, st
 // RemoveSecret remove a secret via the OpenFaaS API by name
 func (c *Client) RemoveSecret(ctx context.Context, secret types.Secret) error {
 	body, _ := json.Marshal(secret)
-	req, err := c.newRequest(http.MethodDelete, secretEndpoint, bytes.NewBuffer(body))
+
+	query := url.Values{}
+
+	req, err := c.newRequest(http.MethodDelete, secretEndpoint, query, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}
@@ -151,8 +158,9 @@ func (c *Client) CreateSecret(ctx context.Context, secret types.Secret) (int, st
 	var output string
 	reqBytes, _ := json.Marshal(&secret)
 	reader := bytes.NewReader(reqBytes)
+	query := url.Values{}
 
-	request, err := c.newRequest(http.MethodPost, secretEndpoint, reader)
+	request, err := c.newRequest(http.MethodPost, secretEndpoint, query, reader)
 
 	if err != nil {
 		output += fmt.Sprintf("cannot connect to OpenFaaS on URL: %s\n", c.GatewayURL.String())

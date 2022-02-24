@@ -75,19 +75,17 @@ func (c *Client) newRequestByURL(method string, uri *url.URL, body io.Reader) (*
 }
 
 //newRequest create a new HTTP request with authentication
-func (c *Client) newRequest(method, path string, body io.Reader) (*http.Request, error) {
-	u, err := url.Parse(path)
-	if err != nil {
-		return nil, err
-	}
+func (c *Client) newRequest(method, path string, query url.Values, body io.Reader) (*http.Request, error) {
+
 	// deep copy gateway url and then add the supplied path  and args to the copy so that
 	// we preserve the original gateway URL as much as possible
 	endpoint, err := url.Parse(c.GatewayURL.String())
 	if err != nil {
 		return nil, err
 	}
-	endpoint.Path = gopath.Join(endpoint.Path, u.Path)
-	endpoint.RawQuery = u.RawQuery
+
+	endpoint.Path = gopath.Join(endpoint.Path, path)
+	endpoint.RawQuery = query.Encode()
 
 	req, err := http.NewRequest(method, endpoint.String(), body)
 	if err != nil {
@@ -118,8 +116,8 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Respon
 		}
 		fmt.Println(string(dump))
 	}
-	resp, err := c.httpClient.Do(req)
 
+	res, err := c.httpClient.Do(req)
 	if err != nil {
 		select {
 		case <-ctx.Done():
@@ -128,7 +126,7 @@ func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Respon
 		}
 	}
 
-	return resp, err
+	return res, err
 }
 
 func addQueryParams(u string, params map[string]string) (string, error) {

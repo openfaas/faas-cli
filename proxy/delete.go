@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	"github.com/openfaas/faas/gateway/requests"
 )
@@ -21,30 +22,30 @@ func (c *Client) DeleteFunction(ctx context.Context, functionName string, namesp
 	reqBytes, _ := json.Marshal(&delReq)
 	reader := bytes.NewReader(reqBytes)
 	deleteEndpoint := "/system/functions"
+
+	query := url.Values{}
 	if len(namespace) > 0 {
-		deleteEndpoint, err = addQueryParams(deleteEndpoint, map[string]string{namespaceKey: namespace})
-		if err != nil {
-			return err
-		}
+		query.Add("namespace", namespace)
 	}
 
-	req, err := c.newRequest(http.MethodDelete, deleteEndpoint, reader)
+	req, err := c.newRequest(http.MethodDelete, deleteEndpoint, query, reader)
 	if err != nil {
 		fmt.Println(err)
 		return err
 	}
-	delRes, delErr := c.doRequest(ctx, req)
 
-	if delErr != nil {
-		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n", delErr.Error(), c.GatewayURL.String(), functionName)
-		return delErr
+	res, err := c.doRequest(ctx, req)
+	if err != nil {
+		fmt.Printf("Error removing existing function: %s, gateway=%s, functionName=%s\n",
+			err.Error(), c.GatewayURL.String(), functionName)
+		return err
 	}
 
-	if delRes.Body != nil {
-		defer delRes.Body.Close()
+	if res.Body != nil {
+		defer res.Body.Close()
 	}
 
-	switch delRes.StatusCode {
+	switch res.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusAccepted:
 		fmt.Println("Removing old function.")
 	case http.StatusNotFound:
@@ -53,11 +54,11 @@ func (c *Client) DeleteFunction(ctx context.Context, functionName string, namesp
 		err = fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		var bodyReadErr error
-		bytesOut, bodyReadErr := ioutil.ReadAll(delRes.Body)
+		bytesOut, bodyReadErr := ioutil.ReadAll(res.Body)
 		if bodyReadErr != nil {
 			err = bodyReadErr
 		} else {
-			err = fmt.Errorf("Server returned unexpected status code %d %s", delRes.StatusCode, string(bytesOut))
+			err = fmt.Errorf("Server returned unexpected status code %d %s", res.StatusCode, string(bytesOut))
 		}
 	}
 

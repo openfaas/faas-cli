@@ -18,7 +18,7 @@ import (
 // GetLogs return stream for the logs
 func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.Message, error) {
 
-	logRequest, err := c.newRequest(http.MethodGet, "/system/logs", nil)
+	logRequest, err := c.newRequest(http.MethodGet, "/system/logs", url.Values{}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", c.GatewayURL.String())
 	}

@@ -16,6 +16,7 @@ functions:
     image: ${DOCKER_USER:-alexellis}/faas-url-ping:0.2
     environment:
       debug: true
+   
 #    limits:
 #      memory: 40m
 #    requests:
@@ -27,6 +28,8 @@ functions:
     fprocess: "sha512sum"
     environment:
       fprocess: sha512sum
+    secrets:
+     - test1
 #    limits:
 #      memory: 40m
 #    requests:
