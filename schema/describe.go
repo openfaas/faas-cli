@@ -7,16 +7,9 @@ import "github.com/openfaas/faas-provider/types"
 
 //FunctionDescription information related to a function
 type FunctionDescription struct {
-	Name              string
-	Status            string
-	Replicas          int
-	AvailableReplicas int
-	InvocationCount   int
-	Image             string
-	EnvProcess        string
-	URL               string
-	AsyncURL          string
-	Labels            *map[string]string
-	Annotations       *map[string]string
-	Usage             *types.FunctionUsage
+	types.FunctionStatus
+	Status          string
+	InvocationCount int
+	URL             string
+	AsyncURL        string
 }

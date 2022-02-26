@@ -14,6 +14,7 @@ import (
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-provider/types"
 
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,7 @@ var describeCmd = &cobra.Command{
 	Use:   "describe FUNCTION_NAME [--gateway GATEWAY_URL]",
 	Short: "Describe an OpenFaaS function",
 	Long:  `Display details of an OpenFaaS function`,
-	Example: `faas-cli describe figlet 
+	Example: `faas-cli describe figlet
 faas-cli describe env --gateway http://127.0.0.1:8080
 faas-cli describe echo -g http://127.0.0.1.8080`,
 	PreRunE: preRunDescribe,
@@ -103,20 +104,11 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	url, asyncURL := getFunctionURLs(gatewayAddress, functionName, functionNamespace)
 
 	funcDesc := schema.FunctionDescription{
-		Name:              function.Name,
-		Status:            status,
-		Replicas:          int(function.Replicas),
-		AvailableReplicas: int(function.AvailableReplicas),
-		InvocationCount:   int(invocationCount),
-		Image:             function.Image,
-		EnvProcess:        function.EnvProcess,
-		URL:               url,
-		AsyncURL:          asyncURL,
-		Labels:            function.Labels,
-		Annotations:       function.Annotations,
-	}
-	if function.Usage != nil {
-		funcDesc.Usage = function.Usage
+		FunctionStatus:  function,
+		Status:          status,
+		InvocationCount: int(invocationCount),
+		URL:             url,
+		AsyncURL:        asyncURL,
 	}
 
 	printFunctionDescription(funcDesc)
@@ -140,17 +132,26 @@ func getFunctionURLs(gateway string, functionName string, functionNamespace stri
 
 func printFunctionDescription(funcDesc schema.FunctionDescription) {
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.TabIndent)
+	process := "<default>"
+	if funcDesc.EnvProcess != "" {
+		process = funcDesc.EnvProcess
+	}
 	fmt.Fprintln(w, "Name:\t "+funcDesc.Name)
 	fmt.Fprintln(w, "Status:\t "+funcDesc.Status)
-	fmt.Fprintln(w, "Replicas:\t "+strconv.Itoa(funcDesc.Replicas))
-	fmt.Fprintln(w, "Available replicas:\t "+strconv.Itoa(funcDesc.AvailableReplicas))
+	fmt.Fprintln(w, "Replicas:\t "+strconv.Itoa(int(funcDesc.Replicas)))
+	fmt.Fprintln(w, "Available replicas:\t "+strconv.Itoa(int(funcDesc.AvailableReplicas)))
 	fmt.Fprintln(w, "Invocations:\t "+strconv.Itoa(funcDesc.InvocationCount))
 	fmt.Fprintln(w, "Image:\t "+funcDesc.Image)
-	fmt.Fprintln(w, "Function process:\t "+funcDesc.EnvProcess)
+	fmt.Fprintln(w, "Function process:\t "+process)
 	fmt.Fprintln(w, "URL:\t "+funcDesc.URL)
 	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
 	printMap(w, "Labels", *funcDesc.Labels)
 	printMap(w, "Annotations", *funcDesc.Annotations)
+	printList(w, "Constraints", funcDesc.Constraints)
+	printMap(w, "Environment", funcDesc.EnvVars)
+	printList(w, "Secrets", funcDesc.Secrets)
+	printResources(w, "Requests", funcDesc.Requests)
+	printResources(w, "Limits", funcDesc.Limits)
 	if funcDesc.Usage != nil {
 		fmt.Println()
 
@@ -160,14 +161,13 @@ func printFunctionDescription(funcDesc schema.FunctionDescription) {
 			cpu = 1
 		}
 		fmt.Fprintf(w, "CPU:\t %.0f Mi\n", (cpu))
-
 	}
 
 	w.Flush()
 }
 
 func printMap(w *tabwriter.Writer, name string, m map[string]string) {
-	fmt.Fprintf(w, name)
+	fmt.Fprintf(w, name+":")
 
 	if len(m) == 0 {
 		fmt.Fprintln(w, " \t <none>")
@@ -175,8 +175,37 @@ func printMap(w *tabwriter.Writer, name string, m map[string]string) {
 	}
 
 	for key, value := range m {
-		fmt.Fprintln(w, " \t "+key+" : "+value)
+		fmt.Fprintln(w, " \t "+key+": "+value)
 	}
+
+	return
+}
+
+func printList(w *tabwriter.Writer, name string, data []string) {
+	fmt.Fprintf(w, name+":")
+
+	if len(data) == 0 {
+		fmt.Fprintln(w, " \t <none>")
+		return
+	}
+
+	for _, value := range data {
+		fmt.Fprintln(w, " \t - "+value)
+	}
+
+	return
+}
+
+func printResources(w *tabwriter.Writer, name string, data *types.FunctionResources) {
+	fmt.Fprintf(w, name+":")
+
+	if data == nil {
+		fmt.Fprintln(w, " \t <none>")
+		return
+	}
+
+	fmt.Fprintln(w, " \t CPU: "+data.CPU)
+	fmt.Fprintln(w, " \t Memory: "+data.Memory)
 
 	return
 }
