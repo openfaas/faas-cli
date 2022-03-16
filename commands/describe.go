@@ -6,7 +6,9 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"reflect"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -26,6 +28,7 @@ func init() {
 	describeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	describeCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	describeCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+	describeCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
 
 	faasCmd.AddCommand(describeCmd)
 }
@@ -111,7 +114,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		AsyncURL:        asyncURL,
 	}
 
-	printFunctionDescription(funcDesc)
+	printFunctionDescription(cmd.OutOrStdout(), funcDesc, verbose)
 
 	return nil
 }
@@ -130,43 +133,92 @@ func getFunctionURLs(gateway string, functionName string, functionNamespace stri
 	return url, asyncURL
 }
 
-func printFunctionDescription(funcDesc schema.FunctionDescription) {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 1, ' ', tabwriter.TabIndent)
+func printFunctionDescription(dst io.Writer, funcDesc schema.FunctionDescription, verbose bool) {
+	w := tabwriter.NewWriter(dst, 0, 0, 1, ' ', tabwriter.TabIndent)
+	defer w.Flush()
+
+	out := printer{
+		w:       w,
+		verbose: verbose,
+	}
+
 	process := "<default>"
 	if funcDesc.EnvProcess != "" {
 		process = funcDesc.EnvProcess
 	}
-	fmt.Fprintln(w, "Name:\t "+funcDesc.Name)
-	fmt.Fprintln(w, "Status:\t "+funcDesc.Status)
-	fmt.Fprintln(w, "Replicas:\t "+strconv.Itoa(int(funcDesc.Replicas)))
-	fmt.Fprintln(w, "Available replicas:\t "+strconv.Itoa(int(funcDesc.AvailableReplicas)))
-	fmt.Fprintln(w, "Invocations:\t "+strconv.Itoa(funcDesc.InvocationCount))
-	fmt.Fprintln(w, "Image:\t "+funcDesc.Image)
-	fmt.Fprintln(w, "Function process:\t "+process)
-	fmt.Fprintln(w, "URL:\t "+funcDesc.URL)
-	fmt.Fprintln(w, "Async URL:\t "+funcDesc.AsyncURL)
-	printMap(w, "Labels", *funcDesc.Labels)
-	printMap(w, "Annotations", *funcDesc.Annotations)
-	printList(w, "Constraints", funcDesc.Constraints)
-	printMap(w, "Environment", funcDesc.EnvVars)
-	printList(w, "Secrets", funcDesc.Secrets)
-	printResources(w, "Requests", funcDesc.Requests)
-	printResources(w, "Limits", funcDesc.Limits)
-	if funcDesc.Usage != nil {
-		fmt.Println()
 
-		fmt.Fprintf(w, "RAM:\t %.2f MB\n", (funcDesc.Usage.TotalMemoryBytes / 1024 / 1024))
-		cpu := funcDesc.Usage.CPU
-		if cpu < 0 {
-			cpu = 1
-		}
-		fmt.Fprintf(w, "CPU:\t %.0f Mi\n", (cpu))
-	}
-
-	w.Flush()
+	out.Printf("Name:\t%s\n", funcDesc.Name)
+	out.Printf("Status:\t%s\n", funcDesc.Status)
+	out.Printf("Replicas:\t%s\n", strconv.Itoa(int(funcDesc.Replicas)))
+	out.Printf("Available Replicas:\t%s\n", strconv.Itoa(int(funcDesc.AvailableReplicas)))
+	out.Printf("Invocations:\t%s\n", strconv.Itoa(int(funcDesc.InvocationCount)))
+	out.Printf("Image:\t%s\n", funcDesc.Image)
+	out.Printf("Function Process:\t%s\n", process)
+	out.Printf("URL:\t%s\n", funcDesc.URL)
+	out.Printf("Async URL:\t%s\n", funcDesc.AsyncURL)
+	out.Printf("Labels", *funcDesc.Labels)
+	out.Printf("Annotations", *funcDesc.Annotations)
+	out.Printf("Constraints", funcDesc.Constraints)
+	out.Printf("Environment", funcDesc.EnvVars)
+	out.Printf("Secrets", funcDesc.Secrets)
+	out.Printf("Requests", funcDesc.Requests)
+	out.Printf("Limits", funcDesc.Limits)
+	out.Printf("", funcDesc.Usage)
 }
 
-func printMap(w *tabwriter.Writer, name string, m map[string]string) {
+type printer struct {
+	verbose bool
+	w       io.Writer
+}
+
+func (p *printer) Printf(format string, a interface{}) {
+	switch v := a.(type) {
+	case map[string]string:
+		printMap(p.w, format, v, p.verbose)
+	case []string:
+		printList(p.w, format, v, p.verbose)
+	case *types.FunctionResources:
+		printResources(p.w, format, v, p.verbose)
+	case *types.FunctionUsage:
+		printUsage(p.w, v, p.verbose)
+	default:
+		if !p.verbose && isEmpty(a) {
+			return
+		}
+
+		if p.verbose && isEmpty(a) {
+			a = "<none>"
+		}
+
+		fmt.Fprintf(p.w, format, a)
+	}
+
+}
+
+func printUsage(w io.Writer, usage *types.FunctionUsage, verbose bool) {
+	if !verbose && usage == nil {
+		return
+	}
+
+	if usage == nil {
+		fmt.Fprintln(w, "No usage information available")
+		return
+	}
+
+	fmt.Fprintln(w)
+	fmt.Fprintf(w, "RAM:\t %.2f MB\n", (usage.TotalMemoryBytes / 1024 / 1024))
+	cpu := usage.CPU
+	if cpu < 0 {
+		cpu = 1
+	}
+	fmt.Fprintf(w, "CPU:\t %.0f Mi\n", (cpu))
+}
+
+func printMap(w io.Writer, name string, m map[string]string, verbose bool) {
+	if !verbose && len(m) == 0 {
+		return
+	}
+
 	fmt.Fprintf(w, name+":")
 
 	if len(m) == 0 {
@@ -181,7 +233,11 @@ func printMap(w *tabwriter.Writer, name string, m map[string]string) {
 	return
 }
 
-func printList(w *tabwriter.Writer, name string, data []string) {
+func printList(w io.Writer, name string, data []string, verbose bool) {
+	if !verbose && len(data) == 0 {
+		return
+	}
+
 	fmt.Fprintf(w, name+":")
 
 	if len(data) == 0 {
@@ -196,7 +252,11 @@ func printList(w *tabwriter.Writer, name string, data []string) {
 	return
 }
 
-func printResources(w *tabwriter.Writer, name string, data *types.FunctionResources) {
+func printResources(w io.Writer, name string, data *types.FunctionResources, verbose bool) {
+	if !verbose && data == nil {
+		return
+	}
+
 	fmt.Fprintf(w, name+":")
 
 	if data == nil {
@@ -208,4 +268,23 @@ func printResources(w *tabwriter.Writer, name string, data *types.FunctionResour
 	fmt.Fprintln(w, " \t Memory: "+data.Memory)
 
 	return
+}
+
+func isEmpty(a interface{}) bool {
+	v := reflect.ValueOf(a)
+	switch v.Kind() {
+	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
+		return v.Len() == 0
+	case reflect.Bool:
+		return !v.Bool()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v.Int() == 0
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v.Uint() == 0
+	case reflect.Float32, reflect.Float64:
+		return v.Float() == 0
+	case reflect.Interface, reflect.Ptr:
+		return v.IsNil()
+	}
+	return false
 }
