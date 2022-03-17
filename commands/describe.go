@@ -201,17 +201,17 @@ func printUsage(w io.Writer, usage *types.FunctionUsage, verbose bool) {
 	}
 
 	if usage == nil {
-		fmt.Fprintln(w, "No usage information available")
+		fmt.Fprintln(w, "Usage:\t <none>")
 		return
 	}
 
-	fmt.Fprintln(w)
-	fmt.Fprintf(w, "RAM:\t %.2f MB\n", (usage.TotalMemoryBytes / 1024 / 1024))
+	fmt.Fprintln(w, "Usage:")
+	fmt.Fprintf(w, "  RAM:\t %.2f MB\n", (usage.TotalMemoryBytes / 1024 / 1024))
 	cpu := usage.CPU
 	if cpu < 0 {
 		cpu = 1
 	}
-	fmt.Fprintf(w, "CPU:\t %.0f Mi\n", (cpu))
+	fmt.Fprintf(w, "  CPU:\t %.0f Mi\n", (cpu))
 }
 
 func printMap(w io.Writer, name string, m map[string]string, verbose bool) {
@@ -219,13 +219,12 @@ func printMap(w io.Writer, name string, m map[string]string, verbose bool) {
 		return
 	}
 
-	fmt.Fprintf(w, name+":")
-
 	if len(m) == 0 {
-		fmt.Fprintln(w, "\t <none>")
+		fmt.Fprintf(w, "%s:\t <none>\n", name)
 		return
 	}
 
+	fmt.Fprintf(w, "%s:\n", name)
 	for key, value := range m {
 		fmt.Fprintln(w, "\t "+key+": "+value)
 	}
@@ -238,13 +237,12 @@ func printList(w io.Writer, name string, data []string, verbose bool) {
 		return
 	}
 
-	fmt.Fprintf(w, name+":")
-
 	if len(data) == 0 {
-		fmt.Fprintln(w, "\t <none>")
+		fmt.Fprintf(w, "%s:\t <none>\n", name)
 		return
 	}
 
+	fmt.Fprintf(w, "%s:\n", name)
 	for _, value := range data {
 		fmt.Fprintln(w, "\t - "+value)
 	}

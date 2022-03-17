@@ -43,7 +43,7 @@ func TestDescribeOuput(t *testing.T) {
 		expectedOutput string
 	}{
 		{
-			name: "minimal output, non-verbose",
+			name: "non-verbose minimal output",
 			function: schema.FunctionDescription{
 				FunctionStatus: types.FunctionStatus{
 					Name:        "figlet",
@@ -57,7 +57,7 @@ func TestDescribeOuput(t *testing.T) {
 			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\n",
 		},
 		{
-			name: "minimal output, verbose",
+			name: "verbose minimal output",
 			function: schema.FunctionDescription{
 				FunctionStatus: types.FunctionStatus{
 					Name:        "figlet",
@@ -68,7 +68,57 @@ func TestDescribeOuput(t *testing.T) {
 				Status: "Ready",
 			},
 			verbose:        true,
-			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nURL:\t<none>\nAsync URL:\t<none>\nLabels:\t<none>\nAnnotations:\t<none>\nConstraints:\t<none>\nEnvironment:\t<none>\nSecrets:\t<none>\nRequests:\t<none>\nLimits:\t<none>\nNo usage information available\n",
+			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nURL:\t<none>\nAsync URL:\t<none>\nLabels:\t<none>\nAnnotations:\t<none>\nConstraints:\t<none>\nEnvironment:\t<none>\nSecrets:\t<none>\nRequests:\t<none>\nLimits:\t<none>\nUsage:\t<none>\n",
+		},
+		{
+			name: "non-verbose formats output with non-empty labels, env variables, and secrets",
+			function: schema.FunctionDescription{
+				FunctionStatus: types.FunctionStatus{
+					Name:        "figlet",
+					Image:       "openfaas/figlet:latest",
+					Labels:      &map[string]string{"quadrant": "alpha"},
+					Annotations: &map[string]string{},
+					EnvVars:     map[string]string{"FOO": "bar"},
+					Secrets:     []string{"db-password"},
+				},
+				Status: "Ready",
+			},
+			verbose:        false,
+			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nLabels:\n quadrant: alpha\nEnvironment:\n FOO: bar\nSecrets:\n - db-password\n",
+		},
+		{
+			name: "verbose formats output with non-empty labels, env variables, and secrets",
+			function: schema.FunctionDescription{
+				FunctionStatus: types.FunctionStatus{
+					Name:        "figlet",
+					Image:       "openfaas/figlet:latest",
+					Labels:      &map[string]string{"quadrant": "alpha"},
+					Annotations: &map[string]string{},
+					EnvVars:     map[string]string{"FOO": "bar"},
+					Secrets:     []string{"db-password"},
+				},
+				Status: "Ready",
+			},
+			verbose:        true,
+			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nURL:\t<none>\nAsync URL:\t<none>\nLabels:\n quadrant: alpha\nAnnotations:\t<none>\nConstraints:\t<none>\nEnvironment:\n FOO: bar\nSecrets:\n - db-password\nRequests:\t<none>\nLimits:\t<none>\nUsage:\t<none>\n",
+		},
+		{
+			name: "formats non-empty usage",
+			function: schema.FunctionDescription{
+				FunctionStatus: types.FunctionStatus{
+					Name:        "figlet",
+					Image:       "openfaas/figlet:latest",
+					Labels:      &map[string]string{},
+					Annotations: &map[string]string{},
+					Usage: &types.FunctionUsage{
+						TotalMemoryBytes: 1024 * 1024 * 1024,
+						CPU:              1.5,
+					},
+				},
+				Status: "Ready",
+			},
+			verbose:        false,
+			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nUsage:\n\tRAM:\t1024.00 MB\n\tCPU:\t2 Mi\n",
 		},
 	}
 	for _, tc := range cases {
