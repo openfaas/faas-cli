@@ -222,12 +222,12 @@ func printMap(w io.Writer, name string, m map[string]string, verbose bool) {
 	fmt.Fprintf(w, name+":")
 
 	if len(m) == 0 {
-		fmt.Fprintln(w, " \t <none>")
+		fmt.Fprintln(w, "\t <none>")
 		return
 	}
 
 	for key, value := range m {
-		fmt.Fprintln(w, " \t "+key+": "+value)
+		fmt.Fprintln(w, "\t "+key+": "+value)
 	}
 
 	return
@@ -241,12 +241,12 @@ func printList(w io.Writer, name string, data []string, verbose bool) {
 	fmt.Fprintf(w, name+":")
 
 	if len(data) == 0 {
-		fmt.Fprintln(w, " \t <none>")
+		fmt.Fprintln(w, "\t <none>")
 		return
 	}
 
 	for _, value := range data {
-		fmt.Fprintln(w, " \t - "+value)
+		fmt.Fprintln(w, "\t - "+value)
 	}
 
 	return
@@ -260,12 +260,12 @@ func printResources(w io.Writer, name string, data *types.FunctionResources, ver
 	fmt.Fprintf(w, name+":")
 
 	if data == nil {
-		fmt.Fprintln(w, " \t <none>")
+		fmt.Fprintln(w, "\t <none>")
 		return
 	}
 
-	fmt.Fprintln(w, " \t CPU: "+data.CPU)
-	fmt.Fprintln(w, " \t Memory: "+data.Memory)
+	fmt.Fprintln(w, "\t CPU: "+data.CPU)
+	fmt.Fprintln(w, "\t Memory: "+data.Memory)
 
 	return
 }
