@@ -34,6 +34,7 @@ type DeployFlags struct {
 	secrets                []string
 	labelOpts              []string
 	annotationOpts         []string
+	envFiles               []string
 }
 
 var deployFlags DeployFlags
@@ -51,6 +52,10 @@ func init() {
 
 	// Setup flags that are used only by this command (variables defined above)
 	deployCmd.Flags().StringArrayVarP(&deployFlags.envvarOpts, "env", "e", []string{}, "Set one or more environment variables (ENVVAR=VALUE)")
+
+	// Specify an environment file to faas-cli deploy
+	// https://github.com/openfaas/faas-cli/issues/907
+	deployCmd.Flags().StringArrayVar(&deployFlags.envFiles, "environment-file", []string{}, "Override every 'environment_file' in stack.yaml")
 
 	deployCmd.Flags().StringArrayVarP(&deployFlags.labelOpts, "label", "l", []string{}, "Set one or more label (LABEL=VALUE)")
 
@@ -86,6 +91,7 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
+                  [--environment-file ENV_FILE ...]
 				  [--label LABEL=VALUE ...]
 				  [--annotation ANNOTATION=VALUE ...]
 				  [--replace=false]
@@ -194,6 +200,15 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
 				return err
+			}
+
+			// Check if there is 'environment-file' flag passed, if so, override the 'environment-file' value
+			// defined in the stack.yaml
+			if len(deployFlags.envFiles) != 0 {
+				fileEnvironment, err = readFiles(deployFlags.envFiles)
+				if err != nil {
+					return err
+				}
 			}
 
 			labelMap := map[string]string{}
