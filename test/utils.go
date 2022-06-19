@@ -15,6 +15,7 @@ type Request struct {
 	Uri                string
 	ResponseStatusCode int
 	ResponseBody       interface{}
+	Hook               func(r *http.Request)
 }
 
 type server struct {
@@ -78,6 +79,10 @@ func MockHttpServer(t *testing.T, requests []Request) *server {
 			} else {
 				w.Write([]byte(s))
 			}
+		}
+
+		if request.Hook != nil {
+			request.Hook(r)
 		}
 
 		s.requestCounter++

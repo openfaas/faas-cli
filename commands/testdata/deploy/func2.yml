@@ -1,0 +1,5 @@
+environment:
+  db_host: localhost
+  db_name: default
+  db_user: root
+  redis_host: localhost

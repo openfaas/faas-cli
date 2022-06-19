@@ -1,0 +1,4 @@
+environment:
+  db_host: 192.168.10.2
+  db_name: func1_db
+  db_user: func1_usr

@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/openfaas/faas-cli/builder"
@@ -34,6 +35,7 @@ type DeployFlags struct {
 	secrets                []string
 	labelOpts              []string
 	annotationOpts         []string
+	environmentFile        []string
 }
 
 var deployFlags DeployFlags
@@ -68,6 +70,8 @@ func init() {
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	deployCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	deployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+
+	deployCmd.Flags().StringArrayVar(&deployFlags.environmentFile, "environment-file", []string{}, "Path to a YAML-file which contains environment files for each function in stack.yml")
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 	deployCmd.Flags().BoolVar(&readTemplate, "read-template", true, "Read the function's template")
@@ -86,6 +90,7 @@ var deployCmd = &cobra.Command{
                   [--handler HANDLER_DIR]
                   [--fprocess PROCESS]
                   [--env ENVVAR=VALUE ...]
+                  [--environment-file path/to/env.yml ...]
 				  [--label LABEL=VALUE ...]
 				  [--annotation ANNOTATION=VALUE ...]
 				  [--replace=false]
@@ -130,6 +135,48 @@ func preRunDeploy(cmd *cobra.Command, args []string) error {
 
 func runDeploy(cmd *cobra.Command, args []string) error {
 	return runDeployCommand(args, image, fprocess, functionName, deployFlags, tagFormat)
+}
+
+func getFileEnvironment(functionName string, environmentFile []string) (env map[string]string, err error) {
+	for _, envFile := range environmentFile {
+		var bytesOut []byte
+		bytesOut, err = ioutil.ReadFile(envFile)
+		if err != nil {
+			return
+		}
+
+		var funcEnvs map[string]struct {
+			Environment     map[string]string `yaml:"environment"`
+			EnvironmentFile []string          `yaml:"environment_file"`
+		}
+
+		if err = yaml.Unmarshal(bytesOut, &funcEnvs); err != nil {
+			return
+		}
+
+		funcEnv, ok := funcEnvs[functionName]
+		if !ok {
+			return
+		}
+
+		var files []string
+		for _, f := range funcEnv.EnvironmentFile {
+			if !filepath.IsAbs(f) {
+				f = filepath.Join(filepath.Dir(envFile), f)
+			}
+			files = append(files, f)
+		}
+
+		var fileEnvironment map[string]string
+		fileEnvironment, err = readFiles(files)
+		if err != nil {
+			return
+		}
+
+		env = mergeMap(env, fileEnvironment)
+		env = mergeMap(env, funcEnv.Environment)
+	}
+	return
 }
 
 func runDeployCommand(args []string, image string, fprocess string, functionName string, deployFlags DeployFlags, tagMode schema.BuildFormat) error {
@@ -194,6 +241,14 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
 				return err
+			}
+
+			if len(deployFlags.environmentFile) > 0 {
+				env, err := getFileEnvironment(k, deployFlags.environmentFile)
+				if err != nil {
+					return err
+				}
+				fileEnvironment = mergeMap(fileEnvironment, env)
 			}
 
 			labelMap := map[string]string{}

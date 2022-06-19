@@ -1,0 +1,4 @@
+environment:
+  db_name: func2_db
+  db_user: func2_user
+  redis_host: 192.168.0.1

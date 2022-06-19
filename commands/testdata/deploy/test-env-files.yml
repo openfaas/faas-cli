@@ -1,0 +1,8 @@
+func1:
+  environment_file:
+    - test-func1.yml
+func2:
+  environment:
+    redis_pass: 123456
+  environment_file:
+    - test-func2.yml
