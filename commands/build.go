@@ -200,7 +200,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
 		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
 		if err != nil {
-			return fmt.Errorf("Already pulled templates directory has issue: %s", err.Error())
+			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
 		}
 
 		err = pullStackTemplates(newTemplateInfos, cmd)

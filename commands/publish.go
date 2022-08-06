@@ -19,6 +19,7 @@ import (
 var (
 	platforms string
 	extraTags []string
+	resetQemu bool
 )
 
 func init() {
@@ -44,6 +45,8 @@ func init() {
 	publishCmd.Flags().StringVar(&platforms, "platforms", "linux/amd64", "A set of platforms to publish")
 	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{}, "Additional extra image tag")
 
+	publishCmd.Flags().BoolVar(&resetQemu, "reset-qemu", false, "Runs \"docker run multiarch/qemu-user-static --reset -p yes`\" to enable multi-arch builds. Compatible with AMD64 machines only.")
+
 	// Set bash-completion.
 	_ = publishCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -65,7 +68,8 @@ var publishCmd = &cobra.Command{
                    [--build-option VALUE]
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
-                   [--platforms linux/arm/v7]`,
+                   [--platforms linux/arm/v7]
+				   [--resetQemu]`,
 	Short: "Builds and pushes multi-arch OpenFaaS container images",
 	Long: `Builds and pushes multi-arch OpenFaaS container images using Docker buildx.
 Most users will want faas-cli build or faas-cli up for development and testing.
@@ -83,6 +87,7 @@ See also: faas-cli build`,
   faas-cli publish -f go.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
+  faas-cli publish --reset-qemu
   `,
 	PreRunE: preRunPublish,
 	RunE:    runPublish,
@@ -130,10 +135,32 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
+	if resetQemu {
+
+		task := v1execute.ExecTask{
+			Command:     "docker",
+			Args:        []string{"run", "--rm", "--privileged", "multiarch/qemu-user-static", "--reset", "-p", "yes"},
+			StreamStdio: false,
+		}
+
+		res, err := task.Execute()
+		if err != nil {
+			return err
+		}
+
+		if res.ExitCode != 0 {
+			fmt.Printf("Note: qemu-user-static only supports AMD64 at this time, see more: https://github.com/multiarch/qemu-user-static\n\n")
+
+			return fmt.Errorf("non-zero exit code: %d, stderr: %s", res.ExitCode, res.Stderr)
+		}
+
+		fmt.Printf("Ran qemu-user-static --reset. OK.\n")
+	}
+
 	task := v1execute.ExecTask{
 		Command:     "docker",
 		Args:        []string{"buildx", "create", "--use", "--name=multiarch", "--node=multiarch"},
-		StreamStdio: !quietBuild,
+		StreamStdio: false,
 		Env:         []string{"DOCKER_CLI_EXPERIMENTAL=enabled"},
 	}
 
@@ -141,16 +168,17 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
 	if res.ExitCode != 0 {
-		return fmt.Errorf("non-zero exit code: %d", res.ExitCode)
+		return fmt.Errorf("non-zero exit code: %d, stderr: %s", res.ExitCode, res.Stderr)
 	}
 
-	fmt.Printf("Created buildx node: %s\n", res.Stdout)
+	fmt.Printf("Created buildx node: \"multiarch\"\n")
 
 	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
 		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
 		if err != nil {
-			return fmt.Errorf("Already pulled templates directory has issue: %s", err.Error())
+			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
 		}
 
 		err = pullStackTemplates(newTemplateInfos, cmd)
