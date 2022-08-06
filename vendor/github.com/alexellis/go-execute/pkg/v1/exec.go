@@ -16,6 +16,10 @@ type ExecTask struct {
 	Env     []string
 	Cwd     string
 
+	// Stdin connect a reader to stdin for the command
+	// being executed.
+	Stdin io.Reader
+
 	// StreamStdio prints stdout and stderr directly to os.Stdout/err as
 	// the command runs.
 	StreamStdio bool
@@ -71,10 +75,23 @@ func (et ExecTask) Execute() (ExecResult, error) {
 	cmd.Dir = et.Cwd
 
 	if len(et.Env) > 0 {
-		cmd.Env = os.Environ()
+		overrides := map[string]bool{}
 		for _, env := range et.Env {
+			key := strings.Split(env, "=")[0]
+			overrides[key] = true
 			cmd.Env = append(cmd.Env, env)
 		}
+
+		for _, env := range os.Environ() {
+			key := strings.Split(env, "=")[0]
+
+			if _, ok := overrides[key]; !ok {
+				cmd.Env = append(cmd.Env, env)
+			}
+		}
+	}
+	if et.Stdin != nil {
+		cmd.Stdin = et.Stdin
 	}
 
 	stdoutBuff := bytes.Buffer{}
