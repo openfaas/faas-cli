@@ -101,8 +101,7 @@ func PublishImage(image string, handler string, functionName string, language st
 }
 
 func getDockerBuildxCommand(build dockerBuild) (string, []string) {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap,
-		build.BuildOptPackages, build.BuildLabelMap)
+	flagSlice := buildFlagSlice(build)
 
 	// pushOnly defined at https://github.com/docker/buildx
 	const pushOnly = "--output=type=registry,push=true"

@@ -27,6 +27,7 @@ var (
 	shrinkwrap       bool
 	buildArgs        []string
 	buildArgMap      map[string]string
+	buildFlags       []string
 	buildOptions     []string
 	copyExtra        []string
 	tagFormat        schema.BuildFormat
@@ -50,6 +51,7 @@ func init() {
 	buildCmd.Flags().IntVar(&parallel, "parallel", 1, "Build in parallel to depth specified.")
 	buildCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 	buildCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
+	buildCmd.Flags().StringArrayVar(&buildFlags, "build-flags", []string{}, "Add a flags for Docker eg. --ssh or --secure")
 	buildCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
 	buildCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', or 'describe'")
 	buildCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
@@ -177,19 +179,24 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		if len(functionName) == 0 {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
-		err := builder.BuildImage(image,
-			handler,
-			functionName,
-			language,
-			nocache,
-			squash,
-			shrinkwrap,
-			buildArgMap,
-			buildOptions,
-			tagFormat,
-			buildLabelMap,
-			quietBuild,
-			copyExtra,
+
+		err := builder.BuildImage(
+			builder.BuildImageConfig{
+				Image:          image,
+				Handler:        handler,
+				FunctionName:   functionName,
+				Language:       language,
+				NoCache:        nocache,
+				Squash:         squash,
+				ShrinkWrap:     shrinkwrap,
+				BuildArgMap:    buildArgMap,
+				BuildFlags:     buildFlags,
+				BuildOptions:   buildOptions,
+				TagMode:        tagFormat,
+				BuildLabelMap:  buildLabelMap,
+				QuiteBuild:     quietBuild,
+				CopyExtraPaths: copyExtra,
+			},
 		)
 		if err != nil {
 			return err
@@ -242,19 +249,23 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
 					combinedBuildArgMap := mergeMap(function.BuildArgs, buildArgMap)
 					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
-					err := builder.BuildImage(function.Image,
-						function.Handler,
-						function.Name,
-						function.Language,
-						nocache,
-						squash,
-						shrinkwrap,
-						combinedBuildArgMap,
-						combinedBuildOptions,
-						tagFormat,
-						buildLabelMap,
-						quietBuild,
-						combinedExtraPaths,
+					err := builder.BuildImage(
+						builder.BuildImageConfig{
+							Image:          function.Image,
+							Handler:        function.Handler,
+							FunctionName:   function.Name,
+							Language:       function.Language,
+							NoCache:        nocache,
+							Squash:         squash,
+							ShrinkWrap:     shrinkwrap,
+							BuildArgMap:    combinedBuildArgMap,
+							BuildFlags:     buildFlags,
+							BuildOptions:   combinedBuildOptions,
+							TagMode:        tagFormat,
+							BuildLabelMap:  buildLabelMap,
+							QuiteBuild:     quietBuild,
+							CopyExtraPaths: combinedExtraPaths,
+						},
 					)
 
 					if err != nil {

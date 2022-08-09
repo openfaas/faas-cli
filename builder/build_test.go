@@ -151,6 +151,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		buildArgMap   map[string]string
 		buildPackages []string
 		expectedSlice []string
+		buildFlags    []string
 		buildLabelMap map[string]string
 	}{
 		{
@@ -161,6 +162,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache"},
 		},
 		{
@@ -171,6 +173,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache", "--squash"},
 		},
 		{
@@ -181,6 +184,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "http_proxy=192.168.0.1"},
 		},
 		{
@@ -191,6 +195,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -201,6 +206,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "http_proxy=192.168.0.1", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -211,6 +217,7 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--build-arg", "http_proxy=192.168.0.1", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -223,6 +230,7 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppet": "ernie",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--build-arg", "muppet=ernie"},
 		},
 		{
@@ -235,6 +243,7 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppets": "burt and ernie",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--build-arg", "muppets=burt and ernie"},
 		},
 		{
@@ -248,6 +257,7 @@ func Test_buildFlagSlice(t *testing.T) {
 				"playschool": "Jemima",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima"},
 		},
 		{
@@ -261,6 +271,7 @@ func Test_buildFlagSlice(t *testing.T) {
 				"playschool": "Jemima",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima"},
 		},
 		{
@@ -274,6 +285,7 @@ func Test_buildFlagSlice(t *testing.T) {
 				"playschool": "Jemima",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			buildLabelMap: map[string]string{
 				"org.label-schema.name": "test function",
 			},
@@ -290,11 +302,48 @@ func Test_buildFlagSlice(t *testing.T) {
 				"playschool": "Jemima",
 			},
 			buildPackages: []string{},
+			buildFlags:    []string{},
 			buildLabelMap: map[string]string{
 				"org.label-schema.name":        "test function",
 				"org.label-schema.description": "This is a test function",
 			},
 			expectedSlice: []string{"--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima", "--label", "org.label-schema.name=test function", "--label", "org.label-schema.description=This is a test function"},
+		},
+		{
+			title:         "build flags with values",
+			nocache:       false,
+			squash:        false,
+			httpProxy:     "",
+			httpsProxy:    "",
+			buildArgMap:   map[string]string{},
+			buildPackages: []string{},
+			buildLabelMap: map[string]string{},
+			buildFlags:    []string{"--ssh default"},
+			expectedSlice: []string{"--ssh", "default"},
+		},
+		{
+			title:         "build flags with no values",
+			nocache:       false,
+			squash:        false,
+			httpProxy:     "",
+			httpsProxy:    "",
+			buildArgMap:   map[string]string{},
+			buildPackages: []string{},
+			buildLabelMap: map[string]string{},
+			buildFlags:    []string{"--disable-content-trust"},
+			expectedSlice: []string{"--disable-content-trust"},
+		},
+		{
+			title:         "build flags combination with and without values",
+			nocache:       false,
+			squash:        false,
+			httpProxy:     "",
+			httpsProxy:    "",
+			buildArgMap:   map[string]string{},
+			buildPackages: []string{},
+			buildLabelMap: map[string]string{},
+			buildFlags:    []string{"--progress plain", "--disable-content-trust"},
+			expectedSlice: []string{"--progress", "plain", "--disable-content-trust"},
 		},
 	}
 
@@ -302,7 +351,17 @@ func Test_buildFlagSlice(t *testing.T) {
 
 		t.Run(test.title, func(t *testing.T) {
 
-			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap)
+			b := dockerBuild{
+				NoCache:          test.nocache,
+				Squash:           test.squash,
+				HTTPProxy:        test.httpProxy,
+				HTTPSProxy:       test.httpsProxy,
+				BuildArgMap:      test.buildArgMap,
+				BuildOptPackages: test.buildPackages,
+				BuildLabelMap:    test.buildLabelMap,
+				BuildFlags:       test.buildFlags,
+			}
+			flagSlice := buildFlagSlice(b)
 			fmt.Println(flagSlice)
 			if len(flagSlice) != len(test.expectedSlice) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))

@@ -22,12 +22,29 @@ import (
 // Can also be passed as a build arg hence needs to be accessed from commands
 const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
+type BuildImageConfig struct {
+	Image          string
+	Handler        string
+	FunctionName   string
+	Language       string
+	NoCache        bool
+	Squash         bool
+	ShrinkWrap     bool
+	QuiteBuild     bool
+	BuildArgMap    map[string]string
+	BuildLabelMap  map[string]string
+	BuildFlags     []string
+	BuildOptions   []string
+	CopyExtraPaths []string
+	TagMode        schema.BuildFormat
+}
+
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string) error {
+func BuildImage(config BuildImageConfig) error {
 
-	if stack.IsValidTemplate(language) {
-		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
+	if stack.IsValidTemplate(config.Language) {
+		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", config.Language)
 		if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 			return err
 		}
@@ -37,29 +54,29 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("error reading language template: %s", err.Error())
 		}
 
-		branch, version, err := GetImageTagValues(tagMode)
+		branch, version, err := GetImageTagValues(config.TagMode)
 		if err != nil {
 			return err
 		}
 
-		imageName := schema.BuildImageName(tagMode, image, version, branch)
+		imageName := schema.BuildImageName(config.TagMode, config.Image, version, branch)
 
-		if err := ensureHandlerPath(handler); err != nil {
-			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
+		if err := ensureHandlerPath(config.Handler); err != nil {
+			return fmt.Errorf("building %s, %s is an invalid path", imageName, config.Handler)
 		}
 
-		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
-		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
+		tempPath, buildErr := createBuildContext(config.FunctionName, config.Handler, config.Language, isLanguageTemplate(config.Language), langTemplate.HandlerFolder, config.CopyExtraPaths)
+		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, config.Language)
 		if buildErr != nil {
 			return buildErr
 		}
 
-		if shrinkwrap {
-			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
+		if config.ShrinkWrap {
+			fmt.Printf("%s shrink-wrapped to %s\n", config.FunctionName, tempPath)
 			return nil
 		}
 
-		buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
+		buildOptPackages, buildPackageErr := getBuildOptionPackages(config.BuildOptions, config.Language, langTemplate.BuildOptions)
 
 		if buildPackageErr != nil {
 			return buildPackageErr
@@ -68,13 +85,14 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		dockerBuildVal := dockerBuild{
 			Image:            imageName,
-			NoCache:          nocache,
-			Squash:           squash,
+			NoCache:          config.NoCache,
+			Squash:           config.Squash,
 			HTTPProxy:        os.Getenv("http_proxy"),
 			HTTPSProxy:       os.Getenv("https_proxy"),
-			BuildArgMap:      buildArgMap,
+			BuildArgMap:      config.BuildArgMap,
 			BuildOptPackages: buildOptPackages,
-			BuildLabelMap:    buildLabelMap,
+			BuildLabelMap:    config.BuildLabelMap,
+			BuildFlags:       config.BuildFlags,
 		}
 
 		command, args := getDockerBuildCommand(dockerBuildVal)
@@ -83,7 +101,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			Cwd:         tempPath,
 			Command:     command,
 			Args:        args,
-			StreamStdio: !quietBuild,
+			StreamStdio: !config.QuiteBuild,
 		}
 
 		res, err := task.Execute()
@@ -93,13 +111,13 @@ func BuildImage(image string, handler string, functionName string, language stri
 		}
 
 		if res.ExitCode != 0 {
-			return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", functionName, res.Stderr)
+			return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", config.FunctionName, res.Stderr)
 		}
 
 		fmt.Printf("Image: %s built.\n", imageName)
 
 	} else {
-		return fmt.Errorf("language template: %s not supported, build a custom Dockerfile", language)
+		return fmt.Errorf("language template: %s not supported, build a custom Dockerfile", config.Language)
 	}
 
 	return nil
@@ -140,7 +158,7 @@ func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err 
 }
 
 func getDockerBuildCommand(build dockerBuild) (string, []string) {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
+	flagSlice := buildFlagSlice(build)
 	args := []string{"build"}
 	args = append(args, flagSlice...)
 
@@ -161,6 +179,9 @@ type dockerBuild struct {
 	BuildArgMap      map[string]string
 	BuildOptPackages []string
 	BuildLabelMap    map[string]string
+
+	// Optional flags
+	BuildFlags []string
 
 	// Platforms for use with buildx and publish command
 	Platforms string
@@ -338,39 +359,43 @@ func dockerBuildFolder(functionName string, handler string, language string) str
 	return tempPath
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
+func buildFlagSlice(build dockerBuild) []string {
 
 	var spaceSafeBuildFlags []string
 
-	if nocache {
+	if build.NoCache {
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--no-cache")
 	}
-	if squash {
+	if build.Squash {
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--squash")
 	}
 
-	if len(httpProxy) > 0 {
-		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("http_proxy=%s", httpProxy))
+	if len(build.HTTPProxy) > 0 {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("http_proxy=%s", build.HTTPProxy))
 	}
 
-	if len(httpsProxy) > 0 {
-		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("https_proxy=%s", httpsProxy))
+	if len(build.HTTPSProxy) > 0 {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("https_proxy=%s", build.HTTPSProxy))
 	}
 
-	for k, v := range buildArgMap {
+	for _, v := range build.BuildFlags {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, strings.Split(v, " ")...)
+	}
+
+	for k, v := range build.BuildArgMap {
 
 		if k != AdditionalPackageBuildArg {
 			spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
 		} else {
-			buildOptionPackages = append(buildOptionPackages, strings.Split(v, " ")...)
+			build.BuildOptPackages = append(build.BuildOptPackages, strings.Split(v, " ")...)
 		}
 	}
-	if len(buildOptionPackages) > 0 {
-		buildOptionPackages = deDuplicate(buildOptionPackages)
-		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", AdditionalPackageBuildArg, strings.Join(buildOptionPackages, " ")))
+	if len(build.BuildOptPackages) > 0 {
+		build.BuildOptPackages = deDuplicate(build.BuildOptPackages)
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", AdditionalPackageBuildArg, strings.Join(build.BuildOptPackages, " ")))
 	}
 
-	for k, v := range buildLabelMap {
+	for k, v := range build.BuildLabelMap {
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--label", fmt.Sprintf("%s=%s", k, v))
 	}
 
