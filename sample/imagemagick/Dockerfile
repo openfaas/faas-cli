@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3.16.2
 
 # Alternatively use ADD https:// (which will not be cached by Docker builder)
 RUN apk --no-cache add curl ca-certificates imagemagick \ 

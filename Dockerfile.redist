@@ -1,7 +1,7 @@
-FROM teamserverless/license-check:0.3.6 as license-check
+FROM ghcr.io/openfaas/license-check:0.4.1 as license-check
 
 # Build stage
-FROM golang:1.17 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.18 as builder
 
 ARG GIT_COMMIT
 ARG VERSION
@@ -62,7 +62,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w \
        -a -installsuffix cgo -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.13
+FROM alpine:3.16.2
 
 RUN apk --no-cache add ca-certificates git
 

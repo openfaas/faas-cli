@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
@@ -21,7 +22,8 @@ import (
 
 var (
 	// readTemplate controls whether we should read the function's template when deploying.
-	readTemplate bool
+	readTemplate    bool
+	timeoutOverride time.Duration
 )
 
 // DeployFlags holds flags that are to be added to commands.
@@ -71,6 +73,8 @@ func init() {
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 	deployCmd.Flags().BoolVar(&readTemplate, "read-template", true, "Read the function's template")
+
+	deployCmd.Flags().DurationVar(&timeoutOverride, "timeout", commandTimeout, "Timeout for any HTTP calls made to the OpenFaaS API.")
 
 	faasCmd.AddCommand(deployCmd)
 }
@@ -147,14 +151,13 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			return err
 		}
 
-		parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL, os.Getenv(openFaaSURLEnvironment))
-
 		if parsedServices != nil {
+			parsedServices.Provider.GatewayURL = getGatewayURL(gateway, defaultGateway, parsedServices.Provider.GatewayURL, os.Getenv(openFaaSURLEnvironment))
 			services = *parsedServices
 		}
 	}
 
-	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	transport := GetDefaultCLITransport(tlsInsecure, &timeoutOverride)
 	ctx := context.Background()
 
 	var failedStatusCodes = make(map[string]int)
@@ -164,7 +167,8 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 		if err != nil {
 			return err
 		}
-		proxyClient, err := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &commandTimeout)
+
+		proxyClient, err := proxy.NewClient(cliAuth, services.Provider.GatewayURL, transport, &timeoutOverride)
 		if err != nil {
 			return err
 		}
@@ -283,7 +287,7 @@ Error: %s`, fprocessErr.Error())
 		}
 	} else {
 		if len(image) == 0 || len(functionName) == 0 {
-			return fmt.Errorf("To deploy a function give --yaml/-f or a --image and --name flag")
+			return fmt.Errorf("to deploy a function give --yaml/-f or a --image and --name flag")
 		}
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 		cliAuth, err := proxy.NewCLIAuth(token, gateway)
@@ -389,7 +393,7 @@ func mergeSlice(values []string, overlay []string) []string {
 	}
 
 	for _, value := range values {
-		if exists := added[value]; exists == false {
+		if exists := added[value]; !exists {
 			results = append(results, value)
 		}
 	}
@@ -490,26 +494,6 @@ func languageExistsNotDockerfile(language string) bool {
 	return len(language) > 0 && strings.ToLower(language) != "dockerfile"
 }
 
-type authConfig struct {
-	Auth string `json:"auth,omitempty"`
-}
-
-type configFile struct {
-	AuthConfigs      map[string]authConfig `json:"auths"`
-	CredentialsStore string                `json:"credsStore,omitempty"`
-}
-
-const (
-	// docker default settings
-	configFileName        = "config.json"
-	configFileDir         = ".docker"
-	defaultDockerRegistry = "https://index.docker.io/v1/"
-)
-
-var (
-	configDir = os.Getenv("DOCKER_CONFIG")
-)
-
 func deployFailed(status map[string]int) error {
 	if len(status) == 0 {
 		return nil
@@ -517,7 +501,7 @@ func deployFailed(status map[string]int) error {
 
 	var allErrors []string
 	for funcName, funcStatus := range status {
-		err := fmt.Errorf("Function '%s' failed to deploy with status code: %d", funcName, funcStatus)
+		err := fmt.Errorf("function '%s' failed to deploy with status code: %d", funcName, funcStatus)
 		allErrors = append(allErrors, err.Error())
 	}
 	return fmt.Errorf(strings.Join(allErrors, "\n"))

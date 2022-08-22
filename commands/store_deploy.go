@@ -28,6 +28,7 @@ func init() {
 	storeDeployCmd.Flags().StringArrayVarP(&storeDeployFlags.annotationOpts, "annotation", "", []string{}, "Set one or more annotation (ANNOTATION=VALUE)")
 	storeDeployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	storeDeployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	storeDeployCmd.Flags().DurationVar(&timeoutOverride, "timeout", commandTimeout, "Timeout for any HTTP calls made to the OpenFaaS API.")
 
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -119,8 +120,8 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	proxyClient, err := proxy.NewClient(cliAuth, gateway, transport, &commandTimeout)
+	transport := GetDefaultCLITransport(tlsInsecure, &timeoutOverride)
+	proxyClient, err := proxy.NewClient(cliAuth, gateway, transport, &timeoutOverride)
 	if err != nil {
 		return err
 	}
