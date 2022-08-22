@@ -85,7 +85,7 @@ jobs:
            openfaas/faas-cli:${{ steps.get_tag.outputs.TAG }}
       - 
         name: Copy binaries to host
-        run: ./build_redist.sh ${{ steps.get_tag.outputs.TAG }}
+        run: ./extract_binaries.sh ${{ steps.get_tag.outputs.TAG }}
       - 
         name: Create SHA of binaries
         run: cd bin && ../ci/hashgen.sh && cd ../

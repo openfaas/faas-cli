@@ -16,7 +16,7 @@ build:
 
 .PHONY: build_redist
 build_redist:
-	./build_redist.sh
+	./extract_binaries.sh
 
 .PHONY: build_samples
 build_samples:

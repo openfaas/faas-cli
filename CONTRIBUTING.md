@@ -53,7 +53,7 @@ $ make local-install
 To build the release binaries type in:
 
 ```
-./build_redist.sh
+./extract_binaries.sh
 ```
 
 This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
