@@ -27,7 +27,7 @@ const (
 - dockerfile
 - ruby`
 
-	LangNotExistsOutput  = `(?m:is unavailable or not supported)`
+	LangNotExistsOutput  = `(template: \"([0-9A-Za-z-])*\" was not found in the templates directory)`
 	FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
 	NoTemplates          = `no language templates were found.
 
@@ -97,7 +97,7 @@ var NewFunctionTests = []NewFunctionTest{
 	{
 		title:       "invalid_1",
 		funcName:    "new-test-invalid-1",
-		funcLang:    "dockerfilee",
+		funcLang:    "docker",
 		expectedMsg: LangNotExistsOutput,
 	},
 	{
@@ -190,7 +190,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	} else {
 		// Validate new function output
 		if found, err := regexp.MatchString(nft.expectedMsg, execErr.Error()); err != nil || !found {
-			t.Fatalf("Output is not as expected: %s\n", execErr)
+			t.Fatalf("No match for:\n%s\nin\n%s\n", execErr, nft.expectedMsg)
 		}
 	}
 

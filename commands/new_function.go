@@ -129,7 +129,7 @@ Download templates:
 	PullTemplates(templateAddress)
 
 	if !stack.IsValidTemplate(language) {
-		return fmt.Errorf("%s is unavailable or not supported", language)
+		return fmt.Errorf("template: \"%s\" was not found in the templates directory", language)
 	}
 
 	var fileName, outputMsg string
