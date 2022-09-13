@@ -8,8 +8,12 @@
 <!--- If describing a bug, tell us what happens instead of the expected behaviour -->
 <!--- If suggesting a change/improvement, explain the difference from current behaviour -->
 
+<!-- How is this affecting you? What task are you trying to accomplish? -->
+## Why do you need this?
+
 ## Are you a GitHub Sponsor (Yes/No?)
-<!--- Given this request for help, how are you supporting the project? -->
+
+<!-- Issues created by customers or monthly sponsors get priority -->
 
 Check at: https://github.com/sponsors/openfaas
 - [ ] Yes
