@@ -203,15 +203,16 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			imageName := schema.BuildImageName(format, function.Image, version, branch)
 
 			spec := openfaasv1.Spec{
-				Name:        name,
-				Image:       imageName,
-				Environment: allEnvironment,
-				Labels:      function.Labels,
-				Annotations: function.Annotations,
-				Limits:      function.Limits,
-				Requests:    function.Requests,
-				Constraints: function.Constraints,
-				Secrets:     function.Secrets,
+				Name:                   name,
+				Image:                  imageName,
+				Environment:            allEnvironment,
+				Labels:                 function.Labels,
+				Annotations:            function.Annotations,
+				Limits:                 function.Limits,
+				Requests:               function.Requests,
+				Constraints:            function.Constraints,
+				Secrets:                function.Secrets,
+				ReadOnlyRootFilesystem: function.ReadOnlyRootFilesystem,
 			}
 
 			crd := openfaasv1.CRD{
