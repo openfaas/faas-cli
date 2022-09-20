@@ -202,6 +202,35 @@ spec:
 		Branch:     "",
 		Version:    "",
 	},
+	{
+		Name: "Read-only root filesystem",
+		Input: `
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+ url-ping:
+  lang: python
+  handler: ./sample/url-ping
+  image: alexellis/faas-url-ping:0.2
+  readonly_root_filesystem: true`,
+		Output: []string{`---
+apiVersion: openfaas.com/v1
+kind: Function
+metadata:
+  name: url-ping
+  namespace: openfaas-fn
+spec:
+  name: url-ping
+  image: alexellis/faas-url-ping:0.2
+  readOnlyRootFilesystem: true
+`},
+		Format:     schema.DefaultFormat,
+		APIVersion: "openfaas.com/v1",
+		Namespace:  "openfaas-fn",
+		Branch:     "",
+		Version:    "",
+	},
 }
 
 func Test_generateCRDYAML(t *testing.T) {

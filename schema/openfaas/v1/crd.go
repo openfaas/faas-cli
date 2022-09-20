@@ -34,6 +34,8 @@ type Spec struct {
 
 	//Secrets list of secrets to be made available to function
 	Secrets []string `yaml:"secrets,omitempty"`
+
+	ReadOnlyRootFilesystem bool `yaml:"readOnlyRootFilesystem,omitempty"`
 }
 
 //CRD root level YAML definition for the object
