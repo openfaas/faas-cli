@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -225,6 +226,15 @@ func printMap(w io.Writer, name string, m map[string]string, verbose bool) {
 	}
 
 	fmt.Fprintf(w, "%s:\n", name)
+
+	if name == "Environment" {
+		orderedKeys := generateMapOrder(m)
+		for _, keyName := range orderedKeys {
+			fmt.Fprintln(w, "\t "+keyName+": "+m[keyName])
+		}
+		return
+	}
+
 	for key, value := range m {
 		fmt.Fprintln(w, "\t "+key+": "+value)
 	}
@@ -285,4 +295,17 @@ func isEmpty(a interface{}) bool {
 		return v.IsNil()
 	}
 	return false
+}
+
+func generateMapOrder(m map[string]string) []string {
+
+	var keyNames []string
+
+	for keyName := range m {
+		keyNames = append(keyNames, keyName)
+	}
+
+	sort.Strings(keyNames)
+
+	return keyNames
 }

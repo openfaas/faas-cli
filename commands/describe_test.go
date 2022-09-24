@@ -148,3 +148,56 @@ func TestDescribeOuput(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateMapOrder(t *testing.T) {
+	var generateMapOrderTestcases = []struct {
+		Name       string
+		Input      map[string]string
+		Output     []string
+		expectFail bool
+	}{
+		{
+			Name: "One item",
+			Input: map[string]string{
+				"AAA": "aaa",
+			},
+			Output:     []string{"AAA"},
+			expectFail: false,
+		},
+		{
+			Name: "Multiple items",
+			Input: map[string]string{
+				"AAA": "aaa",
+				"BBB": "bbb",
+				"CCC": "ccc",
+				"DDD": "ddd",
+			},
+			Output:     []string{"AAA", "BBB", "CCC", "DDD"},
+			expectFail: false,
+		},
+		{
+			Name: "Multiple items but use a value",
+			Input: map[string]string{
+				"AAA": "aaa",
+				"BBB": "bbb",
+				"CCC": "ccc",
+				"DDD": "ddd",
+			},
+			Output:     []string{"AAA", "BBB", "CCC", "ddd"},
+			expectFail: true,
+		},
+	}
+	for _, testcase := range generateMapOrderTestcases {
+		orderedSlice := generateMapOrder(testcase.Input)
+		if len(orderedSlice) != len(testcase.Output) {
+			t.Errorf("Slice sizes do not match: %s", testcase.Name)
+			t.Fail()
+		}
+		for i, v := range testcase.Output {
+			if v != orderedSlice[i] && !testcase.expectFail {
+				t.Errorf("Exected %s got %s: %s", v, orderedSlice[i], testcase.Name)
+				t.Fail()
+			}
+		}
+	}
+}
