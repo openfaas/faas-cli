@@ -120,6 +120,22 @@ func TestDescribeOuput(t *testing.T) {
 			verbose:        false,
 			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nUsage:\n\tRAM:\t1024.00 MB\n\tCPU:\t2 Mi\n",
 		},
+		{
+			name: "Multiple env variables",
+			function: schema.FunctionDescription{
+				FunctionStatus: types.FunctionStatus{
+					Name:        "figlet",
+					Image:       "openfaas/figlet:latest",
+					Labels:      &map[string]string{"quadrant": "alpha"},
+					Annotations: &map[string]string{},
+					EnvVars:     map[string]string{"DDD": "ddd", "AAA": "aaa", "BBB": "bbb", "CCC": "ccc"},
+					Secrets:     []string{"db-password"},
+				},
+				Status: "Ready",
+			},
+			verbose:        true,
+			expectedOutput: "Name:\tfiglet\nStatus:\tReady\nReplicas:\t0\nAvailable Replicas: 0\nInvocations:\t0\nImage:\topenfaas/figlet:latest\nFunction Process:\t<default>\nURL:\t<none>\nAsync URL:\t<none>\nLabels:\n quadrant: alpha\nAnnotations:\t<none>\nConstraints:\t<none>\nEnvironment:\n AAA: aaa\n BBB: bbb\n CCC: ccc\n DDD: ddd\nSecrets:\n - db-password\nRequests:\t<none>\nLimits:\t<none>\nUsage:\t<none>\n",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
