@@ -68,7 +68,8 @@ func runVersionE(cmd *cobra.Command, args []string) error {
 		version := version.Version
 		latest, err := findRelease(releases)
 		if err != nil {
-			return fmt.Errorf("unable to find latest version online error: %s", err.Error())
+			fmt.Printf("Unable to determine from GitHub whether a later CLI version is available.\n")
+			return nil
 		}
 
 		if version != "" && version != latest {
