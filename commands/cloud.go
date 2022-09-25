@@ -216,7 +216,7 @@ func findRelease(url string) (string, error) {
 
 	loc := res.Header.Get("Location")
 	if len(loc) == 0 {
-		return "", fmt.Errorf("unable to determine release of kubeseal")
+		return "", fmt.Errorf("unable to determine release from %s", url)
 	}
 	version := loc[strings.LastIndex(loc, "/")+1:]
 	return version, nil
