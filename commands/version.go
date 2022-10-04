@@ -11,6 +11,7 @@ import (
 
 	"os"
 
+	"github.com/alexellis/arkade/pkg/get"
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/stack"
@@ -50,23 +51,21 @@ This currently consists of the GitSHA from which the client was built.
 }
 
 func runVersionE(cmd *cobra.Command, args []string) error {
-	releases := "https://github.com/openfaas/faas-cli/releases/latest"
-
 	if shortVersion {
 		fmt.Println(version.BuildVersion())
+		return nil
+	}
 
-	} else {
-		printLogo()
-		fmt.Printf(`CLI:
+	printLogo()
+	fmt.Printf(`CLI:
  commit:  %s
  version: %s
 `, version.GitCommit, version.BuildVersion())
-		printServerVersions()
-	}
+	printServerVersions()
 
 	if warnUpdate {
 		version := version.Version
-		latest, err := findRelease(releases)
+		latest, err := get.FindGitHubRelease("openfaas", "faas-cli")
 		if err != nil {
 			return fmt.Errorf("unable to find latest version online error: %s", err.Error())
 		}

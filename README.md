@@ -350,47 +350,6 @@ $ uname -a | curl http://127.0.0.1:8080/function/nodejs-echo--data-binary @-
 
 > For further instructions on the manual CLI flags (without using a YAML file) read [manual_cli.md](https://github.com/openfaas/faas-cli/blob/master/MANUAL_CLI.md)
 
-### OpenFaaS Cloud (extensions)
-
-[OpenFaaS Cloud](https://github.com/openfaas/openfaas-cloud) provides a GitOps experience for functions on Kubernetes.
-
-Commands:
-
-* `seal`
-
-You can use the CLI to seal a secret for usage on public Git repo. The pre-requisite is that you have installed [SealedSecrets](https://github.com/bitnami-labs/sealed-secrets) and exported your public key from your cluster as `pub-cert.pem`.
-
-Install `kubeseal` using `faas-cli` or the [SealedSecrets docs](https://github.com/bitnami-labs/sealed-secrets):
-
-```sh
-$ faas-cli cloud seal --download
-```
-
-You can also download a specific version:
-
-```sh
-$ faas-cli cloud seal --download --download-version v0.8.0
-```
-
-Now grab your pub-cert.pem file from your cluster, or use the official [OpenFaaS Cloud certificate](https://github.com/openfaas/cloud-functions/blob/master/pub-cert.pem).
-
-```sh
-$ kubeseal --fetch-cert --controller-name ofc-sealedsecrets-sealed-secrets > pub-cert.pem
-```
-
-Then seal a secret using the OpenFaaS CLI:
-
-```bash
-$ faas-cli cloud seal --name alexellis-github \
-  --literal hmac-secret=1234 --cert=pub-cert.pem
-```
-
-You can then place the `secrets.yml` file in any public Git repo without others being able to read the contents.
-
-When SealedSecrets is installed by ofc-bootstrap
-
-The [scripts/export-sealed-secret-pubcert.sh](https://github.com/openfaas-incubator/ofc-bootstrap/blob/master/scripts/export-sealed-secret-pubcert.sh) does everything automatically.
-
 ### Environment variable overrides
 
 * `OPENFAAS_TEMPLATE_URL` - to set the default URL to pull templates from
