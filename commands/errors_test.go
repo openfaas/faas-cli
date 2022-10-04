@@ -39,7 +39,7 @@ func Test_checkTLSInsecure(t *testing.T) {
 			got := checkTLSInsecure(tt.args.gateway, tt.args.tlsInsecure)
 
 			if got != tt.want {
-				t.Errorf("[%s] want: %v, but got: %v", name, tt.want, got)
+				t.Errorf("[%s] want: %v, but got: %v", tt.name, tt.want, got)
 			}
 		})
 	}
