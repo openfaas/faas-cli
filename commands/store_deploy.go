@@ -57,14 +57,19 @@ var storeDeployCmd = &cobra.Command{
   faas-cli store deploy figlet \
     --gateway=http://127.0.0.1:8080 \
     --env=MYVAR=myval`,
-	RunE: runStoreDeploy,
+	RunE:    runStoreDeploy,
+	PreRunE: preRunEStoreDeploy,
 }
 
-func runStoreDeploy(cmd *cobra.Command, args []string) error {
+func preRunEStoreDeploy(cmd *cobra.Command, args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("please provide the function name")
 	}
 
+	return nil
+}
+
+func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	targetPlatform := getTargetPlatform(platformValue)
 	storeItems, err := storeList(storeAddress)
 	if err != nil {
@@ -79,13 +84,21 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found for platform '%s'", requestedStoreFn, targetPlatform)
 	}
 
-	// Add the store environment variables to the provided ones from cmd
-	if item.Environment != nil {
-		for k, v := range item.Environment {
-			env := fmt.Sprintf("%s=%s", k, v)
-			storeDeployFlags.envvarOpts = append(storeDeployFlags.envvarOpts, env)
-		}
+	flagEnvs, err := parseMap(storeDeployFlags.envvarOpts, "env")
+	if err != nil {
+		return err
 	}
+
+	// Add the store environment variables to the provided ones from cmd
+	mergedEnvs := mergeMap(item.Environment, flagEnvs)
+
+	envs := []string{}
+	for k, v := range mergedEnvs {
+		env := fmt.Sprintf("%s=%s", k, v)
+		storeDeployFlags.envvarOpts = append(envs, env)
+	}
+
+	storeDeployFlags.envvarOpts = envs
 
 	// Add the store labels to the provided ones from cmd
 	if item.Labels != nil {

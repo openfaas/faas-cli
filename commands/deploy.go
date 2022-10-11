@@ -444,15 +444,18 @@ func parseMap(envvars []string, keyName string) (map[string]string, error) {
 	return result, nil
 }
 
-func mergeMap(i map[string]string, j map[string]string) map[string]string {
+// mergeMap merges two maps, with the overlay taking precedence.
+// The return value allocates a new map.
+func mergeMap(base map[string]string, overlay map[string]string) map[string]string {
 	merged := make(map[string]string)
 
-	for k, v := range i {
+	for k, v := range base {
 		merged[k] = v
 	}
-	for k, v := range j {
+	for k, v := range overlay {
 		merged[k] = v
 	}
+
 	return merged
 }
 
