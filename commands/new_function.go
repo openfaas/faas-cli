@@ -126,7 +126,7 @@ Download templates:
 	}
 
 	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	PullTemplates(templateAddress)
+	pullTemplates(templateAddress)
 
 	if !stack.IsValidTemplate(language) {
 		return fmt.Errorf("template: \"%s\" was not found in the templates directory", language)

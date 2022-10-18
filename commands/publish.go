@@ -20,6 +20,7 @@ var (
 	platforms string
 	extraTags []string
 	resetQemu bool
+	mountSSH  bool
 )
 
 func init() {
@@ -44,7 +45,6 @@ func init() {
 	publishCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
 	publishCmd.Flags().StringVar(&platforms, "platforms", "linux/amd64", "A set of platforms to publish")
 	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{}, "Additional extra image tag")
-
 	publishCmd.Flags().BoolVar(&resetQemu, "reset-qemu", false, "Runs \"docker run multiarch/qemu-user-static --reset -p yes\" to enable multi-arch builds. Compatible with AMD64 machines only.")
 
 	// Set bash-completion.
@@ -59,7 +59,7 @@ var publishCmd = &cobra.Command{
   faas-cli publish --image IMAGE_NAME
                    --handler HANDLER_DIR
                    --name FUNCTION_NAME
-                   [--lang <ruby|python|python3|node|csharp|dockerfile>]
+                   [--lang LANG]
                    [--no-cache] [--squash]
                    [--regex "REGEX"]
                    [--filter "WILDCARD"]
@@ -69,7 +69,7 @@ var publishCmd = &cobra.Command{
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
                    [--platforms linux/arm/v7]
-				   [--resetQemu]`,
+                   [--reset-qemu]`,
 	Short: "Builds and pushes multi-arch OpenFaaS container images",
 	Long: `Builds and pushes multi-arch OpenFaaS container images using Docker buildx.
 Most users will want faas-cli build or faas-cli up for development and testing.
@@ -131,7 +131,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	}
 
 	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	if pullErr := PullTemplates(templateAddress); pullErr != nil {
+	if pullErr := pullTemplates(templateAddress); pullErr != nil {
 		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 	}
 
@@ -187,7 +187,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	errors := publish(&services, parallel, shrinkwrap, quietBuild)
+	errors := publish(&services, parallel, shrinkwrap, quietBuild, mountSSH)
 	if len(errors) > 0 {
 		errorSummary := "Errors received during build:\n"
 		for _, err := range errors {
@@ -198,7 +198,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool) []error {
+func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild, mountSSH bool) []error {
 	startOuter := time.Now()
 
 	errors := []error{}

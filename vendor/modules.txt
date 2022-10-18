@@ -5,7 +5,7 @@ github.com/Azure/go-ansiterm/winterm
 # github.com/VividCortex/ewma v1.2.0
 ## explicit; go 1.12
 github.com/VividCortex/ewma
-# github.com/alexellis/arkade v0.0.0-20220922114024-7b7ade38cff9
+# github.com/alexellis/arkade v0.0.0-20221017065732-2e42683df1e6
 ## explicit; go 1.17
 github.com/alexellis/arkade/pkg/archive
 github.com/alexellis/arkade/pkg/config
@@ -32,21 +32,17 @@ github.com/drone/envsubst/path
 # github.com/fatih/color v1.13.0
 ## explicit; go 1.13
 github.com/fatih/color
-# github.com/google/go-cmp v0.5.8
+# github.com/google/go-cmp v0.5.9
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
 github.com/google/go-cmp/cmp/internal/function
 github.com/google/go-cmp/cmp/internal/value
-# github.com/gotestyourself/gotestyourself v1.4.0
-## explicit
-# github.com/inconshreveable/mousetrap v1.0.0
-## explicit
+# github.com/inconshreveable/mousetrap v1.0.1
+## explicit; go 1.18
 github.com/inconshreveable/mousetrap
-# github.com/konsorten/go-windows-terminal-sequences v1.0.3
-## explicit
-# github.com/kr/pretty v0.1.0
+# github.com/kr/text v0.2.0
 ## explicit
 # github.com/mattn/go-colorable v0.1.12
 ## explicit; go 1.13
@@ -70,13 +66,13 @@ github.com/morikuni/aec
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
-# github.com/openfaas/faas-provider v0.19.0
+# github.com/openfaas/faas-provider v0.19.1
 ## explicit; go 1.17
 github.com/openfaas/faas-provider/httputil
 github.com/openfaas/faas-provider/logs
 github.com/openfaas/faas-provider/types
-# github.com/openfaas/faas/gateway v0.0.0-20220805080331-b87b96ae456e
-## explicit; go 1.17
+# github.com/openfaas/faas/gateway v0.0.0-20221013075423-32b828b25e1c
+## explicit; go 1.18
 github.com/openfaas/faas/gateway/requests
 github.com/openfaas/faas/gateway/types
 # github.com/pkg/errors v0.9.1
@@ -88,25 +84,21 @@ github.com/rivo/uniseg
 # github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
-# github.com/sirupsen/logrus v1.9.0
-## explicit; go 1.13
-# github.com/spf13/cobra v1.5.0
+# github.com/spf13/cobra v1.6.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
-# github.com/stretchr/testify v1.7.0
-## explicit; go 1.13
-# golang.org/x/sys v0.0.0-20220804214406-8e32c043e418
+# golang.org/x/sys v0.0.0-20220823224334-20c2bfdbfe24
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
-## explicit
+# gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c
+## explicit; go 1.11
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gotest.tools v1.4.0
-## explicit
+# gotest.tools/v3 v3.0.3
+## explicit; go 1.11

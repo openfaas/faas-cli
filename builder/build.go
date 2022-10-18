@@ -37,6 +37,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("error reading language template: %s", err.Error())
 		}
 
+		mountSSH := false
+		if langTemplate.MountSSH {
+			mountSSH = true
+		}
+
 		branch, version, err := GetImageTagValues(tagMode)
 		if err != nil {
 			return err
@@ -75,15 +80,22 @@ func BuildImage(image string, handler string, functionName string, language stri
 			BuildArgMap:      buildArgMap,
 			BuildOptPackages: buildOptPackages,
 			BuildLabelMap:    buildLabelMap,
+			MountSSH:         mountSSH,
 		}
 
 		command, args := getDockerBuildCommand(dockerBuildVal)
+
+		envs := os.Environ()
+		if mountSSH {
+			envs = append(envs, "DOCKER_BUILDKIT=1")
+		}
 
 		task := v1execute.ExecTask{
 			Cwd:         tempPath,
 			Command:     command,
 			Args:        args,
 			StreamStdio: !quietBuild,
+			Env:         envs,
 		}
 
 		res, err := task.Execute()
@@ -146,6 +158,10 @@ func getDockerBuildCommand(build dockerBuild) (string, []string) {
 
 	args = append(args, "--tag", build.Image, ".")
 
+	if build.MountSSH {
+		args = append(args, "--ssh", "default")
+	}
+
 	command := "docker"
 
 	return command, args
@@ -167,6 +183,8 @@ type dockerBuild struct {
 
 	// ExtraTags for published images like :latest
 	ExtraTags []string
+
+	MountSSH bool
 }
 
 var defaultDirPermissions os.FileMode = 0700

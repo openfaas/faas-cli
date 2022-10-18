@@ -19,7 +19,7 @@ func Test_PullTemplates(t *testing.T) {
 
 	t.Run("simplePull", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
-		if err := PullTemplates(localTemplateRepository); err != nil {
+		if err := pullTemplates(localTemplateRepository); err != nil {
 			t.Error(err)
 		}
 	})

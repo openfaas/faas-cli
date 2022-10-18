@@ -162,11 +162,21 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	if pullErr := PullTemplates(templateAddress); pullErr != nil {
-		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
-	}
+	if len(services.StackConfiguration.TemplateConfigs) > 0 && !disableStackPull {
+		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
+		if err != nil {
+			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
+		}
 
+		if err = pullStackTemplates(newTemplateInfos, cmd); err != nil {
+			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
+		}
+	} else {
+		templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
+		if pullErr := pullTemplates(templateAddress); pullErr != nil {
+			return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
+		}
+	}
 	if len(services.Functions) == 0 {
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
@@ -195,18 +205,6 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		return nil
-	}
-
-	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
-		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
-		if err != nil {
-			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
-		}
-
-		err = pullStackTemplates(newTemplateInfos, cmd)
-		if err != nil {
-			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
-		}
 	}
 
 	errors := build(&services, parallel, shrinkwrap, quietBuild)
@@ -290,8 +288,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 	return errors
 }
 
-// PullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
-func PullTemplates(templateURL string) error {
+// pullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
+func pullTemplates(templateURL string) error {
 	var err error
 	exists, err := os.Stat("./template")
 	if err != nil || exists == nil {
@@ -308,7 +306,5 @@ func PullTemplates(templateURL string) error {
 }
 
 func combineBuildOpts(YAMLBuildOpts []string, buildFlagBuildOpts []string) []string {
-
 	return mergeSlice(YAMLBuildOpts, buildFlagBuildOpts)
-
 }
