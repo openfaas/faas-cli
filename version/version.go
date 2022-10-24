@@ -1,7 +1,5 @@
 package version
 
-const UserAgent = "OpenFaaS CLI"
-
 var (
 	Version, GitCommit string
 )
