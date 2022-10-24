@@ -11,9 +11,11 @@ import (
 	gopath "path"
 	"strings"
 	"time"
+
+	"github.com/openfaas/faas-cli/version"
 )
 
-//Client an API client to perform all operations
+// Client an API client to perform all operations
 type Client struct {
 	httpClient *http.Client
 	//ClientAuth a type implementing ClientAuth interface for client authentication
@@ -24,13 +26,13 @@ type Client struct {
 	UserAgent string
 }
 
-//ClientAuth an interface for client authentication.
+// ClientAuth an interface for client authentication.
 // to add authentication to the client implement this interface
 type ClientAuth interface {
 	Set(req *http.Request) error
 }
 
-//NewClient initializes a new API client
+// NewClient initializes a new API client
 func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, timeout *time.Duration) (*Client, error) {
 	gatewayURL = strings.TrimRight(gatewayURL, "/")
 	baseURL, err := url.Parse(gatewayURL)
@@ -51,10 +53,11 @@ func NewClient(auth ClientAuth, gatewayURL string, transport http.RoundTripper, 
 		ClientAuth: auth,
 		httpClient: client,
 		GatewayURL: baseURL,
+		UserAgent:  fmt.Sprintf("faas-cli/%s", version.BuildVersion()),
 	}, nil
 }
 
-//newRequest create a new HTTP request with authentication
+// newRequest create a new HTTP request with authentication
 func (c *Client) newRequest(method, path string, query url.Values, body io.Reader) (*http.Request, error) {
 
 	// deep copy gateway url and then add the supplied path  and args to the copy so that
@@ -85,7 +88,7 @@ func (c *Client) newRequest(method, path string, query url.Values, body io.Reade
 	return req, err
 }
 
-//doRequest perform an HTTP request with context
+// doRequest perform an HTTP request with context
 func (c *Client) doRequest(ctx context.Context, req *http.Request) (*http.Response, error) {
 	req = req.WithContext(ctx)
 
@@ -123,7 +126,7 @@ func addQueryParams(u string, params map[string]string) (string, error) {
 	return parsedURL.String(), nil
 }
 
-//AddCheckRedirect add CheckRedirect to the client
+// AddCheckRedirect add CheckRedirect to the client
 func (c *Client) AddCheckRedirect(checkRedirect func(*http.Request, []*http.Request) error) {
 	c.httpClient.CheckRedirect = checkRedirect
 }
