@@ -62,6 +62,9 @@ type Function struct {
 
 	// Platforms for use with buildx and faas-cli publish
 	Platforms string `yaml:"platforms,omitempty"`
+
+	// BuildSecrets is a set of secrets to mount with buildkit
+	BuildSecrets map[string]string `yaml:"build_secrets,omitempty"`
 }
 
 // Configuration for the stack.yml file

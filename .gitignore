@@ -25,3 +25,5 @@ template
 
 *.pem
 secrets.yml
+
+/withprivate*

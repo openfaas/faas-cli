@@ -16,6 +16,8 @@ import (
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/util"
+
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
 )
@@ -188,7 +190,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 			}
 
 			if len(function.Secrets) > 0 {
-				functionSecrets = mergeSlice(function.Secrets, functionSecrets)
+				functionSecrets = util.MergeSlice(function.Secrets, functionSecrets)
 			}
 
 			// Check if there is a functionNamespace flag passed, if so, override the namespace value
@@ -205,12 +207,12 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 				labelMap = *function.Labels
 			}
 
-			labelArgumentMap, labelErr := parseMap(deployFlags.labelOpts, "label")
+			labelArgumentMap, labelErr := util.ParseMap(deployFlags.labelOpts, "label")
 			if labelErr != nil {
 				return fmt.Errorf("error parsing labels: %v", labelErr)
 			}
 
-			allLabels := mergeMap(labelMap, labelArgumentMap)
+			allLabels := util.MergeMap(labelMap, labelArgumentMap)
 
 			allEnvironment, envErr := compileEnvironment(deployFlags.envvarOpts, function.Environment, fileEnvironment)
 			if envErr != nil {
@@ -240,12 +242,12 @@ Error: %s`, fprocessErr.Error())
 				annotations = *function.Annotations
 			}
 
-			annotationArgs, annotationErr := parseMap(deployFlags.annotationOpts, "annotation")
+			annotationArgs, annotationErr := util.ParseMap(deployFlags.annotationOpts, "annotation")
 			if annotationErr != nil {
 				return fmt.Errorf("error parsing annotations: %v", annotationErr)
 			}
 
-			allAnnotations := mergeMap(annotations, annotationArgs)
+			allAnnotations := util.MergeMap(annotations, annotationArgs)
 
 			branch, sha, err := builder.GetImageTagValues(tagMode)
 			if err != nil {
@@ -337,19 +339,19 @@ func deployImage(
 
 	var statusCode int
 	readOnlyRFS := deployFlags.readOnlyRootFilesystem || readOnlyRootFilesystem
-	envvars, err := parseMap(deployFlags.envvarOpts, "env")
+	envvars, err := util.ParseMap(deployFlags.envvarOpts, "env")
 
 	if err != nil {
 		return statusCode, fmt.Errorf("error parsing envvars: %v", err)
 	}
 
-	labelMap, labelErr := parseMap(deployFlags.labelOpts, "label")
+	labelMap, labelErr := util.ParseMap(deployFlags.labelOpts, "label")
 
 	if labelErr != nil {
 		return statusCode, fmt.Errorf("error parsing labels: %v", labelErr)
 	}
 
-	annotationMap, annotationErr := parseMap(deployFlags.annotationOpts, "annotation")
+	annotationMap, annotationErr := util.ParseMap(deployFlags.annotationOpts, "annotation")
 
 	if annotationErr != nil {
 		return statusCode, fmt.Errorf("error parsing annotations: %v", annotationErr)
@@ -384,23 +386,6 @@ func deployImage(
 	return statusCode, nil
 }
 
-func mergeSlice(values []string, overlay []string) []string {
-	results := []string{}
-	added := make(map[string]bool)
-	for _, value := range overlay {
-		results = append(results, value)
-		added[value] = true
-	}
-
-	for _, value := range values {
-		if exists := added[value]; !exists {
-			results = append(results, value)
-		}
-	}
-
-	return results
-}
-
 func readFiles(files []string) (map[string]string, error) {
 	envs := make(map[string]string)
 
@@ -422,51 +407,14 @@ func readFiles(files []string) (map[string]string, error) {
 	return envs, nil
 }
 
-func parseMap(envvars []string, keyName string) (map[string]string, error) {
-	result := make(map[string]string)
-	for _, envvar := range envvars {
-		s := strings.SplitN(strings.TrimSpace(envvar), "=", 2)
-		if len(s) != 2 {
-			return nil, fmt.Errorf("label format is not correct, needs key=value")
-		}
-		envvarName := s[0]
-		envvarValue := s[1]
-
-		if !(len(envvarName) > 0) {
-			return nil, fmt.Errorf("empty %s name: [%s]", keyName, envvar)
-		}
-		if !(len(envvarValue) > 0) {
-			return nil, fmt.Errorf("empty %s value: [%s]", keyName, envvar)
-		}
-
-		result[envvarName] = envvarValue
-	}
-	return result, nil
-}
-
-// mergeMap merges two maps, with the overlay taking precedence.
-// The return value allocates a new map.
-func mergeMap(base map[string]string, overlay map[string]string) map[string]string {
-	merged := make(map[string]string)
-
-	for k, v := range base {
-		merged[k] = v
-	}
-	for k, v := range overlay {
-		merged[k] = v
-	}
-
-	return merged
-}
-
 func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, fileEnvironment map[string]string) (map[string]string, error) {
-	envvarArguments, err := parseMap(envvarOpts, "env")
+	envvarArguments, err := util.ParseMap(envvarOpts, "env")
 	if err != nil {
 		return nil, fmt.Errorf("error parsing envvars: %v", err)
 	}
 
-	functionAndStack := mergeMap(yamlEnvironment, fileEnvironment)
-	return mergeMap(functionAndStack, envvarArguments), nil
+	functionAndStack := util.MergeMap(yamlEnvironment, fileEnvironment)
+	return util.MergeMap(functionAndStack, envvarArguments), nil
 }
 
 func deriveFprocess(function stack.Function) (string, error) {

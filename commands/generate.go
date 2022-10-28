@@ -16,15 +16,16 @@ import (
 	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1"
 	openfaasv1 "github.com/openfaas/faas-cli/schema/openfaas/v1"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/util"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
+
 	yaml "gopkg.in/yaml.v2"
 )
 
 const (
-	defaultFunctionNamespace = ""
-	resourceKind             = "Function"
-	defaultAPIVersion        = "openfaas.com/v1"
+	resourceKind      = "Function"
+	defaultAPIVersion = "openfaas.com/v1"
 )
 
 var (
@@ -94,7 +95,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 	var annotations map[string]string
 
-	annotations, annotationErr := parseMap(annotationArgs, "annotation")
+	annotations, annotationErr := util.ParseMap(annotationArgs, "annotation")
 	if annotationErr != nil {
 		return fmt.Errorf("error parsing annotations: %v", annotationErr)
 	}
@@ -128,7 +129,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			return errors.New(fmt.Sprintf("image for %s not found in store. \noptions: %s", desiredArch, keys))
 		}
 
-		allAnnotations := mergeMap(item.Annotations, annotations)
+		allAnnotations := util.MergeMap(item.Annotations, annotations)
 
 		services.Functions[item.Name] = stack.Function{
 			Name:        item.Name,

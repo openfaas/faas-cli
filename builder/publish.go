@@ -29,11 +29,6 @@ func PublishImage(image string, handler string, functionName string, language st
 			return fmt.Errorf("error reading language template: %s", err.Error())
 		}
 
-		mountSSH := false
-		if langTemplate.MountSSH {
-			mountSSH = true
-		}
-
 		branch, version, err := GetImageTagValues(tagMode)
 		if err != nil {
 			return err
@@ -74,7 +69,6 @@ func PublishImage(image string, handler string, functionName string, language st
 			BuildLabelMap:    buildLabelMap,
 			Platforms:        platforms,
 			ExtraTags:        extraTags,
-			MountSSH:         mountSSH,
 		}
 
 		command, args := getDockerBuildxCommand(dockerBuildVal)
@@ -128,10 +122,6 @@ func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 			tag = applyTag(len(build.Image)-1, build.Image, t)
 		}
 		args = append(args, "--tag", tag)
-	}
-
-	if build.MountSSH {
-		args = append(args, "--ssh", "default")
 	}
 
 	command := "docker"

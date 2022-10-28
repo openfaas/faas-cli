@@ -15,6 +15,8 @@ import (
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/util"
+
 	"github.com/openfaas/faas-cli/versioncontrol"
 	"github.com/spf13/cobra"
 )
@@ -108,7 +110,7 @@ func preRunBuild(cmd *cobra.Command, args []string) error {
 		buildArgMap = mapped
 	}
 
-	buildLabelMap, err = parseMap(buildLabels, "build-label")
+	buildLabelMap, err = util.ParseMap(buildLabels, "build-label")
 
 	if parallel < 1 {
 		return fmt.Errorf("the --parallel flag must be great than 0")
@@ -238,8 +240,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					combinedBuildArgMap := mergeMap(function.BuildArgs, buildArgMap)
-					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
+					combinedBuildArgMap := util.MergeMap(function.BuildArgs, buildArgMap)
+					combinedExtraPaths := util.MergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
 					err := builder.BuildImage(function.Image,
 						function.Handler,
 						function.Name,
@@ -306,5 +308,5 @@ func pullTemplates(templateURL string) error {
 }
 
 func combineBuildOpts(YAMLBuildOpts []string, buildFlagBuildOpts []string) []string {
-	return mergeSlice(YAMLBuildOpts, buildFlagBuildOpts)
+	return util.MergeSlice(YAMLBuildOpts, buildFlagBuildOpts)
 }

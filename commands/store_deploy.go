@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/openfaas/faas-cli/util"
+
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
@@ -84,13 +86,13 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found for platform '%s'", requestedStoreFn, targetPlatform)
 	}
 
-	flagEnvs, err := parseMap(storeDeployFlags.envvarOpts, "env")
+	flagEnvs, err := util.ParseMap(storeDeployFlags.envvarOpts, "env")
 	if err != nil {
 		return err
 	}
 
 	// Add the store environment variables to the provided ones from cmd
-	mergedEnvs := mergeMap(item.Environment, flagEnvs)
+	mergedEnvs := util.MergeMap(item.Environment, flagEnvs)
 
 	envs := []string{}
 	for k, v := range mergedEnvs {

@@ -5,8 +5,11 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path"
 	"strings"
+	"syscall"
 
 	"github.com/docker/docker/pkg/term"
 	"github.com/openfaas/faas-cli/version"
@@ -68,13 +71,42 @@ func init() {
 	_ = faasCmd.PersistentFlags().SetAnnotation("yaml", cobra.BashCompFilenameExt, validYAMLFilenames)
 }
 
-// Execute TODO
 func Execute(customArgs []string) {
 	checkAndSetDefaultYaml()
 
 	faasCmd.SilenceUsage = true
 	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
+
+	args1 := os.Args[1:]
+	cmd1, _, _ := faasCmd.Find(args1)
+
+	plugins, err := getPlugins()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if cmd1 != nil && len(args1) > 0 && args1[0] == "pro" {
+
+		found := ""
+		for _, plugin := range plugins {
+			if path.Base(plugin) == args1[0] {
+				found = plugin
+			}
+		}
+		if len(found) == 0 {
+			log.Fatalf("Plugin %s not found", args1[0])
+			os.Exit(0)
+		}
+
+		// if we have found the plugin then sysexec it by replacing current process.
+		if err := syscall.Exec(found, append([]string{found}, os.Args[2:]...), os.Environ()); err != nil {
+			fmt.Fprintf(os.Stderr, "Error from plugin: %v", err)
+			os.Exit(127)
+		}
+		return
+	}
+
 	if err := faasCmd.Execute(); err != nil {
 		e := err.Error()
 		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
@@ -103,4 +135,24 @@ Manage your OpenFaaS functions from the command line`,
 func runFaas(cmd *cobra.Command, args []string) {
 	printLogo()
 	cmd.Help()
+}
+
+func getPlugins() ([]string, error) {
+	plugins := []string{}
+	pluginHome := os.ExpandEnv("$HOME/.openfaas/plugins")
+
+	if _, err := os.Stat(pluginHome); err != nil && os.IsNotExist(err) {
+		return plugins, nil
+	}
+
+	res, err := os.ReadDir(pluginHome)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, file := range res {
+		plugins = append(plugins, path.Join(pluginHome, file.Name()))
+	}
+
+	return plugins, nil
 }

@@ -12,6 +12,7 @@ const (
 	openFaaSURLEnvironment      = "OPENFAAS_URL"
 	templateURLEnvironment      = "OPENFAAS_TEMPLATE_URL"
 	templateStoreURLEnvironment = "OPENFAAS_TEMPLATE_STORE_URL"
+	defaultFunctionNamespace    = ""
 )
 
 func getGatewayURL(argumentURL, defaultURL, yamlURL, environmentURL string) string {

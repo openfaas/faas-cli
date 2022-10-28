@@ -11,6 +11,8 @@ import (
 
 	v1execute "github.com/alexellis/go-execute/pkg/v1"
 	"github.com/morikuni/aec"
+	"github.com/openfaas/faas-cli/util"
+
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
@@ -103,7 +105,7 @@ func preRunPublish(cmd *cobra.Command, args []string) error {
 		buildArgMap = mapped
 	}
 
-	buildLabelMap, err = parseMap(buildLabels, "build-label")
+	buildLabelMap, err = util.ParseMap(buildLabels, "build-label")
 
 	if parallel < 1 {
 		return fmt.Errorf("the --parallel flag must be great than 0")
@@ -218,8 +220,8 @@ func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild, m
 					fmt.Println("Please provide a valid language for your function.")
 				} else {
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
-					combinedBuildArgMap := mergeMap(function.BuildArgs, buildArgMap)
-					combinedExtraPaths := mergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
+					combinedBuildArgMap := util.MergeMap(function.BuildArgs, buildArgMap)
+					combinedExtraPaths := util.MergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
 					err := builder.PublishImage(function.Image,
 						function.Handler,
 						function.Name,

@@ -6,7 +6,6 @@ package builder
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -80,7 +79,6 @@ func BuildImage(image string, handler string, functionName string, language stri
 			BuildArgMap:      buildArgMap,
 			BuildOptPackages: buildOptPackages,
 			BuildLabelMap:    buildLabelMap,
-			MountSSH:         mountSSH,
 		}
 
 		command, args := getDockerBuildCommand(dockerBuildVal)
@@ -158,10 +156,6 @@ func getDockerBuildCommand(build dockerBuild) (string, []string) {
 
 	args = append(args, "--tag", build.Image, ".")
 
-	if build.MountSSH {
-		args = append(args, "--ssh", "default")
-	}
-
 	command := "docker"
 
 	return command, args
@@ -183,8 +177,6 @@ type dockerBuild struct {
 
 	// ExtraTags for published images like :latest
 	ExtraTags []string
-
-	MountSSH bool
 }
 
 var defaultDirPermissions os.FileMode = 0700
@@ -311,49 +303,6 @@ func pathInScope(path string, scope string) (string, error) {
 
 	// default return is an error
 	return "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
-}
-
-// appears to be unused???
-func dockerBuildFolder(functionName string, handler string, language string) string {
-	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
-
-	clearErr := os.RemoveAll(tempPath)
-	if clearErr != nil {
-		fmt.Printf("Error clearing temporary build folder: %s\n", tempPath)
-	}
-
-	fmt.Printf("Preparing: %s %s\n", handler+"/", tempPath)
-
-	// Both Dockerfile and dockerfile are accepted
-	if language == "Dockerfile" {
-		language = "dockerfile"
-	}
-
-	// CopyFiles(handler, tempPath)
-	infos, readErr := ioutil.ReadDir(handler)
-	if readErr != nil {
-		fmt.Printf("Error reading the handler: %s - %s.\n", handler, readErr.Error())
-	}
-
-	for _, info := range infos {
-		switch info.Name() {
-		case "build", "template":
-			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
-			continue
-		default:
-			copyErr := CopyFiles(
-				filepath.Clean(path.Join(handler, info.Name())),
-				filepath.Clean(path.Join(tempPath, info.Name())),
-			)
-
-			if copyErr != nil {
-				log.Fatal(copyErr)
-			}
-		}
-	}
-
-	return tempPath
 }
 
 func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
