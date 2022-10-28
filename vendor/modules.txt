@@ -146,7 +146,7 @@ github.com/openfaas/faas-provider/types
 github.com/openfaas/faas/gateway/requests
 github.com/openfaas/faas/gateway/types
 # github.com/openfaasltd/ssh-gateway v0.0.0 => ../../openfaasltd/ssh-gateway
-## explicit; go 1.18
+## explicit
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors

@@ -8,9 +8,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
+	"github.com/alexellis/arkade/pkg/env"
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -19,7 +21,7 @@ import (
 
 var pluginRegistry string
 var clientOS string
-var arch string
+var clientArch string
 var tag string
 
 func init() {
@@ -32,8 +34,8 @@ func init() {
 	}
 
 	pluginGetCmd.Flags().StringVar(&pluginRegistry, "registry", "ghcr.io/openfaasltd", "The registry to pull the plugin from")
-	pluginGetCmd.Flags().StringVar(&arch, "arch", "amd64", "The architecture to pull the plugin for")
-	pluginGetCmd.Flags().StringVar(&clientOS, "os", "linux", "The OS to pull the plugin for")
+	pluginGetCmd.Flags().StringVar(&clientArch, "arch", "", "The architecture to pull the plugin for, give a value or leave blank for auto-detection")
+	pluginGetCmd.Flags().StringVar(&clientOS, "os", "", "The OS to pull the plugin for, give a value or leave blank for auto-detection")
 	pluginGetCmd.Flags().StringVar(&tag, "version", "latest", "Version or SHA for plugin")
 	pluginGetCmd.Flags().BoolVar(&verbose, "verbose", false, "Verbose output")
 
@@ -50,12 +52,22 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide the version of the plugin or \"latest\"")
 	}
 
+	arch, operatingSystem := getClientArch()
+
+	if len(clientArch) == 0 {
+		clientArch = arch
+	}
+
+	if len(clientOS) == 0 {
+		clientOS = operatingSystem
+	}
+
 	st := time.Now()
 	pluginName := args[0]
 	src := fmt.Sprintf("%s/%s:%s", pluginRegistry, pluginName, tag)
 
 	if verbose {
-		fmt.Printf("Fetching plugin: %s %s for: %s/%s\n", pluginName, src, clientOS, arch)
+		fmt.Printf("Fetching plugin: %s %s for: %s/%s\n", pluginName, src, clientOS, clientArch)
 	} else {
 		fmt.Printf("Fetching plugin: %s\n", pluginName)
 	}
@@ -76,7 +88,9 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 
 	var img v1.Image
 
-	img, err = crane.Pull(src, crane.WithPlatform(&v1.Platform{Architecture: arch, OS: clientOS}))
+	downloadArch, downloadOS := getDownloadArch(clientArch, clientOS)
+
+	img, err = crane.Pull(src, crane.WithPlatform(&v1.Platform{Architecture: downloadArch, OS: downloadOS}))
 	if err != nil {
 		return fmt.Errorf("pulling %s: %w", src, err)
 	}
@@ -209,4 +223,25 @@ func validRelPath(p string) bool {
 		return false
 	}
 	return true
+}
+
+func getClientArch() (arch string, os string) {
+	if runtime.GOOS == "windows" {
+		return runtime.GOARCH, runtime.GOOS
+	}
+
+	return env.GetClientArch()
+}
+
+func getDownloadArch(clientArch, clientOS string) (arch string, os string) {
+	downloadArch := strings.ToLower(clientArch)
+	downloadOS := strings.ToLower(clientOS)
+
+	if downloadArch == "x86_64" {
+		downloadArch = "amd64"
+	} else if downloadArch == "aarch64" {
+		downloadArch = "arm64"
+	}
+
+	return downloadArch, downloadOS
 }
