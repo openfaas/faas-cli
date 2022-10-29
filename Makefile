@@ -49,6 +49,11 @@ dist:
 	   -X github.com/openfaas/faas-cli/version.Version=${.GIT_VERSION}" \
 	   -a -installsuffix cgo -o ./bin/faas-cli-darwin
 
+	CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build --ldflags "-s -w \
+	   -X github.com/openfaas/faas-cli/version.GitCommit=${.GIT_COMMIT} \
+	   -X github.com/openfaas/faas-cli/version.Version=${.GIT_VERSION}" \
+	   -a -installsuffix cgo -o ./bin/faas-cli-darwin-arm64
+
 
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build --ldflags "-s -w \
 	   -X github.com/openfaas/faas-cli/version.GitCommit=${.GIT_COMMIT} \

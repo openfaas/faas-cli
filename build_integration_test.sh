@@ -5,16 +5,20 @@ template="python3"
 
 get_package() {
     uname=$(uname)
-
+    arch=$(uname -m)
     echo "Getting faas-cli package for $uname..."
+    echo "Having architecture $arch..."
 
     case $uname in
     "Darwin")
-    cli="./faas-cli-darwin"
+        cli="./faas-cli-darwin"
+        case $arnch in
+        "arm64")
+        cli="./faas-cli-darwin-arm64"
+        ;;
+        esac
     ;;
     "Linux")
-        arch=$(uname -m)
-        echo $arch
         case $arch in
         "armv6l" | "armv7l")
         cli="./faas-cli-armhf"
