@@ -40,6 +40,14 @@ RUN CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
        -a -installsuffix cgo -o faas-cli-darwin
 
+
+FROM builder as darwin-arm64
+RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build --ldflags "-s -w \
+       -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
+       -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
+       -X github.com/openfaas/faas-cli/commands.Platform=arm64" \
+       -a -installsuffix cgo -o faas-cli-darwin-arm64
+
 FROM builder as windows
 RUN CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
@@ -72,11 +80,12 @@ RUN addgroup -S app \
 
 WORKDIR /home/app
 
-COPY --from=linux    /go/src/github.com/openfaas/faas-cli/faas-cli                .
-COPY --from=darwin   /go/src/github.com/openfaas/faas-cli/faas-cli-darwin         .
-COPY --from=arm      /go/src/github.com/openfaas/faas-cli/faas-cli-armhf          .
-COPY --from=windows  /go/src/github.com/openfaas/faas-cli/faas-cli.exe            .
-COPY --from=arm64    /go/src/github.com/openfaas/faas-cli/faas-cli-arm64          .
+COPY --from=linux          /go/src/github.com/openfaas/faas-cli/faas-cli                .
+COPY --from=darwin         /go/src/github.com/openfaas/faas-cli/faas-cli-darwin         .
+COPY --from=darwin-arm64   /go/src/github.com/openfaas/faas-cli/faas-cli-darwin-arm64   .
+COPY --from=arm            /go/src/github.com/openfaas/faas-cli/faas-cli-armhf          .
+COPY --from=windows        /go/src/github.com/openfaas/faas-cli/faas-cli.exe            .
+COPY --from=arm64          /go/src/github.com/openfaas/faas-cli/faas-cli-arm64          .
 
 RUN chown -R app:app ./
 
