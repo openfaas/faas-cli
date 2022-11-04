@@ -52,10 +52,10 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
 		}
 
-		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
+		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
-		if buildErr != nil {
-			return buildErr
+		if err != nil {
+			return err
 		}
 
 		if shrinkwrap {
@@ -63,10 +63,9 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return nil
 		}
 
-		buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
-
-		if buildPackageErr != nil {
-			return buildPackageErr
+		buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
+		if err != nil {
+			return err
 
 		}
 
@@ -198,10 +197,9 @@ func createBuildContext(functionName string, handler string, language string, us
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
-	clearErr := os.RemoveAll(tempPath)
-	if clearErr != nil {
+	if err := os.RemoveAll(tempPath); err != nil {
 		fmt.Printf("Error clearing temporary build folder: %s\n", tempPath)
-		return tempPath, clearErr
+		return tempPath, err
 	}
 
 	functionPath := tempPath
@@ -227,19 +225,18 @@ func createBuildContext(functionName string, handler string, language string, us
 	}
 
 	if useFunction {
-		copyErr := CopyFiles(path.Join("./template/", language), tempPath)
-		if copyErr != nil {
-			fmt.Printf("Error copying template directory: %s.\n", copyErr.Error())
-			return tempPath, copyErr
+		if err := CopyFiles(path.Join("./template/", language), tempPath); err != nil {
+			fmt.Printf("Error copying template directory: %s.\n", err.Error())
+			return tempPath, err
 		}
 	}
 
 	// Overlay in user-function
 	// CopyFiles(handler, functionPath)
-	infos, readErr := ioutil.ReadDir(handler)
-	if readErr != nil {
-		fmt.Printf("Error reading the handler: %s - %s.\n", handler, readErr.Error())
-		return tempPath, readErr
+	infos, err := ioutil.ReadDir(handler)
+	if err != nil {
+		fmt.Printf("Error reading the handler: %s - %s.\n", handler, err.Error())
+		return tempPath, err
 	}
 
 	for _, info := range infos {
@@ -248,13 +245,11 @@ func createBuildContext(functionName string, handler string, language string, us
 			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
 		default:
-			copyErr := CopyFiles(
+			if err := CopyFiles(
 				filepath.Clean(path.Join(handler, info.Name())),
 				filepath.Clean(path.Join(functionPath, info.Name())),
-			)
-
-			if copyErr != nil {
-				return tempPath, copyErr
+			); err != nil {
+				return tempPath, err
 			}
 		}
 	}
@@ -371,31 +366,6 @@ Please check /template/%s/template.yml for supported build options`, language, l
 
 	}
 	return buildPackages, nil
-}
-
-func getBuildOptionsFor(language string) ([]stack.BuildOption, error) {
-
-	var buildOptions = []stack.BuildOption{}
-
-	pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
-
-	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
-		return buildOptions, err
-	}
-
-	var langTemplate stack.LanguageTemplate
-	parsedLangTemplate, err := stack.ParseYAMLForLanguageTemplate(pathToTemplateYAML)
-
-	if err != nil {
-		return buildOptions, err
-	}
-
-	if parsedLangTemplate != nil {
-		langTemplate = *parsedLangTemplate
-		buildOptions = langTemplate.BuildOptions
-	}
-
-	return buildOptions, nil
 }
 
 func getPackages(availableBuildOptions []stack.BuildOption, requestedBuildOptions []string) ([]string, bool) {
