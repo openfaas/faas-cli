@@ -86,7 +86,7 @@ func Execute(customArgs []string) {
 		log.Fatal(err)
 	}
 
-	if cmd1 != nil && len(args1) > 0 && args1[0] == "pro" {
+	if cmd1 != nil && len(args1) > 0 {
 
 		found := ""
 		for _, plugin := range plugins {
@@ -94,17 +94,15 @@ func Execute(customArgs []string) {
 				found = plugin
 			}
 		}
-		if len(found) == 0 {
-			log.Fatalf("Plugin %s not found", args1[0])
-			os.Exit(0)
-		}
+		if len(found) > 0 {
 
-		// if we have found the plugin then sysexec it by replacing current process.
-		if err := syscall.Exec(found, append([]string{found}, os.Args[2:]...), os.Environ()); err != nil {
-			fmt.Fprintf(os.Stderr, "Error from plugin: %v", err)
-			os.Exit(127)
+			// if we have found the plugin then sysexec it by replacing current process.
+			if err := syscall.Exec(found, append([]string{found}, os.Args[2:]...), os.Environ()); err != nil {
+				fmt.Fprintf(os.Stderr, "Error from plugin: %v", err)
+				os.Exit(127)
+			}
+			return
 		}
-		return
 	}
 
 	if err := faasCmd.Execute(); err != nil {
