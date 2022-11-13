@@ -12,17 +12,17 @@ var testcases = []struct {
 	{
 		testcase_name: "Testcase 1",
 		input:         "",
-		output:        "template\nbuild",
+		output:        "template\nbuild\n.secrets",
 	},
 	{
 		testcase_name: "Testcase 2",
 		input:         "/path/to/folder\n*.pyc\n.DS_STORE",
-		output:        "/path/to/folder\n*.pyc\n.DS_STORE\ntemplate\nbuild",
+		output:        "/path/to/folder\n*.pyc\n.DS_STORE\ntemplate\nbuild\n.secrets",
 	},
 	{
 		testcase_name: "Testcase 3",
 		input:         "/path/to/folder\ntemplate\n*.pyc\n.DS_STORE",
-		output:        "/path/to/folder\ntemplate\n*.pyc\n.DS_STORE\nbuild",
+		output:        "/path/to/folder\ntemplate\n*.pyc\n.DS_STORE\nbuild\n.secrets",
 	},
 }
 

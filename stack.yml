@@ -14,10 +14,10 @@ functions:
     image: ${DOCKER_USER:-alexellis2}/url-ping:0.3
     environment:
       debug: true
-#    requests:
-#      memory: 32Mi
-#    limits:
-#      memory: 64Mi
+  #    requests:
+  #      memory: 32Mi
+  #    limits:
+  #      memory: 64Mi
 
   # skip_build is useful for deploying pre-existing images from stack.yml
   stronghash:
@@ -27,7 +27,8 @@ functions:
     environment:
       fprocess: sha512sum
     secrets:
-     - test1
+      - test1
+      - test2
 
   nodejs-echo:
     lang: node
