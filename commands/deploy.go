@@ -420,6 +420,10 @@ func compileEnvironment(envvarOpts []string, yamlEnvironment map[string]string, 
 func deriveFprocess(function stack.Function) (string, error) {
 	var fprocess string
 
+	if function.FProcess != "" {
+		return function.FProcess, nil
+	}
+
 	pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
 	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
 		return "", err
