@@ -83,8 +83,6 @@ The main commands supported by the CLI are:
 
 * `faas-cli secret` - manage secrets for your functions
 
-* `faas-cli auth` - initiates an OAuth2 authorization flow to obtain a token
-
 * `faas-cli registry-login` - generate registry auth file in correct format by providing username and password for docker/ecr/self hosted registry
 
 The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
@@ -113,45 +111,6 @@ Help for all of the commands supported by the CLI can be found by running:
 * `faas-cli help` or `faas-cli [command] --help`
 
 You can chose between using a [programming language template](https://github.com/openfaas/templates/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
-
-#### `faas-cli auth`
-
-The `auth` command is only licensed for OpenFaaS Pro customers.
-
-Use the `auth` command to obtain a JWT to use as a Bearer token.
-
-##### `code` grant - default
-
-Use this flow to obtain a token for interactive use from your workstation.
-
-The code grant flow uses the PKCE extension.
-
-At this time the `token` cannot be saved or retained in your OpenFaaS config file. You can pass the token using a CLI flag of `--token=$TOKEN`.
-
-Example:
-
-```sh
-faas-cli auth \
-  --auth-url https://tenant0.eu.auth0.com/authorize \
-  --token-url https://tenant0.eu.auth0.com/oauth/token \
-  --audience http://gw.example.com \
-  --client-id "${OAUTH_CLIENT_ID}"
-```
-
-##### `client_credentials` grant
-
-Use this flow for machine to machine communication such as when you want to deploy a function to a gateway that uses OAuth2 / OIDC.
-
-Example:
-
-```sh
-faas-cli auth \
-  --grant client_credentials \
-  --auth-url https://tenant0.eu.auth0.com/oauth/token \
-  --client-id "${OAUTH_CLIENT_ID}" \
-  --client-secret "${OAUTH_CLIENT_SECRET}"\
-  --audience http://gw.example.com
-```
 
 ##### Environment variable substitution
 
