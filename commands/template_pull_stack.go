@@ -57,14 +57,14 @@ func readStackConfig() (stack.Configuration, error) {
 
 	configFieldBytes, err := ioutil.ReadFile(yamlFile)
 	if err != nil {
-		return configField, fmt.Errorf("Error while reading files %s", err.Error())
+		return configField, fmt.Errorf("can't read file %s, error: %s", yamlFile, err.Error())
 	}
-	unmarshallErr := yaml.Unmarshal(configFieldBytes, &configField)
-	if unmarshallErr != nil {
-		return configField, fmt.Errorf("Error while reading configuration: %s", err.Error())
+	if err := yaml.Unmarshal(configFieldBytes, &configField); err != nil {
+		return configField, fmt.Errorf("can't read: %s", err.Error())
 	}
+
 	if len(configField.StackConfig.TemplateConfigs) == 0 {
-		return configField, fmt.Errorf("Error while reading configuration: no template repos currently configured")
+		return configField, fmt.Errorf("can't read configuration: no template repos currently configured")
 	}
 	return configField, nil
 }
