@@ -157,8 +157,16 @@ func printFunctionDescription(dst io.Writer, funcDesc schema.FunctionDescription
 	out.Printf("Function Process:\t%s\n", process)
 	out.Printf("URL:\t%s\n", funcDesc.URL)
 	out.Printf("Async URL:\t%s\n", funcDesc.AsyncURL)
-	out.Printf("Labels", *funcDesc.Labels)
-	out.Printf("Annotations", *funcDesc.Annotations)
+	if funcDesc.Labels != nil {
+		out.Printf("Labels", *funcDesc.Labels)
+	} else {
+		out.Printf("Labels", map[string]string{})
+	}
+	if funcDesc.Annotations != nil {
+		out.Printf("Annotations", *funcDesc.Annotations)
+	} else {
+		out.Printf("Annotations", map[string]string{})
+	}
 	out.Printf("Constraints", funcDesc.Constraints)
 	out.Printf("Environment", funcDesc.EnvVars)
 	out.Printf("Secrets", funcDesc.Secrets)
