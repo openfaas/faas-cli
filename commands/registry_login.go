@@ -38,17 +38,17 @@ func init() {
 }
 
 func generateRegistryPreRun(command *cobra.Command, args []string) error {
-	_, err := command.Flags().GetString("server")
+	server, err := command.Flags().GetString("server")
 	if err != nil {
 		return fmt.Errorf("error with --server usage: %s", err)
 	}
 
-	_, err = command.Flags().GetString("username")
+	username, err = command.Flags().GetString("username")
 	if err != nil {
 		return fmt.Errorf("error with --username usage: %s", err)
 	}
 
-	_, err = command.Flags().GetString("password")
+	password, err = command.Flags().GetString("password")
 	if err != nil {
 		return fmt.Errorf("error with --password usage: %s", err)
 	}
@@ -58,19 +58,39 @@ func generateRegistryPreRun(command *cobra.Command, args []string) error {
 		return fmt.Errorf("error with --password-stdin usage: %s", err)
 	}
 
-	_, err = command.Flags().GetBool("ecr")
+	ecr, err := command.Flags().GetBool("ecr")
 	if err != nil {
 		return fmt.Errorf("error with --ecr usage: %s", err)
 	}
 
-	_, err = command.Flags().GetString("account-id")
+	accountID, err := command.Flags().GetString("account-id")
 	if err != nil {
 		return fmt.Errorf("error with --account-id usage: %s", err)
 	}
 
-	_, err = command.Flags().GetString("region")
+	region, err := command.Flags().GetString("region")
 	if err != nil {
 		return fmt.Errorf("error with --region usage: %s", err)
+	}
+
+	if ecr {
+		if len(server) > 0 {
+			return fmt.Errorf("the --server flag is not supported with ECR")
+		}
+
+		if len(password) > 0 {
+			return fmt.Errorf("the --password flag is not supported with ECR")
+		}
+
+		if len(username) > 0 {
+			return fmt.Errorf("the --username flag is not supported with ECR")
+		}
+		if len(accountID) == 0 {
+			return fmt.Errorf("the --account-id flag is required with ECR")
+		}
+		if len(region) == 0 {
+			return fmt.Errorf("the --region flag is required with ECR")
+		}
 	}
 
 	return nil
