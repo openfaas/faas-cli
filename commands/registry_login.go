@@ -30,7 +30,7 @@ func init() {
 	registryLoginCommand.Flags().String("password", "", "The registry password")
 	registryLoginCommand.Flags().BoolP("password-stdin", "s", false, "Reads the docker password from stdin, either pipe to the command or remember to press ctrl+d when reading interactively")
 
-	registryLoginCommand.Flags().Bool("ecr", false, "If we are using ECR we need a different set of flags, so if this is set, we need to set --username and --password")
+	registryLoginCommand.Flags().Bool("ecr", false, "If we are using ECR we need a different set of flags, so if this is set, we need to set --account-id and --region")
 	registryLoginCommand.Flags().String("account-id", "", "Your AWS Account id")
 	registryLoginCommand.Flags().String("region", "", "Your AWS region")
 
@@ -38,17 +38,17 @@ func init() {
 }
 
 func generateRegistryPreRun(command *cobra.Command, args []string) error {
-	server, err := command.Flags().GetString("server")
+	_, err := command.Flags().GetString("server")
 	if err != nil {
 		return fmt.Errorf("error with --server usage: %s", err)
 	}
 
-	username, err = command.Flags().GetString("username")
+	_, err = command.Flags().GetString("username")
 	if err != nil {
 		return fmt.Errorf("error with --username usage: %s", err)
 	}
 
-	password, err = command.Flags().GetString("password")
+	_, err = command.Flags().GetString("password")
 	if err != nil {
 		return fmt.Errorf("error with --password usage: %s", err)
 	}
@@ -74,17 +74,6 @@ func generateRegistryPreRun(command *cobra.Command, args []string) error {
 	}
 
 	if ecr {
-		if len(server) > 0 {
-			return fmt.Errorf("the --server flag is not supported with ECR")
-		}
-
-		if len(password) > 0 {
-			return fmt.Errorf("the --password flag is not supported with ECR")
-		}
-
-		if len(username) > 0 {
-			return fmt.Errorf("the --username flag is not supported with ECR")
-		}
 		if len(accountID) == 0 {
 			return fmt.Errorf("the --account-id flag is required with ECR")
 		}
@@ -104,10 +93,6 @@ func generateRegistryAuthFile(command *cobra.Command, _ []string) error {
 	password, _ := command.Flags().GetString("password")
 	server, _ := command.Flags().GetString("server")
 	passStdin, _ := command.Flags().GetBool("password-stdin")
-
-	if len(username) == 0 {
-		return fmt.Errorf("you must give --username (-u)")
-	}
 
 	if ecrEnabled {
 		if err := generateECRFile(accountID, region); err != nil {
