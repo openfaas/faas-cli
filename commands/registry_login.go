@@ -109,23 +109,24 @@ func generateRegistryAuthFile(command *cobra.Command, _ []string) error {
 		return fmt.Errorf("you must give --username (-u)")
 	}
 
-	var generateErr error
 	if ecrEnabled {
-		generateErr = generateECRFile(accountID, region)
+		if err := generateECRFile(accountID, region); err != nil {
+			return err
+		}
+
 	} else if passStdin {
 		fmt.Printf("Enter your password, hit enter then type Ctrl+D\n\nPassword: ")
 		passwordStdin, err := ioutil.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
-		generateErr = generateFile(username, strings.TrimSpace(string(passwordStdin)), server)
+		if err := generateFile(username, strings.TrimSpace(string(passwordStdin)), server); err != nil {
+			return err
+		}
 	} else {
-		generateErr = generateFile(username, password, server)
-
-	}
-
-	if generateErr != nil {
-		return generateErr
+		if err := generateFile(username, password, server); err != nil {
+			return err
+		}
 	}
 
 	fmt.Printf("\nWrote ./credentials/config.json..OK\n")
@@ -195,10 +196,7 @@ func writeFileToFassCLITmp(fileBytes []byte) error {
 		}
 	}
 
-	writeErr := ioutil.WriteFile(filepath.Join(path, "config.json"), fileBytes, 0744)
-
-	return writeErr
-
+	return ioutil.WriteFile(filepath.Join(path, "config.json"), fileBytes, 0744)
 }
 
 type Auth struct {
