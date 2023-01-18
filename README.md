@@ -83,7 +83,7 @@ The main commands supported by the CLI are:
 
 * `faas-cli secret` - manage secrets for your functions
 
-* `faas-cli auth` - initiates an OAuth2 authorization flow to obtain a token
+* `faas-cli pro auth` - initiates an OAuth2 authorization flow to obtain a token
 
 * `faas-cli registry-login` - generate registry auth file in correct format by providing username and password for docker/ecr/self hosted registry
 
@@ -114,7 +114,7 @@ Help for all of the commands supported by the CLI can be found by running:
 
 You can chose between using a [programming language template](https://github.com/openfaas/templates/tree/master/template) where you only need to provide a handler file, or a Docker that you can build yourself.
 
-#### `faas-cli auth`
+#### `faas-cli pro auth`
 
 The `auth` command is only licensed for OpenFaaS Pro customers.
 
@@ -131,7 +131,7 @@ At this time the `token` cannot be saved or retained in your OpenFaaS config fil
 Example:
 
 ```sh
-faas-cli auth \
+faas-cli pro auth \
   --auth-url https://tenant0.eu.auth0.com/authorize \
   --token-url https://tenant0.eu.auth0.com/oauth/token \
   --audience http://gw.example.com \
@@ -145,7 +145,7 @@ Use this flow for machine to machine communication such as when you want to depl
 Example:
 
 ```sh
-faas-cli auth \
+faas-cli pro auth \
   --grant client_credentials \
   --auth-url https://tenant0.eu.auth0.com/oauth/token \
   --client-id "${OAUTH_CLIENT_ID}" \
