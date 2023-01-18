@@ -17,7 +17,9 @@ import (
 const localSecretsDir = ".secrets"
 
 func init() {
-	faasCmd.AddCommand(newLocalRunCmd())
+	if v, ok := os.LookupEnv("OPENFAAS_EXPERIMENTAL"); ok && v == "1" {
+		faasCmd.AddCommand(newLocalRunCmd())
+	}
 }
 
 type runOptions struct {
@@ -34,13 +36,13 @@ func newLocalRunCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   `local-run NAME --port PORT -f YAML_FILE`,
-		Short: "Start a function with docker for local testing.",
+		Short: "Start a function with docker for local testing (experimental feature)",
 		Long: `Providing faas-cli build has already been run, this command will use the 
 docker command to start a container on your local machine using its image.
 
 The function will be bound to the port specified by the --port flag, or 8080
 by default.
-
+ 
 There is limited support for secrets, and the function cannot contact other 
 services deployed within your OpenFaaS cluster.`,
 		Example: `
@@ -49,6 +51,7 @@ services deployed within your OpenFaaS cluster.`,
 
   # Run on a custom port
   faas-cli local-run stronghash --port 8081
+
   # Use a custom YAML file other than stack.yml
   faas-cli local-run stronghash -f ./stronghash.yml
 		`,
