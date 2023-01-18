@@ -17,9 +17,8 @@ import (
 const localSecretsDir = ".secrets"
 
 func init() {
-	if v, ok := os.LookupEnv("OPENFAAS_EXPERIMENTAL"); ok && v == "1" {
-		faasCmd.AddCommand(newLocalRunCmd())
-	}
+	faasCmd.AddCommand(newLocalRunCmd())
+
 }
 
 type runOptions struct {
@@ -56,6 +55,11 @@ services deployed within your OpenFaaS cluster.`,
   faas-cli local-run stronghash -f ./stronghash.yml
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+
+			if v, ok := os.LookupEnv("OPENFAAS_EXPERIMENTAL"); !ok || v == "0" {
+				return fmt.Errorf("this command is experimental, set OPENFAAS_EXPERIMENTAL=1 to use it")
+			}
+
 			if len(args) < 1 {
 				return fmt.Errorf("expected the name of the function")
 			}
