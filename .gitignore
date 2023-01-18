@@ -27,3 +27,5 @@ template
 secrets.yml
 
 /withprivate*
+
+.secrets

@@ -36,13 +36,13 @@ func newLocalRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   `local-run NAME --port PORT -f YAML_FILE`,
 		Short: "Start a function with docker for local testing (experimental feature)",
-		Long: `Providing faas-cli build has already been run, this command will use the 
+		Long: `Providing faas-cli build has already been run, this command will use the
 docker command to start a container on your local machine using its image.
 
 The function will be bound to the port specified by the --port flag, or 8080
 by default.
- 
-There is limited support for secrets, and the function cannot contact other 
+
+There is limited support for secrets, and the function cannot contact other
 services deployed within your OpenFaaS cluster.`,
 		Example: `
   # Run a function locally
@@ -97,6 +97,11 @@ func runFunction(ctx context.Context, name string, opts runOptions) error {
 
 	if len(services.Functions) > 1 {
 		return fmt.Errorf("multiple functions matching %q in the stack file", name)
+	}
+
+	err = updateGitignore()
+	if err != nil {
+		return err
 	}
 
 	fnc := services.Functions[name]
