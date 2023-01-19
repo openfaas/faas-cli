@@ -17,6 +17,7 @@ jobs:
       pull-requests: read
       repository-projects: read
       statuses: read
+      contents: write
 
     steps:
       - 
