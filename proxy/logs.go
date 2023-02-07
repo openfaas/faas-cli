@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"time"
 
@@ -24,6 +25,10 @@ func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.
 	}
 
 	logRequest.URL.RawQuery = reqAsQueryValues(params).Encode()
+
+	if os.Getenv("FAAS_DEBUG") == "1" {
+		fmt.Printf("%s\n", logRequest.URL.RawQuery)
+	}
 
 	res, err := c.doRequest(ctx, logRequest)
 	if err != nil {

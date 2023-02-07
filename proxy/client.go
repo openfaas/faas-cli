@@ -70,6 +70,21 @@ func (c *Client) newRequest(method, path string, query url.Values, body io.Reade
 	endpoint.Path = gopath.Join(endpoint.Path, path)
 	endpoint.RawQuery = query.Encode()
 
+	bodyDebug := ""
+	if os.Getenv("FAAS_DEBUG") == "1" {
+
+		if body != nil {
+			r := io.NopCloser(body)
+			buf := new(strings.Builder)
+			_, err := io.Copy(buf, r)
+			if err != nil {
+				return nil, err
+			}
+			bodyDebug = buf.String()
+			body = io.NopCloser(strings.NewReader(buf.String()))
+		}
+	}
+
 	req, err := http.NewRequest(method, endpoint.String(), body)
 	if err != nil {
 		return nil, err
@@ -84,6 +99,17 @@ func (c *Client) newRequest(method, path string, query url.Values, body io.Reade
 	}
 
 	c.ClientAuth.Set(req)
+
+	if os.Getenv("FAAS_DEBUG") == "1" {
+		fmt.Printf("%s %s\n", req.Method, req.URL.String())
+		for k, v := range req.Header {
+			fmt.Printf("%s: %s\n", k, v)
+		}
+
+		if len(bodyDebug) > 0 {
+			fmt.Printf("%s\n", bodyDebug)
+		}
+	}
 
 	return req, err
 }

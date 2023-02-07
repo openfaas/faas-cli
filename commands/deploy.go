@@ -6,7 +6,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -390,15 +389,14 @@ func readFiles(files []string) (map[string]string, error) {
 	envs := make(map[string]string)
 
 	for _, file := range files {
-		bytesOut, readErr := ioutil.ReadFile(file)
-		if readErr != nil {
-			return nil, readErr
+		bytesOut, err := os.ReadFile(file)
+		if err != nil {
+			return nil, err
 		}
 
 		envFile := stack.EnvironmentFile{}
-		unmarshalErr := yaml.Unmarshal(bytesOut, &envFile)
-		if unmarshalErr != nil {
-			return nil, unmarshalErr
+		if err := yaml.Unmarshal(bytesOut, &envFile); err != nil {
+			return nil, err
 		}
 		for k, v := range envFile.Environment {
 			envs[k] = v
