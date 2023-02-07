@@ -99,6 +99,8 @@ For Kubernetes users you may want to set this in your `.bash_rc` file:
 export OPENFAAS_URL=http://127.0.0.1:31112
 ```
 
+> Did you know? By setting `FAAS_DEBUG=1`, the CLI will print out the HTTP request that it's making to the OpenFaaS Gateway.
+
 Advanced commands:
 
 * `faas-cli template pull` - pull in templates from a remote git repository [Detailed Documentation](guide/TEMPLATE.md)
