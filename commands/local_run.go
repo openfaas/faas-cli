@@ -98,6 +98,11 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 			return err
 		}
 
+		err = updateGitignore()
+		if err != nil {
+			return err
+		}
+
 		services = s
 
 		if len(services.Functions) == 0 {
