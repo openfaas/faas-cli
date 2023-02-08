@@ -23,11 +23,22 @@ var tag string
 
 func init() {
 	pluginGetCmd := &cobra.Command{
-		Use:     "get",
-		Short:   "Get a plugin",
-		Long:    `Get a plugin`,
-		Example: `faas-cli plugin get NAME`,
-		RunE:    runPluginGetCmd,
+		Use:   "get",
+		Short: "Get a plugin",
+		Long: `Download and extract a plugin for faas-cli from a container
+registry`,
+		Example: `# Download a plugin by name:
+faas-cli plugin get NAME
+
+# Give a version
+faas-cli plugin get NAME --version 0.0.1
+
+# Give an explicit OS and architecture
+faas-cli plugin get NAME --arch armhf --os linux
+
+# Use a custom registry
+faas-cli plugin get NAME --registry ghcr.io/openfaasltd`,
+		RunE: runPluginGetCmd,
 	}
 
 	pluginGetCmd.Flags().StringVar(&pluginRegistry, "registry", "ghcr.io/openfaasltd", "The registry to pull the plugin from")
@@ -114,7 +125,7 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	if err := archive.Untar(tarFile, pluginDir, gzipped, true); err != nil {
 		return fmt.Errorf("failed to untar %s: %w", tmpTar, err)
 	}
-	fmt.Printf("OK.. took: (%ds)\n", int(time.Since(st).Seconds()))
+	fmt.Printf("Downloaded in (%ds)\n\nUsage:\n  faas-cli %s\n", int(time.Since(st).Seconds()), pluginName)
 	return nil
 }
 
