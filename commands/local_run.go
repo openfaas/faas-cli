@@ -18,7 +18,6 @@ const localSecretsDir = ".secrets"
 
 func init() {
 	faasCmd.AddCommand(newLocalRunCmd())
-
 }
 
 type runOptions struct {
@@ -36,13 +35,13 @@ func newLocalRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   `local-run NAME --port PORT -f YAML_FILE`,
 		Short: "Start a function with docker for local testing (experimental feature)",
-		Long: `Providing faas-cli build has already been run, this command will use the
+		Long: `Providing faas-cli build has already been run, this command will use the 
 docker command to start a container on your local machine using its image.
 
 The function will be bound to the port specified by the --port flag, or 8080
 by default.
 
-There is limited support for secrets, and the function cannot contact other
+There is limited support for secrets, and the function cannot contact other 
 services deployed within your OpenFaaS cluster.`,
 		Example: `
   # Run a function locally
@@ -60,10 +59,6 @@ services deployed within your OpenFaaS cluster.`,
 				return fmt.Errorf("this command is experimental, set OPENFAAS_EXPERIMENTAL=1 to use it")
 			}
 
-			if len(args) < 1 {
-				return fmt.Errorf("expected the name of the function")
-			}
-
 			if len(args) > 1 {
 				return fmt.Errorf("only one function name is allowed")
 			}
@@ -75,9 +70,14 @@ services deployed within your OpenFaaS cluster.`,
 			opts.output = cmd.OutOrStdout()
 			opts.err = cmd.ErrOrStderr()
 
-			return runFunction(ctx, args[0], opts)
+			name := ""
+			if len(args) > 0 {
+				name = args[0]
+			}
+
+			return runFunction(ctx, name, opts, args)
 		},
-		// TODO: unhide once we are happy with the DX.
+		// AE: show in commands list once we are happy with the developer experience.
 		Hidden: true,
 	}
 
@@ -89,26 +89,45 @@ services deployed within your OpenFaaS cluster.`,
 	return cmd
 }
 
-func runFunction(ctx context.Context, name string, opts runOptions) error {
-	services, err := stack.ParseYAMLFile(yamlFile, "", name, true)
-	if err != nil {
-		return err
+func runFunction(ctx context.Context, name string, opts runOptions, args []string) error {
+	var services *stack.Services
+
+	if len(name) == 0 {
+		s, err := stack.ParseYAMLFile(yamlFile, "", "", true)
+		if err != nil {
+			return err
+		}
+
+		services = s
+
+		if len(services.Functions) == 0 {
+			return fmt.Errorf("no functions found in the stack file")
+		}
+		if len(services.Functions) > 1 {
+			fnList := []string{}
+			for key := range services.Functions {
+				fnList = append(fnList, key)
+			}
+			return fmt.Errorf("give a function name to run: %v", fnList)
+		}
+
+		for key := range services.Functions {
+			name = key
+			break
+		}
+	} else {
+		s, err := stack.ParseYAMLFile(yamlFile, "", name, true)
+		if err != nil {
+			return err
+		}
+		services = s
+
+		if len(services.Functions) == 0 {
+			return fmt.Errorf("no functions matching %q in the stack file", name)
+		}
 	}
 
-	if len(services.Functions) > 1 {
-		return fmt.Errorf("multiple functions matching %q in the stack file", name)
-	}
-
-	err = updateGitignore()
-	if err != nil {
-		return err
-	}
-
-	fnc := services.Functions[name]
-	// TODO: we should probably use a levelled logger here
-	// fmt.Fprintf(opts.output, "%#v\n\n", fnc)
-
-	cmd, err := buildDockerRun(ctx, fnc, opts)
+	cmd, err := buildDockerRun(ctx, services.Functions[name], opts)
 	if err != nil {
 		return err
 	}
