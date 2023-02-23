@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/alexellis/arkade/pkg"
 	"github.com/alexellis/arkade/pkg/archive"
 	"github.com/alexellis/arkade/pkg/config"
 	"github.com/alexellis/arkade/pkg/env"
@@ -20,6 +21,13 @@ const (
 	DownloadTempDir   = iota
 	DownloadArkadeDir = iota
 )
+
+type ErrNotFound struct {
+}
+
+func (e *ErrNotFound) Error() string {
+	return "server returned status: 404"
+}
 
 func Download(tool *Tool, arch, operatingSystem, version string, downloadMode int, displayProgress, quiet bool) (string, string, error) {
 
@@ -60,7 +68,7 @@ func Download(tool *Tool, arch, operatingSystem, version string, downloadMode in
 	}
 
 	finalName := tool.Name
-	if strings.Contains(strings.ToLower(operatingSystem), "mingw") && tool.NoExtension == false {
+	if strings.Contains(strings.ToLower(operatingSystem), "mingw") && !tool.NoExtension {
 		finalName = finalName + ".exe"
 	}
 
@@ -91,7 +99,15 @@ func DownloadFileP(downloadURL string, displayProgress bool) (string, error) {
 }
 
 func downloadFile(downloadURL string, displayProgress bool) (string, error) {
-	res, err := http.DefaultClient.Get(downloadURL)
+
+	req, err := http.NewRequest(http.MethodGet, downloadURL, nil)
+	if err != nil {
+		return "", err
+	}
+
+	req.Header.Set("User-Agent", pkg.UserAgent())
+
+	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -100,8 +116,12 @@ func downloadFile(downloadURL string, displayProgress bool) (string, error) {
 		defer res.Body.Close()
 	}
 
+	if res.StatusCode == http.StatusNotFound {
+		return "", &ErrNotFound{}
+	}
+
 	if res.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("incorrect status for downloading tool: %d", res.StatusCode)
+		return "", fmt.Errorf("server returned status: %d", res.StatusCode)
 	}
 
 	_, fileName := path.Split(downloadURL)

@@ -47,11 +47,11 @@ func MakeTools() Tools {
 
 	tools = append(tools,
 		Tool{
-			Owner:       "helm",
-			Repo:        "helm",
-			Name:        "helm",
-			Version:     "v3.9.3",
-			Description: "The Kubernetes Package Manager: Think of it like apt/yum/homebrew for Kubernetes.",
+			Owner:           "helm",
+			Repo:            "helm",
+			Name:            "helm",
+			VersionStrategy: "github",
+			Description:     "The Kubernetes Package Manager: Think of it like apt/yum/homebrew for Kubernetes.",
 			URLTemplate: `{{$arch := "amd64"}}
 
 {{- if eq .Arch "armv7l" -}}
@@ -244,7 +244,7 @@ https://storage.googleapis.com/kubernetes-release/release/{{.Version}}/bin/{{$os
 
 	tools = append(tools,
 		Tool{
-			Owner:       "loft-sh",
+			Owner:       "devspace-sh",
 			Repo:        "devspace",
 			Name:        "devspace",
 			Description: "Automate your deployment workflow with DevSpace and develop software directly inside Kubernetes.",
@@ -649,28 +649,48 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 
 	tools = append(tools,
 		Tool{
+			Owner:       "aws",
+			Repo:        "eks-anywhere",
+			Name:        "eksctl-anywhere",
+			Description: "Run Amazon EKS on your own infrastructure",
+			BinaryTemplate: `
+			{{$os := .OS}}
+			{{$ext := "tar.gz"}}
+			{{$arch := .Arch}}
+			{{- if eq .Arch "x86_64" -}}
+			{{$arch = "amd64"}}
+			{{- end -}}
+
+			{{.Name}}-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}
+			`,
+		})
+
+	tools = append(tools,
+		Tool{
 			Owner:       "derailed",
 			Repo:        "k9s",
 			Name:        "k9s",
 			Description: "Provides a terminal UI to interact with your Kubernetes clusters.",
 			BinaryTemplate: `
-		{{$osStr := ""}}
+		{{$os := "" }}
 		{{ if HasPrefix .OS "ming" -}}
-		{{$osStr = "Windows"}}
+		{{$os = "Windows"}}
 		{{- else if eq .OS "linux" -}}
-		{{$osStr = "Linux"}}
+		{{$os = "Linux"}}
 		{{- else if eq .OS "darwin" -}}
-		{{$osStr = "Darwin"}}
+		{{$os = "Darwin"}}
 		{{- end -}}
 
-		{{$archStr := .Arch}}
-		{{- if eq .Arch "armv7l" -}}
-		{{$archStr = "arm"}}
-		{{- else if eq .Arch "aarch64" -}}
-		{{$archStr = "arm64"}}
+		{{$arch := .Arch}}
+		{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+		{{$arch = "arm64"}}
+		{{- else if eq .Arch "x86_64" -}}
+		{{ $arch = "amd64" }}
+		{{- else if eq .Arch "armv7l" -}}
+		{{$arch = "arm"}}
 		{{- end -}}
 
-		{{.Version}}/{{.Name}}_{{$osStr}}_{{$archStr}}.tar.gz`,
+		{{.Name}}_{{$os}}_{{$arch}}.tar.gz`,
 		})
 
 	tools = append(tools,
@@ -1022,15 +1042,13 @@ https://releases.hashicorp.com/{{.Name}}/{{.Version}}/{{.Name}}_{{.Version}}_{{$
 			{{$osStr = "linux_arm64"}}
 			{{- end -}}
 			{{- else if eq .OS "darwin" -}}
-			{{-  if eq .Arch "aarch64" -}}
+			{{-  if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 			{{$osStr = "darwin_arm64"}}
 			{{- else if eq .Arch "x86_64" -}}
 			{{$osStr = "darwin_amd64"}}
 			{{- end -}}
 			{{ else if HasPrefix .OS "ming" -}}
-			{{-  if eq .Arch "aarch64" -}}
-			{{$osStr = "darwin_arm64"}}
-			{{- else if eq .Arch "x86_64" -}}
+			{{- if eq .Arch "x86_64" -}}
 			{{$osStr ="windows_amd64"}}
 			{{- end -}}
 			{{- end -}}
@@ -1046,15 +1064,13 @@ https://releases.hashicorp.com/{{.Name}}/{{.Version}}/{{.Name}}_{{.Version}}_{{$
 			{{$osStr = "linux_arm64"}}
 			{{- end -}}
 			{{- else if eq .OS "darwin" -}}
-			{{-  if eq .Arch "aarch64" -}}
+			{{-  if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 			{{$osStr = "darwin_arm64"}}
 			{{- else if eq .Arch "x86_64" -}}
 			{{$osStr = "darwin_amd64"}}
 			{{- end -}}
 			{{ else if HasPrefix .OS "ming" -}}
-			{{-  if eq .Arch "aarch64" -}}
-			{{$osStr = "darwin_arm64"}}
-			{{- else if eq .Arch "x86_64" -}}
+			{{-  if eq .Arch "x86_64" -}}
 			{{$osStr ="windows_amd64"}}
 			{{- end -}}
 			{{- end -}}
@@ -1139,7 +1155,7 @@ https://releases.hashicorp.com/{{.Name}}/{{.Version}}/{{.Name}}_{{.Version}}_{{$
 	{{$os = "windows"}}
 	{{- end -}}
 
-	{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.tar.gz`,
+	{{.Version}}/{{.Name}}_v{{.VersionNumber}}_{{$os}}_{{$arch}}.tar.gz`,
 		})
 
 	tools = append(tools,
@@ -2130,7 +2146,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 
 			{{- if eq .Arch "x86_64" -}}
 			{{ $archStr = "64-bit" }}
-			{{- else if eq .Arch "aarch64" -}}
+			{{- else if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 			{{ $archStr = "arm64" }}
 			{{- end -}}
 
@@ -2909,7 +2925,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{$arch = "arm64"}}
 				{{- end -}}
 
-				kubeconform-{{$os}}-{{$arch}}{{$ext}}
+				{{.Name}}-{{$os}}-{{$arch}}{{$ext}}
 				`,
 		})
 
@@ -2938,7 +2954,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{$os = "Darwin"}}
 				{{- end -}}
 
-				conftest_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
+				{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
 				`,
 		})
 
@@ -2965,7 +2981,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{$ext = "zip"}}
 				{{- end -}}
 
-				kubeval-{{$os}}-{{$arch}}.{{$ext}}
+				{{.Name}}-{{$os}}-{{$arch}}.{{$ext}}
 				`,
 		})
 
@@ -2993,7 +3009,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 						{{$osStr = "Darwin"}}
 					{{- end -}}
 
-					viddy_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}
+					{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}
 					`,
 		})
 
@@ -3020,9 +3036,210 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 						{{$ext = "zip"}}
 						{{- end -}}
 
-						tctl_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
+						{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
 						`,
 		})
 
+	tools = append(tools,
+		Tool{
+			Owner:          "firecracker-microvm",
+			Repo:           "firectl",
+			Name:           "firectl",
+			Description:    "Command-line tool that lets you run arbitrary Firecracker MicroVMs",
+			BinaryTemplate: `{{.Name}}-{{.Version}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "grafana",
+			Repo:        "agent",
+			Name:        "grafana-agent",
+			Description: "Grafana Agent is a telemetry collector for sending metrics, logs, and trace data to the opinionated Grafana observability stack.",
+			URLTemplate: `
+						{{$os := .OS}}
+						{{$arch := .Arch}}
+						{{$ext := ".zip"}}
+
+						{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+						{{$arch = "arm64"}}
+						{{- else if eq .Arch "x86_64" -}}
+						{{ $arch = "amd64" }}
+						{{- else if eq .Arch "armv6l" -}}
+						{{ $arch = "armv6" }}
+						{{- else if eq .Arch "armv7l" -}}
+						{{ $arch = "armv7" }}
+						{{- end -}}
+
+						{{ if HasPrefix .OS "ming" -}}
+						{{$os = "windows"}}
+						{{$ext = ".exe.zip"}}
+						{{- end -}}
+						https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/grafana-agent-{{$os}}-{{$arch}}{{$ext}}
+						`,
+			BinaryTemplate: `
+						{{$os := .OS}}
+						{{$arch := .Arch}}
+						{{$ext := ""}}
+
+						{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+						{{$arch = "arm64"}}
+						{{- else if eq .Arch "x86_64" -}}
+						{{ $arch = "amd64" }}
+						{{- else if eq .Arch "armv6l" -}}
+						{{ $arch = "armv6" }}
+						{{- else if eq .Arch "armv7l" -}}
+						{{ $arch = "armv7" }}
+						{{- end -}}
+
+						{{ if HasPrefix .OS "ming" -}}
+						{{$os = "windows"}}
+						{{$ext = ".exe"}}
+						{{- end -}}
+						grafana-agent-{{$os}}-{{$arch}}{{$ext}}
+						`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "scaleway",
+			Repo:        "scaleway-cli",
+			Name:        "scaleway-cli",
+			Description: "Scaleway CLI is a tool to help you pilot your Scaleway infrastructure directly from your terminal.",
+			BinaryTemplate: `
+							{{$os := .OS}}
+							{{$arch := .Arch}}
+							{{$ext := ""}}
+	
+							{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+							{{$arch = "arm64"}}
+							{{- else if eq .Arch "x86_64" -}}
+							{{ $arch = "amd64" }}
+							{{- end -}}
+	
+							{{ if HasPrefix .OS "ming" -}}
+							{{$os = "windows"}}
+							{{$ext = ".exe"}}
+							{{- end -}}
+							{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}{{$ext}}
+							`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "anchore",
+			Repo:        "syft",
+			Name:        "syft",
+			Description: "CLI tool and library for generating a Software Bill of Materials from container images and filesystems",
+			BinaryTemplate: `
+				{{$os := .OS}}
+				{{$arch := .Arch}}
+				{{$ext := "tar.gz"}}
+
+				{{$arch := .Arch}}
+				{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+				{{$arch = "arm64"}}
+				{{- else if eq .Arch "x86_64" -}}
+				{{ $arch = "amd64" }}
+				{{- end -}}
+
+				{{ if HasPrefix .OS "ming" -}}
+				{{$os = "windows"}}
+				{{$ext = "zip"}}
+				{{- end -}}
+
+				{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
+				`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "anchore",
+			Repo:        "grype",
+			Name:        "grype",
+			Description: "A vulnerability scanner for container images and filesystems",
+			BinaryTemplate: `
+				{{$os := .OS}}
+				{{$arch := .Arch}}
+				{{$ext := "tar.gz"}}
+
+				{{$arch := .Arch}}
+				{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+				{{$arch = "arm64"}}
+				{{- else if eq .Arch "x86_64" -}}
+				{{ $arch = "amd64" }}
+				{{- end -}}
+
+				{{ if HasPrefix .OS "ming" -}}
+				{{$os = "windows"}}
+				{{$ext = "zip"}}
+				{{- end -}}
+
+				{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
+				`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "kubernetes-sigs",
+			Repo:        "cluster-api-provider-aws",
+			Name:        "clusterawsadm",
+			Description: "Kubernetes Cluster API Provider AWS Management Utility",
+			BinaryTemplate: `
+				{{$os := .OS}}
+				{{$arch := .Arch}}
+				{{$ext := ""}}
+
+				{{- if eq .Arch "aarch64" -}}
+				{{$arch = "arm64"}}
+				{{- else if eq .Arch "x86_64" -}}
+				{{ $arch = "amd64" }}
+				{{- end -}}
+
+				{{ if HasPrefix .OS "ming" -}}
+				{{$os = "windows"}}
+				{{$ext = ".exe"}}
+				{{- end -}}
+
+
+				clusterawsadm-{{$os}}-{{$arch}}{{$ext}}
+				`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "schollz",
+			Repo:        "croc",
+			Name:        "croc",
+			Description: "Easily and securely send things from one computer to another",
+			BinaryTemplate: `
+					{{$os := .OS}}
+					{{$arch := .Arch}}
+					{{$ext := "tar.gz"}}
+	
+					{{- if eq .OS "darwin" -}}
+					{{$os = "macOS"}}
+					{{- else if eq .OS "linux" -}}
+					{{ $os = "Linux" }}
+					{{- end -}}
+
+					{{- if eq .Arch "aarch64" -}}
+					{{$arch = "ARM64"}}
+					{{- else if eq .Arch "arm64" -}}
+					{{ $arch = "ARM64" }}
+					{{- else if eq .Arch "x86_64" -}}
+					{{ $arch = "64bit" }}
+					{{- else if eq .Arch "armv7l" -}}
+					{{ $arch = "ARM" }}
+					{{- end -}}
+	
+					{{ if HasPrefix .OS "ming" -}}
+					{{$os = "Windows"}}
+					{{$ext = "zip"}}
+					{{- end -}}
+	
+	
+					croc_{{.VersionNumber}}_{{$os}}-{{$arch}}.{{$ext}}
+					`,
+		})
 	return tools
 }

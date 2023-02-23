@@ -20,7 +20,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const (
@@ -172,7 +172,7 @@ Use "--yaml" to pass a file or "--from-store" to generate using function store.`
 	return nil
 }
 
-//generateCRDYAML generates CRD YAML for functions
+// generateCRDYAML generates CRD YAML for functions
 func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
 
 	var objectsString string

@@ -15,7 +15,7 @@ import (
 
 	envsubst "github.com/drone/envsubst"
 	glob "github.com/ryanuber/go-glob"
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 const legacyProviderName = "faas"

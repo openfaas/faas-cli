@@ -13,6 +13,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/alexellis/arkade/pkg"
 	"github.com/alexellis/arkade/pkg/env"
 )
 
@@ -39,6 +40,9 @@ type Tool struct {
 	// Version pinned or left empty to pull the latest release
 	// if any only if only BinaryTemplate is specified.
 	Version string
+
+	// Bespoke approach for finding version when none is set.
+	VersionStrategy string
 
 	// Description of what the tool is used for.
 	Description string
@@ -85,7 +89,7 @@ func (tool Tool) IsArchive(quiet bool) (bool, error) {
 // GetDownloadURL fetches the download URL for a release of a tool
 // for a given os, architecture and version
 func GetDownloadURL(tool *Tool, os, arch, version string, quiet bool) (string, error) {
-	ver := getToolVersion(tool, version)
+	ver := GetToolVersion(tool, version)
 
 	dlURL, err := tool.GetURL(os, arch, ver, quiet)
 	if err != nil {
@@ -95,7 +99,7 @@ func GetDownloadURL(tool *Tool, os, arch, version string, quiet bool) (string, e
 	return dlURL, nil
 }
 
-func getToolVersion(tool *Tool, version string) string {
+func GetToolVersion(tool *Tool, version string) string {
 	ver := tool.Version
 	if len(version) > 0 {
 		ver = version
@@ -109,6 +113,8 @@ func (tool Tool) Head(uri string) (int, string, http.Header, error) {
 	if err != nil {
 		return http.StatusBadRequest, "", nil, err
 	}
+
+	req.Header.Set("User-Agent", pkg.UserAgent())
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -127,7 +133,9 @@ func (tool Tool) Head(uri string) (int, string, http.Header, error) {
 func (tool Tool) GetURL(os, arch, version string, quiet bool) (string, error) {
 
 	if len(version) == 0 &&
-		(len(tool.URLTemplate) == 0 || strings.Contains(tool.URLTemplate, "https://github.com/")) {
+		(len(tool.URLTemplate) == 0 ||
+			strings.Contains(tool.URLTemplate, "https://github.com/") ||
+			tool.VersionStrategy == "github") {
 		if !quiet {
 			log.Printf("Looking up version for %s", tool.Name)
 		}
@@ -191,6 +199,8 @@ func FindGitHubRelease(owner, repo string) (string, error) {
 		return "", err
 	}
 
+	req.Header.Set("User-Agent", pkg.UserAgent())
+
 	res, err := client.Do(req)
 	if err != nil {
 		return "", err
@@ -201,7 +211,7 @@ func FindGitHubRelease(owner, repo string) (string, error) {
 	}
 
 	if res.StatusCode != 302 {
-		return "", fmt.Errorf("incorrect status code: %d", res.StatusCode)
+		return "", fmt.Errorf("server returned status: %d", res.StatusCode)
 	}
 
 	loc := res.Header.Get("Location")
@@ -303,7 +313,7 @@ func GetBinaryName(tool *Tool, os, arch, version string) (string, error) {
 		}
 
 		var buf bytes.Buffer
-		ver := getToolVersion(tool, version)
+		ver := GetToolVersion(tool, version)
 		if err := t.Execute(&buf, map[string]string{
 			"OS":            os,
 			"Arch":          arch,
@@ -362,6 +372,10 @@ func toolExists(arkadeTools *[]Tool, tools Tools, name, version string) error {
 		}
 	}
 	return fmt.Errorf("tool %s not found", name)
+}
+
+func PostToolNotFoundMsg(url string) string {
+	return fmt.Sprintf("Look like this tool isn't available for your OS or/and platform. Check out the link to see if the tool you're after is available: %s.\nIf it is there, don't hesitate to open an issue and contribute to Arkade!", url)
 }
 
 // PostInstallationMsg generates installation message after tool has been downloaded

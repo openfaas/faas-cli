@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"

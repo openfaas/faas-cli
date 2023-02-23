@@ -15,10 +15,10 @@ import (
 	"strings"
 
 	"github.com/mitchellh/go-homedir"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
-//AuthType auth type
+// AuthType auth type
 type AuthType string
 
 const (

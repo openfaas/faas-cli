@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 func ParseYAMLForLanguageTemplate(file string) (*LanguageTemplate, error) {
@@ -64,7 +64,7 @@ func IsValidTemplate(lang string) bool {
 	return found
 }
 
-//LoadLanguageTemplate loads language template details from template.yml file.
+// LoadLanguageTemplate loads language template details from template.yml file.
 func LoadLanguageTemplate(lang string) (*LanguageTemplate, error) {
 	lang = strings.ToLower(lang)
 	_, err := os.Stat("./template/" + lang)

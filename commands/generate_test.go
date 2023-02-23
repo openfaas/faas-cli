@@ -26,23 +26,23 @@ var generateTestcases = []struct {
 		Name: "Specified Namespace and API Version",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
-  network: "func_functions"      
+    name: openfaas
+    gateway: http://127.0.0.1:8080
+    network: "func_functions"            
 functions:
  url-ping:
-   lang: python
-   handler: ./sample/url-ping
-   image: alexellis/faas-url-ping:0.2`,
+     lang: python
+     handler: ./sample/url-ping
+     image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-fn
+    name: url-ping
+    namespace: openfaas-fn
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1",
@@ -54,27 +54,27 @@ spec:
 		Name: "Annotation present",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
+    name: openfaas
+    gateway: http://127.0.0.1:8080
 functions:
  url-ping:
-   lang: python
-   handler: ./sample/url-ping
-   image: alexellis/faas-url-ping:0.2
-   annotations:
-     com.scale.zero: 1
+     lang: python
+     handler: ./sample/url-ping
+     image: alexellis/faas-url-ping:0.2
+     annotations:
+         com.scale.zero: 1
 `,
 		Output: []string{`---
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-fn
+    name: url-ping
+    namespace: openfaas-fn
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
-  annotations:
-    com.scale.zero: "1"
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
+    annotations:
+        com.scale.zero: "1"
 `},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1",
@@ -86,22 +86,22 @@ spec:
 		Name: "Blank namespace",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
-  network: "func_functions"
+    name: openfaas
+    gateway: http://127.0.0.1:8080
+    network: "func_functions"
 functions:
  url-ping:
-  lang: python
-  handler: ./sample/url-ping
-  image: alexellis/faas-url-ping:0.2`,
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
-  name: url-ping
+    name: url-ping
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1",
@@ -113,23 +113,23 @@ spec:
 		Name: "BranchAndSHA Image format",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
-  network: "func_functions"
+    name: openfaas
+    gateway: http://127.0.0.1:8080
+    network: "func_functions"
 functions:
  url-ping:
-  lang: python
-  handler: ./sample/url-ping
-  image: alexellis/faas-url-ping:0.2`,
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping:0.2`,
 		Output: []string{`---
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-function
+    name: url-ping
+    namespace: openfaas-function
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2-master-6bgf36qd
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2-master-6bgf36qd
 `},
 		Format:     schema.BranchAndSHAFormat,
 		APIVersion: "openfaas.com/v1",
@@ -141,60 +141,60 @@ spec:
 		Name: "Multiple functions",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080  
-  network: "func_functions"
+    name: openfaas
+    gateway: http://127.0.0.1:8080    
+    network: "func_functions"
 functions:
  url-ping:
-  lang: python
-  handler: ./sample/url-ping
-  image: alexellis/faas-url-ping:0.2
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping:0.2
  astronaut-finder:
-  lang: python3
-  handler: ./astronaut-finder
-  image: astronaut-finder
-  environment:
-   write_debug: true`,
+    lang: python3
+    handler: ./astronaut-finder
+    image: astronaut-finder
+    environment:
+     write_debug: true`,
 		Output: []string{`---
 apiVersion: openfaas.com/v2alpha2
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-fn
+    name: url-ping
+    namespace: openfaas-fn
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
 ---
 apiVersion: openfaas.com/v2alpha2
 kind: Function
 metadata:
-  name: astronaut-finder
-  namespace: openfaas-fn
+    name: astronaut-finder
+    namespace: openfaas-fn
 spec:
-  name: astronaut-finder
-  image: astronaut-finder:latest
-  environment:
-    write_debug: "true"
+    name: astronaut-finder
+    image: astronaut-finder:latest
+    environment:
+        write_debug: "true"
 `, `---
 apiVersion: openfaas.com/v2alpha2
 kind: Function
 metadata:
-  name: astronaut-finder
-  namespace: openfaas-fn
+    name: astronaut-finder
+    namespace: openfaas-fn
 spec:
-  name: astronaut-finder
-  image: astronaut-finder:latest
-  environment:
-    write_debug: "true"
+    name: astronaut-finder
+    image: astronaut-finder:latest
+    environment:
+        write_debug: "true"
 ---
 apiVersion: openfaas.com/v2alpha2
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-fn
+    name: url-ping
+    namespace: openfaas-fn
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v2alpha2",
@@ -206,24 +206,24 @@ spec:
 		Name: "Read-only root filesystem",
 		Input: `
 provider:
-  name: openfaas
-  gateway: http://127.0.0.1:8080
+    name: openfaas
+    gateway: http://127.0.0.1:8080
 functions:
  url-ping:
-  lang: python
-  handler: ./sample/url-ping
-  image: alexellis/faas-url-ping:0.2
-  readonly_root_filesystem: true`,
+    lang: python
+    handler: ./sample/url-ping
+    image: alexellis/faas-url-ping:0.2
+    readonly_root_filesystem: true`,
 		Output: []string{`---
 apiVersion: openfaas.com/v1
 kind: Function
 metadata:
-  name: url-ping
-  namespace: openfaas-fn
+    name: url-ping
+    namespace: openfaas-fn
 spec:
-  name: url-ping
-  image: alexellis/faas-url-ping:0.2
-  readOnlyRootFilesystem: true
+    name: url-ping
+    image: alexellis/faas-url-ping:0.2
+    readOnlyRootFilesystem: true
 `},
 		Format:     schema.DefaultFormat,
 		APIVersion: "openfaas.com/v1",
@@ -256,7 +256,6 @@ func Test_generateCRDYAML(t *testing.T) {
 			t.Fatalf("%s failed: want:\n%q, but got:\n%q", testcase.Name, testcase.Output, generatedYAML)
 		}
 	}
-
 }
 
 func stringInSlice(a string, list []string) bool {
@@ -271,7 +270,7 @@ func stringInSlice(a string, list []string) bool {
 func Test_filterStoreItem_Found(t *testing.T) {
 
 	items := []v2.StoreFunction{
-		v2.StoreFunction{
+		{
 			Name: "figlet",
 		},
 	}
@@ -293,7 +292,7 @@ func Test_filterStoreItem_Found(t *testing.T) {
 func Test_filterStoreItem_NotFound(t *testing.T) {
 
 	items := []v2.StoreFunction{
-		v2.StoreFunction{
+		{
 			Name: "figlets",
 		},
 	}
