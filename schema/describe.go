@@ -5,7 +5,7 @@ package schema
 
 import "github.com/openfaas/faas-provider/types"
 
-//FunctionDescription information related to a function
+// FunctionDescription information related to a function
 type FunctionDescription struct {
 	types.FunctionStatus
 	Status          string

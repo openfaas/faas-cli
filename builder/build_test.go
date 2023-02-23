@@ -361,7 +361,7 @@ func Test_getPackages(t *testing.T) {
 		{
 			title: "Single Option",
 			availableBuildOptions: []stack.BuildOption{
-				stack.BuildOption{Name: "dev",
+				{Name: "dev",
 					Packages: []string{"jq", "hw", "ke"}},
 			},
 			requestedBuildOptions: []string{"dev"},
@@ -370,9 +370,9 @@ func Test_getPackages(t *testing.T) {
 		{
 			title: "Two Options one chosen",
 			availableBuildOptions: []stack.BuildOption{
-				stack.BuildOption{Name: "dev",
+				{Name: "dev",
 					Packages: []string{"jq", "hw", "ke"}},
-				stack.BuildOption{Name: "debug",
+				{Name: "debug",
 					Packages: []string{"lr", "kt", "jy"}},
 			},
 			requestedBuildOptions: []string{"dev"},
@@ -381,9 +381,9 @@ func Test_getPackages(t *testing.T) {
 		{
 			title: "Two Options two chosen",
 			availableBuildOptions: []stack.BuildOption{
-				stack.BuildOption{Name: "dev",
+				{Name: "dev",
 					Packages: []string{"jq", "hw", "ke"}},
-				stack.BuildOption{Name: "debug",
+				{Name: "debug",
 					Packages: []string{"lr", "kt", "jy"}},
 			},
 			requestedBuildOptions: []string{"dev", "debug"},
@@ -392,9 +392,9 @@ func Test_getPackages(t *testing.T) {
 		{
 			title: "Two Options two chosen with overlaps",
 			availableBuildOptions: []stack.BuildOption{
-				stack.BuildOption{Name: "dev",
+				{Name: "dev",
 					Packages: []string{"jq", "hw", "ke"}},
-				stack.BuildOption{Name: "debug",
+				{Name: "debug",
 					Packages: []string{"lr", "jq", "hw"}},
 			},
 			requestedBuildOptions: []string{"dev", "debug"},

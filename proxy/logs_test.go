@@ -48,8 +48,8 @@ func Test_GetLogs_200OK(t *testing.T) {
 	params := logs.Request{Name: "testFunc"}
 
 	lines := []logs.Message{
-		logs.Message{Name: params.Name, Text: "test"},
-		logs.Message{Name: params.Name, Text: "test2"},
+		{Name: params.Name, Text: "test"},
+		{Name: params.Name, Text: "test2"},
 	}
 
 	s := test.MockHttpServer(t, []test.Request{

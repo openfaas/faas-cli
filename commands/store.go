@@ -107,7 +107,7 @@ func filterStoreList(functions []storeV2.StoreFunction, platform string) []store
 	return filteredList
 }
 
-//getValueIgnoreCase get a key value from map by ignoring case for key
+// getValueIgnoreCase get a key value from map by ignoring case for key
 func getValueIgnoreCase(kv map[string]string, key string) (string, bool) {
 	for k, v := range kv {
 		if strings.EqualFold(k, key) {

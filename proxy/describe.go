@@ -15,7 +15,7 @@ import (
 	types "github.com/openfaas/faas-provider/types"
 )
 
-//GetFunctionInfo get an OpenFaaS function information
+// GetFunctionInfo get an OpenFaaS function information
 func (c *Client) GetFunctionInfo(ctx context.Context, functionName string, namespace string) (types.FunctionStatus, error) {
 	var (
 		result types.FunctionStatus

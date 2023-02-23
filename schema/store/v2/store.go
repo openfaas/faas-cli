@@ -3,7 +3,7 @@
 
 package v2
 
-//StoreFunction represents a multi-arch function in the store
+// StoreFunction represents a multi-arch function in the store
 type StoreFunction struct {
 	Icon                   string            `json:"icon"`
 	Title                  string            `json:"title"`
@@ -19,7 +19,7 @@ type StoreFunction struct {
 	Images                 map[string]string `json:"images"`
 }
 
-//GetImageName get image name of function for a platform
+// GetImageName get image name of function for a platform
 func (s *StoreFunction) GetImageName(platform string) string {
 	imageName, _ := s.Images[platform]
 	return imageName

@@ -7,7 +7,7 @@ import "github.com/openfaas/faas-cli/schema"
 
 const APIVersionLatest = "serving.knative.dev/v1"
 
-//ServingServiceCRD root level YAML definition for the object
+// ServingServiceCRD root level YAML definition for the object
 type ServingServiceCRD struct {
 	//APIVersion CRD API version
 	APIVersion string `yaml:"apiVersion"`

@@ -6,14 +6,14 @@ import (
 	"github.com/openfaas/faas-cli/config"
 )
 
-//CLIAuth auth struct for the CLI
+// CLIAuth auth struct for the CLI
 type CLIAuth struct {
 	Username string
 	Password string
 	Token    string
 }
 
-//BasicAuth basic authentication type
+// BasicAuth basic authentication type
 type BasicAuth struct {
 	username string
 	password string
@@ -24,7 +24,7 @@ func (auth *BasicAuth) Set(req *http.Request) error {
 	return nil
 }
 
-//BearerToken bearer token
+// BearerToken bearer token
 type BearerToken struct {
 	token string
 }
@@ -34,7 +34,7 @@ func (c *BearerToken) Set(req *http.Request) error {
 	return nil
 }
 
-//NewCLIAuth returns a new CLI Auth
+// NewCLIAuth returns a new CLI Auth
 func NewCLIAuth(token string, gateway string) (ClientAuth, error) {
 	authConfig, _ := config.LookupAuthConfig(gateway)
 
