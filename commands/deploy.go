@@ -339,7 +339,6 @@ func deployImage(
 	var statusCode int
 	readOnlyRFS := deployFlags.readOnlyRootFilesystem || readOnlyRootFilesystem
 	envvars, err := util.ParseMap(deployFlags.envvarOpts, "env")
-
 	if err != nil {
 		return statusCode, fmt.Errorf("error parsing envvars: %v", err)
 	}

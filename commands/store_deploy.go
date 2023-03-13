@@ -97,7 +97,7 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	envs := []string{}
 	for k, v := range mergedEnvs {
 		env := fmt.Sprintf("%s=%s", k, v)
-		storeDeployFlags.envvarOpts = append(envs, env)
+		envs = append(envs, env)
 	}
 
 	storeDeployFlags.envvarOpts = envs
