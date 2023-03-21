@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"sort"
@@ -131,6 +132,16 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 		allAnnotations := util.MergeMap(item.Annotations, annotations)
 
+		if len(item.Fprocess) > 0 {
+			if item.Environment == nil {
+				item.Environment = make(map[string]string)
+			}
+
+			if _, ok := item.Environment["fprocess"]; !ok {
+				item.Environment["fprocess"] = item.Fprocess
+			}
+		}
+
 		services.Functions[item.Name] = stack.Function{
 			Name:        item.Name,
 			Image:       item.Images[desiredArch],
@@ -223,11 +234,15 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				Spec:       spec,
 			}
 
-			//Marshal the object definition to yaml
-			objectString, err := yaml.Marshal(crd)
-			if err != nil {
+			var buff bytes.Buffer
+			yamlEncoder := yaml.NewEncoder(&buff)
+			yamlEncoder.SetIndent(2) // this is what you're looking for
+			if err := yamlEncoder.Encode(&crd); err != nil {
 				return "", err
 			}
+
+			objectString := buff.String()
+
 			objectsString += "---\n" + string(objectString)
 		}
 	}

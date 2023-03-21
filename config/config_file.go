@@ -4,6 +4,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/base64"
 
 	"fmt"
@@ -153,12 +154,14 @@ func (configFile *ConfigFile) save() error {
 	}
 	defer file.Close()
 
-	data, err := yaml.Marshal(configFile)
-	if err != nil {
+	var buff bytes.Buffer
+	yamlEncoder := yaml.NewEncoder(&buff)
+	yamlEncoder.SetIndent(2) // this is what you're looking for
+	if err := yamlEncoder.Encode(&configFile); err != nil {
 		return err
 	}
 
-	_, err = file.Write(data)
+	_, err = file.Write(buff.Bytes())
 	return err
 }
 
