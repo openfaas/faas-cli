@@ -8,22 +8,21 @@ import (
 	"fmt"
 	"text/tabwriter"
 
+	"github.com/mitchellh/go-wordwrap"
 	storeV2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	// Setup flags used by store command
-	storeDescribeCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output for the field values")
-
 	storeCmd.AddCommand(storeDescribeCmd)
 }
 
 var storeDescribeCmd = &cobra.Command{
 	Use:   `describe (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
 	Short: "Show details of OpenFaaS function from a store",
-	Example: `  faas-cli store describe NodeInfo
-  faas-cli store describe NodeInfo --url https://host:port/store.json`,
+	Example: `  faas-cli store describe nodeinfo
+  faas-cli store describe nodeinfo --url https://host:port/store.json
+`,
 	Aliases: []string{"inspect"},
 	RunE:    runStoreDescribe,
 }
@@ -47,35 +46,52 @@ func runStoreDescribe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found for platform '%s'", functionName, targetPlatform)
 	}
 
-	verbose, err := cmd.Flags().GetBool("verbose")
-	if err != nil {
-		return err
-	}
-
-	content := storeRenderItem(item, targetPlatform, verbose)
+	content := storeRenderItem(item, targetPlatform)
 	fmt.Print(content)
 
 	return nil
 }
 
-func storeRenderItem(item *storeV2.StoreFunction, platform string, verbose bool) string {
+func storeRenderItem(item *storeV2.StoreFunction, platform string) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
-	fmt.Fprintf(w, "Info for: %s\n\n", item.Title)
 
-	fmt.Fprintf(w, "%s\t%s\n", "Name", item.Name)
-
-	desc := item.Description
-	if !verbose {
-		desc = storeRenderDescription(desc)
+	author := item.Author
+	if author == "" {
+		author = "unknown"
 	}
 
-	fmt.Fprintf(w, "%s\t%s\n", "Description", desc)
-	fmt.Fprintf(w, "%s\t%s\n", "Image", item.GetImageName(platform))
-	fmt.Fprintf(w, "%s\t%s\n", "Process", item.Fprocess)
-	fmt.Fprintf(w, "%s\t%s\n", "Repo URL", item.RepoURL)
+	fmt.Fprintf(w, "%s\t%s\n", "Title:", item.Title)
+	fmt.Fprintf(w, "%s\t%s\n", "Author:", item.Author)
+	fmt.Fprintf(w, "%s\t\n%s\n\n", "Description:", wordwrap.WrapString(item.Description, 80))
 
-	fmt.Fprintln(w)
+	fmt.Fprintf(w, "%s\t%s\n", "Image:", item.GetImageName(platform))
+	fmt.Fprintf(w, "%s\t%s\n", "Process:", item.Fprocess)
+	fmt.Fprintf(w, "%s\t%s\n", "Repo URL:", item.RepoURL)
+	if len(item.Environment) > 0 {
+		fmt.Fprintf(w, "Environment:\n")
+		for k, v := range item.Environment {
+			fmt.Fprintf(w, "- \t%s:\t%s\n", k, v)
+		}
+		fmt.Fprintln(w)
+	}
+
+	if item.Labels != nil {
+		fmt.Fprintf(w, "Labels:\n")
+		for k, v := range item.Labels {
+			fmt.Fprintf(w, "- \t%s:\t%s\n", k, v)
+		}
+		fmt.Fprintln(w)
+	}
+
+	if len(item.Annotations) > 0 {
+		fmt.Fprintf(w, "Annotations:\n")
+		for k, v := range item.Annotations {
+			fmt.Fprintf(w, "- \t%s:\t%s\n", k, v)
+		}
+		fmt.Fprintln(w)
+	}
+
 	w.Flush()
 	return b.String()
 }

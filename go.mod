@@ -24,7 +24,10 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-require github.com/google/go-containerregistry v0.13.0
+require (
+	github.com/google/go-containerregistry v0.13.0
+	github.com/mitchellh/go-wordwrap v1.0.1
+)
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect

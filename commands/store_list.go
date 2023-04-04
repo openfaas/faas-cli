@@ -55,10 +55,15 @@ func storeRenderItems(items []storeV2.StoreFunction) string {
 	var b bytes.Buffer
 	w := tabwriter.NewWriter(&b, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(w)
-	fmt.Fprintln(w, "FUNCTION\tDESCRIPTION")
+	fmt.Fprintln(w, "FUNCTION\tAUTHOR\tDESCRIPTION")
 
 	for _, item := range items {
-		fmt.Fprintf(w, "%s\t%s\n", item.Title, storeRenderDescription(item.Description))
+		author := item.Author
+		if author == "" {
+			author = "unknown"
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%s\n", item.Name, author, storeRenderDescription(item.Title))
 	}
 
 	fmt.Fprintln(w)

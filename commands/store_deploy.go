@@ -17,7 +17,6 @@ import (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	storeDeployCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-	storeDeployCmd.Flags().StringVar(&network, "network", "", "Name of the network")
 	storeDeployCmd.Flags().StringVar(&functionName, "name", "", "Name of the deployed function (overriding name from the store)")
 	storeDeployCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	// Setup flags that are used only by deploy command (variables defined above)
@@ -42,7 +41,6 @@ var storeDeployCmd = &cobra.Command{
 	Use: `deploy (FUNCTION_NAME|FUNCTION_TITLE)
 			[--name FUNCTION_NAME]
 			[--gateway GATEWAY_URL]
-			[--network NETWORK_NAME]
 			[--env ENVVAR=VALUE ...]
 			[--label LABEL=VALUE ...]
 			[--annotation ANNOTATION=VALUE ...]
@@ -115,11 +113,6 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 			annotation := fmt.Sprintf("%s=%s", k, v)
 			storeDeployFlags.annotationOpts = append(storeDeployFlags.annotationOpts, annotation)
 		}
-	}
-
-	// Use the network from manifest if not changed by user
-	if !cmd.Flag("network").Changed {
-		network = item.Network
 	}
 
 	itemName := item.Name

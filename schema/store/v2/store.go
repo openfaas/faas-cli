@@ -6,11 +6,11 @@ package v2
 // StoreFunction represents a multi-arch function in the store
 type StoreFunction struct {
 	Icon                   string            `json:"icon"`
+	Author                 string            `json:"author,omitempty"`
 	Title                  string            `json:"title"`
 	Description            string            `json:"description"`
 	Name                   string            `json:"name"`
 	Fprocess               string            `json:"fprocess"`
-	Network                string            `json:"network"`
 	RepoURL                string            `json:"repo_url"`
 	ReadOnlyRootFilesystem bool              `json:"readOnlyRootFilesystem"`
 	Environment            map[string]string `json:"environment"`
