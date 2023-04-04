@@ -210,14 +210,20 @@ func formatBasicOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo) {
 
 func formatVerboseOutput(lineWriter *tabwriter.Writer, templates []TemplateInfo) {
 
-	fmt.Fprintf(lineWriter, "NAME\tLANGUAGE\tPLATFORM\tSOURCE\tDESCRIPTION\n")
+	fmt.Fprintf(lineWriter, "NAME\tRECOMMENDED\tSOURCE\tDESCRIPTION\tLANGUAGE\tPLATFORM\n")
 	for _, template := range templates {
-		fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\n",
+		recommended := "[ ]"
+		if template.Recommended {
+			recommended = "[x]"
+		}
+
+		fmt.Fprintf(lineWriter, "%s\t%s\t%s\t%s\t%s\t%s\n",
 			template.TemplateName,
-			template.Language,
-			template.Platform,
+			recommended,
 			template.Source,
-			template.Description)
+			template.Description,
+			template.Language,
+			template.Platform)
 	}
 }
 

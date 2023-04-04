@@ -70,12 +70,26 @@ func formatTemplateOutput(storeTemplate TemplateInfo) string {
 	lineWriter := tabwriter.NewWriter(&buff, 0, 0, 1, ' ', 0)
 	fmt.Fprintln(lineWriter)
 	fmt.Fprintf(lineWriter, "Name:\t%s\n", storeTemplate.TemplateName)
-	fmt.Fprintf(lineWriter, "Platform:\t%s\n", storeTemplate.Platform)
+	fmt.Fprintf(lineWriter, "Description:\t%s\n", storeTemplate.Description)
+
 	fmt.Fprintf(lineWriter, "Language:\t%s\n", storeTemplate.Language)
 	fmt.Fprintf(lineWriter, "Source:\t%s\n", storeTemplate.Source)
-	fmt.Fprintf(lineWriter, "Description:\t%s\n", storeTemplate.Description)
 	fmt.Fprintf(lineWriter, "Repository:\t%s\n", storeTemplate.Repository)
-	fmt.Fprintf(lineWriter, "Official Template:\t%s\n", storeTemplate.Official)
+
+	fmt.Fprintf(lineWriter, "Platform:\t%s\n", storeTemplate.Platform)
+
+	if storeTemplate.Official == "true" {
+		fmt.Fprintf(lineWriter, "Official:\t%s\n", "[x]")
+	} else {
+		fmt.Fprintf(lineWriter, "Official:\t%s\n", "[ ]")
+	}
+
+	if storeTemplate.Recommended {
+		fmt.Fprintf(lineWriter, "Recommended:\t%s\n", "[x]")
+	} else {
+		fmt.Fprintf(lineWriter, "Recommended:\t%s\n", "[ ]")
+	}
+
 	fmt.Fprintln(lineWriter)
 
 	lineWriter.Flush()
