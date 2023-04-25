@@ -85,6 +85,8 @@ func BuildImage(image string, handler string, functionName string, language stri
 		envs := os.Environ()
 		if mountSSH {
 			envs = append(envs, "DOCKER_BUILDKIT=1")
+		} else {
+			envs = append(envs, "DOCKER_BUILDKIT=0")
 		}
 
 		task := v1execute.ExecTask{
