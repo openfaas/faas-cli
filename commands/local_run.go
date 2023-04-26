@@ -27,13 +27,14 @@ type runOptions struct {
 	extraEnv map[string]string
 	output   io.Writer
 	err      io.Writer
+	build    bool
 }
 
 func newLocalRunCmd() *cobra.Command {
 	opts := runOptions{}
 
 	cmd := &cobra.Command{
-		Use:   `local-run NAME --port PORT -f YAML_FILE`,
+		Use:   `local-run NAME --port PORT -f YAML_FILE [flags from build]`,
 		Short: "Start a function with docker for local testing (experimental feature)",
 		Long: `Providing faas-cli build has already been run, this command will use the 
 docker command to start a container on your local machine using its image.
@@ -62,6 +63,13 @@ services deployed within your OpenFaaS cluster.`,
 			if len(args) > 1 {
 				return fmt.Errorf("only one function name is allowed")
 			}
+
+			if opts.build {
+				if err := localBuild(cmd, args); err != nil {
+					return err
+				}
+			}
+
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -82,11 +90,27 @@ services deployed within your OpenFaaS cluster.`,
 	}
 
 	cmd.Flags().BoolVar(&opts.print, "print", false, "Print the docker command instead of running it")
+	cmd.Flags().BoolVar(&opts.build, "build", true, "Build function prior to local-run")
 	cmd.Flags().IntVarP(&opts.port, "port", "p", 8080, "port to bind the function to")
 	cmd.Flags().StringVar(&opts.network, "network", "", "connect function to an existing network, use 'host' to access other process already running on localhost. When using this, '--port' is ignored, if you have port collisions, you may change the port using '-e port=NEW_PORT'")
 	cmd.Flags().StringToStringVarP(&opts.extraEnv, "env", "e", map[string]string{}, "additional environment variables (ENVVAR=VALUE), use this to experiment with different values for your function")
 
+	build, _, _ := faasCmd.Find([]string{"build"})
+	cmd.Flags().AddFlagSet(build.Flags())
+
 	return cmd
+}
+
+func localBuild(cmd *cobra.Command, args []string) error {
+	if err := preRunBuild(cmd, args); err != nil {
+		return err
+	}
+
+	if err := runBuild(cmd, args); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func runFunction(ctx context.Context, name string, opts runOptions, args []string) error {
