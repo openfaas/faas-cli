@@ -93,11 +93,16 @@ func runLogin(cmd *cobra.Command, args []string) error {
 	}
 
 	token := config.EncodeAuth(username, password)
-	if err := config.UpdateAuthConfig(gateway, token, config.BasicAuthType); err != nil {
+	authConfig := config.AuthConfig{
+		Gateway: gateway,
+		Token:   token,
+		Auth:    config.BasicAuthType,
+	}
+	if err := config.UpdateAuthConfig(authConfig); err != nil {
 		return err
 	}
 
-	authConfig, err := config.LookupAuthConfig(gateway)
+	authConfig, err = config.LookupAuthConfig(gateway)
 	if err != nil {
 		return err
 	}

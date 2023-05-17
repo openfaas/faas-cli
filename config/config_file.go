@@ -55,6 +55,12 @@ type AuthConfig struct {
 	Gateway string   `yaml:"gateway,omitempty"`
 	Auth    AuthType `yaml:"auth,omitempty"`
 	Token   string   `yaml:"token,omitempty"`
+	Options []Option `yaml:"options,omitempty"`
+}
+
+type Option struct {
+	Name  string `yaml:"name"`
+	Value string `yaml:"value"`
 }
 
 // New initializes a config file for the given file path
@@ -211,7 +217,9 @@ func DecodeAuth(input string) (string, string, error) {
 }
 
 // UpdateAuthConfig creates or updates the username and password for a given gateway
-func UpdateAuthConfig(gateway, token string, authType AuthType) error {
+func UpdateAuthConfig(authConfig AuthConfig) error {
+	gateway := authConfig.Gateway
+
 	_, err := url.ParseRequestURI(gateway)
 	if err != nil || len(gateway) < 1 {
 		return fmt.Errorf("invalid gateway URL")
@@ -231,12 +239,6 @@ func UpdateAuthConfig(gateway, token string, authType AuthType) error {
 		return err
 	}
 
-	auth := AuthConfig{
-		Gateway: gateway,
-		Auth:    authType,
-		Token:   token,
-	}
-
 	index := -1
 	for i, v := range cfg.AuthConfigs {
 		if gateway == v.Gateway {
@@ -246,9 +248,9 @@ func UpdateAuthConfig(gateway, token string, authType AuthType) error {
 	}
 
 	if index == -1 {
-		cfg.AuthConfigs = append(cfg.AuthConfigs, auth)
+		cfg.AuthConfigs = append(cfg.AuthConfigs, authConfig)
 	} else {
-		cfg.AuthConfigs[index] = auth
+		cfg.AuthConfigs[index] = authConfig
 	}
 
 	if err := cfg.save(); err != nil {
