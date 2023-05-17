@@ -47,7 +47,11 @@ func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
 	p := "some pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
 	token := EncodeAuth(u, p)
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -77,7 +81,11 @@ func Test_UpdateAuthConfig_Insert(t *testing.T) {
 	p := "some pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
 	token := EncodeAuth(u, p)
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -113,7 +121,11 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 	p := "pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
 	token := EncodeAuth(u, p)
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -134,7 +146,11 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 	u = "admin2"
 	p = "pass2"
 	token = EncodeAuth(u, p)
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -156,7 +172,11 @@ func Test_UpdateAuthConfig_Update(t *testing.T) {
 
 func Test_UpdateAuthConfig_InvaidGatewayURL(t *testing.T) {
 	gateway := "http//test.test"
-	err := UpdateAuthConfig(gateway, "a", "b")
+	err := UpdateAuthConfig(AuthConfig{
+		Gateway: gateway,
+		Token:   "a",
+		Auth:    "b",
+	})
 	if err == nil {
 		t.Errorf("Error was not returned")
 	}
@@ -169,7 +189,11 @@ func Test_UpdateAuthConfig_InvaidGatewayURL(t *testing.T) {
 
 func Test_UpdateAuthConfig_EmptyGatewayURL(t *testing.T) {
 	gateway := ""
-	err := UpdateAuthConfig(gateway, "a", "b")
+	err := UpdateAuthConfig(AuthConfig{
+		Gateway: gateway,
+		Token:   "a",
+		Auth:    "b",
+	})
 	if err == nil {
 		t.Errorf("Error was not returned")
 	}
@@ -235,13 +259,21 @@ func Test_RemoveAuthConfig(t *testing.T) {
 	p := "pass"
 	token := EncodeAuth(u, p)
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
 
 	gatewayURL2 := strings.TrimRight("http://openfaas.test2/", "/")
-	err = UpdateAuthConfig(gatewayURL2, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL2,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -296,7 +328,11 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 	p := "pass"
 	token := EncodeAuth(u, p)
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	err = UpdateAuthConfig(gatewayURL, token, BasicAuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    BasicAuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
@@ -324,7 +360,11 @@ func Test_UpdateAuthConfig_Oauth2Insert(t *testing.T) {
 
 	token := "somebase64encodedstring"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
-	err = UpdateAuthConfig(gatewayURL, token, Oauth2AuthType)
+	err = UpdateAuthConfig(AuthConfig{
+		Gateway: gatewayURL,
+		Token:   token,
+		Auth:    Oauth2AuthType,
+	})
 	if err != nil {
 		t.Fatalf("unexpected error when updating auth config: %s", err)
 	}
