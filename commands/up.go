@@ -20,6 +20,9 @@ func init() {
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
+	upFlagset.StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
+	upFlagset.StringVar(&payloadSecretPath, "payload-secret", "", "Path to payload secret file")
+
 	upCmd.Flags().AddFlagSet(upFlagset)
 
 	build, _, _ := faasCmd.Find([]string{"build"})
@@ -68,7 +71,7 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	fmt.Println()
-	if !skipPush {
+	if !skipPush && remoteBuilder == "" {
 		if err := runPush(cmd, args); err != nil {
 			return err
 		}

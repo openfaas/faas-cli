@@ -19,10 +19,12 @@ import (
 )
 
 var (
-	platforms string
-	extraTags []string
-	resetQemu bool
-	mountSSH  bool
+	platforms         string
+	extraTags         []string
+	resetQemu         bool
+	mountSSH          bool
+	remoteBuilder     string
+	payloadSecretPath string
 )
 
 func init() {
@@ -48,6 +50,8 @@ func init() {
 	publishCmd.Flags().StringVar(&platforms, "platforms", "linux/amd64", "A set of platforms to publish")
 	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{}, "Additional extra image tag")
 	publishCmd.Flags().BoolVar(&resetQemu, "reset-qemu", false, "Runs \"docker run multiarch/qemu-user-static --reset -p yes\" to enable multi-arch builds. Compatible with AMD64 machines only.")
+	publishCmd.Flags().StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
+	publishCmd.Flags().StringVar(&payloadSecretPath, "payload-secret", "", "Path to payload secret file")
 
 	// Set bash-completion.
 	_ = publishCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -71,7 +75,8 @@ var publishCmd = &cobra.Command{
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
                    [--platforms linux/arm/v7]
-                   [--reset-qemu]`,
+                   [--reset-qemu]
+                   [--remote-builder http://127.0.0.1:8081/build]`,
 	Short: "Builds and pushes multi-arch OpenFaaS container images",
 	Long: `Builds and pushes multi-arch OpenFaaS container images using Docker buildx.
 Most users will want faas-cli build or faas-cli up for development and testing.
@@ -90,6 +95,7 @@ See also: faas-cli build`,
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
   faas-cli publish --reset-qemu
+  faas-cli publish --remote-address http://127.0.0.1:8081/build
   `,
 	PreRunE: preRunPublish,
 	RunE:    runPublish,
@@ -237,6 +243,8 @@ func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild, m
 						combinedExtraPaths,
 						platforms,
 						extraTags,
+						remoteBuilder,
+						payloadSecretPath,
 					)
 
 					if err != nil {

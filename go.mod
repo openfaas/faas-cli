@@ -25,6 +25,7 @@ require (
 )
 
 require (
+	github.com/alexellis/hmac/v2 v2.0.0
 	github.com/google/go-containerregistry v0.13.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 )
