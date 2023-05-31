@@ -4,8 +4,12 @@
 package builder
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -23,7 +27,7 @@ const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -63,50 +67,91 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return nil
 		}
 
-		buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
-		if err != nil {
-			return err
+		if remoteBuilder != "" {
+			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")
+			if err != nil {
+				return fmt.Errorf("failed to create temporary directory for %s, error: %w", functionName, err)
+			}
+			defer os.RemoveAll(tempDir)
 
+			tarPath := path.Join(tempDir, "req.tar")
+
+			if err := makeTar(builderConfig{Image: imageName, BuildArgs: buildArgMap}, path.Join("build", functionName), tarPath); err != nil {
+				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
+			}
+
+			res, err := callBuilder(tarPath, tempPath, remoteBuilder, functionName, payloadSecretPath)
+			if err != nil {
+				return err
+			}
+			defer res.Body.Close()
+
+			data, _ := io.ReadAll(res.Body)
+
+			result := builderResult{}
+			if err := json.Unmarshal(data, &result); err != nil {
+				return err
+			}
+
+			if !quietBuild {
+				for _, logMsg := range result.Log {
+					fmt.Printf("%s\n", logMsg)
+				}
+			}
+
+			if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
+				fmt.Println(res.StatusCode)
+				return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Status)
+			}
+
+			log.Printf("%s success building and pushing image: %s", functionName, result.Image)
+
+		} else {
+
+			buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
+			if err != nil {
+				return err
+
+			}
+
+			dockerBuildVal := dockerBuild{
+				Image:            imageName,
+				NoCache:          nocache,
+				Squash:           squash,
+				HTTPProxy:        os.Getenv("http_proxy"),
+				HTTPSProxy:       os.Getenv("https_proxy"),
+				BuildArgMap:      buildArgMap,
+				BuildOptPackages: buildOptPackages,
+				BuildLabelMap:    buildLabelMap,
+			}
+
+			command, args := getDockerBuildCommand(dockerBuildVal)
+
+			envs := os.Environ()
+			if mountSSH {
+				envs = append(envs, "DOCKER_BUILDKIT=1")
+			}
+
+			task := v1execute.ExecTask{
+				Cwd:         tempPath,
+				Command:     command,
+				Args:        args,
+				StreamStdio: !quietBuild,
+				Env:         envs,
+			}
+
+			res, err := task.Execute()
+
+			if err != nil {
+				return err
+			}
+
+			if res.ExitCode != 0 {
+				return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", functionName, res.Stderr)
+			}
+
+			fmt.Printf("Image: %s built.\n", imageName)
 		}
-
-		dockerBuildVal := dockerBuild{
-			Image:            imageName,
-			NoCache:          nocache,
-			Squash:           squash,
-			HTTPProxy:        os.Getenv("http_proxy"),
-			HTTPSProxy:       os.Getenv("https_proxy"),
-			BuildArgMap:      buildArgMap,
-			BuildOptPackages: buildOptPackages,
-			BuildLabelMap:    buildLabelMap,
-		}
-
-		command, args := getDockerBuildCommand(dockerBuildVal)
-
-		envs := os.Environ()
-		if mountSSH {
-			envs = append(envs, "DOCKER_BUILDKIT=1")
-		}
-
-		task := v1execute.ExecTask{
-			Cwd:         tempPath,
-			Command:     command,
-			Args:        args,
-			StreamStdio: !quietBuild,
-			Env:         envs,
-		}
-
-		res, err := task.Execute()
-
-		if err != nil {
-			return err
-		}
-
-		if res.ExitCode != 0 {
-			return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", functionName, res.Stderr)
-		}
-
-		fmt.Printf("Image: %s built.\n", imageName)
-
 	} else {
 		return fmt.Errorf("language template: %s not supported, build a custom Dockerfile", language)
 	}

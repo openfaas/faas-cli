@@ -11,6 +11,8 @@ github.com/alexellis/go-execute v0.5.0 h1:L8kgNlFzNbJov7jrInlaig7i6ZUSz/tYYmqvb8
 github.com/alexellis/go-execute v0.5.0/go.mod h1:AgHTcsCF9wrP0mMVTO8N+lFw1Biy71NybBOk8M+qgy8=
 github.com/alexellis/hmac v1.3.0 h1:DJl5wfuhwj2IjG9XRXzPY6bHZYrwrARFTotpxX3KS08=
 github.com/alexellis/hmac v1.3.0/go.mod h1:WmZwlIfB7EQaDuiScnQoMSs3K+1UalW/7ExXP3Cc2zU=
+github.com/alexellis/hmac/v2 v2.0.0 h1:/sH/UJxDXPpJorUeg2DudeKSeUrWPF32Yamw2TiDoOQ=
+github.com/alexellis/hmac/v2 v2.0.0/go.mod h1:O7hZZgTfh5fp5+vAamzodZPlbw+aQK+nnrrJNHsEvL0=
 github.com/cheggaaa/pb/v3 v3.1.0 h1:3uouEsl32RL7gTiQsuaXD4Bzbfl5tGztXGUvXbs4O04=
 github.com/cheggaaa/pb/v3 v3.1.0/go.mod h1:YjrevcBqadFDaGQKRdmZxTY42pXEqda48Ea3lt0K/BE=
 github.com/containerd/stargz-snapshotter/estargz v0.12.1 h1:+7nYmHJb0tEkcRaAW+MHqoKaJYZmkikupxCqVtmPuY0=

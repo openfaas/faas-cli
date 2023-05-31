@@ -202,6 +202,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			buildLabelMap,
 			quietBuild,
 			copyExtra,
+			remoteBuilder,
+			payloadSecretPath,
 		)
 		if err != nil {
 			return err
@@ -255,6 +257,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						buildLabelMap,
 						quietBuild,
 						combinedExtraPaths,
+						remoteBuilder,
+						payloadSecretPath,
 					)
 
 					if err != nil {
