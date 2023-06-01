@@ -174,9 +174,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
 		}
 	} else {
-		templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-		if pullErr := pullTemplates(templateAddress); pullErr != nil {
-			return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
+		for _, function := range services.Functions {
+			runTemplateStorePull(cmd, []string{function.Language})
 		}
 	}
 	if len(services.Functions) == 0 {
