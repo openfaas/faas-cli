@@ -92,7 +92,7 @@ github.com/google/go-containerregistry/pkg/v1/remote/transport
 github.com/google/go-containerregistry/pkg/v1/stream
 github.com/google/go-containerregistry/pkg/v1/tarball
 github.com/google/go-containerregistry/pkg/v1/types
-# github.com/inconshreveable/mousetrap v1.0.1
+# github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
 # github.com/klauspost/compress v1.15.11
@@ -138,12 +138,12 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.17
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openfaas/faas-provider v0.21.0
+# github.com/openfaas/faas-provider v0.22.0
 ## explicit; go 1.17
 github.com/openfaas/faas-provider/httputil
 github.com/openfaas/faas-provider/logs
 github.com/openfaas/faas-provider/types
-# github.com/openfaas/faas/gateway v0.0.0-20230128091048-a128df471f40
+# github.com/openfaas/faas/gateway v0.0.0-20230531141417-e0144b0573cd
 ## explicit; go 1.18
 github.com/openfaas/faas/gateway/requests
 github.com/openfaas/faas/gateway/types
@@ -161,7 +161,7 @@ github.com/ryanuber/go-glob
 # github.com/sirupsen/logrus v1.9.0
 ## explicit; go 1.13
 github.com/sirupsen/logrus
-# github.com/spf13/cobra v1.6.1
+# github.com/spf13/cobra v1.7.0
 ## explicit; go 1.15
 github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
