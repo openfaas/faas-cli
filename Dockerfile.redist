@@ -1,7 +1,7 @@
 FROM ghcr.io/openfaas/license-check:0.4.1 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.19 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.20 as builder
 
 ARG GIT_COMMIT
 ARG VERSION
@@ -31,14 +31,14 @@ RUN CGO_ENABLED=0 GOOS=linux go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
-       -a -installsuffix cgo -o faas-cli
+       -o faas-cli
 
 FROM builder as darwin
 RUN CGO_ENABLED=0 GOOS=darwin go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
-       -a -installsuffix cgo -o faas-cli-darwin
+       -o faas-cli-darwin
 
 
 FROM builder as darwin-arm64
@@ -46,31 +46,31 @@ RUN CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=arm64" \
-       -a -installsuffix cgo -o faas-cli-darwin-arm64
+       -o faas-cli-darwin-arm64
 
 FROM builder as windows
 RUN CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
-       -a -installsuffix cgo -o faas-cli.exe
+       -o faas-cli.exe
 
 FROM builder as arm
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=armhf" \
-       -a -installsuffix cgo -o faas-cli-armhf
+       -o faas-cli-armhf
 
 FROM builder as arm64
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
        -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
        -X github.com/openfaas/faas-cli/commands.Platform=arm64" \
-       -a -installsuffix cgo -o faas-cli-arm64
+       -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.17.2
+FROM alpine:3.18 as release
 
 RUN apk --no-cache add ca-certificates git
 
