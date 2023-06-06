@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -43,7 +42,7 @@ func updateGitignore() (err error) {
 
 	defer f.Close()
 
-	content, err := ioutil.ReadFile(".gitignore")
+	content, err := os.ReadFile(".gitignore")
 	if err != nil {
 		return err
 	}

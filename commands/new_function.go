@@ -327,7 +327,7 @@ func printAvailableTemplates(availableTemplates []string) string {
 }
 
 func duplicateFunctionName(functionName string, appendFile string) error {
-	fileBytes, readErr := ioutil.ReadFile(appendFile)
+	fileBytes, readErr := os.ReadFile(appendFile)
 	if readErr != nil {
 		return fmt.Errorf("unable to read %s to append, %s", appendFile, readErr)
 	}

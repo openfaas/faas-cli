@@ -3,9 +3,9 @@ package proxy
 import (
 	"context"
 	"encoding/json"
+	"io"
 
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 )
@@ -36,7 +36,7 @@ func (c *Client) ListNamespaces(ctx context.Context) ([]string, error) {
 	switch res.StatusCode {
 	case http.StatusOK:
 
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read namespaces from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
@@ -47,7 +47,7 @@ func (c *Client) ListNamespaces(ctx context.Context) ([]string, error) {
 	case http.StatusUnauthorized:
 		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}

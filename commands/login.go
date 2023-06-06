@@ -5,7 +5,7 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -71,7 +71,7 @@ func runLogin(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("must provide --username with --password-stdin")
 		}
 
-		passwordStdin, err := ioutil.ReadAll(os.Stdin)
+		passwordStdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}
@@ -144,7 +144,7 @@ func validateLogin(gatewayURL string, user string, pass string, timeout time.Dur
 	case http.StatusUnauthorized:
 		return fmt.Errorf("unable to login, either username or password is incorrect")
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}

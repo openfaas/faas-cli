@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -56,7 +56,7 @@ func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.
 	case http.StatusUnauthorized:
 		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}

@@ -6,7 +6,7 @@ package commands
 import (
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/alexellis/hmac"
@@ -95,7 +95,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
 	}
 
-	functionInput, err := ioutil.ReadAll(os.Stdin)
+	functionInput, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("unable to read standard input: %s", err.Error())
 	}

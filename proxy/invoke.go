@@ -5,10 +5,10 @@ package proxy
 
 import (
 	"bytes"
+	"io"
 	"os"
 
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -85,14 +85,14 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		fmt.Fprintf(os.Stderr, "Function submitted asynchronously.\n")
 	case http.StatusOK:
 		var readErr error
-		resBytes, readErr = ioutil.ReadAll(res.Body)
+		resBytes, readErr = io.ReadAll(res.Body)
 		if readErr != nil {
 			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, readErr)
 		}
 	case http.StatusUnauthorized:
 		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}

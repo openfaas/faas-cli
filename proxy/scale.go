@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -59,7 +59,7 @@ func (c *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 
 	default:
 		var bodyReadErr error
-		bytesOut, bodyReadErr := ioutil.ReadAll(res.Body)
+		bytesOut, bodyReadErr := io.ReadAll(res.Body)
 		if bodyReadErr != nil {
 			return bodyReadErr
 		}

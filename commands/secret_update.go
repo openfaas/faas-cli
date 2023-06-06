@@ -6,7 +6,7 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -74,7 +74,7 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 		secret.Value = literalSecret
 
 	case len(secretFile) > 0:
-		content, err := ioutil.ReadFile(secretFile)
+		content, err := os.ReadFile(secretFile)
 		if err != nil {
 			return fmt.Errorf("unable to read secret file: %s", err.Error())
 		}
@@ -86,7 +86,7 @@ func runSecretUpdate(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
 		}
 
-		secretStdin, err := ioutil.ReadAll(os.Stdin)
+		secretStdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return fmt.Errorf("unable to read standard input: %s", err.Error())
 		}

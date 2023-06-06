@@ -8,7 +8,6 @@ import (
 	"encoding/base64"
 
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path"
@@ -179,7 +178,7 @@ func (configFile *ConfigFile) load() error {
 		return fmt.Errorf("can't load config from non existent filePath")
 	}
 
-	data, err := ioutil.ReadFile(configFile.FilePath)
+	data, err := os.ReadFile(configFile.FilePath)
 	if err != nil {
 		return err
 	}

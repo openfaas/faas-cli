@@ -2,7 +2,6 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -55,7 +54,7 @@ func loadTemplateConfig() ([]stack.TemplateSource, error) {
 func readStackConfig() (stack.Configuration, error) {
 	configField := stack.Configuration{}
 
-	configFieldBytes, err := ioutil.ReadFile(yamlFile)
+	configFieldBytes, err := os.ReadFile(yamlFile)
 	if err != nil {
 		return configField, fmt.Errorf("can't read file %s, error: %s", yamlFile, err.Error())
 	}

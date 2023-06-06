@@ -6,7 +6,7 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -84,7 +84,7 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 		secret.Value = literalSecret
 
 	case len(secretFile) > 0:
-		fileData, err := ioutil.ReadFile(secretFile)
+		fileData, err := os.ReadFile(secretFile)
 		if err != nil {
 			return err
 		}
@@ -99,7 +99,7 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 			fmt.Fprintf(os.Stderr, "Reading from STDIN - hit (Control + D) to stop.\n")
 		}
 
-		secretStdin, err := ioutil.ReadAll(os.Stdin)
+		secretStdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}

@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -101,7 +102,7 @@ func generateRegistryAuthFile(command *cobra.Command, _ []string) error {
 
 	} else if passStdin {
 		fmt.Printf("Enter your password, hit enter then type Ctrl+D\n\nPassword: ")
-		passwordStdin, err := ioutil.ReadAll(os.Stdin)
+		passwordStdin, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			return err
 		}

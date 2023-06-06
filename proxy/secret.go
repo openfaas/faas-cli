@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -47,7 +47,7 @@ func (c *Client) GetSecretList(ctx context.Context, namespace string) ([]types.S
 	switch res.StatusCode {
 	case http.StatusOK, http.StatusAccepted:
 
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err != nil {
 			return nil, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
@@ -61,7 +61,7 @@ func (c *Client) GetSecretList(ctx context.Context, namespace string) ([]types.S
 		return nil, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
@@ -106,7 +106,7 @@ func (c *Client) UpdateSecret(ctx context.Context, secret types.Secret) (int, st
 		output += fmt.Sprintf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			output += fmt.Sprintf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
@@ -144,7 +144,7 @@ func (c *Client) RemoveSecret(ctx context.Context, secret types.Secret) error {
 		return fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
 		}
@@ -188,7 +188,7 @@ func (c *Client) CreateSecret(ctx context.Context, secret types.Secret) (int, st
 		output += fmt.Sprintf("secret with the name %q already exists\n", secret.Name)
 
 	default:
-		bytesOut, err := ioutil.ReadAll(res.Body)
+		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
 			output += fmt.Sprintf("server returned unexpected status code: %d - %s\n", res.StatusCode, string(bytesOut))
 		}

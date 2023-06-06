@@ -263,7 +263,7 @@ func callBuilder(tarPath, tempPath, builderAddress, functionName, payloadSecretP
 	}
 	defer tarFile.Close()
 
-	tarFileBytes, err := ioutil.ReadAll(tarFile)
+	tarFileBytes, err := io.ReadAll(tarFile)
 	if err != nil {
 		return nil, err
 	}

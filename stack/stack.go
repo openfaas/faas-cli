@@ -5,7 +5,7 @@ package stack
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -39,7 +39,7 @@ func ParseYAMLFile(yamlFile, regex, filter string, envsubst bool) (*Services, er
 			return nil, err
 		}
 	} else {
-		fileData, err = ioutil.ReadFile(yamlFile)
+		fileData, err = os.ReadFile(yamlFile)
 		if err != nil {
 			return nil, err
 		}
@@ -173,7 +173,7 @@ func fetchYAML(address *url.URL) ([]byte, error) {
 	}
 	defer res.Body.Close()
 
-	resBytes, err := ioutil.ReadAll(res.Body)
+	resBytes, err := io.ReadAll(res.Body)
 
 	return resBytes, err
 }

@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -36,7 +36,7 @@ func (c *Client) GetSystemInfo(ctx context.Context) (types.GatewayInfo, error) {
 
 	switch response.StatusCode {
 	case http.StatusOK:
-		bytesOut, err := ioutil.ReadAll(response.Body)
+		bytesOut, err := io.ReadAll(response.Body)
 		if err != nil {
 			return info, fmt.Errorf("cannot read result from OpenFaaS on URL: %s", c.GatewayURL.String())
 		}
@@ -48,7 +48,7 @@ func (c *Client) GetSystemInfo(ctx context.Context) (types.GatewayInfo, error) {
 	case http.StatusUnauthorized:
 		return info, fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
-		bytesOut, err := ioutil.ReadAll(response.Body)
+		bytesOut, err := io.ReadAll(response.Body)
 		if err == nil {
 			return info, fmt.Errorf("server returned unexpected status code: %d - %s", response.StatusCode, string(bytesOut))
 		}

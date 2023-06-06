@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -54,7 +54,7 @@ func (c *Client) DeleteFunction(ctx context.Context, functionName string, namesp
 		err = fmt.Errorf("unauthorized access, run \"faas-cli login\" to setup authentication for this server")
 	default:
 		var bodyReadErr error
-		bytesOut, bodyReadErr := ioutil.ReadAll(res.Body)
+		bytesOut, bodyReadErr := io.ReadAll(res.Body)
 		if bodyReadErr != nil {
 			err = bodyReadErr
 		} else {

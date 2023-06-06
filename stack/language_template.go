@@ -5,7 +5,6 @@ package stack
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"strings"
@@ -25,7 +24,7 @@ func ParseYAMLForLanguageTemplate(file string) (*LanguageTemplate, error) {
 			return nil, err
 		}
 	} else {
-		fileData, err = ioutil.ReadFile(file)
+		fileData, err = os.ReadFile(file)
 		if err != nil {
 			return nil, err
 		}
