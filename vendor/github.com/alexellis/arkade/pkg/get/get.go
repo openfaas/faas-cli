@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"net/http"
@@ -123,7 +123,7 @@ func (tool Tool) Head(uri string) (int, string, http.Header, error) {
 
 	var body string
 	if res.Body != nil {
-		b, _ := ioutil.ReadAll(res.Body)
+		b, _ := io.ReadAll(res.Body)
 		body = string(b)
 	}
 
@@ -379,14 +379,13 @@ func PostToolNotFoundMsg(url string) string {
 }
 
 // PostInstallationMsg generates installation message after tool has been downloaded
-func PostInstallationMsg(dlMode int, localToolsStore []ToolLocal) ([]byte, error) {
+func PostInstallationMsg(movePath string, localToolsStore []ToolLocal) ([]byte, error) {
 
 	t := template.New("Installation Instructions")
 
-	if dlMode == DownloadTempDir {
+	if movePath != "" {
 		t.Parse(`Run the following to copy to install the tool:
 
-chmod +x {{range .}}{{.Path}} {{end}}
 {{- range . }}
 sudo install -m 755 {{.Path}} /usr/local/bin/{{.Name}}
 {{- end}}`)
