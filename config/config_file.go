@@ -6,6 +6,7 @@ package config
 import (
 	"bytes"
 	"encoding/base64"
+	"errors"
 
 	"fmt"
 	"net/url"
@@ -60,6 +61,16 @@ type AuthConfig struct {
 type Option struct {
 	Name  string `yaml:"name"`
 	Value string `yaml:"value"`
+}
+
+var ErrConfigNotFound = errors.New("config file not found")
+
+type AuthConfigNotFoundError struct {
+	Gateway string
+}
+
+func (e *AuthConfigNotFoundError) Error() string {
+	return fmt.Sprintf("no auth config found for %s", e.Gateway)
 }
 
 // New initializes a config file for the given file path
@@ -264,7 +275,7 @@ func LookupAuthConfig(gateway string) (AuthConfig, error) {
 	var authConfig AuthConfig
 
 	if !fileExists() {
-		return authConfig, fmt.Errorf("config file not found")
+		return authConfig, ErrConfigNotFound
 	}
 
 	configPath, err := EnsureFile()
@@ -288,13 +299,13 @@ func LookupAuthConfig(gateway string) (AuthConfig, error) {
 		}
 	}
 
-	return authConfig, fmt.Errorf("no auth config found for %s", gateway)
+	return authConfig, &AuthConfigNotFoundError{Gateway: gateway}
 }
 
 // RemoveAuthConfig deletes the username and password for a given gateway
 func RemoveAuthConfig(gateway string) error {
 	if !fileExists() {
-		return fmt.Errorf("config file not found")
+		return ErrConfigNotFound
 	}
 
 	configPath, err := EnsureFile()
@@ -325,7 +336,7 @@ func RemoveAuthConfig(gateway string) error {
 			return err
 		}
 	} else {
-		return fmt.Errorf("gateway %s not found in config", gateway)
+		return &AuthConfigNotFoundError{Gateway: gateway}
 	}
 
 	return nil

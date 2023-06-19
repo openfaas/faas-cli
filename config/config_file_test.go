@@ -4,6 +4,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -27,6 +28,10 @@ func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
 		t.Errorf("Error was not returned")
 	}
 
+	if !errors.Is(err, ErrConfigNotFound) {
+		t.Errorf("Error was not ErrConfigNotFound")
+	}
+
 	r := regexp.MustCompile(`(?m:config file not found)`)
 	if !r.MatchString(err.Error()) {
 		t.Errorf("Error not matched: %s", err.Error())
@@ -43,6 +48,7 @@ func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
 	os.Setenv(ConfigLocationEnv, configDir)
 	defer os.Unsetenv(ConfigLocationEnv)
 
+	var authConfigNotFoundError *AuthConfigNotFoundError
 	u := "admin"
 	p := "some pass"
 	gatewayURL := strings.TrimRight("http://openfaas.test/", "/")
@@ -59,6 +65,10 @@ func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
 	_, err = LookupAuthConfig("http://openfaas.com")
 	if err == nil {
 		t.Errorf("Error was not returned")
+	}
+
+	if !errors.As(err, &authConfigNotFoundError) {
+		t.Errorf("Error was not AuthConfigNotFoundError")
 	}
 
 	r := regexp.MustCompile(`(?m:no auth config found for)`)
@@ -308,6 +318,10 @@ func Test_RemoveAuthConfig_WithNoConfigFile(t *testing.T) {
 		t.Errorf("Error was not returned")
 	}
 
+	if !errors.Is(err, ErrConfigNotFound) {
+		t.Errorf("Error was not ErrConfigNotFound")
+	}
+
 	r := regexp.MustCompile(`(?m:config file not found)`)
 	if !r.MatchString(err.Error()) {
 		t.Errorf("Error not matched: %s", err.Error())
@@ -324,6 +338,7 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 	os.Setenv(ConfigLocationEnv, configDir)
 	defer os.Unsetenv(ConfigLocationEnv)
 
+	var authConfigNotFoundError *AuthConfigNotFoundError
 	u := "admin"
 	p := "pass"
 	token := EncodeAuth(u, p)
@@ -342,7 +357,11 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 		t.Errorf("Error was not returned")
 	}
 
-	r := regexp.MustCompile(`(?m:gateway)`)
+	if !errors.As(err, &authConfigNotFoundError) {
+		t.Errorf("Error was not AuthConfigNotFoundError")
+	}
+
+	r := regexp.MustCompile(`(?m:no auth config found for)`)
 	if !r.MatchString(err.Error()) {
 		t.Errorf("Error not matched: %s", err.Error())
 	}
