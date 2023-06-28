@@ -105,7 +105,6 @@ func pushStack(services *stack.Services, queueDepth int, tagFormat schema.BuildF
 				}
 
 				imageName := schema.BuildImageName(tagFormat, function.Image, sha, branch)
-				fmt.Println("Push 0", tagFormat, imageName)
 
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s [%s]\n"), index, function.Name, imageName)
 				if len(function.Image) == 0 {

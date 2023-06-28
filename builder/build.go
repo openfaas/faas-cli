@@ -162,6 +162,21 @@ func BuildImage(image string, handler string, functionName string, language stri
 	return nil
 }
 
+type FunctionMetadataSource interface {
+	Get(tagType schema.BuildFormat, contextPath string) (branch, version string, err error)
+}
+
+type FunctionMetadataSourceLive struct {
+}
+
+func (FunctionMetadataSourceLive) Get(tagType schema.BuildFormat, contextPath string) (branch, version string, err error) {
+	return GetImageTagValues(tagType, contextPath)
+}
+
+func NewFunctionMetadataSourceLive() FunctionMetadataSource {
+	return FunctionMetadataSourceLive{}
+}
+
 // GetImageTagValues returns the image tag format and component information determined via GIT
 func GetImageTagValues(tagType schema.BuildFormat, contextPath string) (branch, version string, err error) {
 	switch tagType {

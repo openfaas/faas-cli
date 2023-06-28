@@ -247,7 +247,8 @@ func Test_generateCRDYAML(t *testing.T) {
 		}
 		services := *parsedServices
 
-		generatedYAML, err := generateCRDYAML(services, testcase.Format, testcase.APIVersion, testcase.Namespace, testcase.Branch, testcase.Version)
+		generatedYAML, err := generateCRDYAML(services, testcase.Format, testcase.APIVersion, testcase.Namespace,
+			NewFunctionMetadataSourceStub(testcase.Branch, testcase.Version))
 		if err != nil {
 			t.Fatalf("%s failed: error while generating CRD YAML", testcase.Name)
 		}
@@ -256,6 +257,22 @@ func Test_generateCRDYAML(t *testing.T) {
 			t.Fatalf("%s failed: want:\n%q, but got:\n%q", testcase.Name, testcase.Output, generatedYAML)
 		}
 	}
+}
+
+type FunctionMetadataSourceStub struct {
+	version string
+	branch  string
+}
+
+func NewFunctionMetadataSourceStub(branch, version string) FunctionMetadataSourceStub {
+	return FunctionMetadataSourceStub{
+		version: version,
+		branch:  branch,
+	}
+}
+
+func (f FunctionMetadataSourceStub) Get(tagType schema.BuildFormat, contextPath string) (branch, version string, err error) {
+	return f.branch, f.version, nil
 }
 
 func stringInSlice(a string, list []string) bool {
