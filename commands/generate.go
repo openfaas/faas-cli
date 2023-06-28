@@ -9,9 +9,9 @@ import (
 	"os"
 	"sort"
 
+	"github.com/openfaas/faas-cli/builder"
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
 
-	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
 	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1"
@@ -44,7 +44,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
-	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
+	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
 	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add (to store functions only)")
@@ -67,8 +67,9 @@ faas-cli generate --api=openfaas.com/v1 -f stack.yml --tag branch -n openfaas-fn
 
 func preRunGenerate(cmd *cobra.Command, args []string) error {
 	if len(api) == 0 {
-		return fmt.Errorf("You must supply api version with the --api flag")
+		return fmt.Errorf("you must supply the API version with the --api flag")
 	}
+
 	return nil
 }
 
@@ -101,7 +102,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error parsing annotations: %v", annotationErr)
 	}
 
-	if len(fromStore) > 0 {
+	if fromStore != "" {
+		if tagFormat == schema.DigestFormat {
+			return fmt.Errorf("digest tag format is not supported for store functions")
+		}
+
 		services = stack.Services{
 			Provider: stack.Provider{
 				Name: "openfaas",
@@ -167,12 +172,8 @@ Use "--yaml" to pass a file or "--from-store" to generate using function store.`
 		os.Exit(1)
 	}
 
-	branch, version, err := builder.GetImageTagValues(tagFormat, handler)
-	if err != nil {
-		return err
-	}
-
-	objectsString, err := generateCRDYAML(services, tagFormat, api, crdFunctionNamespace, branch, version)
+	objectsString, err := generateCRDYAML(services, tagFormat, api, crdFunctionNamespace,
+		builder.NewFunctionMetadataSourceLive())
 	if err != nil {
 		return err
 	}
@@ -184,14 +185,14 @@ Use "--yaml" to pass a file or "--from-store" to generate using function store.`
 }
 
 // generateCRDYAML generates CRD YAML for functions
-func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace string, metadataSource builder.FunctionMetadataSource) (string, error) {
 
 	var objectsString string
 
 	if len(services.Functions) > 0 {
 
 		if apiVersion == knativev1.APIVersionLatest {
-			return generateknativev1ServingServiceCRDYAML(services, format, api, crdFunctionNamespace, branch, version)
+			return generateknativev1ServingServiceCRDYAML(services, format, api, crdFunctionNamespace)
 		}
 
 		orderedNames := generateFunctionOrder(services.Functions)
@@ -209,6 +210,11 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 			allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
 			if envErr != nil {
 				return "", envErr
+			}
+
+			branch, version, err := metadataSource.Get(tagFormat, handler)
+			if err != nil {
+				return "", err
 			}
 
 			metadata := schema.Metadata{Name: name, Namespace: namespace}
@@ -250,7 +256,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	return objectsString, nil
 }
 
-func generateknativev1ServingServiceCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace, branch, version string) (string, error) {
+func generateknativev1ServingServiceCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace string) (string, error) {
 	crds := []knativev1.ServingServiceCRD{}
 
 	orderedNames := generateFunctionOrder(services.Functions)
@@ -276,6 +282,11 @@ func generateknativev1ServingServiceCRDYAML(services stack.Services, format sche
 
 		if function.Annotations != nil {
 			annotations = *function.Annotations
+		}
+
+		branch, version, err := builder.GetImageTagValues(tagFormat, function.Handler)
+		if err != nil {
+			return "", err
 		}
 
 		imageName := schema.BuildImageName(format, function.Image, version, branch)
@@ -328,12 +339,15 @@ func generateknativev1ServingServiceCRDYAML(services stack.Services, format sche
 
 	var objectsString string
 	for _, crd := range crds {
-		//Marshal the object definition to yaml
-		objectString, err := yaml.Marshal(crd)
-		if err != nil {
+
+		var buff bytes.Buffer
+		yamlEncoder := yaml.NewEncoder(&buff)
+		yamlEncoder.SetIndent(2) // this is what you're looking for
+		if err := yamlEncoder.Encode(&crd); err != nil {
 			return "", err
 		}
-		objectsString += "---\n" + string(objectString)
+
+		objectsString += "---\n" + string(buff.Bytes())
 	}
 
 	return objectsString, nil

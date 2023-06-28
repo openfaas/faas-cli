@@ -1,0 +1,10 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+  t1:
+    lang: go
+    handler: ./t1
+    image: ttl.sh/t1:latest
+
