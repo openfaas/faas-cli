@@ -167,7 +167,7 @@ Use "--yaml" to pass a file or "--from-store" to generate using function store.`
 		os.Exit(1)
 	}
 
-	branch, version, err := builder.GetImageTagValues(tagFormat)
+	branch, version, err := builder.GetImageTagValues(tagFormat, handler)
 	if err != nil {
 		return err
 	}

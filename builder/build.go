@@ -4,6 +4,8 @@
 package builder
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	v1execute "github.com/alexellis/go-execute/pkg/v1"
@@ -27,7 +30,7 @@ const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -45,19 +48,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 			mountSSH = true
 		}
 
-		branch, version, err := GetImageTagValues(tagMode)
-		if err != nil {
-			return err
-		}
-
-		imageName := schema.BuildImageName(tagMode, image, version, branch)
-
 		if err := ensureHandlerPath(handler); err != nil {
-			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
+			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
 		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
-		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 		if err != nil {
 			return err
 		}
@@ -66,6 +61,14 @@ func BuildImage(image string, handler string, functionName string, language stri
 			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 			return nil
 		}
+
+		branch, version, err := GetImageTagValues(tagFormat, handler)
+		if err != nil {
+			return err
+		}
+
+		imageName := schema.BuildImageName(tagFormat, image, version, branch)
+		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
 			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")
@@ -160,7 +163,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 }
 
 // GetImageTagValues returns the image tag format and component information determined via GIT
-func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err error) {
+func GetImageTagValues(tagType schema.BuildFormat, contextPath string) (branch, version string, err error) {
 	switch tagType {
 	case schema.SHAFormat:
 		version = vcs.GetGitSHA()
@@ -173,7 +176,6 @@ func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err 
 		if len(branch) == 0 {
 			err = fmt.Errorf("cannot tag image with Git branch and SHA as this is not a Git repository")
 			return
-
 		}
 
 		version = vcs.GetGitSHA()
@@ -188,9 +190,54 @@ func GetImageTagValues(tagType schema.BuildFormat) (branch, version string, err 
 			err = fmt.Errorf("cannot tag image with Git Tag and SHA as this is not a Git repository")
 			return
 		}
+	case schema.DigestFormat:
+		hash, err := hashFolder(contextPath)
+		if err != nil {
+			return "", "", fmt.Errorf("unable to get hash of path: %q, %w", contextPath, err)
+		}
+		version = hash
 	}
 
 	return branch, version, nil
+}
+
+func hashFolder(contextPath string) (string, error) {
+	m := make(map[string][md5.Size]byte)
+	if err := filepath.Walk(contextPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		m[path] = md5.Sum(data)
+		return nil
+	}); err != nil {
+		return "", err
+	}
+
+	var keys []string
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	shas := []string{}
+	for _, k := range keys {
+		v := m[k]
+		shaHex := hex.EncodeToString(v[:])
+
+		shas = append(shas, shaHex)
+	}
+
+	hashOfAllFileShas := md5.Sum([]byte(strings.Join(shas, "")))
+
+	return fmt.Sprintf("%x", hashOfAllFileShas), nil
+
 }
 
 func getDockerBuildCommand(build dockerBuild) (string, []string) {
@@ -240,11 +287,9 @@ func isRunningInCI() bool {
 // createBuildContext creates temporary build folder to perform a Docker build with language template
 func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string, copyExtraPaths []string) (string, error) {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
-	fmt.Printf("Clearing temporary build folder: %s\n", tempPath)
 
 	if err := os.RemoveAll(tempPath); err != nil {
-		fmt.Printf("Error clearing temporary build folder: %s\n", tempPath)
-		return tempPath, err
+		return tempPath, fmt.Errorf("unable to clear temporary build folder: %s", tempPath)
 	}
 
 	functionPath := tempPath
@@ -257,7 +302,7 @@ func createBuildContext(functionName string, handler string, language string, us
 		}
 	}
 
-	fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
+	// fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
 
 	if isRunningInCI() {
 		defaultDirPermissions = 0777

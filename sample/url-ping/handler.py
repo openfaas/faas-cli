@@ -13,7 +13,9 @@ def handle(req):
     if url.find("http") == -1:
         print("Give me a URL and I'll ping it for you.")
         return
-    
+
+    echo "Will this update if I save the file?"
     print_url(url)
 
-# handle("http://faaster.io")
+# handle("http://blog.alexellis.io")
+

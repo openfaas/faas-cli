@@ -248,7 +248,7 @@ Error: %s`, fprocessErr.Error())
 
 			allAnnotations := util.MergeMap(annotations, annotationArgs)
 
-			branch, sha, err := builder.GetImageTagValues(tagMode)
+			branch, sha, err := builder.GetImageTagValues(tagMode, function.Handler)
 			if err != nil {
 				return err
 			}

@@ -10,6 +10,8 @@ import (
 
 	"os/exec"
 
+	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
@@ -86,6 +88,8 @@ services deployed within your OpenFaaS cluster.`,
 	cmd.Flags().BoolVar(&opts.print, "print", false, "Print the docker command instead of running it")
 	cmd.Flags().BoolVar(&opts.build, "build", true, "Build function prior to local-run")
 	cmd.Flags().IntVarP(&opts.port, "port", "p", 8080, "port to bind the function to")
+	cmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'sha', 'branch', or 'describe', or 'latest'")
+
 	cmd.Flags().StringVar(&opts.network, "network", "", "connect function to an existing network, use 'host' to access other process already running on localhost. When using this, '--port' is ignored, if you have port collisions, you may change the port using '-e port=NEW_PORT'")
 	cmd.Flags().StringToStringVarP(&opts.extraEnv, "env", "e", map[string]string{}, "additional environment variables (ENVVAR=VALUE), use this to experiment with different values for your function")
 
@@ -116,8 +120,7 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 			return err
 		}
 
-		err = updateGitignore()
-		if err != nil {
+		if err = updateGitignore(); err != nil {
 			return err
 		}
 
@@ -239,8 +242,17 @@ func buildDockerRun(ctx context.Context, fnc stack.Function, opts runOptions) (*
 	}
 
 	args = append(args, fmt.Sprintf("-e=fprocess=%s", fprocess))
-	args = append(args, fnc.Image)
 
+	branch, version, err := builder.GetImageTagValues(tagFormat, fnc.Handler)
+	if err != nil {
+		return nil, err
+	}
+
+	imageName := schema.BuildImageName(tagFormat, fnc.Image, version, branch)
+
+	fmt.Printf("Image: %s\n", imageName)
+
+	args = append(args, imageName)
 	cmd := exec.CommandContext(ctx, "docker", args...)
 
 	return cmd, nil

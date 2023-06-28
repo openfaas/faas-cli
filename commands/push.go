@@ -5,6 +5,7 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"sync"
 
@@ -21,7 +22,7 @@ func init() {
 	faasCmd.AddCommand(pushCmd)
 
 	pushCmd.Flags().IntVar(&parallel, "parallel", 1, "Push images in parallel to depth specified.")
-	pushCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', 'describe'")
+	pushCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
 	pushCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	pushCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
 }
@@ -87,7 +88,7 @@ func pushImage(image string, quietBuild bool) {
 	exec.Command("./", args)
 }
 
-func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFormat) {
+func pushStack(services *stack.Services, queueDepth int, tagFormat schema.BuildFormat) {
 	wg := sync.WaitGroup{}
 
 	workChannel := make(chan stack.Function)
@@ -96,11 +97,15 @@ func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFor
 	for i := 0; i < queueDepth; i++ {
 		go func(index int) {
 			for function := range workChannel {
-				branch, sha, err := builder.GetImageTagValues(tagMode)
+
+				branch, sha, err := builder.GetImageTagValues(tagFormat, function.Handler)
 				if err != nil {
-					tagMode = schema.DefaultFormat
+					log.Printf("Error formatting image tag, defaulting to default format: %s", err.Error())
+					tagFormat = schema.DefaultFormat
 				}
-				imageName := schema.BuildImageName(tagMode, function.Image, sha, branch)
+
+				imageName := schema.BuildImageName(tagFormat, function.Image, sha, branch)
+				fmt.Println("Push 0", tagFormat, imageName)
 
 				fmt.Printf(aec.YellowF.Apply("[%d] > Pushing %s [%s]\n"), index, function.Name, imageName)
 				if len(function.Image) == 0 {
@@ -108,7 +113,6 @@ func pushStack(services *stack.Services, queueDepth int, tagMode schema.BuildFor
 				} else if function.SkipBuild {
 					fmt.Printf("Skipping %s\n", function.Name)
 				} else {
-
 					pushImage(imageName, quietBuild)
 					fmt.Printf(aec.YellowF.Apply("[%d] < Pushing %s [%s] done.\n"), index, function.Name, imageName)
 				}

@@ -55,27 +55,28 @@ func PublishImage(image string, handler string, functionName string, language st
 			return fmt.Errorf("error reading language template: %s", err.Error())
 		}
 
-		branch, version, err := GetImageTagValues(tagMode)
+		if err := ensureHandlerPath(handler); err != nil {
+			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
+		}
+
+		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
 		if err != nil {
 			return err
-		}
-
-		imageName := schema.BuildImageName(tagMode, image, version, branch)
-
-		if err := ensureHandlerPath(handler); err != nil {
-			return fmt.Errorf("building %s, %s is an invalid path", imageName, handler)
-		}
-
-		tempPath, buildErr := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
-		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
-		if buildErr != nil {
-			return buildErr
 		}
 
 		if shrinkwrap {
 			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
 			return nil
 		}
+
+		branch, version, err := GetImageTagValues(tagMode, handler)
+		if err != nil {
+			return err
+		}
+
+		imageName := schema.BuildImageName(tagMode, image, version, branch)
+
+		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
 			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")

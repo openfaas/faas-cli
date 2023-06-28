@@ -173,9 +173,11 @@ func upRunner(cmd *cobra.Command, args []string) func() error {
 			}
 
 			if watch {
-				fmt.Println("Now monitoring for any changes...")
+				fmt.Println("[Watch] Change a file to trigger a rebuild...")
 			}
+
 		}
+
 		return nil
 	}
 }
