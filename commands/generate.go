@@ -212,7 +212,7 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 				return "", envErr
 			}
 
-			branch, version, err := metadataSource.Get(tagFormat, handler)
+			branch, version, err := metadataSource.Get(tagFormat, function.Handler)
 			if err != nil {
 				return "", err
 			}
