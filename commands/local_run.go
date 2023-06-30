@@ -89,7 +89,11 @@ services deployed within your OpenFaaS cluster.`,
 func runLocalRunE(cmd *cobra.Command, args []string) error {
 
 	watch, _ := cmd.Flags().GetBool("watch")
-	fmt.Printf("Watch: %v\n", watch)
+
+	// AE: This doesn't work currently due to the blocking nature of
+	// docker run.
+	// a channel and / or cancellation context will need to be implemented
+	// within the watchLoop utility function.
 	if watch {
 		return watchLoop(cmd, args, localRunExec)
 	}
