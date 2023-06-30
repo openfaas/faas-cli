@@ -192,7 +192,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
 
-		err := builder.BuildImage(image,
+		if err := builder.BuildImage(image,
 			handler,
 			functionName,
 			language,
@@ -207,10 +207,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			copyExtra,
 			remoteBuilder,
 			payloadSecretPath,
-		)
-		if err != nil {
+		); err != nil {
 			return err
 		}
+
 		return nil
 	}
 
@@ -222,6 +222,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 		return fmt.Errorf("%s", aec.Apply(errorSummary, aec.RedF))
 	}
+
 	return nil
 }
 
