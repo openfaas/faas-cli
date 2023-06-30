@@ -4,16 +4,20 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"os/exec"
+	"os/signal"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
+	"golang.org/x/sync/errgroup"
 )
 
 const localSecretsDir = ".secrets"
@@ -78,7 +82,7 @@ services deployed within your OpenFaaS cluster.`,
 
 	cmd.Flags().StringVar(&opts.network, "network", "", "connect function to an existing network, use 'host' to access other process already running on localhost. When using this, '--port' is ignored, if you have port collisions, you may change the port using '-e port=NEW_PORT'")
 	cmd.Flags().StringToStringVarP(&opts.extraEnv, "env", "e", map[string]string{}, "additional environment variables (ENVVAR=VALUE), use this to experiment with different values for your function")
-	cmd.Flags().Bool("watch", false, "Watch for changes in handler code and rebuild")
+	cmd.Flags().BoolVar(&watch, "watch", false, "Watch for changes in files and re-deploy")
 
 	build, _, _ := faasCmd.Find([]string{"build"})
 	cmd.Flags().AddFlagSet(build.Flags())
@@ -98,17 +102,18 @@ func runLocalRunE(cmd *cobra.Command, args []string) error {
 		return watchLoop(cmd, args, localRunExec)
 	}
 
-	return localRunExec(cmd, args)
+	ctx, cancel := context.WithCancel(cmd.Context())
+	defer cancel()
+
+	return localRunExec(cmd, args, ctx)
 }
 
-func localRunExec(cmd *cobra.Command, args []string) error {
+func localRunExec(cmd *cobra.Command, args []string, ctx context.Context) error {
 	if opts.build {
 		if err := localBuild(cmd, args); err != nil {
 			return err
 		}
 	}
-
-	ctx := cmd.Context()
 
 	opts.output = cmd.OutOrStdout()
 	opts.err = cmd.ErrOrStderr()
@@ -187,7 +192,10 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 		}
 	}
 
-	cmd, err := buildDockerRun(ctx, services.Functions[name], opts)
+	// Always try to remove before running, to clear up any previous state
+	removeContainer(name)
+
+	cmd, err := buildDockerRun(ctx, name, services.Functions[name], opts)
 	if err != nil {
 		return err
 	}
@@ -197,21 +205,67 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 		return nil
 	}
 
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
 	cmd.Stdout = opts.output
 	cmd.Stderr = opts.err
 
 	fmt.Printf("Starting local-run for: %s on: http://0.0.0.0:%d\n\n", name, opts.port)
+	grpContext := context.Background()
+	grpContext, cancel := context.WithCancel(grpContext)
+	defer cancel()
 
-	if err = cmd.Start(); err != nil {
-		return err
-	}
+	errGrp, _ := errgroup.WithContext(grpContext)
 
-	return cmd.Wait()
+	errGrp.Go(func() error {
+		if err = cmd.Start(); err != nil {
+			return err
+		}
+
+		if err := cmd.Wait(); err != nil {
+			if strings.Contains(err.Error(), "signal: killed") {
+				return nil
+			} else if strings.Contains(err.Error(), "os: process already finished") {
+				return nil
+			}
+
+			return err
+		}
+		return nil
+	})
+
+	// Always try to remove the container
+	defer func() {
+		removeContainer(name)
+	}()
+
+	errGrp.Go(func() error {
+
+		select {
+		case <-sigs:
+			log.Printf("Caught signal, exiting")
+			cancel()
+		case <-ctx.Done():
+			log.Printf("Context cancelled, exiting..")
+			cancel()
+		}
+		return nil
+	})
+
+	return errGrp.Wait()
+}
+
+func removeContainer(name string) {
+
+	runDockerRm := exec.Command("docker", "rm", "-f", name)
+	runDockerRm.Run()
+
 }
 
 // buildDockerRun constructs a exec.Cmd from the given stack Function
-func buildDockerRun(ctx context.Context, fnc stack.Function, opts runOptions) (*exec.Cmd, error) {
-	args := []string{"run", "--rm", "-i", fmt.Sprintf("-p=%d:8080", opts.port)}
+func buildDockerRun(ctx context.Context, name string, fnc stack.Function, opts runOptions) (*exec.Cmd, error) {
+	args := []string{"run", "--name", name, "--rm", "-i", fmt.Sprintf("-p=%d:8080", opts.port)}
 
 	if opts.network != "" {
 		args = append(args, fmt.Sprintf("--network=%s", opts.network))
