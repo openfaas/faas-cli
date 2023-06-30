@@ -9,12 +9,14 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/bep/debounce"
+	"github.com/openfaas/faas-cli/stack"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
@@ -82,8 +84,26 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 
 func upHandler(cmd *cobra.Command, args []string) error {
 	handler := upRunner(cmd, args)
+
+	// Always run an initial build to freshen up
 	if err := handler(); err != nil {
 		return err
+	}
+
+	var services stack.Services
+	if len(yamlFile) > 0 {
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
+		if err != nil {
+			return err
+		}
+
+		if parsedServices != nil {
+			services = *parsedServices
+		}
+	}
+
+	for _, service := range services.Functions {
+		fmt.Printf("Name: %s\n", service.Name)
 	}
 
 	if watch {
@@ -100,24 +120,33 @@ func upHandler(cmd *cobra.Command, args []string) error {
 
 		matcher := gitignore.NewMatcher(patterns)
 
-		if err = filepath.Walk("./", func(path string, info os.FileInfo, err error) error {
-			if err != nil {
+		cwd, err := os.Getwd()
+		if err != nil {
+			return err
+		}
+		yamlPath := path.Join(cwd, yamlFile)
+
+		debug := os.Getenv("FAAS_DEBUG")
+		if debug == "1" {
+			log.Printf("Watching: %s\n", yamlPath)
+		}
+		watcher.Add(yamlPath)
+
+		handlerMap := make(map[string]string)
+
+		for serviceName, service := range services.Functions {
+			handlerMap[serviceName] = path.Join(cwd, service.Handler)
+		}
+
+		fmt.Println(handlerMap)
+
+		for _, service := range services.Functions {
+			handlerPath := path.Join(cwd, service.Handler)
+
+			if err := addPath(watcher, handlerPath); err != nil {
 				return err
 			}
 
-			if matcher.Match(strings.Split(path, "/"), info.IsDir()) {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-				return nil
-			}
-
-			if !info.IsDir() {
-				return watcher.Add(path)
-			}
-			return nil
-		}); err != nil {
-			return err
 		}
 
 		signalChannel := make(chan os.Signal, 1)
@@ -131,13 +160,69 @@ func upHandler(cmd *cobra.Command, args []string) error {
 				if !ok {
 					return fmt.Errorf("watcher's Events channel is closed")
 				}
+				log.Printf("%s %s", event.Op, event.Name)
 
-				if event.Op == fsnotify.Write {
-					d(func() {
-						if err := handler(); err != nil {
-							log.Printf("%s %s", functionName, err)
+				if strings.HasSuffix(event.Name, ".swp") || strings.HasSuffix(event.Name, "~") {
+					continue
+				}
+
+				if event.Op == fsnotify.Write || event.Op == fsnotify.Create || event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
+
+					info, err := os.Stat(event.Name)
+					if err != nil {
+						continue
+					}
+					ignore := false
+					if matcher.Match(strings.Split(event.Name, "/"), info.IsDir()) {
+						ignore = true
+					}
+
+					// exact match first
+					target := ""
+					for fnName, fnPath := range handlerMap {
+						if event.Name == fnPath {
+							target = fnName
 						}
-					})
+					}
+
+					// fuzzy match after
+					if target != "" {
+						for fnName, fnPath := range handlerMap {
+							if strings.HasPrefix(event.Name, fnPath) {
+								target = fnName
+							}
+						}
+					}
+
+					// New sub-directory added for a function, start tracking it
+					if event.Op == fsnotify.Create && info.IsDir() && target != "" {
+						if err := watcher.Add(event.Name); err != nil {
+							return fmt.Errorf("unable to watch %s: %s", event.Name, err)
+						}
+						if debug == "1" {
+							log.Printf("Watching: %s\n", event.Name)
+						}
+					}
+
+					if !ignore {
+						log.Printf("Reload %s because %s %s", target, event.Op, event.Name)
+					}
+
+					if !ignore {
+						d(func() {
+							filter = target
+
+							go func() {
+								// Assign --filter to the function name or "" for all functions
+								// in the stack.yml file
+
+								if err := handler(); err != nil {
+									log.Printf("%s %s", functionName, err)
+								}
+							}()
+						})
+					}
+
 				}
 
 			case err, ok := <-watcher.Errors:
@@ -153,6 +238,29 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func addPath(watcher *fsnotify.Watcher, rootPath string) error {
+	debug := os.Getenv("FAAS_DEBUG")
+
+	return filepath.WalkDir(rootPath, func(subPath string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if d.IsDir() {
+			if err := watcher.Add(subPath); err != nil {
+				return fmt.Errorf("unable to watch %s: %s", subPath, err)
+			}
+
+			if debug == "1" {
+				log.Printf("Watching: %s\n", subPath)
+			}
+		}
+
+		return nil
+	})
+
 }
 
 func upRunner(cmd *cobra.Command, args []string) func() error {
