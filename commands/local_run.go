@@ -32,8 +32,9 @@ type runOptions struct {
 	build    bool
 }
 
+var opts runOptions
+
 func newLocalRunCmd() *cobra.Command {
-	opts := runOptions{}
 
 	cmd := &cobra.Command{
 		Use:   `local-run NAME --port PORT -f YAML_FILE [flags from build]`,
@@ -57,32 +58,17 @@ services deployed within your OpenFaaS cluster.`,
   faas-cli local-run stronghash -f ./stronghash.yml
 		`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-
 			if len(args) > 1 {
 				return fmt.Errorf("only one function name is allowed")
 			}
-
-			if opts.build {
-				if err := localBuild(cmd, args); err != nil {
-					return err
-				}
+			_, err := cmd.Flags().GetBool("watch")
+			if err != nil {
+				return err
 			}
 
 			return nil
 		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			ctx := cmd.Context()
-
-			opts.output = cmd.OutOrStdout()
-			opts.err = cmd.ErrOrStderr()
-
-			name := ""
-			if len(args) > 0 {
-				name = args[0]
-			}
-
-			return runFunction(ctx, name, opts, args)
-		},
+		RunE: runLocalRunE,
 	}
 
 	cmd.Flags().BoolVar(&opts.print, "print", false, "Print the docker command instead of running it")
@@ -92,6 +78,7 @@ services deployed within your OpenFaaS cluster.`,
 
 	cmd.Flags().StringVar(&opts.network, "network", "", "connect function to an existing network, use 'host' to access other process already running on localhost. When using this, '--port' is ignored, if you have port collisions, you may change the port using '-e port=NEW_PORT'")
 	cmd.Flags().StringToStringVarP(&opts.extraEnv, "env", "e", map[string]string{}, "additional environment variables (ENVVAR=VALUE), use this to experiment with different values for your function")
+	cmd.Flags().Bool("watch", false, "Watch for changes in handler code and rebuild")
 
 	build, _, _ := faasCmd.Find([]string{"build"})
 	cmd.Flags().AddFlagSet(build.Flags())
@@ -99,9 +86,51 @@ services deployed within your OpenFaaS cluster.`,
 	return cmd
 }
 
+func runLocalRunE(cmd *cobra.Command, args []string) error {
+
+	watch, _ := cmd.Flags().GetBool("watch")
+	fmt.Printf("Watch: %v\n", watch)
+	if watch {
+		return watchLoop(cmd, args, localRunExec)
+	}
+
+	return localRunExec(cmd, args)
+}
+
+func localRunExec(cmd *cobra.Command, args []string) error {
+	if opts.build {
+		if err := localBuild(cmd, args); err != nil {
+			return err
+		}
+	}
+
+	ctx := cmd.Context()
+
+	opts.output = cmd.OutOrStdout()
+	opts.err = cmd.ErrOrStderr()
+
+	name := ""
+	if len(args) > 0 {
+		name = args[0]
+	}
+
+	return runFunction(ctx, name, opts, args)
+
+}
+
+// AE: I found that the `localrun` command will do a build of all functions in
+// the stack.yml if no argument is given and there is > 1 function in
+// the file, then it will exit with an error when it comes to the run step
 func localBuild(cmd *cobra.Command, args []string) error {
 	if err := preRunBuild(cmd, args); err != nil {
 		return err
+	}
+
+	if len(args) > 0 {
+		fmt.Println("Building: " + args[0])
+		if args[0] != "" {
+			filter = args[0]
+		}
 	}
 
 	if err := runBuild(cmd, args); err != nil {
@@ -129,6 +158,7 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 		if len(services.Functions) == 0 {
 			return fmt.Errorf("no functions found in the stack file")
 		}
+
 		if len(services.Functions) > 1 {
 			fnList := []string{}
 			for key := range services.Functions {
@@ -241,7 +271,11 @@ func buildDockerRun(ctx context.Context, fnc stack.Function, opts runOptions) (*
 		args = append(args, fmt.Sprintf("--volume=%s:/var/openfaas/secrets", secretsPath))
 	}
 
-	args = append(args, fmt.Sprintf("-e=fprocess=%s", fprocess))
+	// AE: sometimes the fprocess is defined within the Dockerfile, so we should not override it
+	// with an empty string if we weren't able to determine one.
+	if fprocess != "" {
+		args = append(args, fmt.Sprintf("-e=fprocess=%s", fprocess))
+	}
 
 	branch, version, err := builder.GetImageTagValues(tagFormat, fnc.Handler)
 	if err != nil {
