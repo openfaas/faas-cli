@@ -102,9 +102,12 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	for _, service := range services.Functions {
-		fmt.Printf("Name: %s\n", service.Name)
+	fnNames := []string{}
+	for name, _ := range services.Functions {
+		fnNames = append(fnNames, name)
 	}
+
+	fmt.Printf("[Watch] monitoring %d functions: %s\n", len(fnNames), strings.Join(fnNames, ", "))
 
 	if watch {
 		watcher, err := fsnotify.NewWatcher()
@@ -128,7 +131,7 @@ func upHandler(cmd *cobra.Command, args []string) error {
 
 		debug := os.Getenv("FAAS_DEBUG")
 		if debug == "1" {
-			log.Printf("Watching: %s\n", yamlPath)
+			fmt.Printf("[Watch] added: %s\n", yamlPath)
 		}
 		watcher.Add(yamlPath)
 
@@ -138,15 +141,12 @@ func upHandler(cmd *cobra.Command, args []string) error {
 			handlerMap[serviceName] = path.Join(cwd, service.Handler)
 		}
 
-		fmt.Println(handlerMap)
-
 		for _, service := range services.Functions {
 			handlerPath := path.Join(cwd, service.Handler)
 
 			if err := addPath(watcher, handlerPath); err != nil {
 				return err
 			}
-
 		}
 
 		signalChannel := make(chan os.Signal, 1)
@@ -186,8 +186,10 @@ func upHandler(cmd *cobra.Command, args []string) error {
 					}
 
 					// fuzzy match after
-					if target != "" {
+					if target == "" {
 						for fnName, fnPath := range handlerMap {
+							log.Printf("Checking %s against %s", event.Name, fnPath)
+
 							if strings.HasPrefix(event.Name, fnPath) {
 								target = fnName
 							}
@@ -196,16 +198,17 @@ func upHandler(cmd *cobra.Command, args []string) error {
 
 					// New sub-directory added for a function, start tracking it
 					if event.Op == fsnotify.Create && info.IsDir() && target != "" {
-						if err := watcher.Add(event.Name); err != nil {
-							return fmt.Errorf("unable to watch %s: %s", event.Name, err)
-						}
-						if debug == "1" {
-							log.Printf("Watching: %s\n", event.Name)
+						if err := addPath(watcher, event.Name); err != nil {
+							return err
 						}
 					}
 
 					if !ignore {
-						log.Printf("Reload %s because %s %s", target, event.Op, event.Name)
+						if target == "" {
+							fmt.Printf("Rebuilding %d functions reason: %s to %s\n", len(fnNames), event.Op, event.Name)
+						} else {
+							fmt.Printf("Reloading %s reason: %s to %s\n", target, event.Op, event.Name)
+						}
 					}
 
 					if !ignore {
@@ -217,7 +220,8 @@ func upHandler(cmd *cobra.Command, args []string) error {
 								// in the stack.yml file
 
 								if err := handler(); err != nil {
-									log.Printf("%s %s", functionName, err)
+									fmt.Println("Error rebuilding: ", err)
+									os.Exit(1)
 								}
 							}()
 						})
@@ -254,7 +258,7 @@ func addPath(watcher *fsnotify.Watcher, rootPath string) error {
 			}
 
 			if debug == "1" {
-				log.Printf("Watching: %s\n", subPath)
+				fmt.Printf("[Watch] added: %s\n", subPath)
 			}
 		}
 

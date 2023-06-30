@@ -217,19 +217,25 @@ func GetImageTagValues(tagType schema.BuildFormat, contextPath string) (branch, 
 }
 
 func hashFolder(contextPath string) (string, error) {
-	m := make(map[string][md5.Size]byte)
+	m := make(map[string]string)
+
 	if err := filepath.Walk(contextPath, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
+
 		if !info.Mode().IsRegular() {
 			return nil
 		}
+
 		data, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		m[path] = md5.Sum(data)
+
+		hash := md5.Sum(data)
+		m[path] = hex.EncodeToString(hash[:])
+
 		return nil
 	}); err != nil {
 		return "", err
@@ -241,17 +247,14 @@ func hashFolder(contextPath string) (string, error) {
 	}
 	sort.Strings(keys)
 
-	shas := []string{}
+	hashes := ""
 	for _, k := range keys {
-		v := m[k]
-		shaHex := hex.EncodeToString(v[:])
-
-		shas = append(shas, shaHex)
+		hashes += m[k]
 	}
 
-	hashOfAllFileShas := md5.Sum([]byte(strings.Join(shas, "")))
+	hash := md5.Sum([]byte(hashes))
 
-	return fmt.Sprintf("%x", hashOfAllFileShas), nil
+	return hex.EncodeToString(hash[:]), nil
 
 }
 
