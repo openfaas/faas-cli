@@ -162,7 +162,7 @@ func upHandler(cmd *cobra.Command, args []string) error {
 				}
 				log.Printf("%s %s", event.Op, event.Name)
 
-				if strings.HasSuffix(event.Name, ".swp") || strings.HasSuffix(event.Name, "~") {
+				if strings.HasSuffix(event.Name, ".swp") || strings.HasSuffix(event.Name, "~") || strings.HasSuffix(event.Name, ".swx") {
 					continue
 				}
 
