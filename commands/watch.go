@@ -92,17 +92,20 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 
 	bounce := debounce.New(1500 * time.Millisecond)
 
-	// An initial build is usually done on first load with
-	// live reloaders
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	canceller.Set(ctx, cancel)
+	go func() {
+		// An initial build is usually done on first load with
+		// live reloaders
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		canceller.Set(ctx, cancel)
 
-	if err := onChange(cmd, args, ctx); err != nil {
-		fmt.Println("Error rebuilding: ", err)
-		os.Exit(1)
-	}
+		if err := onChange(cmd, args, ctx); err != nil {
+			fmt.Println("Error rebuilding: ", err)
+			os.Exit(1)
+		}
+	}()
 
+	log.Printf("[Watch] Started")
 	for {
 		select {
 		case event, ok := <-watcher.Events:
@@ -161,11 +164,12 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 					}
 
 					bounce(func() {
-						log.Printf("[Watch] Cancel previous build")
+						log.Printf("[Watch] Cancelling")
 
 						canceller.Cancel()
-						log.Printf("[Watch] Cancelled previous build")
-						ctx, cancel = context.WithCancel(context.Background())
+
+						log.Printf("[Watch] Cancelled")
+						ctx, cancel := context.WithCancel(context.Background())
 						canceller.Set(ctx, cancel)
 
 						// Assign --filter to "" for all functions if we can't determine the
