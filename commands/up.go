@@ -16,10 +16,9 @@ import (
 	"time"
 
 	"github.com/bep/debounce"
-	"github.com/openfaas/faas-cli/stack"
-
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -83,10 +82,15 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 }
 
 func upHandler(cmd *cobra.Command, args []string) error {
-	handler := upRunner(cmd, args)
+	return watchLoop(cmd, args, func(cmd *cobra.Command, args []string) error {
+		return upRunner(cmd, args)
+	})
+}
+
+func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Command, args []string) error) error {
 
 	// Always run an initial build to freshen up
-	if err := handler(); err != nil {
+	if err := onChange(cmd, args); err != nil {
 		return err
 	}
 
@@ -135,21 +139,22 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		}
 		watcher.Add(yamlPath)
 
+		// map to determine which function belongs to changed files
+		// when responding to events
 		handlerMap := make(map[string]string)
 
 		for serviceName, service := range services.Functions {
 			handlerMap[serviceName] = path.Join(cwd, service.Handler)
-		}
 
-		for _, service := range services.Functions {
-			handlerPath := path.Join(cwd, service.Handler)
+			handlerFullPath := path.Join(cwd, service.Handler)
 
-			if err := addPath(watcher, handlerPath); err != nil {
+			if err := addPath(watcher, handlerFullPath); err != nil {
 				return err
 			}
 		}
 
 		signalChannel := make(chan os.Signal, 1)
+		// Exit on Ctrl+C or kill
 		signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
 
 		d := debounce.New(2 * time.Second)
@@ -185,7 +190,7 @@ func upHandler(cmd *cobra.Command, args []string) error {
 						}
 					}
 
-					// fuzzy match after
+					// fuzzy match after, if none matched exactly
 					if target == "" {
 						for fnName, fnPath := range handlerMap {
 							log.Printf("Checking %s against %s", event.Name, fnPath)
@@ -216,10 +221,10 @@ func upHandler(cmd *cobra.Command, args []string) error {
 							filter = target
 
 							go func() {
-								// Assign --filter to the function name or "" for all functions
-								// in the stack.yml file
+								// Assign --filter to "" for all functions if we can't determine the
+								// changed function to direct the calls to build/push/deploy
 
-								if err := handler(); err != nil {
+								if err := onChange(cmd, args); err != nil {
 									fmt.Println("Error rebuilding: ", err)
 									os.Exit(1)
 								}
@@ -267,31 +272,29 @@ func addPath(watcher *fsnotify.Watcher, rootPath string) error {
 
 }
 
-func upRunner(cmd *cobra.Command, args []string) func() error {
-	return func() error {
-		if err := runBuild(cmd, args); err != nil {
+func upRunner(cmd *cobra.Command, args []string) error {
+	if err := runBuild(cmd, args); err != nil {
+		return err
+	}
+
+	if !skipPush && remoteBuilder == "" {
+		if err := runPush(cmd, args); err != nil {
+			return err
+		}
+	}
+
+	if !skipDeploy {
+		if err := runDeploy(cmd, args); err != nil {
 			return err
 		}
 
-		if !skipPush && remoteBuilder == "" {
-			if err := runPush(cmd, args); err != nil {
-				return err
-			}
+		if watch {
+			fmt.Println("[Watch] Change a file to trigger a rebuild...")
 		}
 
-		if !skipDeploy {
-			if err := runDeploy(cmd, args); err != nil {
-				return err
-			}
-
-			if watch {
-				fmt.Println("[Watch] Change a file to trigger a rebuild...")
-			}
-
-		}
-
-		return nil
 	}
+
+	return nil
 }
 
 func ignorePatterns() ([]gitignore.Pattern, error) {
