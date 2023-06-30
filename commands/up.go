@@ -77,9 +77,11 @@ func upHandler(cmd *cobra.Command, args []string) error {
 	if watch {
 		return watchLoop(cmd, args, func(cmd *cobra.Command, args []string, ctx context.Context) error {
 
+			if err := upRunner(cmd, args, ctx); err != nil {
+				return err
+			}
 			fmt.Println("[Watch] Change a file to trigger a rebuild...")
-
-			return upRunner(cmd, args, ctx)
+			return nil
 		})
 	}
 
