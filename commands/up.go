@@ -76,6 +76,9 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 func upHandler(cmd *cobra.Command, args []string) error {
 	if watch {
 		return watchLoop(cmd, args, func(cmd *cobra.Command, args []string, ctx context.Context) error {
+
+			fmt.Println("[Watch] Change a file to trigger a rebuild...")
+
 			return upRunner(cmd, args, ctx)
 		})
 	}
@@ -99,11 +102,6 @@ func upRunner(cmd *cobra.Command, args []string, ctx context.Context) error {
 		if err := runDeploy(cmd, args); err != nil {
 			return err
 		}
-
-		if watch {
-			fmt.Println("[Watch] Change a file to trigger a rebuild...")
-		}
-
 	}
 
 	return nil
