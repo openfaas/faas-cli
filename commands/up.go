@@ -18,12 +18,15 @@ import (
 var (
 	skipPush   bool
 	skipDeploy bool
+	usePublish bool
 	watch      bool
 )
 
 func init() {
 
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
+	upFlagset.BoolVar(&usePublish, "publish", false, "Use faas-cli publish instead of faas-cli build followed by faas-cli push")
+
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
 	upFlagset.StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
@@ -57,8 +60,19 @@ and the deploy step with --skip-deploy.
 
 Note: All flags from the build, push and deploy flags are valid and can be combined,
 see the --help text for those commands for details.`,
-	Example: `  faas-cli up -f myfn.yaml
-faas-cli up --filter "*gif*" --secret dockerhuborg`,
+	Example: `  # Deploy everything
+  faas-cli up
+
+  # Deploy a named function
+  faas-cli up --filter echo
+
+  # Deploy but skip the push step
+  faas-cli up --skip-push
+
+  # Build but skip pushing and use a build-arg
+  faas-cli up --skip-push \
+  	--build-arg GO111MODULE=on
+	`,
 	PreRunE: preRunUp,
 	RunE:    upHandler,
 }
@@ -90,13 +104,19 @@ func upHandler(cmd *cobra.Command, args []string) error {
 }
 
 func upRunner(cmd *cobra.Command, args []string, ctx context.Context) error {
-	if err := runBuild(cmd, args); err != nil {
-		return err
-	}
-
-	if !skipPush && remoteBuilder == "" {
-		if err := runPush(cmd, args); err != nil {
+	if usePublish {
+		if err := runPublish(cmd, args); err != nil {
 			return err
+		}
+	} else {
+		if err := runBuild(cmd, args); err != nil {
+			return err
+		}
+
+		if !skipPush && remoteBuilder == "" {
+			if err := runPush(cmd, args); err != nil {
+				return err
+			}
 		}
 	}
 
