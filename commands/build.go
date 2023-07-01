@@ -4,6 +4,8 @@
 package commands
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -151,7 +153,7 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 }
 
 func runBuild(cmd *cobra.Command, args []string) error {
-
+	ctx := cmd.Context()
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
@@ -192,7 +194,9 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("please provide the deployed --name of your function")
 		}
 
-		if err := builder.BuildImage(image,
+		if err := builder.BuildImage(
+			ctx,
+			image,
 			handler,
 			functionName,
 			language,
@@ -214,7 +218,12 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	errors := build(&services, parallel, shrinkwrap, quietBuild)
+	// a proper multi-error such as https://github.com/hashicorp/go-multierror
+	// would be nice here. In the current implementation we are unable to inspect
+	// the cause of the error, so we opted to just hide context cancel errors,
+	// but this makes it harder to detect this case upstream in the call stack.
+
+	errors := build(ctx, &services, parallel, shrinkwrap, quietBuild)
 	if len(errors) > 0 {
 		errorSummary := "Errors received during build:\n"
 		for _, err := range errors {
@@ -226,10 +235,10 @@ func runBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool) []error {
+func build(ctx context.Context, services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool) []error {
 	startOuter := time.Now()
 
-	errors := []error{}
+	buildErrors := []error{}
 
 	wg := sync.WaitGroup{}
 
@@ -248,7 +257,9 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 					combinedBuildOptions := combineBuildOpts(function.BuildOptions, buildOptions)
 					combinedBuildArgMap := util.MergeMap(function.BuildArgs, buildArgMap)
 					combinedExtraPaths := util.MergeSlice(services.StackConfiguration.CopyExtraPaths, copyExtra)
-					err := builder.BuildImage(function.Image,
+					err := builder.BuildImage(
+						ctx,
+						function.Image,
 						function.Handler,
 						function.Name,
 						function.Language,
@@ -264,9 +275,8 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						remoteBuilder,
 						payloadSecretPath,
 					)
-
-					if err != nil {
-						errors = append(errors, err)
+					if err != nil && !errors.Is(err, context.Canceled) {
+						buildErrors = append(buildErrors, err)
 					}
 				}
 
@@ -295,7 +305,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 
 	duration := time.Since(startOuter)
 	fmt.Printf("\n%s\n", aec.Apply(fmt.Sprintf("Total build time: %1.2fs", duration.Seconds()), aec.YellowF))
-	return errors
+	return buildErrors
 }
 
 // pullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.

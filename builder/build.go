@@ -4,9 +4,11 @@
 package builder
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -18,7 +20,7 @@ import (
 	"sort"
 	"strings"
 
-	v1execute "github.com/alexellis/go-execute/pkg/v1"
+	"github.com/openfaas/faas-cli/execute"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	vcs "github.com/openfaas/faas-cli/versioncontrol"
@@ -30,7 +32,7 @@ const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
+func BuildImage(ctx context.Context, image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -135,7 +137,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 				envs = append(envs, "DOCKER_BUILDKIT=1")
 			}
 
-			task := v1execute.ExecTask{
+			task := execute.ExecTask{
 				Cwd:         tempPath,
 				Command:     command,
 				Args:        args,
@@ -143,14 +145,17 @@ func BuildImage(image string, handler string, functionName string, language stri
 				Env:         envs,
 			}
 
-			res, err := task.Execute()
-
+			res, err := task.Execute(ctx)
 			if err != nil {
 				return err
 			}
 
+			if res.ExitCode == -1 && errors.Is(ctx.Err(), context.Canceled) {
+				return ctx.Err()
+			}
+
 			if res.ExitCode != 0 {
-				return fmt.Errorf("[%s] received non-zero exit code from build, error: %s", functionName, res.Stderr)
+				return fmt.Errorf("[%s] received non-zero exit code %d from build, error: %s", functionName, res.ExitCode, res.Stderr)
 			}
 
 			fmt.Printf("Image: %s built.\n", imageName)

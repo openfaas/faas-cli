@@ -8,16 +8,14 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"os/exec"
-	"os/signal"
 
 	"github.com/openfaas/faas-cli/builder"
+	"github.com/openfaas/faas-cli/logger"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
-	"golang.org/x/sync/errgroup"
 )
 
 const localSecretsDir = ".secrets"
@@ -102,15 +100,20 @@ func runLocalRunE(cmd *cobra.Command, args []string) error {
 		return watchLoop(cmd, args, localRunExec)
 	}
 
-	ctx, cancel := context.WithCancel(cmd.Context())
-	defer cancel()
-
-	return localRunExec(cmd, args, ctx)
+	return localRunExec(cmd, args)
 }
 
-func localRunExec(cmd *cobra.Command, args []string, ctx context.Context) error {
+func localRunExec(cmd *cobra.Command, args []string) error {
+	ctx := cmd.Context()
 	if opts.build {
+		log.Printf("[Local-Run] Building function")
 		if err := localBuild(cmd, args); err != nil {
+			if err == context.Canceled {
+				log.Printf("[Local-Run] Context cancelled, build cancelled")
+				return nil
+			}
+
+			logger.Debugf("[Local-Run] Error building function: %s", err.Error())
 			return err
 		}
 	}
@@ -123,6 +126,13 @@ func localRunExec(cmd *cobra.Command, args []string, ctx context.Context) error 
 		name = args[0]
 	}
 
+	// In watch mode, it is possible that runFunction might be invoked after a cancelled build.
+	if ctx.Err() != nil {
+		log.Printf("[Local-Run] Context cancelled, skipping run")
+		return nil
+	}
+
+	logger.Debugf("[Local-Run] Starting execution: %s", name)
 	return runFunction(ctx, name, opts, args)
 
 }
@@ -204,63 +214,32 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 		fmt.Fprintf(opts.output, "%s\n", cmd.String())
 		return nil
 	}
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
 	cmd.Stdout = opts.output
 	cmd.Stderr = opts.err
 
 	fmt.Printf("Starting local-run for: %s on: http://0.0.0.0:%d\n\n", name, opts.port)
-	grpContext := context.Background()
-	grpContext, cancel := context.WithCancel(grpContext)
-	defer cancel()
-
-	errGrp, _ := errgroup.WithContext(grpContext)
-
-	errGrp.Go(func() error {
-		if err = cmd.Start(); err != nil {
-			return err
-		}
-
-		if err := cmd.Wait(); err != nil {
-			if strings.Contains(err.Error(), "signal: killed") {
-				return nil
-			} else if strings.Contains(err.Error(), "os: process already finished") {
-				return nil
-			}
-
-			return err
-		}
-		return nil
-	})
-
 	// Always try to remove the container
-	defer func() {
-		removeContainer(name)
-	}()
+	defer removeContainer(name)
 
-	errGrp.Go(func() error {
+	if err = cmd.Start(); err != nil {
+		return err
+	}
 
-		select {
-		case <-sigs:
-			log.Printf("Caught signal, exiting")
-			cancel()
-		case <-ctx.Done():
-			log.Printf("Context cancelled, exiting..")
-			cancel()
+	if err := cmd.Wait(); err != nil {
+		if strings.Contains(err.Error(), "signal: killed") {
+			return nil
+		} else if strings.Contains(err.Error(), "os: process already finished") {
+			return nil
 		}
-		return nil
-	})
 
-	return errGrp.Wait()
+		return err
+	}
+	return nil
 }
 
 func removeContainer(name string) {
-
 	runDockerRm := exec.Command("docker", "rm", "-f", name)
 	runDockerRm.Run()
-
 }
 
 // buildDockerRun constructs a exec.Cmd from the given stack Function

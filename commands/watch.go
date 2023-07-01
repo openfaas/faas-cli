@@ -3,25 +3,27 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
-	"os/signal"
 	"path"
 	"path/filepath"
 	"strings"
-	"syscall"
+	"sync"
 	"time"
 
 	"github.com/bep/debounce"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
+	"github.com/openfaas/faas-cli/logger"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/spf13/cobra"
 )
 
 // watchLoop will watch for changes to function handler files and the stack.yml
 // then call onChange when a change is detected
-func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Command, args []string, ctx context.Context) error) error {
+func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Command, args []string) error) error {
+	mainCtx := cmd.Context()
 
 	var services stack.Services
 	if len(yamlFile) > 0 {
@@ -42,8 +44,6 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 
 	fmt.Printf("[Watch] monitoring %d functions: %s\n", len(fnNames), strings.Join(fnNames, ", "))
 
-	canceller := Cancel{}
-
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -63,12 +63,7 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 	}
 	yamlPath := path.Join(cwd, yamlFile)
 
-	debug := os.Getenv("FAAS_DEBUG")
-
-	if debug == "1" {
-		fmt.Printf("[Watch] added: %s\n", yamlPath)
-	}
-
+	logger.Debugf("[Watch] added: %s\n", yamlPath)
 	watcher.Add(yamlPath)
 
 	// map to determine which function belongs to changed files
@@ -85,23 +80,29 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 		}
 	}
 
-	signalChannel := make(chan os.Signal, 1)
-
-	// Exit on Ctrl+C or kill
-	signal.Notify(signalChannel, os.Interrupt, syscall.SIGTERM)
-
 	bounce := debounce.New(1500 * time.Millisecond)
 
+	onChangeCtx, onChangeCancel := context.WithCancel(mainCtx)
+	defer onChangeCancel()
+
+	// the WaitGroup is used to enable the watch+debounce to easily wait for
+	// each onChange invocation to complete or fully cancel before starting
+	// the next one. Without this, because the `cmd` is a shared pointer instead
+	// of a value, when we changed the onChangeCtx, it would propogate to the
+	// currently cancelling onChange invocation. If this handler contains many
+	// steps, it would be possible for it continue with the new context.
+	// This was seen in the local-run, the build would cancel but not return,
+	// so it would try to run the just aborted build and produce errors.
+	var wg sync.WaitGroup
+
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		// An initial build is usually done on first load with
 		// live reloaders
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		canceller.Set(ctx, cancel)
-
-		if err := onChange(cmd, args, ctx); err != nil {
-			fmt.Println("Error rebuilding: ", err)
-			os.Exit(1)
+		cmd.SetContext(onChangeCtx)
+		if err := onChange(cmd, args); err != nil {
+			fmt.Println("Error on initial run: ", err)
 		}
 	}()
 
@@ -113,79 +114,70 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 				return fmt.Errorf("watcher's Events channel is closed")
 			}
 
-			if debug == "1" {
-				log.Printf("[Watch] event: %s on: %s", strings.ToLower(event.Op.String()), event.Name)
-			}
-			if strings.HasSuffix(event.Name, ".swp") || strings.HasSuffix(event.Name, "~") || strings.HasSuffix(event.Name, ".swx") {
+			logger.Debugf("[Watch] event: %s on: %s", strings.ToLower(event.Op.String()), event.Name)
+
+			info, trigger := shouldTrigger(event)
+			if !trigger {
 				continue
 			}
 
-			if event.Op == fsnotify.Write || event.Op == fsnotify.Create || event.Op == fsnotify.Remove || event.Op == fsnotify.Rename {
-
-				info, err := os.Stat(event.Name)
-				if err != nil {
-					continue
+			// exact match first
+			target := ""
+			for fnName, fnPath := range handlerMap {
+				if event.Name == fnPath {
+					target = fnName
 				}
-				ignore := false
-				if matcher.Match(strings.Split(event.Name, "/"), info.IsDir()) {
-					ignore = true
-				}
+			}
 
-				// exact match first
-				target := ""
+			// fuzzy match after, if none matched exactly
+			if target == "" {
 				for fnName, fnPath := range handlerMap {
-					if event.Name == fnPath {
+
+					if strings.HasPrefix(event.Name, fnPath) {
 						target = fnName
 					}
 				}
-
-				// fuzzy match after, if none matched exactly
-				if target == "" {
-					for fnName, fnPath := range handlerMap {
-
-						if strings.HasPrefix(event.Name, fnPath) {
-							target = fnName
-						}
-					}
-				}
-
-				// New sub-directory added for a function, start tracking it
-				if event.Op == fsnotify.Create && info.IsDir() && target != "" {
-					if err := addPath(watcher, event.Name); err != nil {
-						return err
-					}
-				}
-
-				if !ignore {
-					if target == "" {
-						fmt.Printf("[Watch] Rebuilding %d functions reason: %s to %s\n", len(fnNames), strings.ToLower(event.Op.String()), event.Name)
-					} else {
-						fmt.Printf("[Watch] Reloading %s reason: %s %s\n", target, strings.ToLower(event.Op.String()), event.Name)
-					}
-
-					bounce(func() {
-						log.Printf("[Watch] Cancelling")
-
-						canceller.Cancel()
-
-						log.Printf("[Watch] Cancelled")
-						ctx, cancel := context.WithCancel(context.Background())
-						canceller.Set(ctx, cancel)
-
-						// Assign --filter to "" for all functions if we can't determine the
-						// changed function to direct the calls to build/push/deploy
-						filter = target
-
-						go func() {
-							if err := onChange(cmd, args, ctx); err != nil {
-								fmt.Println("Error rebuilding: ", err)
-								os.Exit(1)
-							}
-						}()
-					})
-				}
-
 			}
+
+			// New sub-directory added for a function, start tracking it
+			if event.Op == fsnotify.Create && info.IsDir() && target != "" {
+				if err := addPath(watcher, event.Name); err != nil {
+					return err
+				}
+			}
+
+			// now check if the file is ignored and should not trigger the onChange
+			if matcher.Match(strings.Split(event.Name, "/"), info.IsDir()) {
+				continue
+			}
+
+			if target == "" {
+				fmt.Printf("[Watch] Rebuilding %d functions reason: %s to %s\n", len(fnNames), strings.ToLower(event.Op.String()), event.Name)
+			} else {
+				fmt.Printf("[Watch] Reloading %s reason: %s %s\n", target, strings.ToLower(event.Op.String()), event.Name)
+			}
+
+			bounce(func() {
+				log.Printf("[Watch] Cancelling")
+				onChangeCancel()
+				wg.Wait()
+
+				log.Printf("[Watch] Cancelled")
+				onChangeCtx, onChangeCancel = context.WithCancel(mainCtx)
+				cmd.SetContext(onChangeCtx)
+
+				// Assign --filter to "" for all functions if we can't determine the
+				// changed function to direct the calls to build/push/deploy
+				filter = target
+
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					if err := onChange(cmd, args); err != nil {
+						fmt.Println("Error on change: ", err)
+					}
+				}()
+			})
 
 		case err, ok := <-watcher.Errors:
 			if !ok {
@@ -193,18 +185,35 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 			}
 			return err
 
-		case <-signalChannel:
+		case <-mainCtx.Done():
 			watcher.Close()
 			return nil
 		}
 	}
+}
 
-	return nil
+// shouldTrigger returns true if the event should trigger a rebuild. This currently
+// includes create, write, remove, and rename events.
+func shouldTrigger(event fsnotify.Event) (fs.FileInfo, bool) {
+	// skip temp and swap files
+	if strings.HasSuffix(event.Name, ".swp") || strings.HasSuffix(event.Name, "~") || strings.HasSuffix(event.Name, ".swx") {
+		return nil, false
+	}
+
+	// only trigger for content changes, this skips chmod, chown, etc.
+	if event.Has(fsnotify.Create) || event.Has(fsnotify.Write) || event.Has(fsnotify.Remove) || event.Has(fsnotify.Rename) {
+		info, err := os.Stat(event.Name)
+		if err != nil {
+			return nil, false
+		}
+
+		return info, true
+	}
+
+	return nil, false
 }
 
 func addPath(watcher *fsnotify.Watcher, rootPath string) error {
-	debug := os.Getenv("FAAS_DEBUG")
-
 	return filepath.WalkDir(rootPath, func(subPath string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -215,31 +224,10 @@ func addPath(watcher *fsnotify.Watcher, rootPath string) error {
 				return fmt.Errorf("unable to watch %s: %s", subPath, err)
 			}
 
-			if debug == "1" {
-				fmt.Printf("[Watch] added: %s\n", subPath)
-			}
+			logger.Debugf("[Watch] added: %s\n", subPath)
 		}
 
 		return nil
 	})
-
-}
-
-// Cancel is a struct to hold a reference to a context and
-// cancellation function between closures
-type Cancel struct {
-	cancel context.CancelFunc
-	ctx    context.Context
-}
-
-func (c *Cancel) Set(ctx context.Context, cancel context.CancelFunc) {
-	c.cancel = cancel
-	c.ctx = ctx
-}
-
-func (c *Cancel) Cancel() {
-	if c.cancel != nil {
-		c.cancel()
-	}
 
 }

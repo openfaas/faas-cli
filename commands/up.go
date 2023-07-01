@@ -5,7 +5,6 @@ package commands
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -89,9 +88,9 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 
 func upHandler(cmd *cobra.Command, args []string) error {
 	if watch {
-		return watchLoop(cmd, args, func(cmd *cobra.Command, args []string, ctx context.Context) error {
+		return watchLoop(cmd, args, func(cmd *cobra.Command, args []string) error {
 
-			if err := upRunner(cmd, args, ctx); err != nil {
+			if err := upRunner(cmd, args); err != nil {
 				return err
 			}
 			fmt.Println("[Watch] Change a file to trigger a rebuild...")
@@ -99,11 +98,10 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	ctx := context.Background()
-	return upRunner(cmd, args, ctx)
+	return upRunner(cmd, args)
 }
 
-func upRunner(cmd *cobra.Command, args []string, ctx context.Context) error {
+func upRunner(cmd *cobra.Command, args []string) error {
 	if usePublish {
 		if err := runPublish(cmd, args); err != nil {
 			return err

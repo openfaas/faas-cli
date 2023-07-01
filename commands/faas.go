@@ -4,6 +4,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -12,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/moby/term"
+	"github.com/openfaas/faas-cli/contexts"
 	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
@@ -74,6 +76,9 @@ func init() {
 func Execute(customArgs []string) {
 	checkAndSetDefaultYaml()
 
+	ctx, cancel := contexts.WithSignals(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
 	faasCmd.SilenceUsage = true
 	faasCmd.SilenceErrors = true
 	faasCmd.SetArgs(customArgs[1:])
@@ -105,7 +110,7 @@ func Execute(customArgs []string) {
 		}
 	}
 
-	if err := faasCmd.Execute(); err != nil {
+	if err := faasCmd.ExecuteContext(ctx); err != nil {
 		e := err.Error()
 		fmt.Println(strings.ToUpper(e[:1]) + e[1:])
 		os.Exit(1)
