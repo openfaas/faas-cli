@@ -463,7 +463,7 @@ https://storage.googleapis.com/kubernetes-release/release/{{.Version}}/bin/{{$os
 {{- end -}}
 https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}`,
 			BinaryTemplate: `{{ if HasPrefix .OS "ming" -}}
-{{.Name}}.exe
+{{.Name}}
 {{- else if eq .OS "darwin" -}}
 	{{- if eq .Arch "arm64" -}}
 	{{.Name}}-darwin-arm64
@@ -471,13 +471,15 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 	{{.Name}}-darwin
 	{{- end -}}
 {{- else if eq .OS "linux" -}}
-{{.Name}}
-{{- else if eq .Arch "armv6l" -}}
-{{.Name}}-armhf
-{{- else if eq .Arch "armv7l" -}}
-{{.Name}}-armhf
-{{- else if eq .Arch "aarch64" -}}
-{{.Name}}-arm64
+	{{- if eq .Arch "armv6l" -}}
+	{{.Name}}-armhf
+	{{- else if eq .Arch "armv7l" -}}
+	{{.Name}}-armhf
+	{{- else if eq .Arch "aarch64" -}}
+	{{.Name}}-arm64
+	{{- else -}}
+	{{.Name}}
+	{{- end -}}
 {{- end -}}`,
 		},
 		Tool{
@@ -544,9 +546,10 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 			Repo:        "kustomize",
 			Name:        "kustomize",
 			Description: "Customization of kubernetes YAML configurations",
-			Version:     "4.4.1",
+			Version:     "v5.0.3",
 			BinaryTemplate: `
 	{{$osStr := ""}}
+	{{$ext := "tar.gz"}}
 	{{- if eq .OS "linux" -}}
 	{{- if eq .Arch "x86_64" -}}
 	{{$osStr = "linux_amd64"}}
@@ -556,7 +559,10 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 	{{- else if eq .OS "darwin" -}}
 	{{$osStr = "darwin_amd64"}}
 	{{- end -}}
-	kustomize%2Fv{{.Version}}/{{.Name}}_v{{.Version}}_{{$osStr}}.tar.gz`,
+	{{ if HasPrefix .OS "ming" -}}
+	{{$osStr = "windows_amd64"}}
+	{{- end -}}
+	kustomize%2F{{.Version}}/{{.Name}}_{{.Version}}_{{$osStr}}.{{$ext}}`,
 		})
 
 	tools = append(tools,
@@ -2259,7 +2265,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 		})
 	tools = append(tools,
 		Tool{
-			Owner:       "mozilla",
+			Owner:       "getsops",
 			Repo:        "sops",
 			Name:        "sops",
 			Description: "Simple and flexible tool for managing secrets",
@@ -3566,7 +3572,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
  						{{ $arch = "x86_64" }}
  					{{- end -}}
 
- 					{{.Name}}-{{.VersionNumber}}-{{$os}}-{{$arch}}.{{$ext}}
+ 					{{.Name}}-V{{.VersionNumber}}-{{$os}}-{{$arch}}.{{$ext}}
  					`,
 		})
 
@@ -3636,5 +3642,108 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 						https://mirror.openshift.com/pub/openshift-v4/clients/ocp/{{$version}}/openshift-client-{{$os}}{{$arch}}.{{$ext}}
 						`,
 		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "ellie",
+			Repo:        "atuin",
+			Name:        "atuin",
+			Description: "Sync, search and backup shell history with Atuin.",
+			URLTemplate: `
+					{{$os := .OS}}
+					{{$arch := .Arch}}
+					{{$ext := "tar.gz"}}
+					
+					{{- if eq .OS "darwin" -}}
+						{{$os = "apple-darwin"}}
+					{{- else if eq .OS "linux" -}}
+						{{$os = "unknown-linux-gnu"}}
+					{{- end -}}
+					
+					{{- if (or (eq .Arch "x86_64") (eq .Arch "amd64")) -}}
+						{{$arch = "x86_64"}}
+					{{- end -}}
+					
+					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}-{{.Version}}-{{$arch}}-{{$os}}.{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "project-copacetic",
+			Repo:        "copacetic",
+			Name:        "copa",
+			Description: "CLI for patching container images",
+			URLTemplate: `
+				{{$arch := ""}}
+				{{ if (or (eq .Arch "x86_64") (eq .Arch "amd64")) -}}
+				{{$arch = "amd64"}}
+				{{- end -}}
+
+				{{$osStr := ""}}
+				{{- if eq .OS "linux" -}}
+				{{$osStr = "linux"}}
+				{{- end -}}
+
+				{{$extStr := "tar.gz"}}
+
+				https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$extStr}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "go-task",
+			Repo:        "task",
+			Name:        "task",
+			Description: "A simple task runner and build tool",
+			BinaryTemplate: `
+					{{$os := .OS}}
+					{{$arch := .Arch}}
+					{{$ext := "tar.gz"}}
+
+					{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+						{{$arch = "arm64"}}
+					{{- else if eq .Arch "x86_64" -}}
+						{{ $arch = "amd64" }}
+					{{- else if eq .Arch "armv7l" -}}
+						{{ $arch = "arm" }}
+					{{- end -}}
+
+					{{ if HasPrefix .OS "ming" -}}
+					{{$os = "windows"}}
+					{{$ext = "zip"}}
+					{{- end -}}
+
+					{{.Name}}_{{$os}}_{{$arch}}.{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "1password",
+			Name:        "op",
+			Description: "1Password CLI enables you to automate administrative tasks and securely provision secrets across development environments.",
+			URLTemplate: `
+				{{$os := .OS}}
+				{{$arch := .Arch}}
+				{{$version := .Version}}
+
+				{{- if eq .Version "" -}}
+					{{ $version = "v2.17.0" }}
+				{{- end -}}
+
+				{{- if eq .Arch "aarch64" -}}
+					{{ $arch = "arm64" }}
+				{{- else if eq .Arch "x86_64" -}}
+					{{ $arch = "amd64" }}
+				{{- else if eq .Arch "armv7l" -}}
+					{{ $arch = "arm" }}
+				{{- end -}}
+
+				{{ if HasPrefix .OS "ming" -}}
+				{{$os = "windows"}}
+				{{- end -}}
+
+				https://cache.agilebits.com/dist/1P/op2/pkg/{{$version}}/op_{{$os}}_{{$arch}}_{{$version}}.zip`,
+		})
+
 	return tools
 }
