@@ -19,6 +19,7 @@ func (c *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 	scaleReq := types.ScaleServiceRequest{
 		ServiceName: functionName,
 		Replicas:    replicas,
+		Namespace:   namespace,
 	}
 
 	var err error
@@ -28,9 +29,6 @@ func (c *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 
 	functionPath := filepath.Join(scalePath, functionName)
 	query := url.Values{}
-	if len(namespace) > 0 {
-		query.Add("namespace", namespace)
-	}
 
 	req, err := c.newRequest(http.MethodPost, functionPath, query, bodyReader)
 	if err != nil {
