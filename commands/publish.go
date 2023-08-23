@@ -95,7 +95,7 @@ See also: faas-cli build`,
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
   faas-cli publish --reset-qemu
-  faas-cli publish --remote-address http://127.0.0.1:8081/build
+  faas-cli publish --remote-builder http://127.0.0.1:8081/build
   `,
 	PreRunE: preRunPublish,
 	RunE:    runPublish,
