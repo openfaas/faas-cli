@@ -56,27 +56,25 @@ func MakeTools() Tools {
 			Name:            "helm",
 			VersionStrategy: "github",
 			Description:     "The Kubernetes Package Manager: Think of it like apt/yum/homebrew for Kubernetes.",
-			URLTemplate: `{{$arch := "amd64"}}
+			URLTemplate: `
+						{{$os := .OS}}
+						{{$arch := .Arch}}
+						{{$ext := "tar.gz"}}
 
-{{- if eq .Arch "armv7l" -}}
-{{$arch = "arm"}}
-{{- end -}}
+						{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+							{{$arch = "arm64"}}
+						{{- else if eq .Arch "x86_64" -}}
+							{{ $arch = "amd64" }}
+						{{- else if eq .Arch "armv7l" -}}
+							{{ $arch = "arm" }}
+						{{- end -}}
 
-{{- if eq .OS "linux" -}}
-	{{- if eq .Arch "aarch64" -}}
-	{{$arch = "arm64"}}
-	{{- end -}}
-{{- end -}}
+						{{ if HasPrefix .OS "ming" -}}
+						{{$os = "windows"}}
+						{{$ext = "zip"}}
+						{{- end -}}
 
-{{$os := .OS}}
-{{$ext := "tar.gz"}}
-
-{{ if HasPrefix .OS "ming" -}}
-{{$os = "windows"}}
-{{$ext = "zip"}}
-{{- end -}}
-
-https://get.helm.sh/helm-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}`,
+						https://get.helm.sh/helm-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}`,
 		})
 
 	tools = append(tools,
@@ -222,6 +220,34 @@ https://storage.googleapis.com/kubernetes-release/release/{{.Version}}/bin/{{$os
 {{- else -}}
 {{.Name}}
 {{- end -}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "etcd-io",
+			Repo:        "etcd",
+			Name:        "etcd",
+			Description: "Distributed reliable key-value store for the most critical data of a distributed system.",
+			BinaryTemplate: `
+					{{$ext := "zip"}}
+					{{- if eq .OS "linux" -}}
+						{{$ext = "tar.gz"}}
+					{{- end -}}
+
+					{{$arch := .Arch}}
+					{{ if (eq .Arch "x86_64") -}}
+						{{$arch = "amd64"}}
+					{{- else if eq .Arch "aarch64" -}}
+						{{$arch = "arm64"}}
+					{{- end -}}
+
+					{{$osString:= .OS}}
+					{{ if HasPrefix .OS "ming" -}}
+						{{$osString = "windows"}}
+					{{- end -}}
+
+					{{.Name}}-{{.Version}}-{{$osString}}-{{$arch}}.{{$ext}}
+				`,
 		})
 
 	tools = append(tools,
@@ -628,7 +654,7 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 
 	tools = append(tools,
 		Tool{
-			Owner:       "weaveworks",
+			Owner:       "eksctl-io",
 			Repo:        "eksctl",
 			Name:        "eksctl",
 			Description: "Amazon EKS Kubernetes cluster management",
@@ -1870,25 +1896,25 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 			Description: "Kubestr discovers, validates and evaluates your Kubernetes storage options.",
 
 			URLTemplate: `
-{{ $ext := "tar.gz" }}
-{{ $osStr := "Linux" }}
-{{ $arch := .Arch }}
+	{{ $ext := "tar.gz" }}
+	{{ $osStr := "Linux" }}
+	{{ $arch := .Arch }}
+	
+	{{- if eq .Arch "x86_64" -}}
+	{{$arch = "amd64"}}
+	{{- end -}}
 
-{{- if eq .Arch "x86_64" -}}
-{{$arch = "amd64"}}
-{{- end -}}
+	{{- if eq .Arch "aarch64" -}}
+	{{$arch = "arm64"}}
+	{{- end -}}
 
-{{- if eq .Arch "aarch64" -}}
-{{$arch = "arm64"}}
-{{- end -}}
+	{{- if eq .OS "darwin" -}}
+	{{ $osStr = "MacOS" }}
+	{{- else if HasPrefix .OS "ming" -}}
+	{{ $osStr = "Windows" }}
+	{{- end -}}
 
-{{- if eq .OS "darwin" -}}
-{{ $osStr = "MacOS" }}
-{{- else if HasPrefix .OS "ming" -}}
-{{ $osStr = "Windows" }}
-{{- end -}}
-
-https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}`,
+	https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}`,
 			BinaryTemplate: `{{.Name}}`,
 		})
 
@@ -3645,7 +3671,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 
 	tools = append(tools,
 		Tool{
-			Owner:       "ellie",
+			Owner:       "atuinsh",
 			Repo:        "atuin",
 			Name:        "atuin",
 			Description: "Sync, search and backup shell history with Atuin.",
@@ -3743,6 +3769,39 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{- end -}}
 
 				https://cache.agilebits.com/dist/1P/op2/pkg/{{$version}}/op_{{$os}}_{{$arch}}_{{$version}}.zip`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "charmbracelet",
+			Repo:        "vhs",
+			Name:        "vhs",
+			Description: "CLI for recording demos",
+			URLTemplate: `
+					{{$arch := .Arch}}
+					{{ if (eq .Arch "x86_64") -}}
+					{{$arch = "x86_64"}}
+					{{- else if eq .Arch "aarch64" -}}
+					{{$arch = "arm64"}}
+					{{- end -}}
+
+					{{$osStr := ""}}
+					{{$extStr := "tar.gz"}}
+					{{- if eq .OS "darwin" -}}
+					{{$osStr = "Darwin"}}
+					{{- else if eq .OS "linux" -}}
+					{{$osStr = "Linux"}}
+					{{- else if HasPrefix .OS "ming" -}}
+					{{$osStr = "Windows"}}
+					{{$extStr = "zip"}}
+					{{- end -}}
+
+					{{- if eq $osStr "Darwin"}}
+					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{$osStr}}_{{$arch}}.{{$extStr}}
+					{{- else if or (eq $osStr "Windows") (eq $osStr "Linux") -}}
+					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$extStr}}
+					{{- end -}}
+					`,
 		})
 
 	return tools
