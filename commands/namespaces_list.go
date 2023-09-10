@@ -3,9 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
-	"os"
 
-	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -16,31 +14,36 @@ func init() {
 	namespacesCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 
 	faasCmd.AddCommand(namespacesCmd)
+	namespaceCmd.AddCommand(namespaceListCmd)
 }
 
 var namespacesCmd = &cobra.Command{
-	Use:     `namespaces [--gateway GATEWAY_URL] [--tls-no-verify] [--token JWT_TOKEN]`,
-	Aliases: []string{"ns"},
-	Short:   "List OpenFaaS namespaces",
-	Long:    `Lists OpenFaaS namespaces either on a local or remote gateway`,
+	Use:   `namespaces [--gateway GATEWAY_URL] [--tls-no-verify] [--token JWT_TOKEN]`,
+	Short: "List OpenFaaS namespaces",
+	Long:  `Lists OpenFaaS namespaces either on a local or remote gateway`,
 	Example: `  faas-cli namespaces
   faas-cli namespaces --gateway https://127.0.0.1:8080`,
-	RunE: runNamespaces,
+	RunE:       runNamespaces,
+	Hidden:     true,
+	Deprecated: "Use faas-cli namespace list to achieve the same",
+}
+
+var namespaceListCmd = &cobra.Command{
+	Use:     `list`,
+	Aliases: []string{"ls"},
+	Short:   "List OpenFaaS namespaces",
+	Long:    `Lists OpenFaaS namespaces either on a local or remote gateway`,
+	Example: `faas-cli namespace list`,
+	RunE:    runNamespaces,
 }
 
 func runNamespaces(cmd *cobra.Command, args []string) error {
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	cliAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
-	if err != nil {
-		return err
-	}
-	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
-	client, err := proxy.NewClient(cliAuth, gatewayAddress, transport, &commandTimeout)
+	client, err := GetDefaultSDKClient()
 	if err != nil {
 		return err
 	}
 
-	namespaces, err := client.ListNamespaces(context.Background())
+	namespaces, err := client.GetNamespaces(context.Background())
 	if err != nil {
 		return err
 	}
