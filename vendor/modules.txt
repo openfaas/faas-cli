@@ -2,8 +2,6 @@
 ## explicit; go 1.16
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/Masterminds/semver v1.5.0
-## explicit
 # github.com/VividCortex/ewma v1.2.0
 ## explicit; go 1.12
 github.com/VividCortex/ewma
@@ -17,8 +15,6 @@ github.com/alexellis/arkade/pkg/archive
 github.com/alexellis/arkade/pkg/config
 github.com/alexellis/arkade/pkg/env
 github.com/alexellis/arkade/pkg/get
-# github.com/alexellis/go-execute v0.6.0
-## explicit; go 1.19
 # github.com/alexellis/go-execute/v2 v2.0.0
 ## explicit; go 1.20
 github.com/alexellis/go-execute/v2
@@ -28,13 +24,9 @@ github.com/alexellis/hmac
 # github.com/alexellis/hmac/v2 v2.0.0
 ## explicit; go 1.16
 github.com/alexellis/hmac/v2
-# github.com/beorn7/perks v1.0.1
-## explicit; go 1.11
 # github.com/bep/debounce v1.2.1
 ## explicit
 github.com/bep/debounce
-# github.com/cespare/xxhash/v2 v2.2.0
-## explicit; go 1.11
 # github.com/cheggaaa/pb/v3 v3.1.4
 ## explicit; go 1.17
 github.com/cheggaaa/pb/v3
@@ -59,8 +51,6 @@ github.com/docker/docker/pkg/homedir
 ## explicit; go 1.19
 github.com/docker/docker-credential-helpers/client
 github.com/docker/docker-credential-helpers/credentials
-# github.com/docker/go-units v0.5.0
-## explicit
 # github.com/drone/envsubst v1.0.3
 ## explicit; go 1.13
 github.com/drone/envsubst
@@ -86,10 +76,6 @@ github.com/go-git/go-billy/v5
 github.com/go-git/go-git/v5/plumbing/format/config
 github.com/go-git/go-git/v5/plumbing/format/gitignore
 github.com/go-git/go-git/v5/utils/ioutil
-# github.com/gogo/protobuf v1.3.2
-## explicit; go 1.15
-# github.com/golang/protobuf v1.5.3
-## explicit; go 1.9
 # github.com/google/go-cmp v0.5.9
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
@@ -127,8 +113,6 @@ github.com/google/go-containerregistry/pkg/v1/remote/transport
 github.com/google/go-containerregistry/pkg/v1/stream
 github.com/google/go-containerregistry/pkg/v1/tarball
 github.com/google/go-containerregistry/pkg/v1/types
-# github.com/gorilla/mux v1.8.0
-## explicit; go 1.12
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
@@ -153,8 +137,6 @@ github.com/mattn/go-isatty
 # github.com/mattn/go-runewidth v0.0.15
 ## explicit; go 1.9
 github.com/mattn/go-runewidth
-# github.com/matttproud/golang_protobuf_extensions v1.0.4
-## explicit; go 1.9
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
 github.com/mitchellh/go-homedir
@@ -168,14 +150,6 @@ github.com/moby/term/windows
 # github.com/morikuni/aec v1.0.0
 ## explicit
 github.com/morikuni/aec
-# github.com/nats-io/nats.go v1.22.1
-## explicit; go 1.16
-# github.com/nats-io/nkeys v0.3.0
-## explicit; go 1.16
-# github.com/nats-io/nuid v1.0.1
-## explicit
-# github.com/nats-io/stan.go v0.10.4
-## explicit; go 1.14
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
@@ -194,21 +168,12 @@ github.com/openfaas/faas-provider/types
 # github.com/openfaas/faas/gateway v0.0.0-20230914090923-4f4e3d288a38
 ## explicit; go 1.20
 github.com/openfaas/faas/gateway/types
-# github.com/openfaas/nats-queue-worker v0.0.0-20230303171817-9dfe6fa61387
-## explicit; go 1.18
-# github.com/otiai10/copy v1.12.0
-## explicit; go 1.18
+# github.com/openfaas/go-sdk v0.2.6
+## explicit; go 1.20
+github.com/openfaas/go-sdk
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.16.0
-## explicit; go 1.17
-# github.com/prometheus/client_model v0.4.0
-## explicit; go 1.18
-# github.com/prometheus/common v0.42.0
-## explicit; go 1.18
-# github.com/prometheus/procfs v0.11.1
-## explicit; go 1.19
 # github.com/rivo/uniseg v0.4.4
 ## explicit; go 1.18
 github.com/rivo/uniseg
@@ -217,8 +182,6 @@ github.com/rivo/uniseg
 # github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
-# github.com/sethvargo/go-password v0.2.0
-## explicit; go 1.14
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
@@ -228,13 +191,11 @@ github.com/spf13/cobra
 # github.com/spf13/pflag v1.0.5
 ## explicit; go 1.12
 github.com/spf13/pflag
+# github.com/stretchr/testify v1.8.0
+## explicit; go 1.13
 # github.com/vbatts/tar-split v0.11.5
 ## explicit; go 1.17
 github.com/vbatts/tar-split/archive/tar
-# golang.org/x/crypto v0.13.0
-## explicit; go 1.17
-# golang.org/x/mod v0.12.0
-## explicit; go 1.17
 # golang.org/x/net v0.15.0
 ## explicit; go 1.17
 golang.org/x/net/context
@@ -247,13 +208,9 @@ golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# google.golang.org/protobuf v1.30.0
-## explicit; go 1.11
 # gopkg.in/warnings.v0 v0.1.2
 ## explicit
 gopkg.in/warnings.v0
-# gopkg.in/yaml.v2 v2.4.0
-## explicit; go 1.15
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
