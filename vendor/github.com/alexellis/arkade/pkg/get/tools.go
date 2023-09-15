@@ -104,27 +104,47 @@ func MakeTools() Tools {
 			Repo:        "jq",
 			Name:        "jq",
 			Description: "jq is a lightweight and flexible command-line JSON processor",
-			BinaryTemplate: `{{$arch := "arm"}}
+			BinaryTemplate: `
+				{{- if or (eq .Version "jq-1.6") (eq .Version "jq-1.5") -}}
+					{{$os := .OS}}
+					{{$ext := ""}}
+					{{- if eq .OS "darwin" -}}
+						{{$os = "osx-amd"}}
+					{{- else if HasPrefix .OS "ming" -}}
+						{{$os = "win"}}
+						{{$ext = ".exe"}}
+					{{- end -}}
 
-{{- if eq .Arch "x86_64" -}}
-{{$arch = "64"}}
-{{- else if eq .Arch "arm64" -}}
-{{$arch = "64"}}
-{{- else -}}
-{{$arch = "32"}}
-{{- end -}}
+					{{$arch := ""}}
+					{{- if or (eq .Arch "x86_64") (eq .Arch "arm64") (eq .Arch "aarch64") -}}
+						{{$arch = "64"}}
+					{{- else -}}
+						{{$arch = "32"}}
+					{{- end -}}
 
-{{$ext := ""}}
-{{$os := .OS}}
+					{{.Version}}/jq-{{$os}}{{$arch}}{{$ext}}
+				{{- else -}}
 
-{{ if HasPrefix .OS "ming" -}}
-{{$ext = ".exe"}}
-{{$os = "win"}}
-{{- else if eq .OS "darwin" -}}
-{{$os = "osx-amd"}}
-{{- end -}}
+					{{$os := .OS}}
+					{{$ext := ""}}
+					{{- if eq .OS "darwin" -}}
+						{{$os = "macos"}}
+					{{- else if HasPrefix .OS "ming" -}}
+						{{$os = "windows"}}
+						{{$ext = ".exe"}}
+					{{- end -}}
 
-{{.Version}}/jq-{{$os}}{{$arch}}{{$ext}}`,
+					{{$arch := .Arch}}
+					{{- if eq .Arch "x86_64" -}}
+						{{$arch = "amd64"}}
+					{{- else if eq .Arch "aarch64" -}}
+						{{$arch = "arm64"}}
+					{{- else if or (eq .Arch "armv6l") (eq .Arch "armv7l") -}}
+						{{$arch = "armhf"}}
+					{{- end -}}
+
+					{{.Version}}/jq-{{$os}}-{{$arch}}{{$ext}}
+				{{- end -}}`,
 		})
 
 	// https://storage.googleapis.com/kubernetes-release/release/v1.22.2/bin/darwin/amd64/kubectl
@@ -710,6 +730,12 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 			Name:        "k9s",
 			Description: "Provides a terminal UI to interact with your Kubernetes clusters.",
 			BinaryTemplate: `
+
+		{{$extStr := "tar.gz"}}
+		{{ if HasPrefix .OS "ming" -}}
+		{{$extStr = "zip"}}
+		{{- end -}}
+
 		{{$os := "" }}
 		{{ if HasPrefix .OS "ming" -}}
 		{{$os = "Windows"}}
@@ -728,7 +754,7 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 		{{$arch = "arm"}}
 		{{- end -}}
 
-		{{.Name}}_{{$os}}_{{$arch}}.tar.gz`,
+		{{.Name}}_{{$os}}_{{$arch}}.{{$extStr}}`,
 		})
 
 	tools = append(tools,
@@ -929,6 +955,8 @@ https://releases.hashicorp.com/{{.Name}}/{{.Version}}/{{.Name}}_{{.Version}}_{{$
 
 	{{$extStr := "tar.gz"}}
 	{{ if HasPrefix .OS "ming" -}}
+	{{$extStr = "zip"}}
+	{{- else if eq .OS "darwin" -}}
 	{{$extStr = "zip"}}
 	{{- end -}}
 
@@ -3082,7 +3110,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 						{{$osStr = "Darwin"}}
 					{{- end -}}
 
-					{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}
+					{{.Name}}_{{$osStr}}_{{$arch}}.{{$ext}}
 					`,
 		})
 
@@ -3796,13 +3824,45 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 					{{$extStr = "zip"}}
 					{{- end -}}
 
-					{{- if eq $osStr "Darwin"}}
-					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{$osStr}}_{{$arch}}.{{$extStr}}
-					{{- else if or (eq $osStr "Windows") (eq $osStr "Linux") -}}
 					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$extStr}}
-					{{- end -}}
 					`,
 		})
 
+	tools = append(tools,
+		Tool{
+			Owner:       "skupperproject",
+			Repo:        "skupper",
+			Name:        "skupper",
+			Description: "Skupper is an implementation of a Virtual Application Network, enabling rich hybrid cloud communication",
+			BinaryTemplate: `
+					{{$os := .OS}}
+					{{$arch := .Arch}}
+					{{$ext := "tgz"}}
+	
+					{{- if eq .OS "darwin" -}}
+					{{$os = "mac"}}
+					{{- else if eq .OS "linux" -}}
+					{{ $os = "linux" }}
+					{{- end -}}
+
+					{{- if eq .Arch "aarch64" -}}
+					{{$arch = "arm64"}}
+					{{- else if eq .Arch "arm64" -}}
+					{{ $arch = "arm64" }}
+					{{- else if eq .Arch "x86_64" -}}
+					{{ $arch = "amd64" }}
+					{{- else if eq .Arch "armv7l" -}}
+					{{ $arch = "arm32" }}
+					{{- end -}}
+	
+					{{ if HasPrefix .OS "ming" -}}
+					{{$os = "windows"}}
+					{{$ext = "zip"}}
+					{{- end -}}
+	
+	
+					skupper-cli-{{.VersionNumber}}-{{$os}}-{{$arch}}.{{$ext}}
+					`,
+		})
 	return tools
 }
