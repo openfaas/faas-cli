@@ -4,6 +4,7 @@
 package builder
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -18,7 +19,7 @@ import (
 	"sort"
 	"strings"
 
-	v1execute "github.com/alexellis/go-execute/pkg/v1"
+	v1execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	vcs "github.com/openfaas/faas-cli/versioncontrol"
@@ -143,7 +144,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 				Env:         envs,
 			}
 
-			res, err := task.Execute()
+			res, err := task.Execute(context.TODO())
 
 			if err != nil {
 				return err

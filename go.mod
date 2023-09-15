@@ -4,7 +4,7 @@ go 1.20
 
 require (
 	github.com/alexellis/arkade v0.0.0-20230820091328-69c0dc091a32
-	github.com/alexellis/go-execute v0.5.0
+	github.com/alexellis/go-execute/v2 v2.0.0
 	github.com/alexellis/hmac v1.3.0
 	github.com/drone/envsubst v1.0.3
 	github.com/google/go-cmp v0.5.9
@@ -35,6 +35,7 @@ require (
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/VividCortex/ewma v1.2.0 // indirect
 	github.com/acomagu/bufpipe v1.0.4 // indirect
+	github.com/alexellis/go-execute v0.5.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/cheggaaa/pb/v3 v3.1.4 // indirect

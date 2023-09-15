@@ -20,6 +20,9 @@ github.com/alexellis/arkade/pkg/get
 # github.com/alexellis/go-execute v0.5.0
 ## explicit; go 1.16
 github.com/alexellis/go-execute/pkg/v1
+# github.com/alexellis/go-execute/v2 v2.0.0
+## explicit; go 1.20
+github.com/alexellis/go-execute/v2
 # github.com/alexellis/hmac v1.3.0
 ## explicit; go 1.16
 github.com/alexellis/hmac

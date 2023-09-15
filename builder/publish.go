@@ -6,6 +6,7 @@ package builder
 import (
 	"archive/tar"
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -19,7 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	v1execute "github.com/alexellis/go-execute/pkg/v1"
+	v1execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 
@@ -147,7 +148,7 @@ func PublishImage(image string, handler string, functionName string, language st
 				StreamStdio: !quietBuild,
 			}
 
-			res, err := task.Execute()
+			res, err := task.Execute(context.TODO())
 
 			if err != nil {
 				return err

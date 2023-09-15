@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	v1execute "github.com/alexellis/go-execute/pkg/v1"
+	v1execute "github.com/alexellis/go-execute/v2"
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/util"
 
@@ -151,7 +151,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 			StreamStdio: false,
 		}
 
-		res, err := task.Execute()
+		res, err := task.Execute(cmd.Context())
 		if err != nil {
 			return err
 		}
@@ -172,7 +172,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		Env:         []string{"DOCKER_CLI_EXPERIMENTAL=enabled"},
 	}
 
-	res, err := task.Execute()
+	res, err := task.Execute(cmd.Context())
 	if err != nil {
 		return err
 	}
