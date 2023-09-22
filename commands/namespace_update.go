@@ -26,11 +26,11 @@ var namespaceUpdateCmd = &cobra.Command{
 			[--annotation ANNOTATION=VALUE ...]`,
 	Short: "Update a namespace",
 	Long:  "Update a namespace",
-	Example: `faas-cli namespace update NAME
-	faas-cli namespace update NAME --label demo=true
-	faas-cli namespace update NAME --annotation demo=true
-	faas-cli namespace update NAME --label demo=true \
-	  --annotation demo=true`,
+	Example: `  faas-cli namespace update NAME
+  faas-cli namespace update NAME --label demo=true
+  faas-cli namespace update NAME --annotation demo=true
+  faas-cli namespace update NAME --label demo=true \
+    --annotation demo=true`,
 	RunE:    updateNamespace,
 	PreRunE: preUpdateNamespace,
 }

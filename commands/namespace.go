@@ -19,6 +19,6 @@ func init() {
 var namespaceCmd = &cobra.Command{
 	Use:     `namespace [--gateway GATEWAY_URL] [--tls-no-verify] [--token JWT_TOKEN]`,
 	Aliases: []string{"ns"},
-	Short:   "Manage OpenFaaS namespace",
-	Long:    "Manage OpenFaaS namespace either on local or remote gateway",
+	Short:   "Manage OpenFaaS namespaces",
+	Long:    "Query, create, update, and delete OpenFaaS namespaces",
 }

@@ -25,7 +25,7 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 		return fmt.Errorf("pass valid templateURL")
 	}
 
-	dir, err := ioutil.TempDir("", "openFaasTemplates")
+	dir, err := os.MkdirTemp("", "openFaasTemplates")
 	if err != nil {
 		log.Fatal(err)
 	}

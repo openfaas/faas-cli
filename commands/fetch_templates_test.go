@@ -3,7 +3,6 @@
 package commands
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -48,7 +47,7 @@ func Test_PullTemplates(t *testing.T) {
 // setupLocalTemplateRepo will create a local copy of the core OpenFaaS templates, this
 // can be refered to as a local git repository.
 func setupLocalTemplateRepo(t *testing.T) string {
-	dir, err := ioutil.TempDir("", "openFaasTestTemplates")
+	dir, err := os.MkdirTemp("", "openFaasTestTemplates")
 	if err != nil {
 		t.Error(err)
 	}

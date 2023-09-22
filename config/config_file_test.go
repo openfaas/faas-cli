@@ -6,7 +6,6 @@ package config
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -14,7 +13,7 @@ import (
 )
 
 func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -39,7 +38,7 @@ func Test_LookupAuthConfig_WithNoConfigFile(t *testing.T) {
 }
 
 func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -78,7 +77,7 @@ func Test_LookupAuthConfig_GatewayWithNoConfig(t *testing.T) {
 }
 
 func Test_UpdateAuthConfig_Insert(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -118,7 +117,7 @@ func Test_UpdateAuthConfig_Insert(t *testing.T) {
 }
 
 func Test_UpdateAuthConfig_Update(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -222,7 +221,7 @@ func Test_New_NoFile(t *testing.T) {
 }
 
 func Test_EnsureFile(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -256,7 +255,7 @@ func Test_DecodeAuth(t *testing.T) {
 }
 
 func Test_RemoveAuthConfig(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -304,7 +303,7 @@ func Test_RemoveAuthConfig(t *testing.T) {
 }
 
 func Test_RemoveAuthConfig_WithNoConfigFile(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -329,7 +328,7 @@ func Test_RemoveAuthConfig_WithNoConfigFile(t *testing.T) {
 }
 
 func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}
@@ -368,7 +367,7 @@ func Test_RemoveAuthConfig_WithUnknownGateway(t *testing.T) {
 }
 
 func Test_UpdateAuthConfig_Oauth2Insert(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "faas-cli-file-test")
+	configDir, err := os.MkdirTemp("", "faas-cli-file-test")
 	if err != nil {
 		t.Fatalf("can not create test config directory: %s", err)
 	}

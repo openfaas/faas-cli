@@ -14,7 +14,7 @@ var namespaceDeleteCmd = &cobra.Command{
 	Use:     `delete NAME`,
 	Short:   "Delete existing namespace",
 	Long:    "Delete existing namespace",
-	Example: `faas-cli namespace delete NAME`,
+	Example: `  faas-cli namespace delete NAME`,
 	RunE:    deleteNamespace,
 	PreRunE: preDeleteNamespace,
 }

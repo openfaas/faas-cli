@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -89,7 +88,7 @@ func main() {
 
 	// Save it to the (local) target file.
 	log.Print("Writing to ", os.Args[2])
-	if err := ioutil.WriteFile(os.Args[2], formatted, 0644); err != nil {
+	if err := os.WriteFile(os.Args[2], formatted, 0644); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -14,10 +14,10 @@ import (
 )
 
 var namespaceGetCmd = &cobra.Command{
-	Use:     `get NAMESPACE_NAME`,
+	Use:     `get NAME`,
 	Short:   "Get existing namespace",
 	Long:    "Get existing namespace",
-	Example: `faas-cli namespace get NAME`,
+	Example: `  faas-cli namespace get NAME`,
 	RunE:    get_namespace,
 	PreRunE: preGetNamespace,
 }

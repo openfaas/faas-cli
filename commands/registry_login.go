@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -182,7 +181,7 @@ func writeFileToFassCLITmp(fileBytes []byte) error {
 		}
 	}
 
-	return ioutil.WriteFile(filepath.Join(path, "config.json"), fileBytes, 0744)
+	return os.WriteFile(filepath.Join(path, "config.json"), fileBytes, 0744)
 }
 
 type Auth struct {

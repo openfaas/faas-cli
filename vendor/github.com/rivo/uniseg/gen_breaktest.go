@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"go/format"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -58,7 +57,7 @@ func main() {
 
 	// Write it out.
 	log.Print("Writing to ", os.Args[2])
-	if err := ioutil.WriteFile(os.Args[2], formatted, 0644); err != nil {
+	if err := os.WriteFile(os.Args[2], formatted, 0644); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -136,7 +135,9 @@ var (
 //
 // E.g. for the input b="÷ 0020 × 0308 ÷ 1F1E6 ÷"
 // it will append
-//     "\u0020\u0308\U0001F1E6"
+//
+//	"\u0020\u0308\U0001F1E6"
+//
 // and "[][]rune{{0x0020,0x0308},{0x1F1E6},}"
 // to orig and exp respectively.
 //

@@ -26,11 +26,11 @@ var namespaceCreateCmd = &cobra.Command{
 			[--annotation ANNOTATION=VALUE ...]`,
 	Short: "Create a new namespace",
 	Long:  "Create command creates a new namespace",
-	Example: `faas-cli namespace create NAME
-	faas-cli namespace create NAME --label demo=true
-	faas-cli namespace create NAME --annotation demo=true
-	faas-cli namespace create NAME --label demo=true \
-	  --annotation demo=true`,
+	Example: `  faas-cli namespace create NAME
+  faas-cli namespace create NAME --label demo=true
+  faas-cli namespace create NAME --annotation demo=true
+  faas-cli namespace create NAME --label demo=true \
+    --annotation demo=true`,
 	RunE:    createNamespace,
 	PreRunE: preCreateNamespace,
 }

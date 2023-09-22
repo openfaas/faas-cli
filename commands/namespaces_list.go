@@ -20,19 +20,19 @@ func init() {
 var namespacesCmd = &cobra.Command{
 	Use:   `namespaces [--gateway GATEWAY_URL] [--tls-no-verify] [--token JWT_TOKEN]`,
 	Short: "List OpenFaaS namespaces",
-	Long:  `Lists OpenFaaS namespaces either on a local or remote gateway`,
+	Long:  `Lists OpenFaaS namespaces for the given gateway URL`,
 	Example: `  faas-cli namespaces
   faas-cli namespaces --gateway https://127.0.0.1:8080`,
 	RunE:       runNamespaces,
 	Hidden:     true,
-	Deprecated: "Use faas-cli namespace list to achieve the same",
+	Deprecated: "This has moved to \"faas-cli namespace list\".",
 }
 
 var namespaceListCmd = &cobra.Command{
 	Use:     `list`,
 	Aliases: []string{"ls"},
 	Short:   "List OpenFaaS namespaces",
-	Long:    `Lists OpenFaaS namespaces either on a local or remote gateway`,
+	Long:    `Lists OpenFaaS namespaces for the given gateway URL`,
 	Example: `faas-cli namespace list`,
 	RunE:    runNamespaces,
 }

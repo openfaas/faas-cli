@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -229,7 +228,7 @@ func hashFolder(contextPath string) (string, error) {
 			return nil
 		}
 
-		data, err := ioutil.ReadFile(path)
+		data, err := os.ReadFile(path)
 		if err != nil {
 			return err
 		}
@@ -342,7 +341,7 @@ func createBuildContext(functionName string, handler string, language string, us
 
 	// Overlay in user-function
 	// CopyFiles(handler, functionPath)
-	infos, err := ioutil.ReadDir(handler)
+	infos, err := os.ReadDir(handler)
 	if err != nil {
 		fmt.Printf("Error reading the handler: %s - %s.\n", handler, err.Error())
 		return tempPath, err

@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -203,7 +202,7 @@ func applyTag(index int, baseImage, tag string) string {
 
 func makeTar(buildConfig builderConfig, base, tarPath string) error {
 	configBytes, _ := json.Marshal(buildConfig)
-	if err := ioutil.WriteFile(path.Join(base, BuilderConfigFilename), configBytes, 0664); err != nil {
+	if err := os.WriteFile(path.Join(base, BuilderConfigFilename), configBytes, 0664); err != nil {
 		return err
 	}
 
