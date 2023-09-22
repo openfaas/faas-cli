@@ -77,8 +77,10 @@ func Test_templatePull(t *testing.T) {
 	t.Run("InvalidUrlError", func(t *testing.T) {
 		faasCmd.SetArgs([]string{"template", "pull", "user@host.xz:openfaas/faas-cli.git"})
 		err := faasCmd.Execute()
-		if !strings.Contains(err.Error(), "The repository URL must be a valid git repo uri") {
-			t.Errorf("Output does not contain the required error: %s", err.Error())
+		want := "the repository URL must be a valid git repo uri"
+		got := err.Error()
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("The error should contain:\n%q\n, but was:\n%q", want, got)
 		}
 	})
 }
