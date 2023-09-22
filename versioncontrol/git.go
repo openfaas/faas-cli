@@ -43,7 +43,7 @@ var GitInitRepo = &vcsCmd{
 	name: "Git",
 	cmd:  "git",
 	cmds: []string{
-		"init {dir}",
+		"init {dir} --initial-branch=master",
 		"config core.autocrlf false",
 		"config user.email \"contact@openfaas.com\"",
 		"config user.name \"OpenFaaS\"",
