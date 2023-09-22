@@ -25,7 +25,7 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 		return fmt.Errorf("pass valid templateURL")
 	}
 
-	dir, err := os.MkdirTemp("", "openFaasTemplates")
+	dir, err := os.MkdirTemp("", "openfaas-templates-*")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -127,7 +127,7 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 func pullTemplate(repository string) error {
 	if _, err := os.Stat(repository); err != nil {
 		if !versioncontrol.IsGitRemote(repository) && !versioncontrol.IsPinnedGitRemote(repository) {
-			return fmt.Errorf("The repository URL must be a valid git repo uri")
+			return fmt.Errorf("repository URL must be a valid git repo uri")
 		}
 	}
 

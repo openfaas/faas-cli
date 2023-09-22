@@ -16,19 +16,18 @@ func Test_PullTemplates(t *testing.T) {
 	defer os.RemoveAll(localTemplateRepository)
 	defer tearDownFetchTemplates(t)
 
-	t.Run("simplePull", func(t *testing.T) {
+	t.Run("pullTemplates", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 		if err := pullTemplates(localTemplateRepository); err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 	})
 
-	t.Run("fetchTemplates", func(t *testing.T) {
+	t.Run("fetchTemplates with master ref", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
-		err := fetchTemplates(localTemplateRepository, "master", false)
-		if err != nil {
-			t.Error(err)
+		if err := fetchTemplates(localTemplateRepository, "master", false); err != nil {
+			t.Fatal(err)
 		}
 
 	})
@@ -47,7 +46,7 @@ func Test_PullTemplates(t *testing.T) {
 // setupLocalTemplateRepo will create a local copy of the core OpenFaaS templates, this
 // can be refered to as a local git repository.
 func setupLocalTemplateRepo(t *testing.T) string {
-	dir, err := os.MkdirTemp("", "openFaasTestTemplates")
+	dir, err := os.MkdirTemp("", "openfaas-templates-test-*")
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,6 +54,7 @@ func setupLocalTemplateRepo(t *testing.T) string {
 	// Copy the submodule to temp directory to avoid altering it during tests
 	testRepoGit := filepath.Join("testdata", "templates")
 	builder.CopyFiles(testRepoGit, dir)
+
 	// Remove submodule .git file
 	os.Remove(filepath.Join(dir, ".git"))
 	if err := versioncontrol.GitInitRepo.Invoke(dir, map[string]string{"dir": "."}); err != nil {
@@ -68,11 +68,10 @@ func setupLocalTemplateRepo(t *testing.T) string {
 func tearDownFetchTemplates(t *testing.T) {
 
 	// Remove existing templates folder, if it exist
-	if _, err := os.Stat("template/"); err == nil {
-		t.Log("Found a template/ directory, removing it...")
+	if _, err := os.Stat("./template/"); err == nil {
+		t.Log("Found a ./template/ directory, removing it.")
 
-		err := os.RemoveAll("template/")
-		if err != nil {
+		if err := os.RemoveAll("./template/"); err != nil {
 			t.Log(err)
 		}
 	} else {
