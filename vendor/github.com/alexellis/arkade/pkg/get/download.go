@@ -89,15 +89,9 @@ func Download(tool *Tool, arch, operatingSystem, version string, movePath string
 	if !quiet {
 		log.Printf("Copying %s to %s\n", outFilePath, localPath)
 	}
-
-	if _, err = CopyFile(outFilePath, localPath); err != nil {
+	_, err = CopyFile(outFilePath, localPath)
+	if err != nil {
 		return "", "", err
-	}
-
-	// Remove parent folder of the binary
-	tempPath := filepath.Dir(outFilePath)
-	if err := os.RemoveAll(tempPath); err != nil {
-		log.Printf("Error removing temporary directory: %s", err)
 	}
 
 	outFilePath = localPath

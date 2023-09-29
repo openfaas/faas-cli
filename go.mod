@@ -3,7 +3,7 @@ module github.com/openfaas/faas-cli
 go 1.20
 
 require (
-	github.com/alexellis/go-execute/v2 v2.1.0
+	github.com/alexellis/go-execute/v2 v2.2.1
 	github.com/alexellis/hmac v1.3.0
 	github.com/drone/envsubst v1.0.3
 	github.com/google/go-cmp v0.5.9
@@ -19,11 +19,12 @@ require (
 )
 
 require (
-	github.com/alexellis/arkade v0.0.0-20231002130223-9c9b29c1e97c
+	github.com/Masterminds/semver v1.5.0
+	github.com/alexellis/arkade v0.0.0-20230929104708-077a575c15b6
 	github.com/alexellis/hmac/v2 v2.0.0
 	github.com/bep/debounce v1.2.1
 	github.com/fsnotify/fsnotify v1.6.0
-	github.com/go-git/go-git/v5 v5.7.0
+	github.com/go-git/go-git/v5 v5.9.0
 	github.com/google/go-containerregistry v0.16.1
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/moby/term v0.5.0
@@ -43,7 +44,7 @@ require (
 	github.com/docker/docker-credential-helpers v0.8.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
-	github.com/go-git/go-billy/v5 v5.4.1 // indirect
+	github.com/go-git/go-billy/v5 v5.5.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/klauspost/compress v1.17.0 // indirect
@@ -54,9 +55,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
-	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/vbatts/tar-split v0.11.5 // indirect
 	golang.org/x/net v0.15.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
