@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	v1execute "github.com/alexellis/go-execute/v2"
+	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/util"
 
@@ -145,9 +145,15 @@ func runPublish(cmd *cobra.Command, args []string) error {
 
 	if resetQemu {
 
-		task := v1execute.ExecTask{
-			Command:     "docker",
-			Args:        []string{"run", "--rm", "--privileged", "multiarch/qemu-user-static", "--reset", "-p", "yes"},
+		task := v2execute.ExecTask{
+			Command: "docker",
+			Args: []string{"run",
+				"--rm",
+				"--privileged",
+				"multiarch/qemu-user-static",
+				"--reset",
+				"-p",
+				"yes"},
 			StreamStdio: false,
 		}
 
@@ -165,9 +171,13 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Ran qemu-user-static --reset. OK.\n")
 	}
 
-	task := v1execute.ExecTask{
-		Command:     "docker",
-		Args:        []string{"buildx", "create", "--use", "--name=multiarch", "--node=multiarch"},
+	task := v2execute.ExecTask{
+		Command: "docker",
+		Args: []string{"buildx",
+			"create",
+			"--use",
+			"--name=multiarch",
+			"--node=multiarch"},
 		StreamStdio: false,
 		Env:         []string{"DOCKER_CLI_EXPERIMENTAL=enabled"},
 	}

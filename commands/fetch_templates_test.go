@@ -3,9 +3,14 @@
 package commands
 
 import (
+	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"github.com/Masterminds/semver"
+	v2execute "github.com/alexellis/go-execute/v2"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/versioncontrol"
@@ -57,7 +62,34 @@ func setupLocalTemplateRepo(t *testing.T) string {
 
 	// Remove submodule .git file
 	os.Remove(filepath.Join(dir, ".git"))
-	if err := versioncontrol.GitInitRepo.Invoke(dir, map[string]string{"dir": "."}); err != nil {
+
+	// exec "git version" to check which version of git is installed
+
+	task := v2execute.ExecTask{
+		Command: "git",
+		Args:    []string{"version"},
+	}
+
+	res, err := task.Execute(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if res.ExitCode != 0 {
+		t.Fatal("git version command failed")
+	}
+
+	_, v, _ := strings.Cut(strings.TrimSpace(res.Stdout), "git version ")
+
+	s := semver.MustParse(v)
+	initVersion := semver.MustParse("2.28.0")
+
+	cmd := versioncontrol.GitInitRepoClassic
+	if s.GreaterThan(initVersion) || s.Equal(initVersion) {
+		cmd = versioncontrol.GitInitRepo2_28_0
+	}
+
+	if err := cmd.Invoke(dir, map[string]string{"dir": "."}); err != nil {
 		t.Fatal(err)
 	}
 

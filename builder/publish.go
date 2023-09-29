@@ -19,7 +19,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	v1execute "github.com/alexellis/go-execute/v2"
+	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 
@@ -140,7 +140,7 @@ func PublishImage(image string, handler string, functionName string, language st
 			command, args := getDockerBuildxCommand(dockerBuildVal)
 			fmt.Printf("Publishing with command: %v %v\n", command, args)
 
-			task := v1execute.ExecTask{
+			task := v2execute.ExecTask{
 				Cwd:         tempPath,
 				Command:     command,
 				Args:        args,

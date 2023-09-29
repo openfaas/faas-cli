@@ -18,7 +18,7 @@ import (
 	"sort"
 	"strings"
 
-	v1execute "github.com/alexellis/go-execute/v2"
+	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	vcs "github.com/openfaas/faas-cli/versioncontrol"
@@ -135,7 +135,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 				envs = append(envs, "DOCKER_BUILDKIT=1")
 			}
 
-			task := v1execute.ExecTask{
+			task := v2execute.ExecTask{
 				Cwd:         tempPath,
 				Command:     command,
 				Args:        args,
