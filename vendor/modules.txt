@@ -8,14 +8,14 @@ github.com/VividCortex/ewma
 # github.com/acomagu/bufpipe v1.0.4
 ## explicit; go 1.12
 github.com/acomagu/bufpipe
-# github.com/alexellis/arkade v0.0.0-20230914170945-fec33ae658a9
+# github.com/alexellis/arkade v0.0.0-20231002130223-9c9b29c1e97c
 ## explicit; go 1.20
 github.com/alexellis/arkade/pkg
 github.com/alexellis/arkade/pkg/archive
 github.com/alexellis/arkade/pkg/config
 github.com/alexellis/arkade/pkg/env
 github.com/alexellis/arkade/pkg/get
-# github.com/alexellis/go-execute/v2 v2.0.0
+# github.com/alexellis/go-execute/v2 v2.1.0
 ## explicit; go 1.20
 github.com/alexellis/go-execute/v2
 # github.com/alexellis/hmac v1.3.0
@@ -119,7 +119,7 @@ github.com/inconshreveable/mousetrap
 # github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
 ## explicit
 github.com/jbenet/go-context/io
-# github.com/klauspost/compress v1.16.7
+# github.com/klauspost/compress v1.17.0
 ## explicit; go 1.18
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
@@ -156,7 +156,7 @@ github.com/olekukonko/tablewriter
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
-# github.com/opencontainers/image-spec v1.1.0-rc4
+# github.com/opencontainers/image-spec v1.1.0-rc5
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
@@ -168,7 +168,7 @@ github.com/openfaas/faas-provider/types
 # github.com/openfaas/faas/gateway v0.0.0-20230914090923-4f4e3d288a38
 ## explicit; go 1.20
 github.com/openfaas/faas/gateway/types
-# github.com/openfaas/go-sdk v0.2.6
+# github.com/openfaas/go-sdk v0.2.7
 ## explicit; go 1.20
 github.com/openfaas/go-sdk
 # github.com/pkg/errors v0.9.1

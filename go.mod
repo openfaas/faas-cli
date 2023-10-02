@@ -3,8 +3,7 @@ module github.com/openfaas/faas-cli
 go 1.20
 
 require (
-	github.com/alexellis/arkade v0.0.0-20230914170945-fec33ae658a9
-	github.com/alexellis/go-execute/v2 v2.0.0
+	github.com/alexellis/go-execute/v2 v2.1.0
 	github.com/alexellis/hmac v1.3.0
 	github.com/drone/envsubst v1.0.3
 	github.com/google/go-cmp v0.5.9
@@ -20,6 +19,7 @@ require (
 )
 
 require (
+	github.com/alexellis/arkade v0.0.0-20231002130223-9c9b29c1e97c
 	github.com/alexellis/hmac/v2 v2.0.0
 	github.com/bep/debounce v1.2.1
 	github.com/fsnotify/fsnotify v1.6.0
@@ -27,7 +27,7 @@ require (
 	github.com/google/go-containerregistry v0.16.1
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/moby/term v0.5.0
-	github.com/openfaas/go-sdk v0.2.6
+	github.com/openfaas/go-sdk v0.2.7
 	golang.org/x/sync v0.3.0
 )
 
@@ -46,13 +46,13 @@ require (
 	github.com/go-git/go-billy/v5 v5.4.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
-	github.com/klauspost/compress v1.16.7 // indirect
+	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.0-rc4 // indirect
+	github.com/opencontainers/image-spec v1.1.0-rc5 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

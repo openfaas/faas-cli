@@ -136,6 +136,12 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 	}
 	spec.Labels["openfaas"] = "1"
 
+	// set openfaas annotation
+	if spec.Annotations == nil {
+		spec.Annotations = map[string]string{}
+	}
+	spec.Annotations["openfaas"] = "1"
+
 	bodyBytes, err := json.Marshal(spec)
 	if err != nil {
 		return http.StatusBadRequest, err
@@ -188,6 +194,12 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 		spec.Labels = map[string]string{}
 	}
 	spec.Labels["openfaas"] = "1"
+
+	// set openfaas annotation
+	if spec.Annotations == nil {
+		spec.Annotations = map[string]string{}
+	}
+	spec.Annotations["openfaas"] = "1"
 
 	bodyBytes, err := json.Marshal(spec)
 	if err != nil {
