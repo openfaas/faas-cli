@@ -3,7 +3,7 @@ package envsubst
 import (
 	"bytes"
 	"io"
-	"os"
+	"io/ioutil"
 
 	"github.com/drone/envsubst/parse"
 )
@@ -38,7 +38,7 @@ func Parse(s string) (t *Template, err error) {
 // ParseFile creates a new shell format template and parses the template
 // definition from the named file.
 func ParseFile(path string) (*Template, error) {
-	b, err := os.ReadFile(path)
+	b, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
