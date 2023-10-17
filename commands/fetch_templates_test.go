@@ -81,6 +81,11 @@ func setupLocalTemplateRepo(t *testing.T) string {
 
 	_, v, _ := strings.Cut(strings.TrimSpace(res.Stdout), "git version ")
 
+	// On darwin the string has extra text: "git version 2.39.2 (Apple Git-143)", so requires more trimming.
+	if strings.Contains(v, " ") {
+		v = strings.TrimSpace(v[:strings.Index(v, " ")])
+	}
+
 	s := semver.MustParse(v)
 	initVersion := semver.MustParse("2.28.0")
 
