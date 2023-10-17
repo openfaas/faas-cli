@@ -31,6 +31,7 @@ const (
 
 var (
 	api                  string
+	name                 string
 	functionNamespace    string
 	crdFunctionNamespace string
 	fromStore            string
@@ -41,6 +42,7 @@ var (
 func init() {
 
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
+	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the Function CR")
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
@@ -147,8 +149,13 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			}
 		}
 
-		services.Functions[item.Name] = stack.Function{
-			Name:        item.Name,
+		fullName := item.Name
+		if len(name) > 0 {
+			fullName = name
+		}
+
+		services.Functions[fullName] = stack.Function{
+			Name:        fullName,
 			Image:       item.Images[desiredArch],
 			Labels:      &item.Labels,
 			Annotations: &allAnnotations,
