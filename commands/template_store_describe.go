@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	templateStoreDescribeCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
+	templateStoreDescribeCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, templateStoreDoc)
 
 	templateStoreCmd.AddCommand(templateStoreDescribeCmd)
 }

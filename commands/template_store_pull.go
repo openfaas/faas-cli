@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	templateStorePullCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
+	templateStorePullCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, templateStoreDoc)
 	templatePull, _, _ := faasCmd.Find([]string{"template", "pull"})
 	templateStoreCmd.PersistentFlags().AddFlagSet(templatePull.Flags())
 
