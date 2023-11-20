@@ -31,6 +31,11 @@ func init() {
 	storeDeployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	storeDeployCmd.Flags().DurationVar(&timeoutOverride, "timeout", commandTimeout, "Timeout for any HTTP calls made to the OpenFaaS API.")
 
+	storeDeployCmd.Flags().StringVar(&cpuRequest, "cpu-request", "", "Supply the CPU request for the function in Mi")
+	storeDeployCmd.Flags().StringVar(&cpuLimit, "cpu-limit", "", "Supply the CPU limit for the function in Mi")
+	storeDeployCmd.Flags().StringVar(&memoryRequest, "memory-request", "", "Supply the memory request for the function in Mi")
+	storeDeployCmd.Flags().StringVar(&memoryLimit, "memory-limit", "", "Supply the memory limit for the function in Mi")
+
 	// Set bash-completion.
 	_ = storeDeployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -134,8 +139,21 @@ func runStoreDeploy(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	statusCode, err := deployImage(context.Background(), proxyClient, imageName, item.Fprocess, itemName, "", storeDeployFlags,
-		tlsInsecure, item.ReadOnlyRootFilesystem, token, functionNamespace)
+	statusCode, err := deployImage(context.Background(),
+		proxyClient,
+		imageName,
+		item.Fprocess,
+		itemName,
+		"",
+		storeDeployFlags,
+		tlsInsecure,
+		item.ReadOnlyRootFilesystem,
+		token,
+		functionNamespace,
+		cpuRequest,
+		cpuLimit,
+		memoryRequest,
+		memoryLimit)
 
 	if badStatusCode(statusCode) {
 		failedStatusCode := map[string]int{itemName: statusCode}

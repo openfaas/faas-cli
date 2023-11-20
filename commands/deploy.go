@@ -77,6 +77,11 @@ func init() {
 
 	deployCmd.Flags().DurationVar(&timeoutOverride, "timeout", commandTimeout, "Timeout for any HTTP calls made to the OpenFaaS API.")
 
+	deployCmd.Flags().StringVar(&cpuRequest, "cpu-request", "", "Supply the CPU request for the function in Mi (when not using a YAML file)")
+	deployCmd.Flags().StringVar(&cpuLimit, "cpu-limit", "", "Supply the CPU limit for the function in Mi (when not using a YAML file)")
+	deployCmd.Flags().StringVar(&memoryRequest, "memory-request", "", "Supply the memory request for the function in Mi (when not using a YAML file)")
+	deployCmd.Flags().StringVar(&memoryLimit, "memory-limit", "", "Supply the memory limit for the function in Mi (when not using a YAML file)")
+
 	faasCmd.AddCommand(deployCmd)
 }
 
@@ -290,6 +295,7 @@ Error: %s`, fprocessErr.Error())
 		if len(image) == 0 || len(functionName) == 0 {
 			return fmt.Errorf("to deploy a function give --yaml/-f or a --image and --name flag")
 		}
+
 		gateway = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 		cliAuth, err := proxy.NewCLIAuth(token, gateway)
 		if err != nil {
@@ -303,8 +309,21 @@ Error: %s`, fprocessErr.Error())
 		// default to a readable filesystem until we get more input about the expected behavior
 		// and if we want to add another flag for this case
 		defaultReadOnlyRFS := false
-		statusCode, err := deployImage(ctx, proxyClient, image, fprocess, functionName, "", deployFlags,
-			tlsInsecure, defaultReadOnlyRFS, token, functionNamespace)
+		statusCode, err := deployImage(ctx,
+			proxyClient,
+			image,
+			fprocess,
+			functionName,
+			"",
+			deployFlags,
+			tlsInsecure,
+			defaultReadOnlyRFS,
+			token,
+			functionNamespace,
+			cpuRequest,
+			cpuLimit,
+			memoryRequest,
+			memoryLimit)
 		if err != nil {
 			return err
 		}
@@ -334,6 +353,10 @@ func deployImage(
 	readOnlyRootFilesystem bool,
 	token string,
 	namespace string,
+	cpuRequest string,
+	cpuLimit string,
+	memoryRequest string,
+	memoryLimit string,
 ) (int, error) {
 
 	var statusCode int
@@ -373,6 +396,19 @@ func deployImage(
 		TLSInsecure:             tlsInsecure,
 		Token:                   token,
 		Namespace:               namespace,
+	}
+
+	if len(cpuRequest) > 0 || len(memoryRequest) > 0 {
+		deploySpec.FunctionResourceRequest.Requests = &stack.FunctionResources{
+			CPU:    cpuRequest,
+			Memory: memoryRequest,
+		}
+	}
+	if len(cpuLimit) > 0 || len(memoryLimit) > 0 {
+		deploySpec.FunctionResourceRequest.Limits = &stack.FunctionResources{
+			CPU:    cpuLimit,
+			Memory: memoryLimit,
+		}
 	}
 
 	if msg := checkTLSInsecure(gateway, deploySpec.TLSInsecure); len(msg) > 0 {
