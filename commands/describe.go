@@ -273,13 +273,13 @@ func printResources(w io.Writer, name string, data *types.FunctionResources, ver
 		return
 	}
 
-	fmt.Fprintf(w, name+":")
-
+	header := name + ":"
 	if data == nil {
-		fmt.Fprintln(w, "\t <none>")
+		fmt.Fprintln(w, header+"\t <none>")
 		return
 	}
 
+	fmt.Fprintln(w, header)
 	fmt.Fprintln(w, "\t CPU: "+data.CPU)
 	fmt.Fprintln(w, "\t Memory: "+data.Memory)
 
