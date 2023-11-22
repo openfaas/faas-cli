@@ -3032,6 +3032,28 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 
 	tools = append(tools,
 		Tool{
+			Owner:       "stackrox",
+			Repo:        "kube-linter",
+			Name:        "kube-linter",
+			Description: "KubeLinter is a static analysis tool that checks Kubernetes YAML files and Helm charts to ensure the applications represented in them adhere to best practices.",
+			BinaryTemplate: `
+				{{$os := ""}}
+				{{$ext := ""}}
+
+				{{ if HasPrefix .OS "ming" -}}
+				{{$ext = ".exe"}}
+				{{- else if eq .OS "linux" -}}
+				{{$os = "-linux"}}
+				{{- else if eq .OS "darwin" -}}
+				{{$os = "-darwin"}}
+				{{- end -}}
+
+				{{.Name}}{{$os}}{{$ext}}
+				`,
+		})
+
+	tools = append(tools,
+		Tool{
 			Owner:       "open-policy-agent",
 			Repo:        "conftest",
 			Name:        "conftest",
@@ -3863,6 +3885,50 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 	
 					skupper-cli-{{.VersionNumber}}-{{$os}}-{{$arch}}.{{$ext}}
 					`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "kubernetes-sigs",
+			Repo:        "kwok",
+			Name:        "kwok",
+			Description: "KWOK stands for Kubernetes WithOut Kubelet, responsible for simulating the lifecycle of fake nodes, pods, and other Kubernetes API resources",
+			BinaryTemplate: `
+			{{ $os := .OS }}
+			{{ $arch := .Arch }}
+			{{ $ext := "" }}
+
+			{{- if HasPrefix .OS "ming" -}}
+				{{ $os = "windows" }}
+				{{ $ext = ".exe" }}
+			{{- end -}}
+
+			{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+				{{ $arch = "arm64" }}
+			{{- else if eq .Arch "x86_64" -}}
+				{{ $arch = "amd64" }}
+			{{- end -}}
+
+			kwok-{{$os}}-{{$arch}}{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "kubernetes-sigs",
+			Repo:        "kwok",
+			Name:        "kwokctl",
+			Description: "CLI tool designed to streamline the creation and management of clusters, with nodes simulated by `kwok`",
+			BinaryTemplate: `
+			{{ $os := .OS }}
+			{{ $arch := .Arch }}
+
+			{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+				{{ $arch = "arm64" }}
+			{{- else if eq .Arch "x86_64" -}}
+				{{ $arch = "amd64" }}
+			{{- end -}}
+
+			kwokctl-{{$os}}-{{$arch}}`,
 		})
 	return tools
 }
