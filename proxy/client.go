@@ -103,7 +103,21 @@ func (c *Client) newRequest(method, path string, query url.Values, body io.Reade
 	if os.Getenv("FAAS_DEBUG") == "1" {
 		fmt.Printf("%s %s\n", req.Method, req.URL.String())
 		for k, v := range req.Header {
-			fmt.Printf("%s: %s\n", k, v)
+			if k == "Authorization" {
+				auth := "[REDACTED]"
+				if len(v) == 0 {
+					auth = "[NOT_SET]"
+				} else {
+					l, _, ok := strings.Cut(v[0], " ")
+					if ok && (l == "Basic" || l == "Bearer") {
+						auth = l + " REDACTED"
+					}
+				}
+				fmt.Printf("%s: %s\n", k, auth)
+
+			} else {
+				fmt.Printf("%s: %s\n", k, v)
+			}
 		}
 
 		if len(bodyDebug) > 0 {
