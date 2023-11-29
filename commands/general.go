@@ -58,7 +58,7 @@ func GetDefaultSDKClient() (*sdk.Client, error) {
 		httpClient.Transport = transport
 	}
 
-	clientAuth, err := proxy.NewCLIAuth(token, gateway)
+	clientAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
 	if err != nil {
 		return nil, err
 	}
