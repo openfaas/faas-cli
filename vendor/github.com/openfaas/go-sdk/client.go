@@ -8,7 +8,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/openfaas/faas-provider/types"
 )
@@ -16,8 +18,48 @@ import (
 // Client is used to manage OpenFaaS functions
 type Client struct {
 	GatewayURL *url.URL
-	Client     *http.Client
+	client     *http.Client
 	ClientAuth ClientAuth
+}
+
+// Wrap http request Do function to support debug capabilities
+func (s *Client) do(req *http.Request) (*http.Response, error) {
+	if os.Getenv("FAAS_DEBUG") == "1" {
+
+		fmt.Printf("%s %s\n", req.Method, req.URL.String())
+		for k, v := range req.Header {
+			if k == "Authorization" {
+				auth := "[REDACTED]"
+				if len(v) == 0 {
+					auth = "[NOT_SET]"
+				} else {
+					l, _, ok := strings.Cut(v[0], " ")
+					if ok && (l == "Basic" || l == "Bearer") {
+						auth = l + " REDACTED"
+					}
+				}
+				fmt.Printf("%s: %s\n", k, auth)
+
+			} else {
+				fmt.Printf("%s: %s\n", k, v)
+			}
+		}
+
+		if req.Body != nil {
+			r := io.NopCloser(req.Body)
+			buf := new(strings.Builder)
+			_, err := io.Copy(buf, r)
+			if err != nil {
+				return nil, err
+			}
+			bodyDebug := buf.String()
+			if len(bodyDebug) > 0 {
+				fmt.Printf("%s\n", bodyDebug)
+			}
+			req.Body = io.NopCloser(strings.NewReader(buf.String()))
+		}
+	}
+	return s.client.Do(req)
 }
 
 // ClientAuth an interface for client authentication.
@@ -30,7 +72,7 @@ type ClientAuth interface {
 func NewClient(gatewayURL *url.URL, auth ClientAuth, client *http.Client) *Client {
 	return &Client{
 		GatewayURL: gatewayURL,
-		Client:     client,
+		client:     client,
 		ClientAuth: auth,
 	}
 }
@@ -52,7 +94,7 @@ func (s *Client) GetNamespaces(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return namespaces, fmt.Errorf("unable to make request: %w", err)
 	}
@@ -97,7 +139,7 @@ func (s *Client) GetNamespace(ctx context.Context, namespace string) (types.Func
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return types.FunctionNamespace{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -163,7 +205,7 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -222,7 +264,7 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -276,7 +318,7 @@ func (s *Client) DeleteNamespace(ctx context.Context, namespace string) error {
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -331,7 +373,7 @@ func (s *Client) GetFunctions(ctx context.Context, namespace string) ([]types.Fu
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return []types.FunctionStatus{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -367,7 +409,7 @@ func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return SystemInfo{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -410,7 +452,7 @@ func (s *Client) GetFunction(ctx context.Context, name, namespace string) (types
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return types.FunctionStatus{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -462,7 +504,7 @@ func (s *Client) deploy(ctx context.Context, method string, spec types.FunctionD
 		}
 	}
 
-	res, err := s.Client.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -515,7 +557,7 @@ func (s *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -573,7 +615,7 @@ func (s *Client) DeleteFunction(ctx context.Context, functionName, namespace str
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := s.do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
