@@ -11,7 +11,7 @@ require (
 	github.com/bep/debounce v1.2.1
 	github.com/drone/envsubst v1.0.3
 	github.com/fsnotify/fsnotify v1.7.0
-	github.com/go-git/go-git/v5 v5.10.1
+	github.com/go-git/go-git/v5 v5.11.0
 	github.com/google/go-cmp v0.6.0
 	github.com/google/go-containerregistry v0.16.1
 	github.com/mitchellh/go-homedir v1.1.0

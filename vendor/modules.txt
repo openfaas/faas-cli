@@ -71,7 +71,7 @@ github.com/go-git/gcfg/types
 # github.com/go-git/go-billy/v5 v5.5.0
 ## explicit; go 1.19
 github.com/go-git/go-billy/v5
-# github.com/go-git/go-git/v5 v5.10.1
+# github.com/go-git/go-git/v5 v5.11.0
 ## explicit; go 1.19
 github.com/go-git/go-git/v5/internal/path_util
 github.com/go-git/go-git/v5/plumbing/format/config
