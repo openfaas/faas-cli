@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -137,7 +138,12 @@ func runFaas(cmd *cobra.Command, args []string) {
 
 func getPlugins() ([]string, error) {
 	plugins := []string{}
-	pluginHome := os.ExpandEnv("$HOME/.openfaas/plugins")
+	var pluginHome string
+	if runtime.GOOS == "windows" {
+		pluginHome = os.Expand("$HOMEPATH/.openfaas/plugins", os.Getenv)
+	} else {
+		pluginHome = os.ExpandEnv("$HOME/.openfaas/plugins")
+	}
 
 	if _, err := os.Stat(pluginHome); err != nil && os.IsNotExist(err) {
 		return plugins, nil

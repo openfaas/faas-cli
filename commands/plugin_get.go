@@ -80,10 +80,17 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Fetching plugin: %s\n", pluginName)
 	}
 
-	pluginDir := os.ExpandEnv("$HOME/.openfaas/plugins")
+	var pluginDir string
+	if runtime.GOOS == "windows" {
+		pluginDir = os.Expand("$HOMEPATH/.openfaas/plugins", os.Getenv)
+	} else {
+		pluginDir = os.ExpandEnv("$HOME/.openfaas/plugins")
+	}
 
 	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
-		os.MkdirAll(pluginDir, 0755)
+		if err := os.MkdirAll(pluginDir, 0755); err != nil && os.ErrExist != err {
+			return fmt.Errorf("failed to create plugin directory %s: %w", pluginDir, err)
+		}
 	}
 
 	tmpTar := path.Join(os.TempDir(), pluginName+".tar")
