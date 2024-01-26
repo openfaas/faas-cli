@@ -132,6 +132,17 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	if err := archive.Untar(tarFile, pluginDir, gzipped, true); err != nil {
 		return fmt.Errorf("failed to untar %s: %w", tmpTar, err)
 	}
+
+	// Add the .exe filename extension to the plugin executable on windows.
+	// If the .exe extension is missing the plugin will not execute.
+	if runtime.GOOS == "windows" {
+		pluginPath := path.Join(pluginDir, pluginName)
+		err := os.Rename(pluginPath, fmt.Sprintf("%s.exe", pluginPath))
+		if err != nil {
+			return fmt.Errorf("failed to move plugin %w", err)
+		}
+	}
+
 	fmt.Printf("Downloaded in (%ds)\n\nUsage:\n  faas-cli %s\n", int(time.Since(st).Seconds()), pluginName)
 	return nil
 }
