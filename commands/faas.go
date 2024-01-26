@@ -4,9 +4,11 @@
 package commands
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path"
 	"runtime"
 	"strings"
@@ -88,21 +90,42 @@ func Execute(customArgs []string) {
 	}
 
 	if cmd1 != nil && len(args1) > 0 {
-
 		found := ""
 		for _, plugin := range plugins {
-			if path.Base(plugin) == args1[0] {
+			pluginName := args1[0]
+			if runtime.GOOS == "windows" {
+				pluginName = fmt.Sprintf("%s.exe", args1[0])
+			}
+
+			if path.Base(plugin) == pluginName {
 				found = plugin
 			}
 		}
 		if len(found) > 0 {
-
-			// if we have found the plugin then sysexec it by replacing current process.
-			if err := syscall.Exec(found, append([]string{found}, os.Args[2:]...), os.Environ()); err != nil {
-				fmt.Fprintf(os.Stderr, "Error from plugin: %v", err)
-				os.Exit(127)
+			// If we have found the plugin then sysexec it by replacing the current process.
+			// On Windows we use the os/exec package to run the plugins since replacing the current
+			// process with syscall.exec is not supported.
+			if runtime.GOOS == "windows" {
+				cmd := exec.Command(found, os.Args[2:]...)
+				cmd.Stdout = os.Stdout
+				cmd.Stderr = os.Stderr
+				if err := cmd.Run(); err != nil {
+					var exitErr *exec.ExitError
+					if errors.As(err, &exitErr) {
+						os.Exit(exitErr.ExitCode())
+					} else {
+						fmt.Println("Error from plugin", err)
+						os.Exit(127)
+					}
+				}
+				return
+			} else {
+				if err := syscall.Exec(found, append([]string{found}, os.Args[2:]...), os.Environ()); err != nil {
+					fmt.Fprintf(os.Stderr, "Error from plugin: %v", err)
+					os.Exit(127)
+				}
+				return
 			}
-			return
 		}
 	}
 
