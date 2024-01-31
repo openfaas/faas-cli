@@ -6,17 +6,14 @@ package commands
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 
-	"net/http"
 	"os"
 	"sort"
 	"strings"
 	"text/tabwriter"
-	"time"
 
+	"github.com/openfaas/faas-cli/proxy"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +21,7 @@ const (
 	// DefaultTemplatesStore is the URL where the official store can be found
 	DefaultTemplatesStore = "https://raw.githubusercontent.com/openfaas/store/master/templates.json"
 	mainPlatform          = "x86_64"
+	templateStoreDoc      = `Alternative path to the template store metadata. It may be an http(s) URL or a local path to a JSON file.`
 )
 
 var (
@@ -35,7 +33,7 @@ var (
 
 func init() {
 	templateStoreListCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Shows additional language and platform")
-	templateStoreListCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
+	templateStoreListCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, templateStoreDoc)
 	templateStoreListCmd.Flags().StringVarP(&inputPlatform, "platform", "p", mainPlatform, "Shows the platform if the output is verbose")
 	templateStoreListCmd.Flags().BoolVarP(&recommended, "recommended", "r", false, "Shows only recommended templates")
 	templateStoreListCmd.Flags().BoolVarP(&official, "official", "o", false, "Shows only official templates")
@@ -107,42 +105,13 @@ func runTemplateStoreList(cmd *cobra.Command, args []string) error {
 }
 
 func getTemplateInfo(repository string) ([]TemplateInfo, error) {
-	req, reqErr := http.NewRequest(http.MethodGet, repository, nil)
-	if reqErr != nil {
-		return nil, fmt.Errorf("error while trying to create request to take template info: %s", reqErr.Error())
-	}
-
-	reqContext, cancel := context.WithTimeout(req.Context(), 5*time.Second)
-	defer cancel()
-	req = req.WithContext(reqContext)
-
-	client := http.DefaultClient
-	res, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error while requesting template list: %s", err.Error())
-	}
-
-	if res.Body == nil {
-		return nil, fmt.Errorf("error empty response body from: %s", templateStoreURL)
-	}
-	defer res.Body.Close()
-
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code wanted: %d got: %d", http.StatusOK, res.StatusCode)
-	}
-
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error while reading response: %s", err.Error())
-	}
-
 	templatesInfo := []TemplateInfo{}
-	if err := json.Unmarshal(body, &templatesInfo); err != nil {
-		return nil, fmt.Errorf("can't unmarshal text: %s", err.Error())
+	err := proxy.ReadJSON(context.TODO(), repository, &templatesInfo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read templates info from: %s", repository)
 	}
 
 	sortTemplates(templatesInfo)
-
 	return templatesInfo, nil
 }
 
