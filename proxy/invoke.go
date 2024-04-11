@@ -83,7 +83,7 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	switch res.StatusCode {
 	case http.StatusAccepted:
 		fmt.Fprintf(os.Stderr, "Function submitted asynchronously.\n")
-	case http.StatusOK:
+	case http.StatusOK, http.StatusCreated:
 		var readErr error
 		resBytes, readErr = io.ReadAll(res.Body)
 		if readErr != nil {
