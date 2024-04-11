@@ -51,6 +51,10 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	if attempts < 1 {
+		return fmt.Errorf("attempts must be greater than 0")
+	}
+
 	var services stack.Services
 	var gatewayAddress string
 	var yamlGateway string
@@ -69,6 +73,7 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 
 	if len(args) == 0 {
+		ready := false
 
 		c := &http.Client{
 			Transport: transport,
@@ -93,14 +98,20 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 				fmt.Printf("[%d/%d] Error reaching OpenFaaS gateway: %s\n", i+1, attempts, err.Error())
 			} else if res.StatusCode == http.StatusOK {
 				fmt.Printf("OpenFaaS gateway is ready\n")
+				ready = true
 				break
 			}
 
 			time.Sleep(interval)
 		}
+
+		if !ready {
+			return fmt.Errorf("gateway: %s not ready after: %s", gatewayAddress, interval*time.Duration(attempts).Round(time.Second))
+		}
+
 	} else {
 		functionName := args[0]
-
+		ready := false
 		cliAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
 		if err != nil {
 			return err
@@ -118,14 +129,19 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 
 			function, err := cliClient.GetFunctionInfo(ctx, functionName, functionNamespace)
 			if err != nil {
-				return err
+				fmt.Printf("[%d/%d] Error getting function info: %s\n", i+1, attempts, err.Error())
 			}
 
 			if function.AvailableReplicas > 0 {
 				fmt.Printf("Function %s is ready\n", functionName)
+				ready = true
 				break
 			}
 			time.Sleep(interval)
+		}
+
+		if !ready {
+			return fmt.Errorf("function %s not ready after: %s", functionName, interval*time.Duration(attempts).Round(time.Second))
 		}
 
 	}
