@@ -16,10 +16,13 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var pluginRegistry string
-var clientOS string
-var clientArch string
-var tag string
+var (
+	pluginRegistry string
+	clientOS       string
+	clientArch     string
+	tag            string
+	pluginPath     string
+)
 
 func init() {
 	pluginGetCmd := &cobra.Command{
@@ -45,7 +48,9 @@ faas-cli plugin get NAME --registry ghcr.io/openfaasltd`,
 	pluginGetCmd.Flags().StringVar(&clientArch, "arch", "", "The architecture to pull the plugin for, give a value or leave blank for auto-detection")
 	pluginGetCmd.Flags().StringVar(&clientOS, "os", "", "The OS to pull the plugin for, give a value or leave blank for auto-detection")
 	pluginGetCmd.Flags().StringVar(&tag, "version", "latest", "Version or SHA for plugin")
-	pluginGetCmd.Flags().BoolVar(&verbose, "verbose", false, "Verbose output")
+	pluginGetCmd.Flags().StringVar(&pluginPath, "path", "$HOME/.openfaas/plugins", "The path for the plugin")
+
+	pluginGetCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Verbose output")
 
 	pluginCmd.AddCommand(pluginGetCmd)
 }
@@ -81,10 +86,17 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	var pluginDir string
-	if runtime.GOOS == "windows" {
-		pluginDir = os.Expand("$HOMEPATH/.openfaas/plugins", os.Getenv)
+
+	if cmd.Flags().Changed("path") {
+		pluginPath = strings.ReplaceAll(pluginPath, "$HOME", os.Getenv("HOME"))
+
+		pluginDir = pluginPath
 	} else {
-		pluginDir = os.ExpandEnv("$HOME/.openfaas/plugins")
+		if runtime.GOOS == "windows" {
+			pluginDir = os.Expand("$HOMEPATH/.openfaas/plugins", os.Getenv)
+		} else {
+			pluginDir = os.ExpandEnv("$HOME/.openfaas/plugins")
+		}
 	}
 
 	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
@@ -121,6 +133,7 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to open %s: %w", tmpTar, err)
 	}
+
 	defer tarFile.Close()
 
 	if verbose {
@@ -143,7 +156,11 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	fmt.Printf("Downloaded in (%ds)\n\nUsage:\n  faas-cli %s\n", int(time.Since(st).Seconds()), pluginName)
+	if cmd.Flags().Changed("path") {
+		fmt.Printf("Wrote: %s (%s/%s) in (%s)\n", path.Join(pluginPath, pluginName), clientOS, clientArch, time.Since(st).Round(time.Millisecond))
+	} else {
+		fmt.Printf("Downloaded in (%s)\n\nUsage:\n  faas-cli %s\n", time.Since(st).Round(time.Millisecond), pluginName)
+	}
 	return nil
 }
 
