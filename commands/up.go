@@ -26,6 +26,7 @@ func init() {
 
 	upFlagset := pflag.NewFlagSet("up", pflag.ExitOnError)
 	upFlagset.BoolVar(&usePublish, "publish", false, "Use faas-cli publish instead of faas-cli build followed by faas-cli push")
+	upFlagset.StringVar(&platforms, "platforms", "linux/amd64", "Publish for these platforms, when used with --publish")
 
 	upFlagset.BoolVar(&skipPush, "skip-push", false, "Skip pushing function to remote registry")
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
@@ -90,8 +91,7 @@ func preRunUp(cmd *cobra.Command, args []string) error {
 func upHandler(cmd *cobra.Command, args []string) error {
 	if watch {
 		return watchLoop(cmd, args, func(cmd *cobra.Command, args []string, ctx context.Context) error {
-
-			if err := upRunner(cmd, args, ctx); err != nil {
+			if err := upRunner(cmd, args); err != nil {
 				return err
 			}
 			fmt.Println("[Watch] Change a file to trigger a rebuild...")
@@ -99,16 +99,19 @@ func upHandler(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	ctx := context.Background()
-	return upRunner(cmd, args, ctx)
+	return upRunner(cmd, args)
 }
 
-func upRunner(cmd *cobra.Command, args []string, ctx context.Context) error {
+func upRunner(cmd *cobra.Command, args []string) error {
 	if usePublish {
 		if err := runPublish(cmd, args); err != nil {
 			return err
 		}
 	} else {
+		if len(platforms) > 0 && cmd.Flags().Changed("platforms") {
+			return fmt.Errorf("--platforms can only be used with the --publish flag")
+		}
+
 		if err := runBuild(cmd, args); err != nil {
 			return err
 		}
