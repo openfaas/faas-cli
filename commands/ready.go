@@ -19,7 +19,7 @@ import (
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	readyCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
-
+	readyCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	readyCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 
 	readyCmd.Flags().Int("attempts", 60, "Number of attempts to check the gateway")
@@ -36,7 +36,12 @@ var readyCmd = &cobra.Command{
 
   # Block until the env function is ready
   faas-cli store deploy env && \
-  faas-cli ready env`,
+    faas-cli ready env
+
+  # Block until the env function is ready in staging-fn namespace
+  faas-cli store deploy env --namespace staging-fn && \
+    faas-cli ready env --namespace staging-fn
+`,
 	RunE: runReadyCmd,
 }
 
@@ -125,7 +130,12 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 		ctx := context.Background()
 
 		for i := 0; i < attempts; i++ {
-			fmt.Printf("[%d/%d] Waiting for function %s\n", i+1, attempts, functionName)
+			suffix := ""
+			if len(functionNamespace) > 0 {
+				suffix = "." + functionNamespace
+			}
+
+			fmt.Printf("[%d/%d] Waiting for function %s%s\n", i+1, attempts, functionName, suffix)
 
 			function, err := cliClient.GetFunctionInfo(ctx, functionName, functionNamespace)
 			if err != nil {
