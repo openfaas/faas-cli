@@ -37,6 +37,7 @@ var (
 	fromStore            string
 	desiredArch          string
 	annotationArgs       []string
+	labelArgs            []string
 )
 
 func init() {
@@ -50,6 +51,7 @@ func init() {
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
 	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add (to store functions only)")
+	generateCmd.Flags().StringArrayVar(&labelArgs, "label", []string{}, "Any labels you want to add (to store functions only)")
 
 	faasCmd.AddCommand(generateCmd)
 }
@@ -104,6 +106,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error parsing annotations: %v", annotationErr)
 	}
 
+	labels, err := util.ParseMap(labelArgs, "label")
+	if err != nil {
+		return fmt.Errorf("error parsing labels: %v", err)
+	}
+
 	if fromStore != "" {
 		if tagFormat == schema.DigestFormat {
 			return fmt.Errorf("digest tag format is not supported for store functions")
@@ -149,6 +156,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 			}
 		}
 
+		allLabels := util.MergeMap(item.Labels, labels)
+
 		fullName := item.Name
 		if len(name) > 0 {
 			fullName = name
@@ -157,7 +166,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		services.Functions[fullName] = stack.Function{
 			Name:        fullName,
 			Image:       item.Images[desiredArch],
-			Labels:      &item.Labels,
+			Labels:      &allLabels,
 			Annotations: &allAnnotations,
 			Environment: item.Environment,
 			FProcess:    item.Fprocess,
