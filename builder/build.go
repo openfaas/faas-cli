@@ -68,6 +68,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 		}
 
 		imageName := schema.BuildImageName(tagFormat, image, version, branch)
+
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {

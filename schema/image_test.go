@@ -20,6 +20,16 @@ func Test_BuildImageName_DefaultFormat_WithCustomServerPort(t *testing.T) {
 	}
 }
 
+func Test_BuildImageName_Localhost_SingleLevelDigestFormat(t *testing.T) {
+
+	want := "localhost:5001/pydict:851a77095527c1c703905ddb5f94780a"
+	got := BuildImageName(DigestFormat, "localhost:5001/pydict:latest", "851a77095527c1c703905ddb5f94780a", "")
+
+	if got != want {
+		t.Errorf("BuildImageName want: \"%s\", got: \"%s\"", want, got)
+	}
+}
+
 func Test_BuildImageName_SHAFormat(t *testing.T) {
 	want := "img:latest-ef384"
 	got := BuildImageName(SHAFormat, "img", "ef384", "master")

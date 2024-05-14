@@ -71,7 +71,7 @@ func (i *BuildFormat) Set(value string) error {
 func BuildImageName(format BuildFormat, image string, version string, branch string) string {
 	imageVal := image
 	splitImage := strings.Split(image, "/")
-	if strings.Contains(splitImage[len(splitImage)-1], ":") == false {
+	if !strings.Contains(splitImage[len(splitImage)-1], ":") {
 		imageVal += ":latest"
 	}
 
@@ -85,13 +85,13 @@ func BuildImageName(format BuildFormat, image string, version string, branch str
 		// the describe describe value
 		return imageVal + "-" + version
 	case DigestFormat:
-		baseImage, _, found := strings.Cut(imageVal, ":")
-		if !found {
+
+		if lastIndex := strings.LastIndex(imageVal, ":"); lastIndex > -1 {
+			baseImage := imageVal[:lastIndex]
+			return fmt.Sprintf("%s:%s", baseImage, version)
+		} else {
 			return imageVal + "-" + version
 		}
-
-		return fmt.Sprintf("%s:%s", baseImage, version)
-
 	default:
 		return imageVal
 	}
