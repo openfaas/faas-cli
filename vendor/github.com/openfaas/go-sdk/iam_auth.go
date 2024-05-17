@@ -1,6 +1,7 @@
 package sdk
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,24 +33,43 @@ type TokenAuth struct {
 // Set validates the token expiry on each call. If it's expired it will exchange
 // an ID token from the TokenSource for a new OpenFaaS token.
 func (a *TokenAuth) Set(req *http.Request) error {
+	token, err := a.getToken()
+	if err != nil {
+		return err
+	}
+
+	req.Header.Add("Authorization", "Bearer "+token)
+	return nil
+}
+
+func (a *TokenAuth) Token() (string, error) {
+	return a.getToken()
+}
+
+func (a *TokenAuth) getToken() (string, error) {
 	a.lock.Lock()
 	defer a.lock.Unlock()
 
 	if a.token == nil || a.token.Expired() {
 		idToken, err := a.TokenSource.Token()
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		token, err := ExchangeIDToken(a.TokenURL, idToken)
-		if err != nil {
-			return err
+
+		var authError *OAuthError
+		if errors.As(err, &authError) {
+			return "", fmt.Errorf("failed to exchange token for an OpenFaaS token: %s", authError.Description)
 		}
+		if err != nil {
+			return "", fmt.Errorf("failed to exchange token for an OpenFaaS token: %s", err)
+		}
+
 		a.token = token
 	}
 
-	req.Header.Add("Authorization", "Bearer "+a.token.IDToken)
-	return nil
+	return a.token.IDToken, nil
 }
 
 // A TokenSource to get ID token by reading a Kubernetes projected service account token

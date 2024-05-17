@@ -5,14 +5,14 @@ package commands
 
 import (
 	"net/http"
+	"net/url"
 	"os"
+	"reflect"
 	"regexp"
-	"strings"
 	"testing"
 
 	"io/ioutil"
 
-	"github.com/alexellis/hmac"
 	"github.com/openfaas/faas-cli/test"
 )
 
@@ -87,69 +87,38 @@ func Test_async_invoke(t *testing.T) {
 
 }
 
-func Test_generateSignedHeader(t *testing.T) {
-
-	var generateTestcases = []struct {
-		title       string
-		message     []byte
-		key         string
-		headerName  string
-		expectedSig string
-		expectedErr bool
+func Test_generateHeader(t *testing.T) {
+	var tests = []struct {
+		name    string
+		message []byte
+		key     string
+		want    string
 	}{
 		{
-			title:       "Header with empty key",
-			message:     []byte("This is a message"),
-			key:         "",
-			headerName:  "HeaderSet",
-			expectedSig: "HeaderSet=sha1=cdefd604e685e5c8b31fbcf6621a6e8282770dfe",
-			expectedErr: false,
+			name:    "Empty key",
+			message: []byte("This is a message"),
+			key:     "",
+			want:    "sha1=cdefd604e685e5c8b31fbcf6621a6e8282770dfe",
 		},
 		{
-			title:       "Key with empty Header",
-			message:     []byte("This is a message"),
-			key:         "KeySet",
-			headerName:  "",
-			expectedSig: "",
-			expectedErr: true,
+			name:    "Key with empty message",
+			message: []byte(""),
+			key:     "KeySet",
+			want:    "sha1=33dcd94ffaf13fce58615585c030c1a39d100b3c",
 		},
 		{
-			title:       "Header & key with empty message",
-			message:     []byte(""),
-			key:         "KeySet",
-			headerName:  "HeaderSet",
-			expectedSig: "HeaderSet=sha1=33dcd94ffaf13fce58615585c030c1a39d100b3c",
-			expectedErr: false,
-		},
-		{
-			title:       "Header with empty message & key",
-			message:     []byte(""),
-			key:         "",
-			headerName:  "HeaderSet",
-			expectedSig: "HeaderSet=sha1=fbdb1d1b18aa6c08324b7d64b71fb76370690e1d",
-			expectedErr: false,
+			name:    "Empty key and message",
+			message: []byte(""),
+			key:     "",
+			want:    "sha1=fbdb1d1b18aa6c08324b7d64b71fb76370690e1d",
 		},
 	}
-	for _, test := range generateTestcases {
-		t.Run(test.title, func(t *testing.T) {
-			sig, err := generateSignedHeader(test.message, test.key, test.headerName)
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got := generateSignature(test.message, test.key)
 
-			if sig != test.expectedSig {
-				t.Fatalf("error generating signature, wanted: %s, got %s", test.expectedSig, sig)
-			}
-			if (err != nil) != test.expectedErr {
-				t.Fatalf("error generating expected error: %v, got: %v", err != nil, test.expectedErr)
-			}
-
-			if test.expectedErr == false {
-
-				encodedHash := strings.SplitN(test.expectedSig, "=", 2)
-
-				invalid := hmac.Validate(test.message, encodedHash[1], test.key)
-
-				if invalid != nil {
-					t.Fatalf("expected no error, but got: %s", invalid.Error())
-				}
+			if got != test.want {
+				t.Fatalf("error generating signature, want: %s, got %s", test.want, got)
 			}
 		})
 	}
@@ -195,6 +164,151 @@ func Test_missingSignFlag(t *testing.T) {
 
 			if res != test.expectedRes {
 				t.Fatalf("error testing ability to sign, wanted: %v, got %v", test.expectedRes, res)
+			}
+		})
+	}
+}
+
+func Test_parseHeaders_valid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+		want  http.Header
+	}{
+		{
+			name:  "Header with key-value pair as value",
+			input: []string{`X-Hub-Signature="sha1="shashashaebaf43""`, "X-Hub-Signature-1=sha1=shashashaebaf43"},
+			want: http.Header{
+				"X-Hub-Signature":   []string{`"sha1="shashashaebaf43""`},
+				"X-Hub-Signature-1": []string{"sha1=shashashaebaf43"},
+			},
+		},
+		{
+			name:  "Header with normal values",
+			input: []string{`X-Hub-Signature="shashashaebaf43"`, "X-Hub-Signature-1=shashashaebaf43"},
+			want:  http.Header{"X-Hub-Signature": []string{`"shashashaebaf43"`}, "X-Hub-Signature-1": []string{"shashashaebaf43"}},
+		},
+		{
+			name:  "Header with base64 string value",
+			input: []string{`X-Hub-Signature="shashashaebaf43="`},
+			want:  http.Header{"X-Hub-Signature": []string{`"shashashaebaf43="`}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := parseHeaders(test.input)
+
+			if err != nil {
+				t.Fatalf("want: %s, got error: %s", test.want, err)
+			}
+
+			if err == nil && !reflect.DeepEqual(test.want, got) {
+				t.Fatalf("want: %s, got: %s", test.want, got)
+			}
+		})
+	}
+}
+
+func Test_parseHeaders_invalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+	}{
+		{
+			name:  "Invalid header string",
+			input: []string{"invalid_header"},
+		},
+		{
+			name:  "Empty header key",
+			input: []string{"=shashashaebaf43"},
+		},
+		{
+			name:  "Empty header value",
+			input: []string{"X-Hub-Signature="},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := parseHeaders(test.input)
+
+			if err == nil {
+				t.Fatalf("want err, got nil")
+			}
+		})
+	}
+}
+
+func Test_parseQueryValues_valid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+		want  url.Values
+	}{
+		{
+			name:  "Header with key-value pair as value",
+			input: []string{`key1="nkey1="nval1""`, "key2=nkey2=nval2"},
+			want: url.Values{
+				"key1": []string{`"nkey1="nval1""`},
+				"key2": []string{"nkey2=nval2"},
+			},
+		},
+		{
+			name:  "Header with normal values",
+			input: []string{`key1="val1"`, "key2=val2"},
+			want: url.Values{
+				"key1": []string{`"val1"`},
+				"key2": []string{"val2"},
+			},
+		},
+		{
+			name:  "Header with base64 string value",
+			input: []string{`key="shashashaebaf43="`},
+			want:  url.Values{"key": []string{`"shashashaebaf43="`}},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, err := parseQueryValues(test.input)
+
+			if err != nil {
+				t.Fatalf("want: %s, got error: %s", test.want, err)
+			}
+
+			if err == nil && !reflect.DeepEqual(test.want, got) {
+				t.Fatalf("want: %s, got: %s", test.want, got)
+			}
+		})
+	}
+}
+
+func Test_parseQueryValues_invalid(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []string
+	}{
+		{
+			name:  "Invalid query value string",
+			input: []string{"invalid"},
+		},
+		{
+			name:  "Empty query key",
+			input: []string{"=bar"},
+		},
+		{
+			name:  "Empty query value",
+			input: []string{"foo="},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			_, err := parseQueryValues(test.input)
+
+			if err == nil {
+				t.Fatalf("want err, got nil")
 			}
 		})
 	}

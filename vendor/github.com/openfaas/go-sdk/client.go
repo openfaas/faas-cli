@@ -19,49 +19,34 @@ import (
 	"github.com/openfaas/faas-provider/types"
 )
 
-// Client is used to manage OpenFaaS functions
+// Client is used to manage OpenFaaS and invoke functions
 type Client struct {
+	// URL of the OpenFaaS gateway
 	GatewayURL *url.URL
-	client     *http.Client
+
+	// Authentication provider for authenticating request to the OpenFaaS API.
 	ClientAuth ClientAuth
+
+	// TokenSource for getting an ID token that can be exchanged for an
+	// OpenFaaS function access token to invoke functions.
+	FunctionTokenSource TokenSource
+
+	// Http client used for calls to the OpenFaaS gateway.
+	client *http.Client
+
+	// OpenFaaS function access token cache for invoking functions.
+	fnTokenCache TokenCache
 }
 
 // Wrap http request Do function to support debug capabilities
 func (s *Client) do(req *http.Request) (*http.Response, error) {
 	if os.Getenv("FAAS_DEBUG") == "1" {
-
-		fmt.Printf("%s %s\n", req.Method, req.URL.String())
-		for k, v := range req.Header {
-			if k == "Authorization" {
-				auth := "[REDACTED]"
-				if len(v) == 0 {
-					auth = "[NOT_SET]"
-				} else {
-					l, _, ok := strings.Cut(v[0], " ")
-					if ok && (l == "Basic" || l == "Bearer") {
-						auth = l + " REDACTED"
-					}
-				}
-				fmt.Printf("%s: %s\n", k, auth)
-
-			} else {
-				fmt.Printf("%s: %s\n", k, v)
-			}
+		dump, err := dumpRequest(req)
+		if err != nil {
+			return nil, err
 		}
 
-		if req.Body != nil {
-			r := io.NopCloser(req.Body)
-			buf := new(strings.Builder)
-			_, err := io.Copy(buf, r)
-			if err != nil {
-				return nil, err
-			}
-			bodyDebug := buf.String()
-			if len(bodyDebug) > 0 {
-				fmt.Printf("%s\n", bodyDebug)
-			}
-			req.Body = io.NopCloser(strings.NewReader(buf.String()))
-		}
+		fmt.Println(dump)
 	}
 
 	return s.client.Do(req)
@@ -73,13 +58,58 @@ type ClientAuth interface {
 	Set(req *http.Request) error
 }
 
-// NewClient creates an Client for managing OpenFaaS
-func NewClient(gatewayURL *url.URL, auth ClientAuth, client *http.Client) *Client {
-	return &Client{
-		GatewayURL: gatewayURL,
-		client:     client,
-		ClientAuth: auth,
+type ClientOption func(*Client)
+
+// WithFunctionTokenSource configures the function token source for the client.
+func WithFunctionTokenSource(tokenSource TokenSource) ClientOption {
+	return func(c *Client) {
+		c.FunctionTokenSource = tokenSource
 	}
+}
+
+// WithAuthentication configures the authentication provider fot the client.
+func WithAuthentication(auth ClientAuth) ClientOption {
+	return func(c *Client) {
+		c.ClientAuth = auth
+	}
+}
+
+// WithFunctionTokenCache configures the token cache used by the client to cache access
+// tokens for function invocations.
+func WithFunctionTokenCache(cache TokenCache) ClientOption {
+	return func(c *Client) {
+		c.fnTokenCache = cache
+	}
+}
+
+// NewClient creates a Client for managing OpenFaaS and invoking functions
+func NewClient(gatewayURL *url.URL, auth ClientAuth, client *http.Client) *Client {
+	return NewClientWithOpts(gatewayURL, client, WithAuthentication(auth))
+}
+
+// NewClientWithOpts creates a Client for managing OpenFaaS and invoking functions
+// It takes a list of ClientOptions to configure the client.
+func NewClientWithOpts(gatewayURL *url.URL, client *http.Client, options ...ClientOption) *Client {
+	c := &Client{
+		GatewayURL: gatewayURL,
+
+		client: client,
+	}
+
+	for _, option := range options {
+		option(c)
+	}
+
+	if c.ClientAuth != nil && c.FunctionTokenSource == nil {
+		// Use auth as the default function token source for IAM function authentication
+		// if it implements the TokenSource interface.
+		functionTokenSource, ok := c.ClientAuth.(TokenSource)
+		if ok {
+			c.FunctionTokenSource = functionTokenSource
+		}
+	}
+
+	return c
 }
 
 // GetNamespaces get openfaas namespaces
@@ -934,4 +964,44 @@ func (s *Client) GetLogs(ctx context.Context, functionName, namespace string, fo
 		}
 	}
 	return logStream, nil
+}
+
+func dumpRequest(req *http.Request) (string, error) {
+	var sb strings.Builder
+
+	sb.WriteString(fmt.Sprintf("%s %s\n", req.Method, req.URL.String()))
+	for k, v := range req.Header {
+		if k == "Authorization" {
+			auth := "[REDACTED]"
+			if len(v) == 0 {
+				auth = "[NOT_SET]"
+			} else {
+				l, _, ok := strings.Cut(v[0], " ")
+				if ok && (l == "Basic" || l == "Bearer") {
+					auth = l + " [REDACTED]"
+				}
+			}
+			sb.WriteString(fmt.Sprintf("%s: %s\n", k, auth))
+
+		} else {
+			sb.WriteString(fmt.Sprintf("%s: %s\n", k, v))
+		}
+	}
+
+	if req.Body != nil {
+		r := io.NopCloser(req.Body)
+		buf := new(strings.Builder)
+		_, err := io.Copy(buf, r)
+		if err != nil {
+			return "", err
+		}
+		bodyDebug := buf.String()
+		if len(bodyDebug) > 0 {
+			sb.WriteString(fmt.Sprintf("%s\n", bodyDebug))
+
+		}
+		req.Body = io.NopCloser(strings.NewReader(buf.String()))
+	}
+
+	return sb.String(), nil
 }

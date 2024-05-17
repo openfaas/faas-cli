@@ -24,13 +24,9 @@ github.com/alexellis/hmac
 # github.com/alexellis/hmac/v2 v2.0.0
 ## explicit; go 1.16
 github.com/alexellis/hmac/v2
-# github.com/beorn7/perks v1.0.1
-## explicit; go 1.11
 # github.com/bep/debounce v1.2.1
 ## explicit
 github.com/bep/debounce
-# github.com/cespare/xxhash/v2 v2.3.0
-## explicit; go 1.11
 # github.com/cheggaaa/pb/v3 v3.1.5
 ## explicit; go 1.17
 github.com/cheggaaa/pb/v3
@@ -55,8 +51,6 @@ github.com/docker/docker/pkg/homedir
 ## explicit; go 1.19
 github.com/docker/docker-credential-helpers/client
 github.com/docker/docker-credential-helpers/credentials
-# github.com/docker/go-units v0.5.0
-## explicit
 # github.com/drone/envsubst v1.0.3
 ## explicit; go 1.13
 github.com/drone/envsubst
@@ -83,8 +77,6 @@ github.com/go-git/go-git/v5/internal/path_util
 github.com/go-git/go-git/v5/plumbing/format/config
 github.com/go-git/go-git/v5/plumbing/format/gitignore
 github.com/go-git/go-git/v5/utils/ioutil
-# github.com/gogo/protobuf v1.3.2
-## explicit; go 1.15
 # github.com/google/go-cmp v0.6.0
 ## explicit; go 1.13
 github.com/google/go-cmp/cmp
@@ -122,8 +114,6 @@ github.com/google/go-containerregistry/pkg/v1/remote/transport
 github.com/google/go-containerregistry/pkg/v1/stream
 github.com/google/go-containerregistry/pkg/v1/tarball
 github.com/google/go-containerregistry/pkg/v1/types
-# github.com/gorilla/mux v1.8.1
-## explicit; go 1.20
 # github.com/inconshreveable/mousetrap v1.1.0
 ## explicit; go 1.18
 github.com/inconshreveable/mousetrap
@@ -161,14 +151,6 @@ github.com/moby/term/windows
 # github.com/morikuni/aec v1.0.0
 ## explicit
 github.com/morikuni/aec
-# github.com/nats-io/nats.go v1.35.0
-## explicit; go 1.20
-# github.com/nats-io/nkeys v0.4.7
-## explicit; go 1.20
-# github.com/nats-io/nuid v1.0.1
-## explicit
-# github.com/nats-io/stan.go v0.10.4
-## explicit; go 1.14
 # github.com/olekukonko/tablewriter v0.0.5
 ## explicit; go 1.12
 github.com/olekukonko/tablewriter
@@ -187,32 +169,18 @@ github.com/openfaas/faas-provider/types
 # github.com/openfaas/faas/gateway v0.0.0-20240531125512-3d2808354de4
 ## explicit; go 1.22
 github.com/openfaas/faas/gateway/types
-# github.com/openfaas/go-sdk v0.2.10
+# github.com/openfaas/go-sdk v0.2.10 => /home/welteki/code/openfaas/oss/go-sdk
 ## explicit; go 1.21
 github.com/openfaas/go-sdk
-# github.com/openfaas/nats-queue-worker v0.0.0-20231219105451-b94918cb8a24
-## explicit; go 1.20
-# github.com/otiai10/copy v1.14.0
-## explicit; go 1.18
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.19.1
-## explicit; go 1.20
-# github.com/prometheus/client_model v0.6.1
-## explicit; go 1.19
-# github.com/prometheus/common v0.53.0
-## explicit; go 1.20
-# github.com/prometheus/procfs v0.15.1
-## explicit; go 1.20
 # github.com/rivo/uniseg v0.4.4
 ## explicit; go 1.18
 github.com/rivo/uniseg
 # github.com/ryanuber/go-glob v1.0.0
 ## explicit
 github.com/ryanuber/go-glob
-# github.com/sethvargo/go-password v0.3.0
-## explicit; go 1.22
 # github.com/sirupsen/logrus v1.9.3
 ## explicit; go 1.13
 github.com/sirupsen/logrus
@@ -225,10 +193,6 @@ github.com/spf13/pflag
 # github.com/vbatts/tar-split v0.11.5
 ## explicit; go 1.17
 github.com/vbatts/tar-split/archive/tar
-# golang.org/x/crypto v0.24.0
-## explicit; go 1.18
-# golang.org/x/mod v0.18.0
-## explicit; go 1.18
 # golang.org/x/net v0.26.0
 ## explicit; go 1.18
 golang.org/x/net/context
@@ -240,11 +204,10 @@ golang.org/x/sync/errgroup
 golang.org/x/sys/execabs
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# google.golang.org/protobuf v1.34.1
-## explicit; go 1.17
 # gopkg.in/warnings.v0 v0.1.2
 ## explicit
 gopkg.in/warnings.v0
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
+# github.com/openfaas/go-sdk => /home/welteki/code/openfaas/oss/go-sdk
