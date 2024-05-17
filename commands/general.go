@@ -2,13 +2,14 @@ package commands
 
 import (
 	"crypto/tls"
+	"fmt"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
 
-	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/faas-cli/config"
 	"github.com/openfaas/go-sdk"
 )
 
@@ -49,21 +50,67 @@ func GetDefaultSDKClient() (*sdk.Client, error) {
 		return nil, err
 	}
 
-	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
+	authConfig, err := config.LookupAuthConfig(gatewayURL.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to lookup auth config: %w", err)
+	}
+
+	var clientAuth sdk.ClientAuth
+	var functionTokenSource sdk.TokenSource
+	if authConfig.Auth == config.BasicAuthType {
+		username, password, err := config.DecodeAuth(authConfig.Token)
+		if err != nil {
+			return nil, err
+		}
+
+		clientAuth = &sdk.BasicAuth{
+			Username: username,
+			Password: password,
+		}
+	}
+
+	if authConfig.Auth == config.Oauth2AuthType {
+		tokenAuth := &StaticTokenAuth{
+			token: authConfig.Token,
+		}
+
+		clientAuth = tokenAuth
+		functionTokenSource = tokenAuth
+	}
+
+	// User specified token gets priority
+	if len(token) > 0 {
+		tokenAuth := &StaticTokenAuth{
+			token: token,
+		}
+
+		clientAuth = tokenAuth
+		functionTokenSource = tokenAuth
+	}
 
 	httpClient := &http.Client{}
 	httpClient.Timeout = commandTimeout
 
+	transport := GetDefaultCLITransport(tlsInsecure, &commandTimeout)
 	if transport != nil {
 		httpClient.Transport = transport
 	}
 
-	clientAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
-	if err != nil {
-		return nil, err
-	}
+	return sdk.NewClientWithOpts(gatewayURL, httpClient,
+		sdk.WithAuthentication(clientAuth),
+		sdk.WithFunctionTokenSource(functionTokenSource),
+	), nil
+}
 
-	client := sdk.NewClient(gatewayURL, clientAuth, http.DefaultClient)
+type StaticTokenAuth struct {
+	token string
+}
 
-	return client, nil
+func (a *StaticTokenAuth) Set(req *http.Request) error {
+	req.Header.Add("Authorization", "Bearer "+a.token)
+	return nil
+}
+
+func (ts *StaticTokenAuth) Token() (string, error) {
+	return ts.token, nil
 }

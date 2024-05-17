@@ -1,14 +1,13 @@
 package sdk
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
-	"time"
 )
 
 type ClientCredentialsAuth struct {
@@ -41,7 +40,7 @@ type ClientCredentialsTokenSource struct {
 	scope        string
 	grantType    string
 	audience     string
-	token        *ClientCredentialsToken
+	token        *Token
 	lock         sync.RWMutex
 }
 
@@ -72,28 +71,26 @@ func (ts *ClientCredentialsTokenSource) Token() (string, error) {
 		ts.token = token
 		ts.lock.Unlock()
 
-		return token.AccessToken, nil
+		return ts.token.IDToken, nil
 	}
 
 	ts.lock.RUnlock()
-	return ts.token.AccessToken, nil
+	return ts.token.IDToken, nil
 }
 
-func obtainClientCredentialsToken(clientID, clientSecret, tokenURL, scope, grantType, audience string) (*ClientCredentialsToken, error) {
+func obtainClientCredentialsToken(clientID, clientSecret, tokenURL, scope, grantType, audience string) (*Token, error) {
 
-	reqBody := url.Values{}
-	reqBody.Set("client_id", clientID)
-	reqBody.Set("client_secret", clientSecret)
-	reqBody.Set("grant_type", grantType)
-	reqBody.Set("scope", scope)
+	v := url.Values{}
+	v.Set("client_id", clientID)
+	v.Set("client_secret", clientSecret)
+	v.Set("grant_type", grantType)
+	v.Set("scope", scope)
 
 	if len(audience) > 0 {
-		reqBody.Set("audience", audience)
+		v.Set("audience", audience)
 	}
 
-	buffer := []byte(reqBody.Encode())
-
-	req, err := http.NewRequest(http.MethodPost, tokenURL, bytes.NewBuffer(buffer))
+	req, err := http.NewRequest(http.MethodPost, tokenURL, strings.NewReader(v.Encode()))
 	if err != nil {
 		return nil, err
 	}
@@ -104,45 +101,26 @@ func obtainClientCredentialsToken(clientID, clientSecret, tokenURL, scope, grant
 		return nil, err
 	}
 
-	var body []byte
 	if res.Body != nil {
 		defer res.Body.Close()
-		body, _ = io.ReadAll(res.Body)
 	}
 
-	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code %d, body: %s", res.StatusCode, string(body))
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return nil, fmt.Errorf("cannot fetch token: %v", err)
 	}
 
-	token := &ClientCredentialsToken{}
-	if err := json.Unmarshal(body, token); err != nil {
+	if code := res.StatusCode; code < 200 || code > 299 {
+		return nil, fmt.Errorf("unexpected status code: %v\nResponse: %s", res.Status, body)
+	}
+
+	tj := &tokenJSON{}
+	if err := json.Unmarshal(body, tj); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal token: %s", err)
 	}
 
-	token.ObtainedAt = time.Now()
-
-	return token, nil
-}
-
-// ClientCredentialsToken represents an access_token
-// obtained through the client credentials grant type.
-// This token is not associated with a human user.
-type ClientCredentialsToken struct {
-	AccessToken string `json:"access_token"`
-	TokenType   string `json:"token_type"`
-	ExpiresIn   int    `json:"expires_in"`
-	ObtainedAt  time.Time
-}
-
-// Expired returns true if the token is expired
-// or if the expiry time is not known.
-// The token will always expire 10s early to avoid
-// clock skew.
-func (t *ClientCredentialsToken) Expired() bool {
-	if t.ExpiresIn == 0 {
-		return false
-	}
-	expiry := t.ObtainedAt.Add(time.Duration(t.ExpiresIn) * time.Second).Add(-expiryDelta)
-
-	return expiry.Before(time.Now())
+	return &Token{
+		IDToken: tj.AccessToken,
+		Expiry:  tj.expiry(),
+	}, nil
 }

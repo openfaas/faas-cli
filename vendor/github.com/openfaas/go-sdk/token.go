@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -9,7 +11,7 @@ import (
 // expirations due to client-server time mismatches.
 const expiryDelta = 10 * time.Second
 
-// Token represents an OpenFaaS ID token
+// Token represents an OIDC token
 type Token struct {
 	// IDToken is the OIDC access token that authorizes and authenticates
 	// the requests.
@@ -19,6 +21,9 @@ type Token struct {
 	//
 	// A zero value means the token never expires.
 	Expiry time.Time
+
+	// Scope is the scope of the access token
+	Scope []string
 }
 
 // Expired reports whether the token is expired, and will start
@@ -31,13 +36,13 @@ func (t *Token) Expired() bool {
 	return t.Expiry.Round(0).Add(-expiryDelta).Before(time.Now())
 }
 
+// tokenJson represents an OAuth token response
 type tokenJSON struct {
 	AccessToken string `json:"access_token"`
-	IDToken     string `json:"id_token"`
+	TokenType   string `json:"token_type"`
 
-	TokenType string `json:"token_type"`
-
-	ExpiresIn int `json:"expires_in"`
+	ExpiresIn int    `json:"expires_in"`
+	Scope     string `json:"scope"`
 }
 
 func (t *tokenJSON) expiry() (exp time.Time) {
@@ -45,4 +50,25 @@ func (t *tokenJSON) expiry() (exp time.Time) {
 		return time.Now().Add(time.Duration(v) * time.Second)
 	}
 	return
+}
+
+func (t *tokenJSON) scope() []string {
+	if len(t.Scope) > 0 {
+		return strings.Split(t.Scope, " ")
+	}
+
+	return []string{}
+}
+
+// OAuthError represents an OAuth error response.
+type OAuthError struct {
+	Err         string `json:"error"`
+	Description string `json:"error_description,omitempty"`
+}
+
+func (e *OAuthError) Error() string {
+	if len(e.Description) > 0 {
+		return fmt.Sprintf("%s: %s", e.Err, e.Description)
+	}
+	return e.Err
 }

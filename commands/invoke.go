@@ -4,14 +4,18 @@
 package commands
 
 import (
+	"bytes"
 	"encoding/hex"
 	"fmt"
 	"io"
+	"net/http"
+	"net/url"
 	"os"
+	"runtime"
+	"strings"
 
 	"github.com/alexellis/hmac"
-	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
 
@@ -63,32 +67,32 @@ var invokeCmd = &cobra.Command{
 }
 
 func runInvoke(cmd *cobra.Command, args []string) error {
-	var services stack.Services
-
 	if len(args) < 1 {
 		return fmt.Errorf("please provide a name for the function")
 	}
+	functionName = args[0]
 
 	if missingSignFlag(sigHeader, key) {
 		return fmt.Errorf("signing requires both --sign <header-value> and --key <key-value>")
 	}
 
-	var yamlGateway string
-	functionName = args[0]
-
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
-		if err != nil {
-			return err
-		}
-
-		if parsedServices != nil {
-			services = *parsedServices
-			yamlGateway = services.Provider.GatewayURL
-		}
+	err := validateHTTPMethod(httpMethod)
+	if err != nil {
+		return nil
 	}
 
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
+	httpHeader, err := parseHeaders(headers)
+	if err != nil {
+		return err
+	}
+
+	httpQuery, err := parseQueryValues(query)
+	if err != nil {
+		return err
+	}
+
+	httpHeader.Set("Content-Type", contentType)
+	httpHeader.Set("User-Agent", fmt.Sprintf("faas-cli/%s (openfaas; %s; %s)", version.BuildVersion(), runtime.GOOS, runtime.GOARCH))
 
 	stat, _ := os.Stdin.Stat()
 	if (stat.Mode() & os.ModeCharDevice) != 0 {
@@ -101,38 +105,126 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(sigHeader) > 0 {
-		signedHeader, err := generateSignedHeader(functionInput, key, sigHeader)
-		if err != nil {
-			return fmt.Errorf("unable to sign message: %s", err.Error())
-		}
-		headers = append(headers, signedHeader)
+		sig := generateSignature(functionInput, key)
+		httpHeader.Add(sigHeader, sig)
 	}
 
-	response, err := proxy.InvokeFunction(gatewayAddress, functionName, &functionInput, contentType, query, headers, invokeAsync, httpMethod, tlsInsecure, functionInvokeNamespace)
+	client, err := GetDefaultSDKClient()
 	if err != nil {
 		return err
 	}
 
-	if response != nil {
-		os.Stdout.Write(*response)
+	u, _ := url.Parse("/")
+	u.RawQuery = httpQuery.Encode()
+
+	body := bytes.NewReader(functionInput)
+	req, err := http.NewRequest(httpMethod, u.String(), body)
+	if err != nil {
+		return err
+	}
+	req.Header = httpHeader
+
+	authenticate := false
+	res, err := client.InvokeFunction(functionName, functionInvokeNamespace, invokeAsync, authenticate, req)
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", client.GatewayURL)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	if code := res.StatusCode; code < 200 || code > 299 {
+		resBody, err := io.ReadAll(res.Body)
+		if err != nil {
+			return fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, err)
+		}
+
+		return fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(resBody))
+	}
+
+	if invokeAsync && res.StatusCode == http.StatusAccepted {
+		fmt.Fprintf(os.Stderr, "Function submitted asynchronously.\n")
+		return nil
+	}
+
+	if _, err := io.Copy(os.Stdout, res.Body); err != nil {
+		return fmt.Errorf("cannot read result from OpenFaaS on URL: %s %s", gateway, err)
 	}
 
 	return nil
 }
 
-func generateSignedHeader(message []byte, key string, headerName string) (string, error) {
-
-	if len(headerName) == 0 {
-		return "", fmt.Errorf("signed header must have a non-zero length")
-	}
-
+func generateSignature(message []byte, key string) string {
 	hash := hmac.Sign(message, []byte(key))
 	signature := hex.EncodeToString(hash)
-	signedHeader := fmt.Sprintf(`%s=%s=%s`, headerName, "sha1", string(signature[:]))
 
-	return signedHeader, nil
+	return fmt.Sprintf(`%s=%s`, "sha1", string(signature[:]))
 }
 
 func missingSignFlag(header string, key string) bool {
 	return (len(header) > 0 && len(key) == 0) || (len(header) == 0 && len(key) > 0)
+}
+
+// parseHeaders parses header values from the header command flag
+func parseHeaders(headers []string) (http.Header, error) {
+	httpHeader := http.Header{}
+
+	for _, header := range headers {
+		headerVal := strings.SplitN(header, "=", 2)
+		if len(headerVal) != 2 {
+			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value")
+		}
+
+		key, value := headerVal[0], headerVal[1]
+		if key == "" {
+			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value (empty key given)")
+		}
+
+		if value == "" {
+			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value (empty value given)")
+		}
+
+		httpHeader.Add(key, value)
+	}
+
+	return httpHeader, nil
+}
+
+// parseQueryValues parses query values from the query command flags
+func parseQueryValues(query []string) (url.Values, error) {
+	v := url.Values{}
+
+	for _, q := range query {
+		queryVal := strings.SplitN(q, "=", 2)
+		if len(queryVal) != 2 {
+			return v, fmt.Errorf("the --query flag must take the form of key=value")
+		}
+
+		key, value := queryVal[0], queryVal[1]
+		if key == "" {
+			return v, fmt.Errorf("the --header or -H flag must take the form of key=value (empty key given)")
+		}
+
+		if value == "" {
+			return v, fmt.Errorf("the --header or -H flag must take the form of key=value (empty value given)")
+		}
+
+		v.Add(key, value)
+	}
+
+	return v, nil
+}
+
+// validateMethod validates the HTTP request method
+func validateHTTPMethod(httpMethod string) error {
+	var allowedMethods = []string{
+		http.MethodGet, http.MethodPost, http.MethodPut, http.MethodPatch, http.MethodDelete,
+	}
+	helpString := strings.Join(allowedMethods, "/")
+
+	if !contains(allowedMethods, httpMethod) {
+		return fmt.Errorf("the --method or -m flag must take one of these values (%s)", helpString)
+	}
+	return nil
 }

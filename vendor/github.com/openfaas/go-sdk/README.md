@@ -143,6 +143,77 @@ if err != nil {
 
 Please refer [examples](https://github.com/openfaas/go-sdk/tree/master/examples) folder for code examples of each operation
 
+## Invoke functions
+
+```go
+body := strings.NewReader("OpenFaaS")
+req, err := http.NewRequestWithContext(context.TODO(), http.MethodPost, "/", body)
+if err != nil {
+	panic(err)
+}
+
+req.Header.Set("Content-Type", "text/plain")
+
+async := false
+authenticate := false
+
+// Make a POST request to a figlet function in the openfaas-fn namespace
+res, err := client.InvokeFunction(context.Background(), "figlet", "openfaas-fn", async, authenticate, req)
+if err != nil {
+	log.Printf("Failed to invoke function: %s", err)
+	return
+}
+
+if res.Body != nil {
+	defer res.Body.Close()
+}
+
+// Read the response body
+body, err := io.ReadAll(res.Body)
+if err != nil {
+	log.Printf("Error reading response body: %s", err)
+	return
+}
+
+// Print the response
+fmt.Printf("Response status code: %s\n", res.Status)
+fmt.Printf("Response body: %s\n", string(body))
+```
+
+### Authenticate function invocations
+
+The SDK supports invoking functions if you are using OpenFaaS IAM with [built-in authentication for functions](https://www.openfaas.com/blog/built-in-function-authentication/).
+
+Set the `auth` argument to `true` when calling `InvokeFunction` to authenticate the request with an OpenFaaS function access token.
+
+The `Client` needs a `TokenSource` to get an ID token that can be exchanged for a function access token to make authenticated function invocations. By default the `TokenAuth` provider that was set when constructing a new `Client` is used.
+
+It is also possible to provide a custom `TokenSource` for the function token exchange:
+
+```go
+ts := sdk.NewClientCredentialsTokenSource(clientID, clientSecret, tokenURL, scope, grantType, audience)
+
+client := sdk.NewClientWithOpts(gatewayURL, http.DefaultClient, sdk.WithFunctionTokenSource(ts))
+```
+
+Optionally a `TokenCache` can be configured to cache function access tokens and prevent the client from having to do a token exchange each time a function is invoked.
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+fnTokenCache := sdk.NewMemoryTokenCache()
+// Start garbage collection to remove expired tokens from the cache.
+go fnTokenCache.StartGC(ctx, time.Second*10)
+
+client := sdk.NewClientWithOpts(
+    gatewayUrl,
+    httpClient,
+    sdk.WithAuthentication(auth),
+    sdk.WithFunctionTokenCache(fnTokenCache),
+)
+```
+
 ## License
 
 License: MIT
