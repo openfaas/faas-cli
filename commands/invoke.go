@@ -28,7 +28,10 @@ var (
 	sigHeader               string
 	key                     string
 	functionInvokeNamespace string
+	authenticate            bool
 )
+
+const functionInvokeRealm = "IAM function invoke"
 
 func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
@@ -40,6 +43,7 @@ func init() {
 	invokeCmd.Flags().StringVar(&contentType, "content-type", "text/plain", "The content-type HTTP header such as application/json")
 	invokeCmd.Flags().StringArrayVar(&query, "query", []string{}, "pass query-string options")
 	invokeCmd.Flags().StringArrayVarP(&headers, "header", "H", []string{}, "pass HTTP request header")
+	invokeCmd.Flags().BoolVar(&authenticate, "auth", false, "Authenticate with an OpenFaaS token when invoking the function")
 	invokeCmd.Flags().BoolVarP(&invokeAsync, "async", "a", false, "Invoke the function asynchronously")
 	invokeCmd.Flags().StringVarP(&httpMethod, "method", "m", "POST", "pass HTTP request method")
 	invokeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
@@ -124,14 +128,37 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	}
 	req.Header = httpHeader
 
-	authenticate := false
 	res, err := client.InvokeFunction(functionName, functionInvokeNamespace, invokeAsync, authenticate, req)
 	if err != nil {
-		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s", client.GatewayURL)
+		return fmt.Errorf("failed to invoke function: %s", err)
 	}
-
 	if res.Body != nil {
 		defer res.Body.Close()
+	}
+
+	if !authenticate && res.StatusCode == http.StatusUnauthorized {
+		authenticateHeader := res.Header.Get("WWW-Authenticate")
+		realm := getRealm(authenticateHeader)
+
+		// Retry the request and authenticate with an OpenFaaS function access token if the realm directive in the
+		// WWW-Authenticate header is the function invoke realm.
+		if realm == functionInvokeRealm {
+			authenticate := true
+			body := bytes.NewReader(functionInput)
+			req, err := http.NewRequest(httpMethod, u.String(), body)
+			if err != nil {
+				return err
+			}
+			req.Header = httpHeader
+
+			res, err = client.InvokeFunction(functionName, functionInvokeNamespace, invokeAsync, authenticate, req)
+			if err != nil {
+				return fmt.Errorf("failed to invoke function: %s", err)
+			}
+			if res.Body != nil {
+				defer res.Body.Close()
+			}
+		}
 	}
 
 	if code := res.StatusCode; code < 200 || code > 299 {
@@ -227,4 +254,25 @@ func validateHTTPMethod(httpMethod string) error {
 		return fmt.Errorf("the --method or -m flag must take one of these values (%s)", helpString)
 	}
 	return nil
+}
+
+// NOTE: This is far from a fully compliant parser per RFC 7235.
+// It is only intended to correctly capture the realm directive in the
+// known format as returned by the OpenFaaS watchdogs.
+func getRealm(headerVal string) string {
+	parts := strings.SplitN(headerVal, " ", 2)
+
+	realm := ""
+	if len(parts) > 1 {
+		directives := strings.Split(parts[1], ", ")
+
+		for _, part := range directives {
+			if strings.HasPrefix(part, "realm=") {
+				realm = strings.Trim(part[6:], `"`)
+				break
+			}
+		}
+	}
+
+	return realm
 }

@@ -313,3 +313,35 @@ func Test_parseQueryValues_invalid(t *testing.T) {
 		})
 	}
 }
+
+func Test_getRealm(t *testing.T) {
+	tests := []struct {
+		header string
+		want   string
+	}{
+		{
+			header: "Bearer",
+			want:   "",
+		},
+		{
+			header: `Bearer realm="OpenFaaS API"`,
+			want:   "OpenFaaS API",
+		},
+		{
+			header: `Bearer realm="OpenFaaS API", charset="UTF-8"`,
+			want:   "OpenFaaS API",
+		},
+		{
+			header: "",
+			want:   "",
+		},
+	}
+
+	for _, test := range tests {
+		got := getRealm(test.header)
+
+		if test.want != got {
+			t.Errorf("want: %s, got: %s", test.want, got)
+		}
+	}
+}
