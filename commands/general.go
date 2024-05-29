@@ -52,7 +52,7 @@ func GetDefaultSDKClient() (*sdk.Client, error) {
 
 	authConfig, err := config.LookupAuthConfig(gatewayURL.String())
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup auth config: %w", err)
+		fmt.Printf("Failed to lookup auth config: %s\n", err)
 	}
 
 	var clientAuth sdk.ClientAuth

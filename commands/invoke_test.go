@@ -23,14 +23,14 @@ func Test_invoke(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
 		{
 			Method:             http.MethodPost,
-			Uri:                "/function/" + funcName,
+			Uri:                "/function/" + funcName + ".openfaas-fn",
 			ResponseStatusCode: http.StatusOK,
 			ResponseBody:       expectedInvokeResponse,
 		},
 	})
 	defer s.Close()
 
-	os.Stdin, _ = ioutil.TempFile("", "stdin")
+	os.Stdin, _ = os.CreateTemp("", "stdin")
 	os.Stdin.WriteString("test-data")
 	os.Stdin.Seek(0, 0)
 	defer func() {
@@ -58,7 +58,7 @@ func Test_async_invoke(t *testing.T) {
 	s := test.MockHttpServer(t, []test.Request{
 		{
 			Method:             http.MethodPost,
-			Uri:                "/async-function/" + funcName,
+			Uri:                "/async-function/" + funcName + ".openfaas-fn",
 			ResponseStatusCode: http.StatusAccepted,
 		},
 	})
