@@ -1,7 +1,7 @@
 FROM ghcr.io/openfaas/license-check:0.4.1 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.20 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.22 as builder
 
 ARG GIT_COMMIT
 ARG VERSION
@@ -70,7 +70,7 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w \
        -o faas-cli-arm64
 
 # Release stage
-FROM alpine:3.18 as release
+FROM alpine:3.20.0 as release
 
 RUN apk --no-cache add ca-certificates git
 
