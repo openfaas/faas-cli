@@ -7,11 +7,14 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"runtime"
 
 	"fmt"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/openfaas/faas-cli/version"
 )
 
 // InvokeFunction a function
@@ -58,6 +61,8 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s", gateway)
 	}
 
+	req.Header.Set("User-Agent", fmt.Sprintf("faas-cli/%s (openfaas; %s; %s)", version.BuildVersion(), runtime.GOOS, runtime.GOARCH))
+
 	req.Header.Add("Content-Type", contentType)
 	// Add additional headers to request
 	for name, value := range headerMap {
@@ -69,7 +74,6 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	// SetAuth(req, gateway)
 
 	res, err := client.Do(req)
-
 	if err != nil {
 		fmt.Println()
 		fmt.Println(err)
