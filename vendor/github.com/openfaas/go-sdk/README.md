@@ -116,6 +116,33 @@ func Test_ClientCredentials(t *testing.T) {
 }
 ```
 
+## Deploy Function
+```go
+
+status, err := client.Deploy(context.Background(), types.FunctionDeployment{
+	Service:    "env-store-test",
+	Image:      "ghcr.io/openfaas/alpine:latest",
+	Namespace:  "openfaas-fn",
+	EnvProcess: "env",
+})
+
+// non 200 status value will have some error
+if err != nil {
+	log.Printf("Deploy Failed: %s", err)
+}
+```
+
+## Delete Function
+```go
+
+err := client.DeleteFunction(context.Background(),"env-store-test", "openfaas-fn")
+if err != nil {
+	log.Printf("Deletion Failed: %s", err)
+}
+```
+
+Please refer [examples](https://github.com/openfaas/go-sdk/tree/master/examples) folder for code examples of each operation
+
 ## License
 
 License: MIT

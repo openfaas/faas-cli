@@ -6,12 +6,16 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/openfaas/faas-provider/logs"
 	"github.com/openfaas/faas-provider/types"
 )
 
@@ -59,6 +63,7 @@ func (s *Client) do(req *http.Request) (*http.Response, error) {
 			req.Body = io.NopCloser(strings.NewReader(buf.String()))
 		}
 	}
+
 	return s.client.Do(req)
 }
 
@@ -79,8 +84,9 @@ func NewClient(gatewayURL *url.URL, auth ClientAuth, client *http.Client) *Clien
 
 // GetNamespaces get openfaas namespaces
 func (s *Client) GetNamespaces(ctx context.Context) ([]string, error) {
-	u := s.GatewayURL
 	namespaces := []string{}
+
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/namespaces"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -125,7 +131,7 @@ func (s *Client) GetNamespaces(ctx context.Context) ([]string, error) {
 
 // GetNamespaces get openfaas namespaces
 func (s *Client) GetNamespace(ctx context.Context, namespace string) (types.FunctionNamespace, error) {
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = fmt.Sprintf("/system/namespace/%s", namespace)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -191,7 +197,7 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/namespace/"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bodyReader)
@@ -250,7 +256,7 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = fmt.Sprintf("/system/namespace/%s", spec.Name)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bodyReader)
@@ -305,7 +311,7 @@ func (s *Client) DeleteNamespace(ctx context.Context, namespace string) error {
 	bodyBytes, _ := json.Marshal(delReq)
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = fmt.Sprintf("/system/namespace/%s", namespace)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), bodyReader)
@@ -352,8 +358,7 @@ func (s *Client) DeleteNamespace(ctx context.Context, namespace string) error {
 
 // GetFunctions lists all functions
 func (s *Client) GetFunctions(ctx context.Context, namespace string) ([]types.FunctionStatus, error) {
-	u := s.GatewayURL
-
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/functions"
 
 	if len(namespace) > 0 {
@@ -394,8 +399,7 @@ func (s *Client) GetFunctions(ctx context.Context, namespace string) ([]types.Fu
 }
 
 func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
-	u := s.GatewayURL
-
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/info"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -431,8 +435,7 @@ func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
 
 // GetFunction gives a richer payload than GetFunctions, but for a specific function
 func (s *Client) GetFunction(ctx context.Context, name, namespace string) (types.FunctionStatus, error) {
-	u := s.GatewayURL
-
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/function/" + name
 
 	if len(namespace) > 0 {
@@ -490,7 +493,7 @@ func (s *Client) deploy(ctx context.Context, method string, spec types.FunctionD
 
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/functions"
 
 	req, err := http.NewRequestWithContext(ctx, method, u.String(), bodyReader)
@@ -541,11 +544,8 @@ func (s *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 	bodyBytes, _ := json.Marshal(scaleReq)
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
-
-	functionPath := filepath.Join("/system/scale-function", functionName)
-
-	u.Path = functionPath
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = filepath.Join("/system/scale-function", functionName)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bodyReader)
 	if err != nil {
@@ -602,7 +602,7 @@ func (s *Client) DeleteFunction(ctx context.Context, functionName, namespace str
 	bodyBytes, _ := json.Marshal(delReq)
 	bodyReader := bytes.NewReader(bodyBytes)
 
-	u := s.GatewayURL
+	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/functions"
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), bodyReader)
@@ -645,4 +645,293 @@ func (s *Client) DeleteFunction(ctx context.Context, functionName, namespace str
 		return fmt.Errorf("server returned unexpected status code %d, message: %q", res.StatusCode, string(bytesOut))
 	}
 	return nil
+}
+
+// GetSecrets list all secrets
+func (s *Client) GetSecrets(ctx context.Context, namespace string) ([]types.Secret, error) {
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = "/system/secrets"
+
+	if len(namespace) > 0 {
+		query := u.Query()
+		query.Set("namespace", namespace)
+		u.RawQuery = query.Encode()
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return []types.Secret{}, fmt.Errorf("unable to create request for %s, error: %w", u.String(), err)
+	}
+
+	if s.ClientAuth != nil {
+		if err := s.ClientAuth.Set(req); err != nil {
+			return []types.Secret{}, fmt.Errorf("unable to set Authorization header: %w", err)
+		}
+	}
+
+	res, err := s.do(req)
+	if err != nil {
+		return []types.Secret{}, fmt.Errorf("unable to make HTTP request: %w", err)
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	body, _ := io.ReadAll(res.Body)
+
+	secrets := []types.Secret{}
+	if err := json.Unmarshal(body, &secrets); err != nil {
+		return []types.Secret{},
+			fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+	}
+
+	return secrets, nil
+}
+
+// CreateSecret creates a secret
+func (s *Client) CreateSecret(ctx context.Context, spec types.Secret) (int, error) {
+
+	bodyBytes, err := json.Marshal(spec)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	bodyReader := bytes.NewReader(bodyBytes)
+
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = "/system/secrets"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bodyReader)
+	if err != nil {
+		return http.StatusBadGateway, err
+	}
+
+	if s.ClientAuth != nil {
+		if err := s.ClientAuth.Set(req); err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to set Authorization header: %w", err)
+		}
+	}
+
+	res, err := s.do(req)
+	if err != nil {
+		return http.StatusBadGateway, err
+	}
+
+	var body []byte
+	if res.Body != nil {
+		defer res.Body.Close()
+		body, _ = io.ReadAll(res.Body)
+	}
+
+	switch res.StatusCode {
+	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
+		return res.StatusCode, nil
+
+	case http.StatusUnauthorized:
+		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+
+	default:
+		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+	}
+}
+
+// UpdateSecret updates a secret
+func (s *Client) UpdateSecret(ctx context.Context, spec types.Secret) (int, error) {
+
+	bodyBytes, err := json.Marshal(spec)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	bodyReader := bytes.NewReader(bodyBytes)
+
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = "/system/secrets"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, u.String(), bodyReader)
+	if err != nil {
+		return http.StatusBadGateway, err
+	}
+
+	if s.ClientAuth != nil {
+		if err := s.ClientAuth.Set(req); err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to set Authorization header: %w", err)
+		}
+	}
+
+	res, err := s.do(req)
+	if err != nil {
+		return http.StatusBadGateway, err
+	}
+
+	var body []byte
+	if res.Body != nil {
+		defer res.Body.Close()
+		body, _ = io.ReadAll(res.Body)
+	}
+
+	switch res.StatusCode {
+	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
+		return res.StatusCode, nil
+
+	case http.StatusNotFound:
+		return res.StatusCode, fmt.Errorf("secret %s not found", spec.Name)
+
+	case http.StatusUnauthorized:
+		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+
+	default:
+		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+	}
+}
+
+// DeleteSecret deletes a secret
+func (s *Client) DeleteSecret(ctx context.Context, secretName, namespace string) error {
+
+	delReq := types.Secret{
+		Name:      secretName,
+		Namespace: namespace,
+	}
+
+	var err error
+
+	bodyBytes, _ := json.Marshal(delReq)
+	bodyReader := bytes.NewReader(bodyBytes)
+
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = "/system/secrets"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, u.String(), bodyReader)
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
+	}
+
+	if s.ClientAuth != nil {
+		if err := s.ClientAuth.Set(req); err != nil {
+			return fmt.Errorf("unable to set Authorization header: %w", err)
+		}
+	}
+	res, err := s.do(req)
+	if err != nil {
+		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
+
+	}
+
+	if res.Body != nil {
+		defer res.Body.Close()
+	}
+
+	switch res.StatusCode {
+	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
+		break
+
+	case http.StatusNotFound:
+		return fmt.Errorf("secret %s not found", secretName)
+
+	case http.StatusUnauthorized:
+		return fmt.Errorf("unauthorized action, please setup authentication for this server")
+
+	default:
+		var err error
+		bytesOut, err := io.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+		return fmt.Errorf("server returned unexpected status code %d, message: %q", res.StatusCode, string(bytesOut))
+	}
+	return nil
+}
+
+func generateLogRequest(functionName, namespace string, follow bool, tail int, since *time.Time) url.Values {
+	query := url.Values{}
+	query.Add("name", functionName)
+	if len(namespace) > 0 {
+		query.Add("namespace", namespace)
+	}
+
+	if follow {
+		query.Add("follow", "1")
+	} else {
+		query.Add("follow", "0")
+	}
+
+	if since != nil {
+		query.Add("since", since.Format(time.RFC3339))
+	}
+
+	if tail != 0 {
+		query.Add("tail", strconv.Itoa(tail))
+	}
+
+	return query
+}
+
+func (s *Client) GetLogs(ctx context.Context, functionName, namespace string, follow bool, tail int, since *time.Time) (<-chan logs.Message, error) {
+
+	var err error
+
+	u, _ := url.Parse(s.GatewayURL.String())
+	u.Path = "/system/logs"
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
+	}
+
+	req.URL.RawQuery = generateLogRequest(functionName, namespace, follow, tail, since).Encode()
+	log.Printf("%s", req.URL.RawQuery)
+
+	if s.ClientAuth != nil {
+		if err := s.ClientAuth.Set(req); err != nil {
+			return nil, fmt.Errorf("unable to set Authorization header: %w", err)
+		}
+	}
+
+	res, err := s.do(req)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
+
+	}
+
+	logStream := make(chan logs.Message, 1000)
+
+	switch res.StatusCode {
+	case http.StatusOK:
+		go func() {
+			defer func() {
+				close(logStream)
+			}()
+
+			if res.Body != nil {
+				defer res.Body.Close()
+			}
+
+			decoder := json.NewDecoder(res.Body)
+
+			for decoder.More() {
+				msg := logs.Message{}
+				err := decoder.Decode(&msg)
+				if err != nil {
+					log.Printf("cannot parse log results: %s", err.Error())
+					return
+				}
+				logStream <- msg
+			}
+		}()
+
+	case http.StatusNotFound:
+		return nil, fmt.Errorf("function: %s not found", functionName)
+
+	case http.StatusUnauthorized:
+		return nil, fmt.Errorf("unauthorized action, please setup authentication for this server")
+
+	default:
+		bytesOut, err := io.ReadAll(res.Body)
+		if err == nil {
+			return nil, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(bytesOut))
+		}
+	}
+	return logStream, nil
 }
