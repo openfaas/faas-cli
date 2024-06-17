@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/openfaas/faas-cli/config"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/go-sdk"
 )
 
@@ -44,7 +45,11 @@ func GetDefaultCLITransport(tlsInsecure bool, timeout *time.Duration) *http.Tran
 }
 
 func GetDefaultSDKClient() (*sdk.Client, error) {
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	gatewayAddress, err := getGatewayAddress()
+	if err != nil {
+		return nil, err
+	}
+
 	gatewayURL, err := url.Parse(gatewayAddress)
 	if err != nil {
 		return nil, err
@@ -100,6 +105,22 @@ func GetDefaultSDKClient() (*sdk.Client, error) {
 		sdk.WithAuthentication(clientAuth),
 		sdk.WithFunctionTokenSource(functionTokenSource),
 	), nil
+}
+
+func getGatewayAddress() (string, error) {
+	var yamlUrl string
+	if len(yamlFile) > 0 {
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
+		if err != nil {
+			return "", err
+		}
+
+		if parsedServices != nil {
+			yamlUrl = parsedServices.Provider.GatewayURL
+		}
+	}
+
+	return getGatewayURL(gateway, defaultGateway, yamlUrl, os.Getenv(openFaaSURLEnvironment)), nil
 }
 
 type StaticTokenAuth struct {
