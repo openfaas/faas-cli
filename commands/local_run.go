@@ -195,7 +195,21 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 	// Always try to remove before running, to clear up any previous state
 	removeContainer(name)
 
-	cmd, err := buildDockerRun(ctx, name, services.Functions[name], opts)
+	function := services.Functions[name]
+
+	functionNamespace = function.Namespace
+	if len(functionNamespace) == 0 {
+		functionNamespace = "openfaas-fn"
+	}
+
+	// Add openfaas env variables that are normally injected by the provider.
+	opts.extraEnv["OPENFAAS_NAME"] = name
+	opts.extraEnv["OPENFAAS_NAMESPACE"] = functionNamespace
+
+	// Enable local jwt auth by default
+	opts.extraEnv["jwt_auth_local"] = "true"
+
+	cmd, err := buildDockerRun(ctx, name, function, opts)
 	if err != nil {
 		return err
 	}
