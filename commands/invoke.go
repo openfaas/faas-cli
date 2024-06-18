@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/alexellis/hmac"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
@@ -68,6 +69,17 @@ var invokeCmd = &cobra.Command{
   faas-cli invoke flask --method GET --namespace dev
   faas-cli invoke env --sign X-GitHub-Event --key yoursecret`,
 	RunE: runInvoke,
+	PreRunE: func(cmd *cobra.Command, args []string) error {
+		if len(yamlFile) > 0 {
+			parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
+			if err != nil {
+				return err
+			}
+			services = parsedServices
+		}
+
+		return nil
+	},
 }
 
 func runInvoke(cmd *cobra.Command, args []string) error {
@@ -75,6 +87,16 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("please provide a name for the function")
 	}
 	functionName = args[0]
+
+	var stackNamespace string
+	if services != nil {
+		if function, ok := services.Functions[functionName]; ok {
+			if len(function.Namespace) > 0 {
+				stackNamespace = function.Namespace
+			}
+		}
+	}
+	functionNamespace = getNamespace(functionInvokeNamespace, stackNamespace)
 
 	if missingSignFlag(sigHeader, key) {
 		return fmt.Errorf("signing requires both --sign <header-value> and --key <key-value>")
@@ -128,7 +150,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 	}
 	req.Header = httpHeader
 
-	res, err := client.InvokeFunction(functionName, functionInvokeNamespace, invokeAsync, authenticate, req)
+	res, err := client.InvokeFunction(functionName, functionNamespace, invokeAsync, authenticate, req)
 	if err != nil {
 		return fmt.Errorf("failed to invoke function: %s", err)
 	}

@@ -15,6 +15,7 @@ import (
 	"syscall"
 
 	"github.com/moby/term"
+	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
 )
@@ -46,6 +47,9 @@ var (
 	language     string
 	tlsInsecure  bool
 )
+
+// Services parsed from stack file
+var services *stack.Services
 
 var stat = func(filename string) (os.FileInfo, error) {
 	return os.Stat(filename)
