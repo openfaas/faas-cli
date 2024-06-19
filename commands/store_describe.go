@@ -9,6 +9,7 @@ import (
 	"text/tabwriter"
 
 	"github.com/mitchellh/go-wordwrap"
+	"github.com/openfaas/faas-cli/proxy"
 	storeV2 "github.com/openfaas/faas-cli/schema/store/v2"
 	"github.com/spf13/cobra"
 )
@@ -33,7 +34,7 @@ func runStoreDescribe(cmd *cobra.Command, args []string) error {
 	}
 
 	targetPlatform := getTargetPlatform(platformValue)
-	storeItems, err := storeList(storeAddress)
+	storeItems, err := proxy.FunctionStoreList(storeAddress)
 	if err != nil {
 		return err
 	}
