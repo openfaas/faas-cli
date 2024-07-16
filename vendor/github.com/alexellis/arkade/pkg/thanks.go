@@ -4,4 +4,4 @@
 package pkg
 
 // SupportMessageShort shows how to support arkade
-const SupportMessageShort = `🚀 Speed up GitHub Actions/GitLab CI + reduce costs: https://actuated.dev`
+const SupportMessageShort = `👏 Say thanks for arkade and sponsor Alex via GitHub: https://github.com/sponsors/alexellis`

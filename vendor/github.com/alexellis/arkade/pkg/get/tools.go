@@ -1988,101 +1988,6 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 
 	tools = append(tools,
 		Tool{
-			Owner:       "kanisterio",
-			Repo:        "kanister",
-			Name:        "kanctl",
-			Description: "Framework for application-level data management on Kubernetes.",
-			URLTemplate: `
-{{ $osStr := "linux" }}
-{{- if eq .OS "darwin" -}}
-{{ $osStr = "darwin" }}
-{{- end -}}
-
-https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}_{{$.Version}}_{{$osStr}}_amd64.tar.gz`,
-			BinaryTemplate: `{{.Name}}`,
-		})
-
-	tools = append(tools,
-		Tool{
-			Owner:       "kastenhq",
-			Repo:        "kubestr",
-			Name:        "kubestr",
-			Description: "Kubestr discovers, validates and evaluates your Kubernetes storage options.",
-
-			URLTemplate: `
-	{{ $ext := "tar.gz" }}
-	{{ $osStr := "Linux" }}
-	{{ $arch := .Arch }}
-
-	{{- if eq .Arch "x86_64" -}}
-	{{$arch = "amd64"}}
-	{{- end -}}
-
-	{{- if eq .Arch "aarch64" -}}
-	{{$arch = "arm64"}}
-	{{- end -}}
-
-	{{- if eq .OS "darwin" -}}
-	{{ $osStr = "MacOS" }}
-	{{- else if HasPrefix .OS "ming" -}}
-	{{ $osStr = "Windows" }}
-	{{- end -}}
-
-	https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}`,
-			BinaryTemplate: `{{.Name}}`,
-		})
-
-	//(Temporarily disable k10multicluster as the binaries are not available at v7.0.0)
-	/*  tools = append(tools,
-		Tool{
-			Owner:       "kastenhq",
-			Repo:        "external-tools",
-			Name:        "k10multicluster",
-			Description: "Multi-cluster support for K10.",
-
-			BinaryTemplate: `
-	{{ $osStr := "linux" }}
-	{{ $archStr := "amd64" }}
-
-	{{- if eq .Arch "aarch64" -}}
-	{{ $archStr = "arm64" }}
-	{{- end -}}
-
-	{{- if eq .OS "darwin" -}}
-	{{ $osStr = "macOS" }}
-	{{- end -}}
-
-	{{.Name}}_{{.Version}}_{{$osStr}}_{{$archStr}}.tar.gz`,
-		})
-	*/
-	tools = append(tools,
-		Tool{
-			Owner:       "kastenhq",
-			Repo:        "external-tools",
-			Name:        "k10tools",
-			Description: "Tools for evaluating and debugging K10.",
-
-			BinaryTemplate: `
-	{{ $osStr := "linux" }}
-	{{ $archStr := "amd64" }}
-
-	{{- if eq .Arch "aarch64" -}}
-	{{ $archStr = "arm64" }}
-	{{- end -}}
-
-	{{- if eq .Arch "arm64" -}}
-	{{ $archStr = "arm64" }}
-	{{- end -}}
-
-	{{- if eq .OS "darwin" -}}
-	{{ $osStr = "macOS" }}
-	{{- end -}}
-
-	{{.Name}}_{{.Version}}_{{$osStr}}_{{$archStr}}.tar.gz`,
-		})
-
-	tools = append(tools,
-		Tool{
 			Owner:       "sigstore",
 			Repo:        "cosign",
 			Name:        "cosign",
@@ -3112,7 +3017,9 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 				{{$ext = ".zip"}}
 				{{- end -}}
 
-				{{- if eq .Arch "aarch64" -}}
+				{{- if eq .Arch "x86_64" -}}
+				{{$arch = "amd64"}}
+				{{- else if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 				{{$arch = "arm64"}}
 				{{- end -}}
 
@@ -3859,7 +3766,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 						{{$arch = "aarch64"}}
 					{{- end -}}
 
-					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}-{{.Version}}-{{$arch}}-{{$os}}.{{$ext}}`,
+					https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}-{{$arch}}-{{$os}}.{{$ext}}`,
 		})
 
 	tools = append(tools,
@@ -4219,5 +4126,64 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}
 			{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}`,
 		})
 
+	tools = append(tools,
+		Tool{
+			Owner:       "kubecolor",
+			Repo:        "kubecolor",
+			Name:        "kubecolor",
+			Description: "KubeColor is a kubectl replacement used to add colors to your kubectl output.",
+			BinaryTemplate: `
+				{{$os := .OS}}
+				{{$arch := .Arch}}
+				{{$ext := "tar.gz"}}
+	
+				{{- if HasPrefix .OS "ming" -}}
+				{{ $os = "windows" }}
+				{{ $ext = "exe" }}
+			{{- end -}}
+	
+				{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+					{{$arch = "arm64"}}
+				{{- else if eq .Arch "x86_64" -}}
+					{{ $arch = "amd64" }}
+				{{- end -}}
+	
+				{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "jesseduffield",
+			Repo:        "lazydocker",
+			Name:        "lazydocker",
+			Description: "A simple terminal UI for both docker and docker-compose, written in Go with the gocui library.",
+			BinaryTemplate: `
+			{{$os := .OS}}
+			{{$arch := .Arch}}
+			{{$ext := "tar.gz"}}
+
+			{{ if HasPrefix .OS "ming" -}}
+			    {{$ext = "zip"}}
+			{{- end -}}
+
+			{{- if eq .Arch "aarch64" -}}
+				{{$arch = "arm64"}}
+			{{- else if eq .Arch "armv6l" -}}
+				{{ $arch = "armv6" }}
+			{{- else if eq .Arch "armv7l" -}}
+				{{ $arch = "armv7" }}
+			{{- end -}}
+
+			{{$osStr := ""}}
+			{{ if HasPrefix .OS "ming" -}}
+				{{$osStr = "Windows"}}
+			{{- else if eq .OS "linux" -}}
+				{{$osStr = "Linux"}}
+			{{- else if eq .OS "darwin" -}}
+				{{$osStr = "Darwin"}}
+			{{- end -}}
+
+			{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}`,
+		})
 	return tools
 }
