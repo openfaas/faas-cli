@@ -1,10 +1,13 @@
 package proxy
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"os/user"
 	"strings"
 	"time"
 
@@ -23,36 +26,95 @@ func FunctionStoreList(store string) ([]v2.StoreFunction, error) {
 
 	store = strings.TrimRight(store, "/")
 
+	err := ReadJSON(context.TODO(), store, &storeResults)
+	if err != nil {
+		return nil, fmt.Errorf("cannot read result from OpenFaaS store at URL: %s", store)
+	}
+
+	return storeResults.Functions, nil
+}
+
+// ReadJSON reads a JSON file from a URL or local file
+func ReadJSON(ctx context.Context, location string, dest interface{}) error {
+	var body io.ReadCloser
+	var err error
+
 	timeout := 60 * time.Second
 	tlsInsecure := false
 
-	client := MakeHTTPClient(&timeout, tlsInsecure)
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 
-	res, err := client.Get(store)
-	if err != nil {
-		return nil, fmt.Errorf("cannot connect to OpenFaaS store at URL: %s", store)
-	}
+	scheme := determineScheme(location)
+	switch scheme {
+	case "http", "https":
+		client := MakeHTTPClient(&timeout, tlsInsecure)
 
-	if res.Body != nil {
-		defer res.Body.Close()
-	}
-
-	switch res.StatusCode {
-	case http.StatusOK:
-		bytesOut, err := io.ReadAll(res.Body)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, location, nil)
 		if err != nil {
-			return nil, fmt.Errorf("cannot read result from OpenFaaS store at URL: %s", store)
+			return fmt.Errorf("cannot create request to: %s", location)
 		}
 
-		jsonErr := json.Unmarshal(bytesOut, &storeResults)
-		if jsonErr != nil {
-			return nil, fmt.Errorf("cannot parse result from OpenFaaS store at URL: %s\n%s", store, jsonErr.Error())
+		res, err := client.Do(req)
+		if err != nil {
+			return fmt.Errorf("cannot connect to: %s", location)
 		}
+		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			return fmt.Errorf("server returned unexpected status code: %d", res.StatusCode)
+		}
+
+		body = res.Body
+	case "file":
+		location, err = expandTilde(location)
+		if err != nil {
+			return err
+		}
+
+		body, err = os.Open(location)
+		if err != nil {
+			return fmt.Errorf("cannot read file: %s", location)
+		}
+
+	// Add more schemes such as s3:// or gs://
 	default:
-		bytesOut, err := io.ReadAll(res.Body)
-		if err == nil {
-			return nil, fmt.Errorf("server returned unexpected status code: %d - %s", res.StatusCode, string(bytesOut))
-		}
+		return fmt.Errorf("unsupported scheme: %s", scheme)
 	}
-	return storeResults.Functions, nil
+
+	if body != nil {
+		defer body.Close()
+	}
+
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return fmt.Errorf("cannot read data from: %s", location)
+	}
+
+	return json.Unmarshal(data, dest)
+}
+
+func determineScheme(location string) string {
+	location = strings.ToLower(location)
+	if strings.HasPrefix(location, "http://") {
+		return "http"
+	}
+	if strings.HasPrefix(location, "https://") {
+		return "https"
+	}
+	return "file"
+}
+
+// expandTilde expands a path with a leading tilde to the home directory
+func expandTilde(location string) (string, error) {
+	if !strings.HasPrefix(location, "~") {
+		return location, nil
+	}
+
+	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+
+	return strings.Replace(location, "~", usr.HomeDir, 1), nil
 }

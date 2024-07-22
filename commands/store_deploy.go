@@ -76,7 +76,7 @@ func preRunEStoreDeploy(cmd *cobra.Command, args []string) error {
 
 func runStoreDeploy(cmd *cobra.Command, args []string) error {
 	targetPlatform := getTargetPlatform(platformValue)
-	storeItems, err := storeList(storeAddress)
+	storeItems, err := proxy.FunctionStoreList(storeAddress)
 	if err != nil {
 		return err
 	}
