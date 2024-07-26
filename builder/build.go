@@ -80,11 +80,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 			tarPath := path.Join(tempDir, "req.tar")
 
-			if err := makeTar(builderConfig{Image: imageName, BuildArgs: buildArgMap}, path.Join("build", functionName), tarPath); err != nil {
+			if err := makeTar(buildConfig{Image: imageName, BuildArgs: buildArgMap}, path.Join("build", functionName), tarPath); err != nil {
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
-			res, err := callBuilder(tarPath, tempPath, remoteBuilder, functionName, payloadSecretPath)
+			res, err := callBuilder(tarPath, remoteBuilder, functionName, payloadSecretPath)
 			if err != nil {
 				return err
 			}

@@ -26,9 +26,11 @@ import (
 	hmac "github.com/alexellis/hmac/v2"
 )
 
-type builderConfig struct {
+type buildConfig struct {
 	Image     string            `json:"image"`
+	Frontend  string            `json:"frontend,omitempty"`
 	BuildArgs map[string]string `json:"buildArgs,omitempty"`
+	Platforms []string          `json:"platforms,omitempty"`
 }
 
 type builderResult struct {
@@ -87,11 +89,13 @@ func PublishImage(image string, handler string, functionName string, language st
 
 			tarPath := path.Join(tempDir, "req.tar")
 
-			if err := makeTar(builderConfig{Image: imageName, BuildArgs: buildArgMap}, path.Join("build", functionName), tarPath); err != nil {
+			builderPlatforms := strings.Split(platforms, ",")
+
+			if err := makeTar(buildConfig{Image: imageName, BuildArgs: buildArgMap, Platforms: builderPlatforms}, path.Join("build", functionName), tarPath); err != nil {
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
-			res, err := callBuilder(tarPath, tempPath, remoteBuilder, functionName, payloadSecretPath)
+			res, err := callBuilder(tarPath, remoteBuilder, functionName, payloadSecretPath)
 			if err != nil {
 				return err
 			}
@@ -200,7 +204,7 @@ func applyTag(index int, baseImage, tag string) string {
 	return fmt.Sprintf("%s:%s", baseImage[:index], tag)
 }
 
-func makeTar(buildConfig builderConfig, base, tarPath string) error {
+func makeTar(buildConfig buildConfig, base, tarPath string) error {
 	configBytes, _ := json.Marshal(buildConfig)
 	if err := os.WriteFile(path.Join(base, BuilderConfigFilename), configBytes, 0664); err != nil {
 		return err
@@ -251,7 +255,7 @@ func makeTar(buildConfig builderConfig, base, tarPath string) error {
 	return err
 }
 
-func callBuilder(tarPath, tempPath, builderAddress, functionName, payloadSecretPath string) (*http.Response, error) {
+func callBuilder(tarPath, builderAddress, functionName, payloadSecretPath string) (*http.Response, error) {
 
 	payloadSecret, err := os.ReadFile(payloadSecretPath)
 	if err != nil {
@@ -280,7 +284,7 @@ func callBuilder(tarPath, tempPath, builderAddress, functionName, payloadSecretP
 	r.Header.Set("X-Build-Signature", "sha256="+hex.EncodeToString(digest))
 	r.Header.Set("Content-Type", "application/octet-stream")
 
-	log.Printf("%s invoking the API for build at %s ", functionName, builderAddress)
+	log.Printf("%s invoking the API for build at %s", functionName, builderAddress)
 	res, err := http.DefaultClient.Do(r)
 	if err != nil {
 		return nil, err

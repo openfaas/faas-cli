@@ -171,27 +171,29 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Ran qemu-user-static --reset. OK.\n")
 	}
 
-	task := v2execute.ExecTask{
-		Command: "docker",
-		Args: []string{"buildx",
-			"create",
-			"--use",
-			"--name=multiarch",
-			"--node=multiarch"},
-		StreamStdio: false,
-		Env:         []string{"DOCKER_CLI_EXPERIMENTAL=enabled"},
-	}
+	if len(remoteBuilder) == 0 {
+		task := v2execute.ExecTask{
+			Command: "docker",
+			Args: []string{"buildx",
+				"create",
+				"--use",
+				"--name=multiarch",
+				"--node=multiarch"},
+			StreamStdio: false,
+			Env:         []string{"DOCKER_CLI_EXPERIMENTAL=enabled"},
+		}
 
-	res, err := task.Execute(cmd.Context())
-	if err != nil {
-		return err
-	}
+		res, err := task.Execute(cmd.Context())
+		if err != nil {
+			return err
+		}
 
-	if res.ExitCode != 0 {
-		return fmt.Errorf("non-zero exit code: %d, stderr: %s", res.ExitCode, res.Stderr)
-	}
+		if res.ExitCode != 0 {
+			return fmt.Errorf("non-zero exit code: %d, stderr: %s", res.ExitCode, res.Stderr)
+		}
 
-	fmt.Printf("Created buildx node: \"multiarch\"\n")
+		fmt.Printf("Created buildx node: \"multiarch\"\n")
+	}
 
 	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
 		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
