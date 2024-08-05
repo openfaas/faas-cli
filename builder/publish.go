@@ -61,7 +61,18 @@ func PublishImage(image string, handler string, functionName string, language st
 			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
-		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
+		// To avoid breaking the CLI for custom templates that do not set the language attribute
+		// we ensure it is always set.
+		//
+		// While templates are expected to have the language in `template.yaml` set to the same name as the template folder
+		// this was never enforced.
+		langTemplate.Language = language
+
+		if isDockerfileTemplate(langTemplate.Language) {
+			langTemplate = nil
+		}
+
+		tempPath, err := CreateBuildContext(functionName, handler, langTemplate, copyExtraPaths)
 		if err != nil {
 			return err
 		}

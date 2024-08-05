@@ -52,7 +52,18 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
-		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
+		// To avoid breaking the CLI for custom templates that do not set the language attribute
+		// we ensure it is always set.
+		//
+		// While templates are expected to have the language in `template.yaml` set to the same name as the template folder
+		// this was never enforced.
+		langTemplate.Language = language
+
+		if isDockerfileTemplate(langTemplate.Language) {
+			langTemplate = nil
+		}
+
+		tempPath, err := CreateBuildContext(functionName, handler, langTemplate, copyExtraPaths)
 		if err != nil {
 			return err
 		}
@@ -303,8 +314,17 @@ func isRunningInCI() bool {
 	return false
 }
 
-// createBuildContext creates temporary build folder to perform a Docker build with language template
-func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string, copyExtraPaths []string) (string, error) {
+// CreateBuildContext creates a Docker build context using the provided function handler and language template.
+//
+// Parameters:
+//   - functionName: the name of the function.
+//   - handler: path to the function handler folder.
+//   - template: function language template to use. Set to nil if no template is required (e.g. the handler folder is the build context with Dockerfile).
+//   - copyExtraPaths: additional path to copy into the function handler folder. Paths should be relative to the current directory.
+//     Any path outside of this current directory will be skipped.
+//
+// Returns the path to the new build context. An error is returned if creating the build context fails.
+func CreateBuildContext(functionName string, handler string, template *stack.LanguageTemplate, copyExtraPaths []string) (string, error) {
 	tempPath := fmt.Sprintf("./build/%s/", functionName)
 
 	if err := os.RemoveAll(tempPath); err != nil {
@@ -313,15 +333,18 @@ func createBuildContext(functionName string, handler string, language string, us
 
 	functionPath := tempPath
 
-	if useFunction {
-		if handlerFolder == "" {
-			functionPath = path.Join(functionPath, defaultHandlerFolder)
-		} else {
-			functionPath = path.Join(functionPath, handlerFolder)
-		}
+	useTemplate := false
+	if template != nil {
+		useTemplate = true
 	}
 
-	// fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
+	if useTemplate {
+		if len(template.HandlerFolder) > 0 {
+			functionPath = path.Join(functionPath, template.HandlerFolder)
+		} else {
+			functionPath = path.Join(functionPath, defaultHandlerFolder)
+		}
+	}
 
 	if isRunningInCI() {
 		defaultDirPermissions = 0777
@@ -333,8 +356,8 @@ func createBuildContext(functionName string, handler string, language string, us
 		return tempPath, mkdirErr
 	}
 
-	if useFunction {
-		if err := CopyFiles(path.Join("./template/", language), tempPath); err != nil {
+	if useTemplate {
+		if err := CopyFiles(path.Join("./template/", template.Language), tempPath); err != nil {
 			fmt.Printf("Error copying template directory: %s.\n", err.Error())
 			return tempPath, err
 		}
@@ -350,6 +373,7 @@ func createBuildContext(functionName string, handler string, language string, us
 
 	for _, info := range infos {
 		switch info.Name() {
+		// Ignore the build and template folder.
 		case "build", "template":
 			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
 			continue
@@ -368,16 +392,12 @@ func createBuildContext(functionName string, handler string, language string, us
 		if err != nil {
 			return tempPath, err
 		}
-		// Note that if useFunction is false, ie is a `dockerfile` template, then
+
+		// Note that if template is nil, i.e. is a `dockerfile` template, then
 		// functionPath == tempPath, the docker build context, not the `function` handler folder
 		// inside the docker build context
-		copyErr := CopyFiles(
-			extraPathAbs,
-			filepath.Clean(path.Join(functionPath, extraPath)),
-		)
-
-		if copyErr != nil {
-			return tempPath, copyErr
+		if err := CopyFiles(extraPathAbs, filepath.Clean(path.Join(functionPath, extraPath))); err != nil {
+			return tempPath, err
 		}
 	}
 
@@ -516,6 +536,6 @@ func deDuplicate(buildOptPackages []string) []string {
 	return retPackages
 }
 
-func isLanguageTemplate(language string) bool {
-	return strings.ToLower(language) != "dockerfile"
+func isDockerfileTemplate(language string) bool {
+	return strings.ToLower(language) == "dockerfile"
 }
