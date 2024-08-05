@@ -9,23 +9,22 @@ import (
 	"github.com/openfaas/faas-cli/stack"
 )
 
-func Test_isLanguageTemplate_Dockerfile(t *testing.T) {
+func Test_isDockerfileTemplate_Dockerfile(t *testing.T) {
 
 	language := "Dockerfile"
 
-	want := false
-	got := isLanguageTemplate(language)
+	want := true
+	got := isDockerfileTemplate(language)
 	if got != want {
 		t.Errorf("language: %s got %v, want %v", language, got, want)
 	}
 }
 
-func Test_isLanguageTemplate_Node(t *testing.T) {
-
+func Test_isDockerfileTemplate_Node(t *testing.T) {
 	language := "node"
 
-	want := true
-	got := isLanguageTemplate(language)
+	want := false
+	got := isDockerfileTemplate(language)
 	if got != want {
 		t.Errorf("language: %s got %v, want %v", language, got, want)
 	}
