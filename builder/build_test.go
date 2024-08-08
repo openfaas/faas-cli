@@ -302,7 +302,8 @@ func Test_buildFlagSlice(t *testing.T) {
 
 		t.Run(test.title, func(t *testing.T) {
 
-			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap)
+			forcePull := false
+			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap, forcePull)
 			fmt.Println(flagSlice)
 			if len(flagSlice) != len(test.expectedSlice) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))

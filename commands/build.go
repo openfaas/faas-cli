@@ -37,6 +37,7 @@ var (
 	envsubst         bool
 	quietBuild       bool
 	disableStackPull bool
+	forcePull        bool
 )
 
 func init() {
@@ -59,6 +60,7 @@ func init() {
 	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
 	buildCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
 	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
+	buildCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -80,7 +82,8 @@ var buildCmd = &cobra.Command{
                  [--build-arg KEY=VALUE]
                  [--build-option VALUE]
                  [--copy-extra PATH]
-                 [--tag <sha|branch|describe>]`,
+                 [--tag <sha|branch|describe>]
+				 [--forcePull]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
@@ -207,6 +210,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			copyExtra,
 			remoteBuilder,
 			payloadSecretPath,
+			forcePull,
 		); err != nil {
 			return err
 		}
@@ -263,6 +267,7 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						combinedExtraPaths,
 						remoteBuilder,
 						payloadSecretPath,
+						forcePull,
 					)
 
 					if err != nil {

@@ -30,7 +30,7 @@ const AdditionalPackageBuildArg = "ADDITIONAL_PACKAGE"
 
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, remoteBuilder, payloadSecretPath string, forcePull bool) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -127,6 +127,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 				BuildArgMap:      buildArgMap,
 				BuildOptPackages: buildOptPackages,
 				BuildLabelMap:    buildLabelMap,
+				ForcePull:        forcePull,
 			}
 
 			command, args := getDockerBuildCommand(dockerBuildVal)
@@ -135,6 +136,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			if mountSSH {
 				envs = append(envs, "DOCKER_BUILDKIT=1")
 			}
+			log.Printf("Build flags: %+v\n", args)
 
 			task := v2execute.ExecTask{
 				Cwd:         tempPath,
@@ -260,7 +262,7 @@ func hashFolder(contextPath string) (string, error) {
 }
 
 func getDockerBuildCommand(build dockerBuild) (string, []string) {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap)
+	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap, build.ForcePull)
 	args := []string{"build"}
 	args = append(args, flagSlice...)
 
@@ -287,6 +289,8 @@ type dockerBuild struct {
 
 	// ExtraTags for published images like :latest
 	ExtraTags []string
+
+	ForcePull bool
 }
 
 var defaultDirPermissions os.FileMode = 0700
@@ -409,7 +413,7 @@ func pathInScope(path string, scope string) (string, error) {
 	return "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string) []string {
+func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string, forcePull bool) []string {
 
 	var spaceSafeBuildFlags []string
 
@@ -443,6 +447,10 @@ func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy stri
 
 	for k, v := range buildLabelMap {
 		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--label", fmt.Sprintf("%s=%s", k, v))
+	}
+
+	if forcePull {
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--pull")
 	}
 
 	return spaceSafeBuildFlags

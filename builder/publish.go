@@ -44,7 +44,7 @@ const BuilderConfigFilename = "com.openfaas.docker.config"
 // PublishImage will publish images as multi-arch
 // TODO: refactor signature to a struct to simplify the length of the method header
 func PublishImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string,
-	buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, platforms string, extraTags []string, remoteBuilder, payloadSecretPath string) error {
+	buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, platforms string, extraTags []string, remoteBuilder, payloadSecretPath string, forcePull bool) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -81,6 +81,11 @@ func PublishImage(image string, handler string, functionName string, language st
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
+
+			if forcePull {
+				return fmt.Errorf("--pull is not supported with --remote-builder")
+			}
+
 			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")
 			if err != nil {
 				return fmt.Errorf("failed to create temporary directory for %s, error: %w", functionName, err)
@@ -139,6 +144,7 @@ func PublishImage(image string, handler string, functionName string, language st
 				BuildLabelMap:    buildLabelMap,
 				Platforms:        platforms,
 				ExtraTags:        extraTags,
+				ForcePull:        forcePull,
 			}
 
 			command, args := getDockerBuildxCommand(dockerBuildVal)
@@ -173,7 +179,7 @@ func PublishImage(image string, handler string, functionName string, language st
 
 func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap,
-		build.BuildOptPackages, build.BuildLabelMap)
+		build.BuildOptPackages, build.BuildLabelMap, build.ForcePull)
 
 	// pushOnly defined at https://github.com/docker/buildx
 	const pushOnly = "--output=type=registry,push=true"
