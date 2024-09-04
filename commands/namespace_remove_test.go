@@ -3,7 +3,7 @@ package commands
 import "testing"
 
 func Test_preDeleteNamespace_NoArgs_Fails(t *testing.T) {
-	res := preDeleteNamespace(nil, []string{})
+	res := preRemoveNamespace(nil, []string{})
 
 	want := "namespace name required"
 	if res.Error() != want {
@@ -12,7 +12,7 @@ func Test_preDeleteNamespace_NoArgs_Fails(t *testing.T) {
 }
 
 func Test_preDeleteNamespace_MoreThan1Arg_Fails(t *testing.T) {
-	res := preDeleteNamespace(nil, []string{
+	res := preRemoveNamespace(nil, []string{
 		"secret1",
 		"secret2",
 	})
@@ -24,7 +24,7 @@ func Test_preDeleteNamespace_MoreThan1Arg_Fails(t *testing.T) {
 }
 
 func Test_preDeleteNamespace_ExtactlyOneArgIsFine(t *testing.T) {
-	res := preDeleteNamespace(nil, []string{
+	res := preRemoveNamespace(nil, []string{
 		"namespace1",
 	})
 

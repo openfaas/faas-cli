@@ -15,7 +15,7 @@ import (
 
 var secretRemoveCmd = &cobra.Command{
 	Use:     "remove [--tls-no-verify]",
-	Aliases: []string{"rm"},
+	Aliases: []string{"rm", "delete"},
 	Short:   "remove a secret",
 	Long:    `Remove a secret by name`,
 	Example: `faas-cli secret remove NAME

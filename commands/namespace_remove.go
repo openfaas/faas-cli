@@ -10,20 +10,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var namespaceDeleteCmd = &cobra.Command{
-	Use:     `delete NAME`,
-	Short:   "Delete existing namespace",
-	Long:    "Delete existing namespace",
-	Example: `  faas-cli namespace delete NAME`,
-	RunE:    deleteNamespace,
-	PreRunE: preDeleteNamespace,
+var namespaceRemoveCmd = &cobra.Command{
+	Use:     `remove NAME`,
+	Short:   "Remove existing namespace",
+	Long:    "Remove existing namespace",
+	Example: `  faas-cli namespace remove NAME`,
+	Aliases: []string{"rm", "delete"},
+	RunE:    removeNamespace,
+	PreRunE: preRemoveNamespace,
 }
 
 func init() {
-	namespaceCmd.AddCommand(namespaceDeleteCmd)
+	namespaceCmd.AddCommand(namespaceRemoveCmd)
 }
 
-func preDeleteNamespace(cmd *cobra.Command, args []string) error {
+func preRemoveNamespace(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("namespace name required")
 	}
@@ -35,7 +36,7 @@ func preDeleteNamespace(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func deleteNamespace(cmd *cobra.Command, args []string) error {
+func removeNamespace(cmd *cobra.Command, args []string) error {
 	client, err := GetDefaultSDKClient()
 	if err != nil {
 		return err
@@ -48,7 +49,7 @@ func deleteNamespace(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Printf("Namespace Deleted: %s\n", ns)
+	fmt.Printf("Namespace Removed: %s\n", ns)
 
 	return nil
 }
