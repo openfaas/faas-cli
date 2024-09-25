@@ -75,7 +75,7 @@ var publishCmd = &cobra.Command{
                    [--build-option VALUE]
                    [--copy-extra PATH]
                    [--tag <sha|branch|describe>]
-                   [--platforms linux/arm/v7]
+                   [--platforms linux/amd64,linux/arm64]
                    [--reset-qemu]
                    [--remote-builder http://127.0.0.1:8081/build]`,
 	Short: "Builds and pushes multi-arch OpenFaaS container images",
@@ -90,8 +90,8 @@ Docker and buildx. You must use a multi-arch template to use this command with
 correctly configured TARGETPLATFORM and BUILDPLATFORM arguments.
 
 See also: faas-cli build`,
-	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64,linux/arm/7
-  faas-cli publish --platforms linux/arm/7 --filter webhook
+	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64
+  faas-cli publish --platforms linux/arm64 --filter webhook-arm
   faas-cli publish -f go.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
