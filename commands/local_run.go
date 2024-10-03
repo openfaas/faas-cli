@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -58,9 +60,12 @@ services deployed within your OpenFaaS cluster.`,
   # Run on a custom port
   faas-cli local-run stronghash --port 8081
 
+  # Run on a random port
+  faas-cli local-run -p 0
+
   # Use a custom YAML file other than stack.yml
   faas-cli local-run stronghash -f ./stronghash.yml
-		`,
+`,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return fmt.Errorf("only one function name is allowed")
@@ -77,7 +82,7 @@ services deployed within your OpenFaaS cluster.`,
 
 	cmd.Flags().BoolVar(&opts.print, "print", false, "Print the docker command instead of running it")
 	cmd.Flags().BoolVar(&opts.build, "build", true, "Build function prior to local-run")
-	cmd.Flags().IntVarP(&opts.port, "port", "p", 8080, "port to bind the function to")
+	cmd.Flags().IntVarP(&opts.port, "port", "p", 8080, "port to bind the function to, set to \"0\" to use a random port")
 	cmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'sha', 'branch', or 'describe', or 'latest'")
 
 	cmd.Flags().StringVar(&opts.network, "network", "", "connect function to an existing network, use 'host' to access other process already running on localhost. When using this, '--port' is ignored, if you have port collisions, you may change the port using '-e port=NEW_PORT'")
@@ -123,7 +128,7 @@ func localRunExec(cmd *cobra.Command, args []string, ctx context.Context) error 
 		name = args[0]
 	}
 
-	return runFunction(ctx, name, opts, args)
+	return runFunction(ctx, name, opts)
 
 }
 
@@ -149,7 +154,7 @@ func localBuild(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func runFunction(ctx context.Context, name string, opts runOptions, args []string) error {
+func runFunction(ctx context.Context, name string, opts runOptions) error {
 	var services *stack.Services
 
 	if len(name) == 0 {
@@ -208,6 +213,14 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 
 	// Enable local jwt auth by default
 	opts.extraEnv["jwt_auth_local"] = "true"
+
+	if opts.port == 0 {
+		randomPort, err := getPort()
+		if err != nil {
+			return err
+		}
+		opts.port = randomPort
+	}
 
 	cmd, err := buildDockerRun(ctx, name, function, opts)
 	if err != nil {
@@ -268,6 +281,27 @@ func runFunction(ctx context.Context, name string, opts runOptions, args []strin
 	})
 
 	return errGrp.Wait()
+}
+
+func getPort() (int, error) {
+
+	l, err := net.Listen("tcp", ":0")
+	if err != nil {
+		return 0, err
+	}
+
+	l.Close()
+
+	_, port, err := net.SplitHostPort(l.Addr().String())
+	if err != nil {
+		return 0, err
+	}
+
+	if port != "" {
+		return strconv.Atoi(port)
+	}
+
+	return 0, fmt.Errorf("unable to get a port")
 }
 
 func removeContainer(name string) {
