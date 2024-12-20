@@ -1,7 +1,7 @@
-FROM ghcr.io/openfaas/license-check:0.4.1 as license-check
+FROM ghcr.io/openfaas/license-check:0.4.2 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.22 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.23 as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
@@ -40,7 +40,7 @@ RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 \
    -o faas-cli
 
 # CICD stage
-FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.20.0 as root
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.21.0 as root
 
 ARG REPO_URL
 
@@ -57,7 +57,7 @@ ENV PATH=$PATH:/usr/bin/
 ENTRYPOINT [ "faas-cli" ]
 
 # Release stage
-FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.20.0 as release
+FROM --platform=${TARGETPLATFORM:-linux/amd64} alpine:3.21.0 as release
 
 ARG REPO_URL
 
