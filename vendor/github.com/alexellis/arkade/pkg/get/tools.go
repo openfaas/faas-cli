@@ -403,6 +403,29 @@ https://dl.k8s.io/release/{{.Version}}/bin/{{$os}}/{{$arch}}/kubectl{{$ext}}`})
 	tools = append(tools,
 		Tool{
 			Owner:       "alexellis",
+			Repo:        "kubetrim",
+			Name:        "kubetrim",
+			Description: "Tidy up old Kubernetes clusters from kubeconfig.",
+			BinaryTemplate: `{{ if HasPrefix .OS "ming" -}}
+				{{.Name}}.exe.tgz
+				{{- else if eq .OS "darwin" -}}
+					{{ if eq .Arch "arm64" -}}
+					{{.Name}}-darwin-arm64.tgz
+					{{- else -}}
+					{{.Name}}-darwin.tgz
+					{{- end -}}
+				{{- else if eq .Arch "armv7l" -}}
+				{{.Name}}-armhf.tgz
+				{{- else if eq .Arch "aarch64" -}}
+				{{.Name}}-arm64.tgz
+				{{- else -}}
+				{{.Name}}.tgz
+				{{- end -}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "alexellis",
 			Repo:        "run-job",
 			Name:        "run-job",
 			Description: "Run a Kubernetes Job and get the logs when it's done.",
@@ -1396,6 +1419,9 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
   {{- end }}
 {{- else if eq .OS "darwin" -}}
 {{$osStr = "darwin"}}
+{{- if eq .Arch "arm64" -}}
+{{ $arch = "aarch64"}}
+{{- end -}}
 {{- end -}}
 {{$ext := ""}}
 {{ if HasPrefix .OS "ming" -}}
@@ -1942,9 +1968,11 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			Repo:        "k0sctl",
 			Name:        "k0sctl",
 			Description: "A bootstrapping and management tool for k0s clusters",
-			BinaryTemplate: `{{$arch := "x64"}}
-	{{- if eq .Arch "aarch64" -}}
+			BinaryTemplate: `{{$arch := "amd64"}}
+	{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 	{{$arch = "arm64"}}
+	{{- else if eq .Arch "armv7l" -}}
+	{{$arch = "arm"}}
 	{{- end -}}
 
 	{{$os := .OS}}
@@ -3017,9 +3045,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{$ext = ".zip"}}
 				{{- end -}}
 
-				{{- if eq .Arch "x86_64" -}}
-				{{$arch = "amd64"}}
-				{{- else if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+				{{- if eq .Arch "aarch64" -}}
 				{{$arch = "arm64"}}
 				{{- end -}}
 
@@ -3146,16 +3172,14 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 					{{$arch = "arm64"}}
 					{{- end -}}
 
-					{{$osStr := ""}}
+					{{$osStr := .OS}}
 					{{ if HasPrefix .OS "ming" -}}
-						{{$osStr = "Windows"}}
-					{{- else if eq .OS "linux" -}}
-						{{$osStr = "Linux"}}
+						{{$osStr = "windows"}}
 					{{- else if eq .OS "darwin" -}}
-						{{$osStr = "Darwin"}}
+						{{$osStr = "macos"}}
 					{{- end -}}
 
-					{{.Name}}_{{$osStr}}_{{$arch}}.{{$ext}}
+					{{.Name}}-{{.Version}}-{{$osStr}}-{{$arch}}.{{$ext}}
 					`,
 		})
 
@@ -3346,11 +3370,9 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{$ext = ".exe"}}
 				{{- end -}}
 
-				clusterawsadm_{{.Version}}_{{$os}}_{{$arch}}{{$ext}}
+				clusterawsadm-{{$os}}-{{$arch}}{{$ext}}
 				`,
 		})
-	// https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.5.0/clusterawsadm-v2.5.0-linux_amd64
-	// https://github.com/kubernetes-sigs/cluster-api-provider-aws/releases/download/v2.5.0/clusterawsadm_v2.5.0_linux_amd64
 	tools = append(tools,
 		Tool{
 			Owner:       "schollz",
@@ -4184,6 +4206,266 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			{{- end -}}
 
 			{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "keploy",
+			Repo:        "keploy",
+			Name:        "keploy",
+			Description: "Test generation for Developers. Generate tests and stubs for your application that actually work!",
+			BinaryTemplate: `
+						{{ $os := .OS }}
+						{{ $arch := .Arch }}
+						{{ $ext := "tar.gz" }}
+
+						{{- if eq .Arch "aarch64" -}}
+							{{$arch = "arm64"}}
+						{{- else if eq .Arch "arm64" -}}
+							{{ $arch = "arm64" }}
+						{{- else if eq .Arch "x86_64" -}}
+							{{ $arch = "amd64" }}
+						{{- end -}}
+
+						{{ if HasPrefix .OS "ming" -}}
+							{{$os = "windows"}}
+							{{ $ext := "tar.gz" }}
+						
+						{{- end -}}
+						
+						{{- if eq .OS "darwin" -}}
+							{{$os = "darwin"}}
+							{{$arch = "all"}}
+						{{- else if eq .OS "linux" -}}
+							{{ $os = "linux" }}
+						{{- end -}}
+
+						keploy_{{$os}}_{{$arch}}.{{$ext}}
+						`,
+		})
+	tools = append(tools,
+		Tool{
+			Owner:       "iximiuz",
+			Repo:        "labctl",
+			Name:        "labctl",
+			Description: "iximiuz Labs control - start remote microVM playgrounds from the command line.",
+			BinaryTemplate: `
+							{{ $os := .OS }}
+							{{ $arch := .Arch }}
+							{{ $ext := "tar.gz" }}
+	
+							{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+							    {{ $arch = "arm64" }}
+							{{- else if eq .Arch "x86_64" -}}
+								{{ $arch = "amd64" }}
+							{{- end -}}
+							
+							{{- if eq .OS "darwin" -}}
+								{{$os = "darwin"}}
+							{{- else if eq .OS "linux" -}}
+								{{ $os = "linux" }}
+							{{- end -}}
+	
+							labctl_{{$os}}_{{$arch}}.{{$ext}}
+							`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "gitlab-org",
+			Repo:            "cli",
+			Name:            "glab",
+			Description:     "A GitLab CLI tool bringing GitLab to your command line.",
+			VersionStrategy: GitLabVersionStrategy,
+			URLTemplate: `
+			{{ $osStr := .OS }}
+            {{ $arch := .Arch }}
+			{{ $extStr := "tar.gz" }}
+
+            {{- if eq .Arch "x86_64" -}}
+            {{$arch = "amd64"}}
+            {{- else if eq .Arch "armv6l" -}}
+            {{$arch = "armv6"}}
+            {{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+			{{$arch = "arm64"}}
+            {{- end -}}
+
+            {{- if HasPrefix .OS "ming" -}}
+            {{$osStr = "windows"}}
+			{{$extStr = "zip"}}
+            {{- end -}}
+
+            https://gitlab.com/{{.Owner}}/{{.Repo}}/-/releases/{{.Version}}/downloads/{{.Name}}_{{.VersionNumber}}_{{$osStr}}_{{$arch}}.{{$extStr}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "Telemaco019",
+			Repo:        "duplik8s",
+			Name:        "duplik8s",
+			Description: "kubectl plugin to duplicate resources in a Kubernetes cluster.",
+			BinaryTemplate: `
+							{{ $os := .OS }}
+							{{ $arch := .Arch }}
+							{{ $ext := "tar.gz" }}
+	
+							{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+							    {{ $arch = "arm64" }}
+							{{- end -}}
+	
+							{{ if HasPrefix .OS "ming" -}}
+								{{$os = "Windows"}}
+								{{ $ext = "zip" }}
+							{{- end -}}
+							
+							{{- if eq .OS "darwin" -}}
+								{{$os = "Darwin"}}
+							{{- else if eq .OS "linux" -}}
+								{{ $os = "Linux" }}
+							{{- end -}}
+	
+							duplik8s_{{$os}}_{{$arch}}.{{$ext}}
+							`,
+		})
+	tools = append(tools,
+		Tool{
+			Owner:           "crossplane",
+			Repo:            "crossplane",
+			Name:            "crossplane",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "Simplify some development and administration aspects of Crossplane.",
+			URLTemplate: `
+					{{$arch := .Arch}}
+					{{$ext := "" }}
+					{{- if (or (eq .Arch "x86_64") (eq .Arch "amd64")) -}}
+						{{$arch = "amd64"}}
+					{{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+						{{$arch = "arm64"}}
+					{{- else if eq .Arch "armv7l" -}}
+						{{ $arch = "arm" }}
+					{{- end -}}
+					
+					{{$os := .OS}}
+					{{ if HasPrefix .OS "ming" -}}
+					{{$ext = ".exe" }}
+					{{$os = "windows"}}
+					{{- end -}}
+					
+					https://releases.crossplane.io/stable/{{.Version}}/bin/{{$os}}_{{$arch}}/crank{{$ext}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "openshift",
+			Repo:            "rosa",
+			Name:            "rosa",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "Red Hat OpenShift on AWS (ROSA) command line tool",
+			BinaryTemplate: `
+							{{$os := .OS}}
+							{{$arch := .Arch}}
+							{{$ext := "tar.gz"}}
+				
+							{{- if eq .OS "darwin" -}}
+								{{$os = "Darwin"}}
+							{{- else if eq .OS "linux" -}}
+								{{$os = "Linux"}}
+							{{- else if HasPrefix .OS "ming" -}}
+								{{$os = "Windows"}}
+								{{$ext = "zip"}}
+							{{- end -}}
+		
+							{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+								{{$arch = "arm64"}}
+							{{- end -}}
+		
+						rosa_{{$os}}_{{$arch}}.{{$ext}}
+						`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "sbstp",
+			Repo:            "kubie",
+			Name:            "kubie",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "A more powerful alternative to kubectx and kubens",
+			BinaryTemplate: `
+								{{$os := .OS}}
+								{{$arch := .Arch}}
+			
+								{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+									{{$arch = "arm64"}}
+								{{- else if eq .Arch "x86_64" -}}
+                                    {{$arch = "amd64"}}
+								{{- else if eq .Arch "armv7l" -}}
+                                    {{$arch = "arm32"}}
+								{{- end -}}
+			
+							kubie-{{$os}}-{{$arch}}
+							`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "awslabs",
+			Repo:            "eks-node-viewer",
+			Name:            "eks-node-viewer",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "eks-node-viewer is a tool for visualizing dynamic node usage within an EKS cluster.",
+			BinaryTemplate: `
+									{{$os := .OS}}
+									{{$arch := .Arch}}
+									{{$ext := ""}}
+
+									{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+										{{$arch = "arm64"}}
+									{{- end -}}
+						
+									{{- if eq .OS "darwin" -}}
+										{{$os = "Darwin"}}
+										{{$arch = "all"}}
+									{{- else if eq .OS "linux" -}}
+										{{$os = "Linux"}}
+									{{- else if HasPrefix .OS "ming" -}}
+										{{$os = "Windows"}}
+										{{$ext = ".exe"}}
+									{{- end -}}
+				
+								eks-node-viewer_{{$os}}_{{$arch}}{{$ext}}
+								`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "rclone",
+			Repo:            "rclone",
+			Name:            "rclone",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "'rsync for cloud storage' - Google Drive, S3, Dropbox, Backblaze B2, One Drive, Swift, Hubic, Wasabi, Google Cloud Storage, Azure Blob, Azure Files, Yandex Files",
+			BinaryTemplate: `
+								{{$os := .OS}}
+								{{$arch := .Arch}}
+								{{$ext := "zip"}}
+					
+								{{- if eq .OS "darwin" -}}
+									{{$os = "osx"}}
+								{{- else if eq .OS "linux" -}}
+									{{$os = "linux"}}
+								{{- else if HasPrefix .OS "ming" -}}
+									{{$os = "windows"}}
+								{{- end -}}
+			
+								{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+									{{$arch = "arm64"}}
+								{{- else if eq .Arch "x86_64" -}}
+                                    {{$arch = "amd64"}}
+								{{- else if eq .Arch "armv7l" -}}
+                                    {{$arch = "arm-v7"}}
+								{{- end -}}
+			
+							rclone-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}
+							`,
 		})
 	return tools
 }

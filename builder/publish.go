@@ -110,7 +110,7 @@ func PublishImage(image string, handler string, functionName string, language st
 
 			result := builderResult{}
 			if err := json.Unmarshal(data, &result); err != nil {
-				return err
+				return fmt.Errorf("error: %s, unable to unmarshal: %q", err, string(data))
 			}
 
 			if !quietBuild {

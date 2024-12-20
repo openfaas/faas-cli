@@ -43,6 +43,7 @@ func ExchangeIDToken(tokenURL, rawIDToken string, options ...ExchangeOption) (*T
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", "openfaas-go-sdk")
 
 	if os.Getenv("FAAS_DEBUG") == "1" {
 		dump, err := dumpRequest(req)

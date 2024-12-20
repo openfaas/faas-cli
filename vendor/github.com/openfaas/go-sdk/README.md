@@ -214,6 +214,75 @@ client := sdk.NewClientWithOpts(
 )
 ```
 
+## Build functions
+
+Use the OpenFaaS [OpenFaaS Function Builder API](https://docs.openfaas.com/openfaas-pro/builder/) to build functions from code.
+
+The Function Builder API provides a simple REST API to create your functions from source code. The API accepts a tar archive with the function build context and build configuration. The SDk provides methods to create this tar archive and invoke the build API.
+
+If your functions are using a language template you will need to make sure the required templates are available on the file system. How this is done is up to your implementation. Templates can be pulled from a git repository, copied from an S3 bucket, downloaded with an http call or fetched with the faas-cli.
+
+```go
+functionName := "hello-world"
+handler := "./hello-world"
+lang := "node18"
+
+// Get the HMAC secret used for payload authentication with the builder API.
+payloadSecret, err := os.ReadFile("payload.txt")
+if err != nil {
+	log.Fatal(err)
+}
+payloadSecret := bytes.TrimSpace(payloadSecret)
+
+// Initialize a new builder client.
+builderURL, _ := url.Parse("http://pro-builder.openfaas.svc.cluster.local")
+b := builder.NewFunctionBuilder(builderURL, http.DefaultClient, builder.WithHmacAuth(string(payloadSecret)))
+
+// Create the function build context using the provided function handler and language template.
+buildContext, err := builder.CreateBuildContext(functionName, handler, lang, []string{})
+if err != nil {
+	log.Fatalf("failed to create build context: %s", err)
+}
+
+// Create a temporary file for the build tar.
+tarFile, err := os.CreateTemp(os.TempDir(), "build-context-*.tar")
+if err != nil {
+	log.Fatalf("failed to temporary file: %s", err)
+}
+tarFile.Close()
+
+tarPath := tarFile.Name()
+defer os.Remove(tarPath)
+
+// Configuration for the build.
+// Set the image name plus optional build arguments and target platforms for multi-arch images.
+buildConfig := builder.BuildConfig{
+	Image:     image,
+	Platforms: []string{"linux/arm64"},
+	BuildArgs: map[string]string{},
+}
+
+// Prepare a tar archive that contains the build config and build context.
+// The function build context is a normal docker build context. Any valid folder with a Dockerfile will work.
+if err := builder.MakeTar(tarPath, buildContext, &buildConfig); err != nil {
+	log.Fatal(err)
+}
+
+// Invoke the function builder with the tar archive containing the build config and context
+// to build and push the function image.
+result, err := b.Build(tarPath)
+if err != nil {
+	log.Fatal(err)
+}
+
+// Print build logs
+for _, logMsg := range result.Log {
+	fmt.Printf("%s\n", logMsg)
+}
+```
+
+Take a look at the [function builder examples](https://github.com/openfaas/function-builder-examples) for a complete example.
+
 ## License
 
 License: MIT

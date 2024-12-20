@@ -95,6 +95,7 @@ func obtainClientCredentialsToken(clientID, clientSecret, tokenURL, scope, grant
 		return nil, err
 	}
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", "openfaas-go-sdk")
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {

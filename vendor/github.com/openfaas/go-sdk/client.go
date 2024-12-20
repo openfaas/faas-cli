@@ -38,8 +38,13 @@ type Client struct {
 	fnTokenCache TokenCache
 }
 
-// Wrap http request Do function to support debug capabilities
+// Wrap http request Do function to add default headers and support debug capabilities
 func (s *Client) do(req *http.Request) (*http.Response, error) {
+	// Add default user-agent header
+	if len(req.Header.Get("User-Agent")) == 0 {
+		req.Header.Set("User-Agent", "openfaas-go-sdk")
+	}
+
 	if os.Getenv("FAAS_DEBUG") == "1" {
 		dump, err := dumpRequest(req)
 		if err != nil {
