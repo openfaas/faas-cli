@@ -103,7 +103,7 @@ func checkDestinationFiles(dir string, numberOfFiles, mode int) error {
 	// Check each file inside the destination folder
 	for i := 1; i <= numberOfFiles; i++ {
 		fileStat, err := os.Stat(fmt.Sprintf("%s/test-file-%d", dir, i))
-		if os.IsNotExist(err) {
+		if err != nil && os.IsNotExist(err) {
 			return err
 		}
 		if fileStat.Mode() != os.FileMode(mode) {

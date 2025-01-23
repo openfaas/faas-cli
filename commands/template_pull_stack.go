@@ -93,7 +93,7 @@ func filterExistingTemplates(templateInfo []stack.TemplateSource, templatesDir s
 	var newTemplates []stack.TemplateSource
 	for _, info := range templateInfo {
 		templatePath := fmt.Sprintf("%s/%s", templatesDir, info.Name)
-		if _, err := os.Stat(templatePath); os.IsNotExist(err) {
+		if _, err := os.Stat(templatePath); err != nil && os.IsNotExist(err) {
 			newTemplates = append(newTemplates, info)
 		}
 	}

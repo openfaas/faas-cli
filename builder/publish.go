@@ -48,7 +48,7 @@ func PublishImage(image string, handler string, functionName string, language st
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
-		if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+		if _, err := os.Stat(pathToTemplateYAML); err != nil && os.IsNotExist(err) {
 			return err
 		}
 

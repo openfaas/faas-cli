@@ -164,7 +164,7 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	}
 
 	if needTemplates {
-		if _, err := os.Stat("./template"); os.IsNotExist(err) {
+		if _, err := os.Stat("./template"); err != nil && os.IsNotExist(err) {
 
 			return fmt.Errorf(`the "template" directory is missing but required by at least one function`)
 		}

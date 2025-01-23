@@ -234,8 +234,7 @@ func Test_EnsureFile(t *testing.T) {
 	if err != nil {
 		t.Error(err.Error())
 	}
-	_, err = os.Stat(cfg)
-	if os.IsNotExist(err) {
+	if _, err = os.Stat(cfg); err != nil && os.IsNotExist(err) {
 		t.Errorf("expected config at %s", cfg)
 	}
 }
