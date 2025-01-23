@@ -1,7 +1,8 @@
 #!/bin/bash
 
 cli="./bin/faas-cli"
-template="python3"
+
+TEMPLATE_NAME="python3-http"
 
 get_package() {
     uname=$(uname)
@@ -22,21 +23,20 @@ get_package() {
         case $arch in
         "armv6l" | "armv7l")
         cli="./faas-cli-armhf"
-        template="python3-armhf"
         ;;
         esac
     ;;
     esac
 
     echo "Using package $cli"
-    echo "Using template $template"
+    echo "Using template $TEMPLATE_NAME"
 }
 
 build_faas_function() {
 
     function_name=$1
 
-    eval $cli new $function_name --lang $template
+    eval $cli new $function_name --lang $TEMPLATE_NAME
 
 cat << EOF > $function_name/handler.py
 def handle(req):
@@ -119,6 +119,13 @@ EOF
     echo "Removing created files..."
     rm -rf got.txt want.txt $function_name*
 }
+
+get_templates() {
+    echo "Getting templates..."
+    eval $cli template pull $TEMPLATE_NAME
+}
+
+get_templates
 
 get_package
 build_faas_function $FUNCTION
