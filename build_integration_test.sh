@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -e # Exit script immediately on first error.
+set -x # Print commands and their arguments as they are executed.
+set -o pipefail # Print commands and their arguments as they are
+
 cli="./bin/faas-cli"
 
 TEMPLATE_NAME="python3-http"
