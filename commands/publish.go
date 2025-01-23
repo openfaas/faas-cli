@@ -139,9 +139,35 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	if pullErr := pullTemplates(templateAddress); pullErr != nil {
-		return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
+	needTemplates := false
+	for _, function := range services.Functions {
+		if len(function.Language) > 0 {
+			needTemplates = true
+			break
+		}
+	}
+
+	templatesFound := false
+	if stat, err := os.Stat("./template"); err == nil && stat.IsDir() {
+		templatesFound = true
+	}
+
+	// if no templates are configured, but they exist in the configuration section,
+	// attempt to pull them first
+	if !templatesFound && needTemplates {
+		if len(services.StackConfiguration.TemplateConfigs) > 0 {
+			if err := pullStackTemplates(services.StackConfiguration.TemplateConfigs, cmd); err != nil {
+				return err
+			}
+
+		}
+	}
+
+	if needTemplates {
+		if _, err := os.Stat("./template"); os.IsNotExist(err) {
+
+			return fmt.Errorf(`the "template" directory is missing but required by at least one function`)
+		}
 	}
 
 	if resetQemu {

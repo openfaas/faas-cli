@@ -27,13 +27,15 @@ const (
 - dockerfile
 - ruby`
 
-	LangNotExistsOutput  = `(template: \"([0-9A-Za-z-])*\" was not found in the templates directory)`
+	LangNotExistsOutput  = `(template: \"([0-9A-Za-z-])*\" was not found in the templates folder or in the store)`
 	FunctionExistsOutput = `(Function (.+)? already exists in (.+)? file)`
 	NoTemplates          = `no language templates were found.
 
 Download templates:
-  faas-cli template pull           download the default templates
-  faas-cli template store list     view the community template store`
+  faas-cli template pull                download the default templates
+  faas-cli template store list          view the template store
+  faas-cli template store pull NAME     download the default templates
+  faas-cli new --lang NAME              Attempt to download NAME from the template store`
 	InvalidFileSuffix = "when appending to a stack the suffix should be .yml or .yaml"
 )
 

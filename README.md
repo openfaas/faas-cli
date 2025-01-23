@@ -216,9 +216,9 @@ Find templates with: `faas-cli template store list`
 
 > Note: You can set your own custom store location with `--url` flag or set `OPENFAAS_TEMPLATE_STORE_URL` environmental variable
 
-To pull templates from the store just write the name of the template you want `faas-cli template store pull go` or the repository and name `faas-cli template store pull openfaas/go`
+To pull templates from the store just write the name of the template you want `faas-cli template store pull golang-middleware` or the repository and name `faas-cli template store pull openfaas/golang-middleware`
 
-To get more detail on a template just use the `template store describe` command and pick a template of your choice, example with `go` would look like this `faas-cli template store describe go`
+To get more detail on a template just use the `template store describe` command and pick a template of your choice, example with `go` would look like this `faas-cli template store describe golang-middleware`
 
 > Note: This feature is still in experimental stage and in the future the CLI verbs might be changed
 

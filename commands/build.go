@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"sync"
@@ -155,6 +154,8 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 
 func runBuild(cmd *cobra.Command, args []string) error {
 
+	templateName := "" // templateName may not be known at this point
+
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
@@ -178,7 +179,7 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-		if pullErr := pullTemplates(templateAddress); pullErr != nil {
+		if pullErr := pullTemplates(templateAddress, templateName); pullErr != nil {
 			return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
 		}
 	}
@@ -304,20 +305,19 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 }
 
 // pullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
-func pullTemplates(templateURL string) error {
-	var err error
-	exists, err := os.Stat("./template")
-	if err != nil || exists == nil {
-		log.Println("No templates found in current directory.")
+func pullTemplates(templateURL, templateName string) error {
+
+	if _, err := os.Stat("./template"); err != nil && os.IsNotExist(err) {
+
+		fmt.Printf("No templates found in current directory.\n")
 
 		templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
-		err = fetchTemplates(templateURL, refName, false)
-		if err != nil {
-			log.Println("Unable to download templates from Github.")
+		if err := fetchTemplates(templateURL, refName, templateName, false); err != nil {
 			return err
 		}
 	}
-	return err
+
+	return nil
 }
 
 func combineBuildOpts(YAMLBuildOpts []string, buildFlagBuildOpts []string) []string {
