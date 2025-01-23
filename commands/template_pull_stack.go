@@ -77,19 +77,12 @@ func pullStackTemplates(templateInfo []stack.TemplateSource, cmd *cobra.Command)
 				return pullErr
 			}
 		} else {
-			pullErr := pullTemplate(val.Source)
+
+			templateName := val.Name
+			pullErr := pullTemplate(val.Source, templateName)
 			if pullErr != nil {
 				return pullErr
 			}
-		}
-	}
-	return nil
-}
-
-func findTemplate(templateInfo []stack.TemplateSource, customName string) (specificTemplate *stack.TemplateSource) {
-	for _, val := range templateInfo {
-		if val.Name == customName {
-			return &val
 		}
 	}
 	return nil

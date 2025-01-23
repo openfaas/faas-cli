@@ -3,48 +3,11 @@ package commands
 import (
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/stack"
 )
-
-func Test_findTemplate(t *testing.T) {
-	tests := []struct {
-		title             string
-		desiredTemplate   string
-		existingTemplates []stack.TemplateSource
-		expectedTemplate  *stack.TemplateSource
-	}{
-		{
-			title:           "Desired template is found",
-			desiredTemplate: "powershell",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "powershell", Source: "exampleURL"},
-				{Name: "rust", Source: "exampleURL"},
-			},
-			expectedTemplate: &stack.TemplateSource{Name: "powershell", Source: "exampleURL"},
-		},
-		{
-			title:           "Desired template is not found",
-			desiredTemplate: "golang",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "powershell", Source: "exampleURL"},
-				{Name: "rust", Source: "exampleURL"},
-			},
-			expectedTemplate: nil,
-		},
-	}
-	for _, test := range tests {
-		t.Run(test.title, func(t *testing.T) {
-			result := findTemplate(test.existingTemplates, test.desiredTemplate)
-			if !reflect.DeepEqual(result, test.expectedTemplate) {
-				t.Errorf("Wanted template: `%s` got `%s`", test.expectedTemplate, result)
-			}
-		})
-	}
-}
 
 func Test_pullAllTemplates(t *testing.T) {
 	tests := []struct {

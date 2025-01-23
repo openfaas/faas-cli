@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -20,21 +19,22 @@ const DefaultTemplateRepository = "https://github.com/openfaas/templates.git"
 const templateDirectory = "./template/"
 
 // fetchTemplates fetch code templates using git clone.
-func fetchTemplates(templateURL string, refName string, overwrite bool) error {
+func fetchTemplates(templateURL, refName, templateName string, overwrite bool) error {
 	if len(templateURL) == 0 {
 		return fmt.Errorf("pass valid templateURL")
 	}
 
 	dir, err := os.MkdirTemp("", "openfaas-templates-*")
 	if err != nil {
-		log.Fatal(err)
-	}
-	if !pullDebug {
-		defer os.RemoveAll(dir) // clean up
+		return err
 	}
 
-	log.Printf("Attempting to expand templates from %s\n", templateURL)
+	if !pullDebug {
+		defer os.RemoveAll(dir)
+	}
+
 	pullDebugPrint(fmt.Sprintf("Temp files in %s", dir))
+
 	args := map[string]string{"dir": dir, "repo": templateURL}
 	cmd := versioncontrol.GitCloneDefault
 
@@ -47,7 +47,7 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 		return err
 	}
 
-	preExistingLanguages, fetchedLanguages, err := moveTemplates(dir, overwrite)
+	preExistingLanguages, fetchedLanguages, err := moveTemplates(dir, templateName, overwrite)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func fetchTemplates(templateURL string, refName string, overwrite bool) error {
 		log.Printf("Cannot overwrite the following %d template(s): %v\n", len(preExistingLanguages), preExistingLanguages)
 	}
 
-	log.Printf("Fetched %d template(s) : %v from %s\n", len(fetchedLanguages), fetchedLanguages, templateURL)
+	fmt.Printf("Wrote %d template(s) : %v from %s\n", len(fetchedLanguages), fetchedLanguages, templateURL)
 
 	return err
 }
@@ -87,7 +87,7 @@ func templateFolderExists(language string, overwrite bool) bool {
 	return true
 }
 
-func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) {
+func moveTemplates(repoPath, templateName string, overwrite bool) ([]string, []string, error) {
 	var (
 		existingLanguages []string
 		fetchedLanguages  []string
@@ -97,7 +97,7 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 	availableLanguages := make(map[string]bool)
 
 	templateDir := filepath.Join(repoPath, templateDirectory)
-	templates, err := ioutil.ReadDir(templateDir)
+	templates, err := os.ReadDir(templateDir)
 	if err != nil {
 		return nil, nil, fmt.Errorf("can't find templates in: %s", repoPath)
 	}
@@ -108,23 +108,35 @@ func moveTemplates(repoPath string, overwrite bool) ([]string, []string, error) 
 		}
 		language := file.Name()
 
-		canWrite := canWriteLanguage(availableLanguages, language, overwrite)
-		if canWrite {
-			fetchedLanguages = append(fetchedLanguages, language)
-			// Do cp here
-			languageSrc := filepath.Join(templateDir, language)
-			languageDest := filepath.Join(templateDirectory, language)
-			builder.CopyFiles(languageSrc, languageDest)
-		} else {
-			existingLanguages = append(existingLanguages, language)
-			continue
+		if len(templateName) == 0 {
+
+			canWrite := canWriteLanguage(availableLanguages, language, overwrite)
+			if canWrite {
+				fetchedLanguages = append(fetchedLanguages, language)
+				// Do cp here
+				languageSrc := filepath.Join(templateDir, language)
+				languageDest := filepath.Join(templateDirectory, language)
+				builder.CopyFiles(languageSrc, languageDest)
+			} else {
+				existingLanguages = append(existingLanguages, language)
+				continue
+			}
+		} else if language == templateName {
+
+			if canWriteLanguage(availableLanguages, language, overwrite) {
+				fetchedLanguages = append(fetchedLanguages, language)
+				// Do cp here
+				languageSrc := filepath.Join(templateDir, language)
+				languageDest := filepath.Join(templateDirectory, language)
+				builder.CopyFiles(languageSrc, languageDest)
+			}
 		}
 	}
 
 	return existingLanguages, fetchedLanguages, nil
 }
 
-func pullTemplate(repository string) error {
+func pullTemplate(repository, templateName string) error {
 	if _, err := os.Stat(repository); err != nil {
 		if !versioncontrol.IsGitRemote(repository) && !versioncontrol.IsPinnedGitRemote(repository) {
 			return fmt.Errorf("the repository URL must be a valid git repo uri")
@@ -143,8 +155,12 @@ func pullTemplate(repository string) error {
 		}
 	}
 
-	fmt.Printf("Fetch templates from repository: %s at %s\n", repository, refName)
-	if err := fetchTemplates(repository, refName, overwrite); err != nil {
+	refStr := ""
+	if len(refName) > 0 {
+		refStr = fmt.Sprintf(" @ %s", refName)
+	}
+	fmt.Printf("Fetch templates from repository: %s%s\n", repository, refStr)
+	if err := fetchTemplates(repository, refName, templateName, overwrite); err != nil {
 		return fmt.Errorf("error while fetching templates: %s", err)
 	}
 

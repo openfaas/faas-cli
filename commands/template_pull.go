@@ -43,8 +43,11 @@ func runTemplatePull(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		repository = args[0]
 	}
+
+	templateName := "" // templateName may not be known at this point
+
 	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	return pullTemplate(repository)
+	return pullTemplate(repository, templateName)
 }
 
 func pullDebugPrint(message string) {

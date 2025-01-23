@@ -5,7 +5,6 @@ package commands
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -74,7 +73,7 @@ func validateFunctionName(functionName string) error {
 
 // preRunNewFunction validates args & flags
 func preRunNewFunction(cmd *cobra.Command, args []string) error {
-	if list == true {
+	if list {
 		return nil
 	}
 
@@ -102,16 +101,18 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 }
 
 func runNewFunction(cmd *cobra.Command, args []string) error {
-	if list == true {
+	if list {
 		var availableTemplates []string
 
-		templateFolders, err := ioutil.ReadDir(templateDirectory)
+		templateFolders, err := os.ReadDir(templateDirectory)
 		if err != nil {
 			return fmt.Errorf(`no language templates were found.
 
 Download templates:
-  faas-cli template pull           download the default templates
-  faas-cli template store list     view the community template store`)
+  faas-cli template pull                download the default templates
+  faas-cli template store list          view the template store
+  faas-cli template store pull NAME     download the default templates
+  faas-cli new --lang NAME              Attempt to download NAME from the template store`)
 		}
 
 		for _, file := range templateFolders {
@@ -125,11 +126,34 @@ Download templates:
 		return nil
 	}
 
-	templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	pullTemplates(templateAddress)
-
 	if !stack.IsValidTemplate(language) {
-		return fmt.Errorf("template: \"%s\" was not found in the templates directory", language)
+
+		envTemplateRepoStore := os.Getenv(templateStoreURLEnvironment)
+		storeURL := getTemplateStoreURL(templateStoreURL, envTemplateRepoStore, DefaultTemplatesStore)
+
+		templatesInfo, err := getTemplateInfo(storeURL)
+		if err != nil {
+			return fmt.Errorf("error while getting templates info: %s", err)
+		}
+
+		var templateInfo *TemplateInfo
+		for _, info := range templatesInfo {
+			if info.TemplateName == language {
+				templateInfo = &info
+				break
+			}
+		}
+
+		if templateInfo == nil {
+			return fmt.Errorf("template: \"%s\" was not found in the templates folder or in the store", language)
+		}
+
+		templateName := templateInfo.TemplateName
+
+		if err := pullTemplate(templateInfo.Repository, templateName); err != nil {
+			return fmt.Errorf("error while pulling template: %s", err)
+		}
+
 	}
 
 	var fileName, outputMsg string

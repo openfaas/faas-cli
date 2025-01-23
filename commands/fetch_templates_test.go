@@ -21,17 +21,18 @@ func Test_PullTemplates(t *testing.T) {
 	defer os.RemoveAll(localTemplateRepository)
 	defer tearDownFetchTemplates(t)
 
+	templateName := ""
 	t.Run("pullTemplates", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
-		if err := pullTemplates(localTemplateRepository); err != nil {
-			t.Fatal(err)
+		if err := pullTemplates(localTemplateRepository, templateName); err != nil {
+			t.Fatalf("Trying to pull %s, error: %s", localTemplateRepository, err)
 		}
 	})
 
 	t.Run("fetchTemplates with master ref", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
-		if err := fetchTemplates(localTemplateRepository, "master", false); err != nil {
+		if err := fetchTemplates(localTemplateRepository, "master", templateName, false); err != nil {
 			t.Fatal(err)
 		}
 
@@ -40,8 +41,8 @@ func Test_PullTemplates(t *testing.T) {
 	t.Run("fetchTemplates with default ref", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
-		err := fetchTemplates(localTemplateRepository, "", false)
-		if err != nil {
+		templateName := ""
+		if err := fetchTemplates(localTemplateRepository, "", templateName, false); err != nil {
 			t.Error(err)
 		}
 
