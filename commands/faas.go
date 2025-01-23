@@ -21,9 +21,11 @@ import (
 )
 
 const (
-	defaultGateway       = "http://127.0.0.1:8080"
-	defaultNetwork       = ""
-	defaultYAML          = "stack.yml"
+	defaultGateway = "http://127.0.0.1:8080"
+	defaultNetwork = ""
+	defaultYML     = "stack.yml"
+	defaultYAML    = "stack.yaml"
+
 	defaultSchemaVersion = "1.0"
 )
 
@@ -144,6 +146,8 @@ func checkAndSetDefaultYaml() {
 	// Check if there is a default yaml file and set it
 	if _, err := stat(defaultYAML); err == nil {
 		yamlFile = defaultYAML
+	} else if _, err := stat(defaultYML); err == nil {
+		yamlFile = defaultYML
 	}
 }
 
