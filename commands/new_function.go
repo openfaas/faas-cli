@@ -52,7 +52,7 @@ var newFunctionCmd = &cobra.Command{
 	Long: `The new command creates a new function based upon hello-world in the given
 language or type in --list for a list of languages available.`,
 	Example: `  faas-cli new chatbot --lang node
-  faas-cli new chatbot --lang node --append stack.yml
+  faas-cli new chatbot --lang node --append bots.yaml
   faas-cli new text-parser --lang python --quiet
   faas-cli new text-parser --lang python --gateway http://mydomain:8080
   faas-cli new --list`,
@@ -95,6 +95,10 @@ func preRunNewFunction(cmd *cobra.Command, args []string) error {
 
 	if err := validateFunctionName(functionName); err != nil {
 		return err
+	}
+
+	if len(yamlFile) == 0 && len(appendFile) == 0 {
+		yamlFile = defaultYAML
 	}
 
 	return nil
@@ -160,7 +164,7 @@ Download templates:
 	appendMode := len(appendFile) > 0
 
 	if appendMode {
-		if (strings.HasSuffix(appendFile, ".yml") || strings.HasSuffix(appendFile, ".yaml")) == false {
+		if !(strings.HasSuffix(appendFile, ".yml") || strings.HasSuffix(appendFile, ".yaml")) {
 			return fmt.Errorf("when appending to a stack the suffix should be .yml or .yaml")
 		}
 
@@ -168,11 +172,8 @@ Download templates:
 			return fmt.Errorf("unable to find file: %s - %s", appendFile, statErr.Error())
 		}
 
-		var duplicateError error
-		duplicateError = duplicateFunctionName(functionName, appendFile)
-
-		if duplicateError != nil {
-			return duplicateError
+		if err := duplicateFunctionName(functionName, appendFile); err != nil {
+			return err
 		}
 
 		fileName = appendFile
@@ -180,7 +181,7 @@ Download templates:
 
 	} else {
 		gateway = getGatewayURL(gateway, defaultGateway, gateway, os.Getenv(openFaaSURLEnvironment))
-		fileName = functionName + ".yml"
+		fileName = yamlFile
 		outputMsg = fmt.Sprintf("Stack file written: %s\n", fileName)
 	}
 
@@ -192,14 +193,14 @@ Download templates:
 		return fmt.Errorf("folder: %s already exists", handlerDir)
 	}
 
-	_, err := os.Stat(fileName)
-	if err == nil && appendMode == false {
-		return fmt.Errorf("file: %s already exists", fileName)
+	if _, err := os.Stat(fileName); err == nil && !appendMode {
+		return fmt.Errorf("file: %s already exists. Try \"faas-cli new --append %s\" instead", fileName, fileName)
 	}
 
 	if err := os.Mkdir(handlerDir, 0700); err != nil {
 		return fmt.Errorf("folder: could not create %s : %s", handlerDir, err)
 	}
+
 	fmt.Printf("Folder: %s created.\n", handlerDir)
 
 	if err := updateGitignore(); err != nil {

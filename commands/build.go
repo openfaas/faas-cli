@@ -56,9 +56,9 @@ func init() {
 	buildCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'sha', 'branch', or 'describe', or 'latest'")
 	buildCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
 	buildCmd.Flags().StringArrayVar(&copyExtra, "copy-extra", []string{}, "Extra paths that will be copied into the function build context")
-	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	buildCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 	buildCmd.Flags().BoolVar(&quietBuild, "quiet", false, "Perform a quiet build, without showing output from Docker")
-	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yml")
+	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yaml")
 	buildCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
 	// Set bash-completion.
@@ -88,16 +88,16 @@ var buildCmd = &cobra.Command{
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
-  faas-cli build -f ./stack.yml --no-cache --build-arg NPM_VERSION=0.2.2
-  faas-cli build -f ./stack.yml --build-option dev
-  faas-cli build -f ./stack.yml --tag sha
-  faas-cli build -f ./stack.yml --tag branch
-  faas-cli build -f ./stack.yml --tag describe
-  faas-cli build -f ./stack.yml --filter "*gif*"
-  faas-cli build -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/
+  faas-cli build -f stack.yaml --no-cache --build-arg NPM_VERSION=0.2.2
+  faas-cli build -f stack.yaml --build-option dev
+  faas-cli build -f stack.yaml --tag sha
+  faas-cli build -f stack.yaml --tag branch
+  faas-cli build -f stack.yaml --tag describe
+  faas-cli build -f stack.yaml --filter "*gif*"
+  faas-cli build -f stack.yaml --regex "fn[0-9]_.*"
+  faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ \
                  --name=my_fn --squash
-  faas-cli build -f ./stack.yml --build-label org.label-schema.label-name="value"`,
+  faas-cli build -f stack.yaml --build-label org.label-schema.label-name="value"`,
 	PreRunE: preRunBuild,
 	RunE:    runBuild,
 }

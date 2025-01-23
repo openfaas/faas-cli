@@ -48,7 +48,7 @@ func init() {
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
-	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 	generateCmd.Flags().StringVar(&desiredArch, "arch", "x86_64", "Desired image arch. (Default x86_64)")
 	generateCmd.Flags().StringArrayVar(&annotationArgs, "annotation", []string{}, "Any annotations you want to add (to store functions only)")
 	generateCmd.Flags().StringArrayVar(&labelArgs, "label", []string{}, "Any labels you want to add (to store functions only)")
@@ -57,14 +57,14 @@ func init() {
 }
 
 var generateCmd = &cobra.Command{
-	Use:   "generate --api=openfaas.com/v1 --yaml stack.yml --tag sha --namespace=openfaas-fn",
+	Use:   "generate --api=openfaas.com/v1 --yaml stack.yaml --tag sha --namespace=openfaas-fn",
 	Short: "Generate Kubernetes CRD YAML file",
 	Long:  `The generate command creates kubernetes CRD YAML file for functions`,
-	Example: `faas-cli generate --api=openfaas.com/v1 --yaml stack.yml | kubectl apply  -f -
-faas-cli generate --api=openfaas.com/v1 -f stack.yml
-faas-cli generate --api=serving.knative.dev/v1 -f stack.yml
-faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yml
-faas-cli generate --api=openfaas.com/v1 -f stack.yml --tag branch -n openfaas-fn`,
+	Example: `faas-cli generate --api=openfaas.com/v1 --yaml stack.yaml | kubectl apply  -f -
+faas-cli generate --api=openfaas.com/v1 -f stack.yaml
+faas-cli generate --api=serving.knative.dev/v1 -f stack.yaml
+faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yaml
+faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn`,
 	PreRunE: preRunGenerate,
 	RunE:    runGenerate,
 }
@@ -183,8 +183,10 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		fmt.Println(
-			`"stack.yml" file not found in the current directory.
-Use "--yaml" to pass a file or "--from-store" to generate using function store.`)
+			`No "stack.yaml" or "stack.yml" file was found in the current directory.
+Use "--yaml" / "-f" to specify a custom filename.
+
+Alternatively, to generate a definition for store functions, use "--from-store"`)
 		os.Exit(1)
 	}
 

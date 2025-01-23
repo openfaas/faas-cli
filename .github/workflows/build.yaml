@@ -27,7 +27,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - 
         name: Local docker build (non-root image)
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -42,7 +42,7 @@ jobs:
           tags: openfaas/faas-cli:${{ github.sha }}
       -
         name: Test for multi-arch build
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile

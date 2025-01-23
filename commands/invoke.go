@@ -5,6 +5,7 @@ package commands
 
 import (
 	"bytes"
+	"crypto"
 	"encoding/hex"
 	"fmt"
 	"io"
@@ -14,7 +15,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/alexellis/hmac"
+	"github.com/alexellis/hmac/v2"
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
 	"github.com/spf13/cobra"
@@ -51,7 +52,7 @@ func init() {
 	invokeCmd.Flags().StringVar(&sigHeader, "sign", "", "name of HTTP request header to hold the signature")
 	invokeCmd.Flags().StringVar(&key, "key", "", "key to be used to sign the request (must be used with --sign)")
 
-	invokeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	invokeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 
 	faasCmd.AddCommand(invokeCmd)
 }
@@ -205,10 +206,10 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 }
 
 func generateSignature(message []byte, key string) string {
-	hash := hmac.Sign(message, []byte(key))
+	hash := hmac.Sign(message, []byte(key), crypto.SHA256.New)
 	signature := hex.EncodeToString(hash)
 
-	return fmt.Sprintf(`%s=%s`, "sha1", string(signature[:]))
+	return fmt.Sprintf(`%s=%s`, "sha256", string(signature[:]))
 }
 
 func missingSignFlag(header string, key string) bool {

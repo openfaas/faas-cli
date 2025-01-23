@@ -17,7 +17,7 @@ func init() {
 	// Setup flags that are used by multiple commands (variables defined in faas.go)
 	removeCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	removeCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
-	removeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	removeCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 	removeCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	removeCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 
@@ -34,9 +34,9 @@ var removeCmd = &cobra.Command{
 using the "--yaml" flag (which may contain multiple function definitions), or by
 explicitly specifying a function name.`,
 	Example: `  faas-cli remove -f https://domain/path/myfunctions.yml
-  faas-cli remove -f ./stack.yml
-  faas-cli remove -f ./stack.yml --filter "*gif*"
-  faas-cli remove -f ./stack.yml --regex "fn[0-9]_.*"
+  faas-cli remove -f stack.yaml
+  faas-cli remove -f stack.yaml --filter "*gif*"
+  faas-cli remove -f stack.yaml --regex "fn[0-9]_.*"
   faas-cli remove url-ping
   faas-cli remove img2ansi --gateway==http://remote-site.com:8080`,
 	RunE: runDelete,
