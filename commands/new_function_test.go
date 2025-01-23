@@ -272,7 +272,7 @@ func Test_languageNotExists(t *testing.T) {
 
 func Test_appendInvalidSuffix(t *testing.T) {
 	const functionName = "samplefunc"
-	const functionLang = "ruby"
+	const functionLang = "dockerfile"
 
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
@@ -294,7 +294,7 @@ func Test_appendInvalidSuffix(t *testing.T) {
 
 func Test_appendInvalidFile(t *testing.T) {
 	const functionName = "samplefunc"
-	const functionLang = "ruby"
+	const functionLang = "dockerfile"
 
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
@@ -318,7 +318,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 	resetForTest()
 
 	const functionName = "samplefunc"
-	const functionLang = "ruby"
+	const functionLang = "dockerfile"
 
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
@@ -346,7 +346,7 @@ func Test_duplicateFunctionName(t *testing.T) {
 func Test_backfillTemplates(t *testing.T) {
 	resetForTest()
 	const functionName = "samplefunc"
-	const functionLang = "ruby"
+	const functionLang = "dockerfile"
 
 	// Delete cached templates
 	localTemplateRepository := setupLocalTemplateRepo(t)
