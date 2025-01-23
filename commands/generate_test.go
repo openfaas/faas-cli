@@ -150,7 +150,7 @@ functions:
   handler: ./sample/url-ping
   image: alexellis/faas-url-ping:0.2
  astronaut-finder:
-  lang: python3
+  lang: python3-http
   handler: ./astronaut-finder
   image: astronaut-finder
   environment:
@@ -348,43 +348,43 @@ provider:
   network: "func_functions"    
 functions:
  fn1:
-  lang: python3
+  lang: python3-http
   handler: ./fn1
   image: fn1:latest
  fn2:
-  lang: python3
+  lang: python3-http
   handler: ./fn2
   image: fn2:latest
  fn3:
-  lang: python3
+  lang: python3-http
   handler: ./fn3
   image: fn3:latest
  fn4:
-  lang: python3
+  lang: python3-http
   handler: ./fn4
   image: fn4:latest
  fn5:
-  lang: python3
+  lang: python3-http
   handler: ./fn5
   image: fn5:latest
  fn6:
-  lang: python3
+  lang: python3-http
   handler: ./fn6
   image: fn6:latest
  fn7:
-  lang: python3
+  lang: python3-http
   handler: ./fn7
   image: fn7:latest
  fn8:
-  lang: python3
+  lang: python3-http
   handler: ./fn8
   image: fn8:latest
  fn9:
-  lang: python3
+  lang: python3-http
   handler: ./fn9
   image: fn9:latest
  fn10:
-  lang: python3
+  lang: python3-http
   handler: ./fn10
   image: fn10:latest`,
 		Output: []string{
@@ -405,43 +405,43 @@ provider:
   network: "func_functions"    
 functions:
  fn3:
-  lang: python3
+  lang: python3-http
   handler: ./fn3
   image: fn3:latest
  fn7:
-  lang: python3
+  lang: python3-http
   handler: ./fn7
   image: fn7:latest
  fn2:
-  lang: python3
+  lang: python3-http
   handler: ./fn2
   image: fn2:latest
  fn10:
-  lang: python3
+  lang: python3-http
   handler: ./fn10
   image: fn10:latest
  fn5:
-  lang: python3
+  lang: python3-http
   handler: ./fn5
   image: fn5:latest
  fn1:
-  lang: python3
+  lang: python3-http
   handler: ./fn1
   image: fn1:latest
  fn6:
-  lang: python3
+  lang: python3-http
   handler: ./fn6
   image: fn6:latest
  fn9:
-  lang: python3
+  lang: python3-http
   handler: ./fn9
   image: fn9:latest
  fn4:
-  lang: python3
+  lang: python3-http
   handler: ./fn4
   image: fn4:latest
  fn8:
-  lang: python3
+  lang: python3-http
   handler: ./fn8
   image: fn8:latest`,
 		Output: []string{
@@ -462,43 +462,43 @@ provider:
   network: "func_functions"    
 functions:
  fn3:
-  lang: python3
+  lang: python3-http
   handler: ./fn3
   image: fn3:latest
  fn7:
-  lang: python3
+  lang: python3-http
   handler: ./fn7
   image: fn7:latest
  fn2:
-  lang: python3
+  lang: python3-http
   handler: ./fn2
   image: fn2:latest
  fn10:
-  lang: python3
+  lang: python3-http
   handler: ./fn10
   image: fn10:latest
  fn5:
-  lang: python3
+  lang: python3-http
   handler: ./fn5
   image: fn5:latest
  fn1:
-  lang: python3
+  lang: python3-http
   handler: ./fn1
   image: fn1:latest
  fn6:
-  lang: python3
+  lang: python3-http
   handler: ./fn6
   image: fn6:latest
  fn9:
-  lang: python3
+  lang: python3-http
   handler: ./fn9
   image: fn9:latest
  fn4:
-  lang: python3
+  lang: python3-http
   handler: ./fn4
   image: fn4:latest
  fn8:
-  lang: python3
+  lang: python3-http
   handler: ./fn8
   image: fn8:latest`,
 		Output: []string{
