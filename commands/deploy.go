@@ -69,7 +69,7 @@ func init() {
 	deployCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', or 'describe'")
 
 	deployCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
-	deployCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yml file")
+	deployCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 	deployCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	// Set bash-completion.
 	_ = deployCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
@@ -113,16 +113,16 @@ var deployCmd = &cobra.Command{
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags. Note: --replace and --update are mutually exclusive.`,
 	Example: `  faas-cli deploy -f https://domain/path/myfunctions.yml
-  faas-cli deploy -f ./stack.yml
-  faas-cli deploy -f ./stack.yml --label canary=true
-  faas-cli deploy -f ./stack.yml --annotation user=true
-  faas-cli deploy -f ./stack.yml --filter "*gif*" --secret dockerhuborg
-  faas-cli deploy -f ./stack.yml --regex "fn[0-9]_.*"
-  faas-cli deploy -f ./stack.yml --replace=false --update=true
-  faas-cli deploy -f ./stack.yml --replace=true --update=false
-  faas-cli deploy -f ./stack.yml --tag sha
-  faas-cli deploy -f ./stack.yml --tag branch
-  faas-cli deploy -f ./stack.yml --tag describe
+  faas-cli deploy -f stack.yaml
+  faas-cli deploy -f stack.yaml --label canary=true
+  faas-cli deploy -f stack.yaml --annotation user=true
+  faas-cli deploy -f stack.yaml --filter "*gif*" --secret dockerhuborg
+  faas-cli deploy -f stack.yaml --regex "fn[0-9]_.*"
+  faas-cli deploy -f stack.yaml --replace=false --update=true
+  faas-cli deploy -f stack.yaml --replace=true --update=false
+  faas-cli deploy -f stack.yaml --tag sha
+  faas-cli deploy -f stack.yaml --tag branch
+  faas-cli deploy -f stack.yaml --tag describe
   faas-cli deploy --image=alexellis/faas-url-ping --name=url-ping
   faas-cli deploy --image=my_image --name=my_fn --handler=/path/to/fn/
                   --gateway=http://remote-site.com:8080 --lang=python

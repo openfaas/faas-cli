@@ -63,8 +63,8 @@ services deployed within your OpenFaaS cluster.`,
   # Run on a random port
   faas-cli local-run -p 0
 
-  # Use a custom YAML file other than stack.yml
-  faas-cli local-run stronghash -f ./stronghash.yml
+  # Use a custom YAML file other than stack.yaml
+  faas-cli local-run stronghash -f ./stronghash.yaml
 `,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) > 1 {
@@ -133,7 +133,7 @@ func localRunExec(cmd *cobra.Command, args []string, ctx context.Context) error 
 }
 
 // AE: I found that the `localrun` command will do a build of all functions in
-// the stack.yml if no argument is given and there is > 1 function in
+// the stack.yaml if no argument is given and there is > 1 function in
 // the file, then it will exit with an error when it comes to the run step
 func localBuild(cmd *cobra.Command, args []string) error {
 	if err := preRunBuild(cmd, args); err != nil {

@@ -53,7 +53,7 @@ def handle(event, context):
     }
 EOF
 
-    eval $cli build -f $function_name.yml
+    eval $cli build -f stack.yaml
 }
 
 wait_for_function_up() {

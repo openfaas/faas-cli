@@ -98,19 +98,19 @@ func Test_generateHeader(t *testing.T) {
 			name:    "Empty key",
 			message: []byte("This is a message"),
 			key:     "",
-			want:    "sha1=cdefd604e685e5c8b31fbcf6621a6e8282770dfe",
+			want:    "sha256=7fb67a61acd7a9fa2541bbde51cef1bd4086a5a3acec0a0c821b40e06e824cfc",
 		},
 		{
 			name:    "Key with empty message",
 			message: []byte(""),
 			key:     "KeySet",
-			want:    "sha1=33dcd94ffaf13fce58615585c030c1a39d100b3c",
+			want:    "sha256=51846d8900847a40a129743c98742c83a56c3cbc4f5aec188d7eb2de629d11df",
 		},
 		{
 			name:    "Empty key and message",
 			message: []byte(""),
 			key:     "",
-			want:    "sha1=fbdb1d1b18aa6c08324b7d64b71fb76370690e1d",
+			want:    "sha256=b613679a0814d9ec772f95d778c35fc5ff1697c493715653c6c712144292c5ad",
 		},
 	}
 	for _, test := range tests {

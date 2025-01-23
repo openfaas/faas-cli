@@ -19,7 +19,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// watchLoop will watch for changes to function handler files and the stack.yml
+// watchLoop will watch for changes to function handler files and the stack.yaml
 // then call onChange when a change is detected
 func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Command, args []string, ctx context.Context) error) error {
 

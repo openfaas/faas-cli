@@ -67,12 +67,12 @@ type Function struct {
 	BuildSecrets map[string]string `yaml:"build_secrets,omitempty"`
 }
 
-// Configuration for the stack.yml file
+// Configuration for the stack.yaml file
 type Configuration struct {
 	StackConfig StackConfiguration `yaml:"configuration"`
 }
 
-// StackConfiguration for the overall stack.yml
+// StackConfiguration for the overall stack.yaml
 type StackConfiguration struct {
 	TemplateConfigs []TemplateSource `yaml:"templates"`
 

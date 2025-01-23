@@ -5,6 +5,7 @@ package commands
 
 import (
 	"os"
+	"path"
 	"reflect"
 	"regexp"
 	"strings"
@@ -47,15 +48,20 @@ type NewFunctionTest struct {
 	dirName       string
 	expectedImage string
 	expectedMsg   string
+
+	stackYaml     string
+	wantStackYaml string
 }
 
-var NewFunctionTests = []NewFunctionTest{
+var newFunctionTests = []NewFunctionTest{
 	{
-		title:         "new_1",
+		title:         "new-test-1",
 		funcName:      "new-test-1",
-		funcLang:      "ruby",
+		funcLang:      "dockerfile",
 		expectedImage: "new-test-1:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "new-test-1.yml",
+		wantStackYaml: "new-test-1.yml",
 	},
 	{
 		title:         "lowercase-dockerfile",
@@ -63,13 +69,17 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:      "dockerfile",
 		expectedImage: "lowercase-dockerfile:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "lowercase-dockerfile.yml",
+		wantStackYaml: "lowercase-dockerfile.yml",
 	},
 	{
-		title:         "uppercase-dockerfile",
-		funcName:      "uppercase-dockerfile",
+		title:         "stack.yaml as default",
+		funcName:      "default-stack",
 		funcLang:      "dockerfile",
-		expectedImage: "uppercase-dockerfile:latest",
+		expectedImage: "default-stack:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "",
+		wantStackYaml: "stack.yaml",
 	},
 	{
 		title:         "func-with-prefix",
@@ -78,6 +88,8 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:      "dockerfile",
 		expectedImage: "username/func-with-prefix:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "func-with-prefix.yml",
+		wantStackYaml: "func-with-prefix.yml",
 	},
 	{
 		title:         "func-with-whitespace-only-prefix",
@@ -86,6 +98,8 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:      "dockerfile",
 		expectedImage: "func-with-whitespace-only-prefix:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "func-with-whitespace-only-prefix.yml",
+		wantStackYaml: "func-with-whitespace-only-prefix.yml",
 	},
 	{
 		title:         "long-name-with-hyphens",
@@ -95,30 +109,40 @@ var NewFunctionTests = []NewFunctionTest{
 		funcLang:      "dockerfile",
 		expectedImage: "long-name-with-hyphens:latest",
 		expectedMsg:   SuccessMsg,
+		stackYaml:     "long-name-with-hyphens.yml",
+		wantStackYaml: "long-name-with-hyphens.yml",
 	},
 	{
-		title:       "invalid_1",
-		funcName:    "new-test-invalid-1",
-		funcLang:    "docker",
-		expectedMsg: LangNotExistsOutput,
+		title:         "template_not_found",
+		funcName:      "template_not_found",
+		funcLang:      "docker",
+		expectedMsg:   LangNotExistsOutput,
+		stackYaml:     "template_not_found.yml",
+		wantStackYaml: "template_not_found.yml",
 	},
 	{
-		title:       "test_Uppercase",
-		funcName:    "test_Uppercase",
-		funcLang:    "dockerfile",
-		expectedMsg: IncludeUpperCase,
+		title:         "test_Uppercase",
+		funcName:      "test_Uppercase",
+		funcLang:      "dockerfile",
+		expectedMsg:   IncludeUpperCase,
+		stackYaml:     "test_Uppercase.yml",
+		wantStackYaml: "test_Uppercase.yml",
 	},
 	{
-		title:       "no-function-name",
-		funcName:    "",
-		funcLang:    "--lang node",
-		expectedMsg: NoFunctionName,
+		title:         "no-function-name",
+		funcName:      "",
+		funcLang:      "--lang node",
+		expectedMsg:   NoFunctionName,
+		stackYaml:     "",
+		wantStackYaml: "no-function-name.yml",
 	},
 	{
-		title:       "no-language",
-		funcName:    "no-language",
-		funcLang:    "",
-		expectedMsg: NoLanguage,
+		title:         "no-language",
+		funcName:      "no-language",
+		funcLang:      "",
+		expectedMsg:   NoLanguage,
+		stackYaml:     "no-language.yml",
+		wantStackYaml: "no-language.yml",
 	},
 }
 
@@ -127,31 +151,71 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	funcLang := nft.funcLang
 	dirName := nft.dirName
 	imagePrefix := nft.prefix
+
 	var funcYAML string
-	funcYAML = funcName + ".yml"
+
+	if len(nft.stackYaml) > 0 {
+		funcYAML = nft.stackYaml
+	} else {
+		funcYAML = defaultYAML
+	}
 
 	cmdParameters := []string{
 		"new",
 		"--lang=" + funcLang,
 		"--gateway=" + defaultGateway,
-		"--prefix=" + imagePrefix,
 	}
+	if len(imagePrefix) > 0 {
+		cmdParameters = append(cmdParameters, "--prefix="+imagePrefix)
+	}
+
 	if len(dirName) != 0 {
 		cmdParameters = append(cmdParameters, "--handler="+dirName)
 	} else {
 		dirName = funcName
 	}
+
+	if len(funcYAML) > 0 && nft.stackYaml != defaultYAML {
+		cmdParameters = append(cmdParameters, "--yaml="+funcYAML)
+	}
+
 	if len(funcName) != 0 {
 		cmdParameters = append(cmdParameters, funcName)
 	}
 
+	if nft.stackYaml == "" {
+		t.Logf("Cmd: %+v", cmdParameters)
+	}
+
 	faasCmd.SetArgs(cmdParameters)
-	execErr := faasCmd.Execute()
+	if err := faasCmd.Execute(); err != nil {
+
+		if nft.expectedMsg != "" && nft.expectedMsg != SuccessMsg {
+			// Validate new function output
+			if found, err := regexp.MatchString(nft.expectedMsg, err.Error()); err != nil || !found {
+				t.Logf("No match for:\n%s\nin\n%s\n", err, nft.expectedMsg)
+			}
+		} else {
+			t.Fatalf("Error: %v", err)
+		}
+	}
+
 	if nft.expectedMsg == SuccessMsg {
+		cwd, _ := os.Getwd()
+
+		handlerPath := path.Join(cwd, dirName)
+		if len(nft.stackYaml) == 0 {
+			t.Logf("Should have a function created in folder: %s", handlerPath)
+			t.Logf("Should have a function created in folder: %s", nft.stackYaml)
+		}
 
 		// Make sure that the folder and file was created:
-		if _, err := os.Stat("./" + dirName); err != nil && os.IsNotExist(err) {
-			t.Fatalf("%s/ directory was not created", dirName)
+		if _, err := os.Stat(handlerPath); err != nil {
+			if os.IsNotExist(err) {
+				t.Fatalf("%s/ directory was not created", handlerPath)
+			} else {
+				t.Fatalf("Error: %v", err)
+			}
 		}
 
 		// Check that the Dockerfile was created
@@ -162,7 +226,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		}
 
 		if _, err := os.Stat(funcYAML); err != nil && os.IsNotExist(err) {
-			t.Fatalf("\"%s\" yaml file was not created", funcYAML)
+			t.Fatalf("%s was not created", funcYAML)
 		}
 
 		// Make sure that the information in the YAML file is correct:
@@ -189,13 +253,7 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 		if !reflect.DeepEqual(services.Functions[funcName], testServices.Functions[funcName]) {
 			t.Fatalf("YAML `functions` section was not created correctly for file %s, got %v", funcYAML, services.Functions[funcName])
 		}
-	} else {
-		// Validate new function output
-		if found, err := regexp.MatchString(nft.expectedMsg, execErr.Error()); err != nil || !found {
-			t.Fatalf("No match for:\n%s\nin\n%s\n", execErr, nft.expectedMsg)
-		}
 	}
-
 }
 
 func Test_newFunctionTests(t *testing.T) {
@@ -203,10 +261,34 @@ func Test_newFunctionTests(t *testing.T) {
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
 
-	for _, testcase := range NewFunctionTests {
+	cwd, _ := os.Getwd()
+	for _, testcase := range newFunctionTests {
 		t.Run(testcase.title, func(t *testing.T) {
-			defer tearDownNewFunction(t, testcase.funcName)
+
+			name := testcase.funcName
+			wantStackYaml := testcase.wantStackYaml
+			// Clean-up functions and stack.yaml files created by the tests
+			// These should be removed at the end of the function's execution
+			defer tearDownNewFunction(t, name, wantStackYaml)
+
+			// Remove any left over stack.yaml files from a previous run
+			os.Remove(path.Join(cwd, wantStackYaml))
+
+			// Clean-up any existing handler folder before running
+			// only do this for tests that are meant to pass and create
+			// a valid folder
+			handlerDir := testcase.dirName
+			if len(handlerDir) == 0 {
+				handlerDir = testcase.funcName
+			}
+
+			if testcase.expectedMsg == SuccessMsg {
+				os.Remove(path.Join(cwd, handlerDir))
+			}
+
 			runNewFunctionTest(t, testcase)
+
+			defer os.Remove(path.Join(cwd, testcase.wantStackYaml))
 		})
 	}
 }
@@ -319,16 +401,18 @@ func Test_duplicateFunctionName(t *testing.T) {
 
 	const functionName = "samplefunc"
 	const functionLang = "dockerfile"
+	const functionYaml = functionName + ".yml"
 
 	templatePullLocalTemplateRepo(t)
 	defer tearDownFetchTemplates(t)
-	defer tearDownNewFunction(t, functionName)
+	defer tearDownNewFunction(t, functionName, functionYaml)
 
 	// Create function
 	parameters := []string{
 		"new",
 		functionName,
 		"--lang=" + functionLang,
+		"--yaml=" + functionYaml,
 	}
 	faasCmd.SetArgs(parameters)
 	faasCmd.Execute()
@@ -347,11 +431,12 @@ func Test_backfillTemplates(t *testing.T) {
 	resetForTest()
 	const functionName = "samplefunc"
 	const functionLang = "dockerfile"
+	const functionYaml = "samplefunc.yml"
 
 	// Delete cached templates
 	localTemplateRepository := setupLocalTemplateRepo(t)
 	defer os.RemoveAll(localTemplateRepository)
-	defer tearDownNewFunction(t, functionName)
+	defer tearDownNewFunction(t, functionName, functionYaml)
 
 	os.Setenv(templateURLEnvironment, localTemplateRepository)
 	defer os.Unsetenv(templateURLEnvironment)
@@ -360,7 +445,9 @@ func Test_backfillTemplates(t *testing.T) {
 		"new",
 		functionName,
 		"--lang=" + functionLang,
+		"--yaml=" + functionYaml,
 	}
+
 	faasCmd.SetArgs(parameters)
 	err := faasCmd.Execute()
 	if err != nil {
@@ -368,7 +455,7 @@ func Test_backfillTemplates(t *testing.T) {
 	}
 }
 
-func tearDownNewFunction(t *testing.T, functionName string) {
+func tearDownNewFunction(t *testing.T, functionName, functionStackYml string) {
 	if _, err := os.Stat(".gitignore"); err == nil {
 		if err := os.Remove(".gitignore"); err != nil {
 			t.Log(err)
@@ -383,12 +470,18 @@ func tearDownNewFunction(t *testing.T, functionName string) {
 			t.Log(err)
 		}
 	}
-	functionYaml := functionName + ".yml"
-	if _, err := os.Stat(functionYaml); err == nil {
-		if err := os.Remove(functionYaml); err != nil {
-			t.Log(err)
+
+	if len(functionStackYml) == 0 {
+		functionYaml := functionName + ".yml"
+		if _, err := os.Stat(functionYaml); err == nil {
+			if err := os.Remove(functionYaml); err != nil {
+				t.Log(err)
+			}
 		}
+	} else {
+		os.RemoveAll(functionStackYml)
 	}
+
 	handlerDir = ""
 }
 

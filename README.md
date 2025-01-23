@@ -90,7 +90,7 @@ The main commands supported by the CLI are:
 The default gateway URL of `127.0.0.1:8080` can be overridden in three places including an environmental variable.
 
 * 1st priority `--gateway` flag
-* 2nd priority `--yaml` / `-f` flag or `stack.yml` if in current directory
+* 2nd priority `--yaml` / `-f` flag or `stack.yaml` if in current directory
 * 3rd priority `OPENFAAS_URL` environmental variable
 
 For Kubernetes users you may want to set this in your `.bash_rc` file:
@@ -293,7 +293,7 @@ A YAML stack file groups functions together and also saves on typing.
 
 You can define individual functions or a set of them within a YAML file. This makes the CLI easier to use and means you can use this file to deploy to your OpenFaaS instance.  By default the faas-cli will attempt to load `stack.yaml` from the current directory.
 
-Here is an example file using the `stack.yml` file included in the repository.
+Here is an example file using the `stack.yaml` file included in the repository.
 
 ```yaml
 provider:
@@ -317,10 +317,10 @@ $ faas-cli build
 
 > `-f` specifies the file or URL to download your YAML file from. The long version of the `-f` flag is: `--yaml`.
 
-You can also download over HTTP(s):
+You can also download over HTTP(s), for example:
 
 ```sh
-$ faas-cli build -f https://raw.githubusercontent.com/openfaas/faas-cli/master/stack.yml
+$ faas-cli build -f https://raw.githubusercontent.com/openfaas/store-functions/master/stack.yml
 ```
 
 Docker along with a Python template will be used to build an image named alexellis2/faas-urlping.
