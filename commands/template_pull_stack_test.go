@@ -77,8 +77,8 @@ func Test_filterExistingTemplates(t *testing.T) {
 	defer os.RemoveAll(templatesDir)
 
 	templates := []stack.TemplateSource{
-		{Name: "dockerfile", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
-		{Name: "ruby", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
+		{Name: "dockerfile", Source: "https://github.com/openfaas/templates"},
+		{Name: "ruby", Source: "https://github.com/openfaas/classic-templates"},
 		{Name: "perl", Source: "https://github.com/openfaas-incubator/perl-template"},
 	}
 
