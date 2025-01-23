@@ -43,9 +43,14 @@ build_faas_function() {
     eval $cli new $function_name --lang $TEMPLATE_NAME
 
 cat << EOF > $function_name/handler.py
-def handle(req):
-
-    return "Function output from integration testing: Hello World!"
+def handle(event, context):
+    return {
+        "statusCode": 200,
+        "body": {"message": "Hello from OpenFaaS!"},
+        "headers": {
+            "Content-Type": "application/json"
+        }
+    }
 EOF
 
     eval $cli build -f $function_name.yml
@@ -126,7 +131,7 @@ EOF
 
 get_templates() {
     echo "Getting templates..."
-    eval $cli template pull $TEMPLATE_NAME
+    eval $cli template store pull $TEMPLATE_NAME
 }
 
 get_templates
