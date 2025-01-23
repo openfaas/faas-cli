@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 )
@@ -11,7 +11,7 @@ var mockStatParams string
 func setupFaas(statError error) {
 	yamlFile = ""
 	mockStatParams = ""
-	faasCmd.SetOutput(ioutil.Discard)
+	faasCmd.SetOutput(io.Discard)
 
 	stat = func(f string) (os.FileInfo, error) {
 		mockStatParams = f
@@ -19,7 +19,7 @@ func setupFaas(statError error) {
 	}
 }
 
-func TestCallsStatWithDefaulYAMLFileName(t *testing.T) {
+func TestCallsStatWithDefaultYAMLFileName(t *testing.T) {
 	setupFaas(nil)
 
 	Execute([]string{"help"})

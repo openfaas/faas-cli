@@ -138,7 +138,7 @@ func getTemplateInfo(repository string) ([]TemplateInfo, error) {
 
 	templatesInfo := []TemplateInfo{}
 	if err := json.Unmarshal(body, &templatesInfo); err != nil {
-		return nil, fmt.Errorf("can't unmarshal text: %s", err.Error())
+		return nil, fmt.Errorf("can't unmarshal text: %s, value: %s", err.Error(), string(body))
 	}
 
 	sortTemplates(templatesInfo)
