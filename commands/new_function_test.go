@@ -150,18 +150,18 @@ func runNewFunctionTest(t *testing.T, nft NewFunctionTest) {
 	if nft.expectedMsg == SuccessMsg {
 
 		// Make sure that the folder and file was created:
-		if _, err := os.Stat("./" + dirName); os.IsNotExist(err) {
+		if _, err := os.Stat("./" + dirName); err != nil && os.IsNotExist(err) {
 			t.Fatalf("%s/ directory was not created", dirName)
 		}
 
 		// Check that the Dockerfile was created
 		if funcLang == "Dockerfile" || funcLang == "dockerfile" {
-			if _, err := os.Stat("./" + dirName + "/Dockerfile"); os.IsNotExist(err) {
+			if _, err := os.Stat("./" + dirName + "/Dockerfile"); err != nil && os.IsNotExist(err) {
 				t.Fatalf("Dockerfile language should create a Dockerfile for you: %s", funcName)
 			}
 		}
 
-		if _, err := os.Stat(funcYAML); os.IsNotExist(err) {
+		if _, err := os.Stat(funcYAML); err != nil && os.IsNotExist(err) {
 			t.Fatalf("\"%s\" yaml file was not created", funcYAML)
 		}
 

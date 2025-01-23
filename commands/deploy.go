@@ -458,7 +458,7 @@ func deriveFprocess(function stack.Function) (string, error) {
 	}
 
 	pathToTemplateYAML := "./template/" + function.Language + "/template.yml"
-	if _, err := os.Stat(pathToTemplateYAML); os.IsNotExist(err) {
+	if _, err := os.Stat(pathToTemplateYAML); err != nil && os.IsNotExist(err) {
 		return "", err
 	}
 

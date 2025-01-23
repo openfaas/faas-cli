@@ -179,8 +179,8 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	} else {
 		templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-		if pullErr := pullTemplates(templateAddress, templateName); pullErr != nil {
-			return fmt.Errorf("could not pull templates for OpenFaaS: %v", pullErr)
+		if err := pullTemplates(templateAddress, templateName); err != nil {
+			return fmt.Errorf("could not pull templates: %v", err)
 		}
 	}
 
@@ -307,12 +307,18 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 // pullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
 func pullTemplates(templateURL, templateName string) error {
 
-	if _, err := os.Stat("./template"); err != nil && os.IsNotExist(err) {
+	if _, err := os.Stat("./template"); err != nil {
+		if os.IsNotExist(err) {
 
-		fmt.Printf("No templates found in current directory.\n")
+			fmt.Printf("No templates found in current directory.\n")
 
-		templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
-		if err := fetchTemplates(templateURL, refName, templateName, false); err != nil {
+			templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
+			if err := fetchTemplates(templateURL, refName, templateName, false); err != nil {
+				return err
+			}
+		} else {
+
+			// Perhaps there was a permissions issue or something else.
 			return err
 		}
 	}

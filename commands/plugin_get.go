@@ -99,7 +99,7 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	if _, err := os.Stat(pluginDir); os.IsNotExist(err) {
+	if _, err := os.Stat(pluginDir); err != nil && os.IsNotExist(err) {
 		if err := os.MkdirAll(pluginDir, 0755); err != nil && os.ErrExist != err {
 			return fmt.Errorf("failed to create plugin directory %s: %w", pluginDir, err)
 		}

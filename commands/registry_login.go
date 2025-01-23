@@ -174,7 +174,7 @@ func generateECRRegistryAuth(accountID, region string) ([]byte, error) {
 
 func writeFileToFassCLITmp(fileBytes []byte) error {
 	path := "./credentials"
-	if _, err := os.Stat(path); os.IsNotExist(err) {
+	if _, err := os.Stat(path); err != nil && os.IsNotExist(err) {
 		err := os.Mkdir(path, 0744)
 		if err != nil {
 			return err

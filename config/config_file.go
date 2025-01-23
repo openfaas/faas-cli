@@ -135,7 +135,7 @@ func EnsureFile() (string, error) {
 		return "", err
 	}
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
 		file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 		if err != nil {
 			return "", err
@@ -155,7 +155,7 @@ func fileExists() bool {
 	}
 
 	filePath := path.Clean(filepath.Join(dirPath, DefaultFile))
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+	if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {
 		return false
 	}
 
@@ -185,7 +185,7 @@ func (configFile *ConfigFile) save() error {
 func (configFile *ConfigFile) load() error {
 	conf := &ConfigFile{}
 
-	if _, err := os.Stat(configFile.FilePath); os.IsNotExist(err) {
+	if _, err := os.Stat(configFile.FilePath); err != nil && os.IsNotExist(err) {
 		return fmt.Errorf("can't load config from non existent filePath")
 	}
 
