@@ -518,3 +518,89 @@ func Test_getPrefixValue_Flag(t *testing.T) {
 		t.Errorf("want %s, got %s", want, val)
 	}
 }
+
+func TestInsertFunctionIntoFunctionsBlock(t *testing.T) {
+	tests := []struct {
+		name            string
+		existingContent string
+		newFuncBlock    string
+		want            string
+		wantErr         bool
+	}{
+		{
+			name:            "empty file",
+			existingContent: "",
+			newFuncBlock:    "  newFunc:\n    image: test\n",
+			// When the file is empty, we return a newline plus the new block.
+			want:    "\n  newFunc:\n    image: test\n",
+			wantErr: false,
+		},
+		{
+			name: "templates present - insert before configuration",
+			existingContent: "version: 1.0\n" +
+				"provider:\n" +
+				"  name: openfaas\n" +
+				"  gateway: http://localhost:8080\n" +
+				"functions:\n" +
+				"  func1:\n" +
+				"    image: img1\n" +
+				"configuration:\n" +
+				"  templates:\n" +
+				"    - name: go\n",
+			newFuncBlock: "  func2:\n    image: img2\n",
+			want: "version: 1.0\n" +
+				"provider:\n" +
+				"  name: openfaas\n" +
+				"  gateway: http://localhost:8080\n" +
+				"functions:\n" +
+				"  func1:\n" +
+				"    image: img1\n" +
+				"  func2:\n" +
+				"    image: img2\n" +
+				"configuration:\n" +
+				"  templates:\n" +
+				"    - name: go",
+			wantErr: false,
+		},
+		{
+			name: "no templates block present - simple append",
+			existingContent: "version: 1.0\n" +
+				"provider:\n" +
+				"  name: openfaas\n" +
+				"  gateway: http://localhost:8080\n" +
+				"functions:\n" +
+				"  func1:\n" +
+				"    image: img1\n",
+			newFuncBlock: "  func2:\n    image: img2\n",
+			want: "version: 1.0\n" +
+				"provider:\n" +
+				"  name: openfaas\n" +
+				"  gateway: http://localhost:8080\n" +
+				"functions:\n" +
+				"  func1:\n" +
+				"    image: img1\n" +
+				"  func2:\n" +
+				"    image: img2",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt // capture range variable
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := insertFunctionIntoFunctionsBlock(tt.existingContent, tt.newFuncBlock)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatalf("Test %s: want error, got nil", tt.name)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("Test %s: unexpected error, got: %v", tt.name, err)
+			}
+			if got != tt.want {
+				t.Errorf("Test %s:\nwant:\n%s\ngot:\n%s", tt.name, tt.want, got)
+			}
+		})
+	}
+}

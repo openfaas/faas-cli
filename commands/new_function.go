@@ -193,6 +193,7 @@ Download templates:
 		return fmt.Errorf("folder: %s already exists", handlerDir)
 	}
 
+	// In non-append mode, we error if the file exists.
 	if _, err := os.Stat(fileName); err == nil && !appendMode {
 		return fmt.Errorf("file: %s already exists. Try \"faas-cli new --append %s\" instead", fileName, fileName)
 	}
@@ -258,17 +259,37 @@ Download templates:
 		}
 	}
 
+	// Build the YAML content. In append mode this is just the function block.
 	yamlContent := prepareYAMLContent(appendMode, gateway, &function)
 
-	f, err := os.OpenFile("./"+fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("could not open file '%s' %s", fileName, err)
-	}
+	// === Begin Updated Code for Inserting into functions: block ===
+	if appendMode {
+		// Read the existing file content.
+		existingBytes, err := os.ReadFile(fileName)
+		if err != nil {
+			return fmt.Errorf("unable to read file: %s", fileName)
+		}
+		existingContent := string(existingBytes)
 
-	_, stackWriteErr := f.Write([]byte(yamlContent))
-	if stackWriteErr != nil {
-		return fmt.Errorf("error writing stack file %s", stackWriteErr)
+		// Insert the new function block into the functions: section.
+		updatedContent, err := insertFunctionIntoFunctionsBlock(existingContent, yamlContent)
+		if err != nil {
+			return fmt.Errorf("error updating functions block: %s", err)
+		}
+
+		// Write the updated content back to file.
+		err = os.WriteFile(fileName, []byte(updatedContent), 0644)
+		if err != nil {
+			return fmt.Errorf("error writing updated stack file: %s", err)
+		}
+	} else {
+		// In non-append mode, write out the entire YAML file.
+		err = os.WriteFile(fileName, []byte(yamlContent), 0644)
+		if err != nil {
+			return fmt.Errorf("error writing stack file: %s", err)
+		}
 	}
+	// === End Updated Code ===
 
 	fmt.Print(outputMsg)
 
@@ -370,4 +391,68 @@ Cannot have duplicate function names in same yaml file`, functionName, appendFil
 	}
 
 	return nil
+}
+
+// insertFunctionIntoFunctionsBlock locates the existing "functions:" block
+// in the YAML file content and inserts newFuncBlock (which should be indented)
+// at the end of the functions: block (i.e. before the next section begins).
+func insertFunctionIntoFunctionsBlock(existingContent string, newFuncBlock string) (string, error) {
+	// If existing content is empty (or only whitespace), return a newline plus the new block.
+	if strings.TrimSpace(existingContent) == "" {
+		return "\n" + newFuncBlock, nil
+	}
+
+	// Split the file into lines.
+	lines := strings.Split(existingContent, "\n")
+	// Remove any trailing empty lines.
+	for len(lines) > 0 && lines[len(lines)-1] == "" {
+		lines = lines[:len(lines)-1]
+	}
+
+	functionsHeaderRegex := regexp.MustCompile(`^\s*functions:\s*$`)
+	var functionsIndex int = -1
+
+	// Find the "functions:" header.
+	for i, line := range lines {
+		if functionsHeaderRegex.MatchString(line) {
+			functionsIndex = i
+			break
+		}
+	}
+
+	// If no functions header is found, simply append the new block at the end.
+	if functionsIndex == -1 {
+		return strings.Join(lines, "\n") + "\n" + newFuncBlock, nil
+	}
+
+	// Determine where the functions: block ends.
+	// We assume that function entries are indented (e.g. at least 2 spaces).
+	insertIndex := len(lines)
+	for i := functionsIndex + 1; i < len(lines); i++ {
+		line := lines[i]
+		if strings.TrimSpace(line) == "" {
+			continue // Skip blank lines.
+		}
+		// Calculate the indent level.
+		indentLen := len(line) - len(strings.TrimLeft(line, " "))
+		if indentLen < 2 {
+			// Found a new section (or unindented line); mark the end of the functions block.
+			insertIndex = i
+			break
+		}
+	}
+
+	// Remove any trailing newline from the new function block.
+	newFuncBlock = strings.TrimRight(newFuncBlock, "\n")
+	newFuncLines := strings.Split(newFuncBlock, "\n")
+
+	// Insert the new function block just before insertIndex.
+	newLines := append([]string{}, lines[:insertIndex]...)
+	newLines = append(newLines, newFuncLines...)
+	// Append the remainder of the file.
+	if insertIndex < len(lines) {
+		newLines = append(newLines, lines[insertIndex:]...)
+	}
+	updatedContent := strings.Join(newLines, "\n")
+	return updatedContent, nil
 }
