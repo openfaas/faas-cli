@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -20,6 +21,7 @@ var (
 	literalSecret string
 	secretFile    string
 	trimSecret    bool
+	replaceSecret bool
 )
 
 // secretCreateCmd represents the secretCreate command
@@ -32,10 +34,23 @@ var secretCreateCmd = &cobra.Command{
 			[--tls-no-verify]`,
 	Short: "Create a new secret",
 	Long:  `The create command creates a new secret from file, literal or STDIN`,
-	Example: `faas-cli secret create secret-name --from-literal=secret-value
-faas-cli secret create secret-name --from-literal=secret-value --gateway=http://127.0.0.1:8080
-faas-cli secret create secret-name --from-file=/path/to/secret/file --gateway=http://127.0.0.1:8080
-cat /path/to/secret/file | faas-cli secret create secret-name`,
+	Example: `  # Create a secret from a literal value in the default namespace
+  faas-cli secret create NAME --from-literal=VALUE
+
+  # Create a secret in a specific namespace
+  faas-cli secret create NAME --from-literal=VALUE \
+    --namespace=NS
+
+  # Create the secret from a file with a given gateway
+  faas-cli secret create NAME --from-file=PATH \
+    --gateway=http://127.0.0.1:8080
+
+  # Create the secret from a STDIN pipe
+  cat ./secret.txt | faas-cli secret create NAME
+  
+  # Force an update if the secret already exists
+  faas-cli secret create NAME --from-file PATH --update
+`,
 	RunE:    runSecretCreate,
 	PreRunE: preRunSecretCreate,
 }
@@ -48,6 +63,7 @@ func init() {
 	secretCreateCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	secretCreateCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretCreateCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+	secretCreateCmd.Flags().BoolVar(&replaceSecret, "replace", false, "Replace the secret if it already exists using an update")
 
 	secretCmd.AddCommand(secretCreateCmd)
 }
@@ -130,8 +146,12 @@ func runSecretCreate(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Creating secret: %s.%s\n", secret.Name, functionNamespace)
-	_, output := client.CreateSecret(context.Background(), secret)
-	fmt.Printf(output)
+	status, output := client.CreateSecret(context.Background(), secret)
+	if status == http.StatusConflict && replaceSecret {
+		fmt.Printf("Secret %s already exists, updating...\n", secret.Name)
+		_, output = client.UpdateSecret(context.Background(), secret)
+	}
+	fmt.Print(output)
 
 	return nil
 }
