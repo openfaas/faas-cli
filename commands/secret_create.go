@@ -30,6 +30,7 @@ var secretCreateCmd = &cobra.Command{
 			[--trim=false]
 			[--from-literal=SECRET_VALUE]
 			[--from-file=/path/to/secret/file]
+			[--replace]
 			[STDIN]
 			[--tls-no-verify]`,
 	Short: "Create a new secret",
@@ -49,7 +50,7 @@ var secretCreateCmd = &cobra.Command{
   cat ./secret.txt | faas-cli secret create NAME
   
   # Force an update if the secret already exists
-  faas-cli secret create NAME --from-file PATH --update
+  faas-cli secret create NAME --from-file PATH --replace
 `,
 	RunE:    runSecretCreate,
 	PreRunE: preRunSecretCreate,
