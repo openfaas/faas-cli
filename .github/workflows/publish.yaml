@@ -46,7 +46,7 @@ jobs:
           registry: ghcr.io
       -
         name: Build and Push container images (non-root)
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -63,7 +63,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}:latest
       - 
         name: Build and Push container images (root)
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile
@@ -80,7 +80,7 @@ jobs:
             ${{ env.IMAGE_PREFIX }}:latest-root
       -
         name: Build binaries for multiple environments
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: ./Dockerfile.redist
