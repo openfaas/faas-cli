@@ -59,5 +59,5 @@ func (c *Client) InvokeFunction(name, namespace string, async bool, auth bool, r
 		req.Header.Add("Authorization", "Bearer "+bearer)
 	}
 
-	return c.do(req)
+	return c.client.Do(req)
 }

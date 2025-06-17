@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/openfaas/go-sdk/internal/httpclient"
 )
 
 // Exchange an OIDC ID Token from an IdP for OpenFaaS token
@@ -46,7 +48,7 @@ func ExchangeIDToken(tokenURL, rawIDToken string, options ...ExchangeOption) (*T
 	req.Header.Set("User-Agent", "openfaas-go-sdk")
 
 	if os.Getenv("FAAS_DEBUG") == "1" {
-		dump, err := dumpRequest(req)
+		dump, err := httpclient.DumpRequest(req)
 		if err != nil {
 			return nil, err
 		}

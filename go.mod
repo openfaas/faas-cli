@@ -19,9 +19,9 @@ require (
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/moby/term v0.5.2
 	github.com/morikuni/aec v1.0.0
-	github.com/openfaas/faas-provider v0.25.5
+	github.com/openfaas/faas-provider v0.25.7
 	github.com/openfaas/faas/gateway v0.0.0-20241209094132-4e20249bc070
-	github.com/openfaas/go-sdk v0.2.16
+	github.com/openfaas/go-sdk v0.2.18
 	github.com/pkg/errors v0.9.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/spf13/cobra v1.8.1

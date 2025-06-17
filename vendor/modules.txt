@@ -156,7 +156,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.18
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openfaas/faas-provider v0.25.5
+# github.com/openfaas/faas-provider v0.25.7
 ## explicit; go 1.23
 github.com/openfaas/faas-provider/httputil
 github.com/openfaas/faas-provider/logs
@@ -165,9 +165,11 @@ github.com/openfaas/faas-provider/types
 ## explicit; go 1.23
 github.com/openfaas/faas/gateway/types
 github.com/openfaas/faas/gateway/version
-# github.com/openfaas/go-sdk v0.2.16
+# github.com/openfaas/go-sdk v0.2.18
 ## explicit; go 1.23
 github.com/openfaas/go-sdk
+github.com/openfaas/go-sdk/builder
+github.com/openfaas/go-sdk/internal/httpclient
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors

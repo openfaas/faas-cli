@@ -223,16 +223,17 @@ The Function Builder API provides a simple REST API to create your functions fro
 If your functions are using a language template you will need to make sure the required templates are available on the file system. How this is done is up to your implementation. Templates can be pulled from a git repository, copied from an S3 bucket, downloaded with an http call or fetched with the faas-cli.
 
 ```go
+image := "ttl.sh/openfaas/hello-world"
 functionName := "hello-world"
 handler := "./hello-world"
-lang := "node18"
+lang := "node22"
 
 // Get the HMAC secret used for payload authentication with the builder API.
 payloadSecret, err := os.ReadFile("payload.txt")
 if err != nil {
 	log.Fatal(err)
 }
-payloadSecret := bytes.TrimSpace(payloadSecret)
+payloadSecret = bytes.TrimSpace(payloadSecret)
 
 // Initialize a new builder client.
 builderURL, _ := url.Parse("http://pro-builder.openfaas.svc.cluster.local")
@@ -282,6 +283,55 @@ for _, logMsg := range result.Log {
 ```
 
 Take a look at the [function builder examples](https://github.com/openfaas/function-builder-examples) for a complete example.
+
+### Stream build logs
+
+```go
+// Invoke the function builder with the tar archive containing the build config and context
+// to build and push the function image.
+stream, err := b.BuildWithStream(tarPath)
+if err != nil {
+	log.Fatal(err)
+}
+defer stream.Close()
+
+for event, err := range stream.Results() {
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if event.Log != nil {
+		for _, logMsg := range event.Log {
+			fmt.Printf("%s\n", logMsg)
+		}
+	}
+
+	if event.Status == builder.BuildSuccess || event.Status == builder.BuildFailed {
+		fmt.Printf("Status: %s\n", event.Status)
+		fmt.Printf("Image: %s\n", event.Image)
+
+		if len(event.Error) > 0 {
+			fmt.Printf("Error: %s\n", event.Error)
+		}
+	}
+}
+```
+
+When you use the `BuildWithStream` method, the SDK invokes the Function Builder API and requests that the build progress be streamed in the response. If the invocation is successful, the method returns a `*builder.BuildResultStream`. This stream allows you to iterate over the build progress and has two key methods:
+
+- `Results()`: This method returns a single-use iterator.
+
+	You can use a range expression to loop over this iterator and receive intermediate build results. Each iteration produces a `builder.BuildResult` and an `error`.
+
+	While the build is in progress, `result.Status` will always be `in_progress`, and `result.Log` will contain the container build logs.
+
+	When the build completes successfully, `result.Status` will be `success`, and `result.Image` will contain the reference for the published image. If an error occurs during the build process, the status will be `failed`, and `result.Error` should contain the error that caused the build to fail.
+
+	The iterator produces an `error` only when something goes wrong while reading or parsing a build result from the HTTP response.
+
+- `Close()`: This method stops the stream and ensures the underlying connection is closed.
+
+	The stream is automatically closed when you iterate through all results or when the iteration terminates (e.g., with `break` or `return`). However, it's a good practice to call `defer stream.Close()` immediately after a successful call to `BuildWithStream` to prevent any resource leaks.
 
 ## License
 

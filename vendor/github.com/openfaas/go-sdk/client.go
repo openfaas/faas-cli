@@ -9,14 +9,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/openfaas/faas-provider/logs"
 	"github.com/openfaas/faas-provider/types"
+	"github.com/openfaas/go-sdk/internal/httpclient"
 )
 
 // Client is used to manage OpenFaaS and invoke functions
@@ -36,25 +35,6 @@ type Client struct {
 
 	// OpenFaaS function access token cache for invoking functions.
 	fnTokenCache TokenCache
-}
-
-// Wrap http request Do function to add default headers and support debug capabilities
-func (s *Client) do(req *http.Request) (*http.Response, error) {
-	// Add default user-agent header
-	if len(req.Header.Get("User-Agent")) == 0 {
-		req.Header.Set("User-Agent", "openfaas-go-sdk")
-	}
-
-	if os.Getenv("FAAS_DEBUG") == "1" {
-		dump, err := dumpRequest(req)
-		if err != nil {
-			return nil, err
-		}
-
-		fmt.Println(dump)
-	}
-
-	return s.client.Do(req)
 }
 
 // ClientAuth an interface for client authentication.
@@ -95,6 +75,9 @@ func NewClient(gatewayURL *url.URL, auth ClientAuth, client *http.Client) *Clien
 // NewClientWithOpts creates a Client for managing OpenFaaS and invoking functions
 // It takes a list of ClientOptions to configure the client.
 func NewClientWithOpts(gatewayURL *url.URL, client *http.Client, options ...ClientOption) *Client {
+	// Wrap http client to add default headers and support debug capabilities
+	client = httpclient.WithFaasTransport(client)
+
 	c := &Client{
 		GatewayURL: gatewayURL,
 
@@ -135,7 +118,7 @@ func (s *Client) GetNamespaces(ctx context.Context) ([]string, error) {
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return namespaces, fmt.Errorf("unable to make request: %w", err)
 	}
@@ -180,7 +163,7 @@ func (s *Client) GetNamespace(ctx context.Context, namespace string) (types.Func
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return types.FunctionNamespace{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -239,6 +222,7 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
@@ -246,7 +230,7 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -298,6 +282,7 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
@@ -305,7 +290,7 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -353,13 +338,14 @@ func (s *Client) DeleteNamespace(ctx context.Context, namespace string) error {
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -413,7 +399,7 @@ func (s *Client) GetFunctions(ctx context.Context, namespace string) ([]types.Fu
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return []types.FunctionStatus{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -448,7 +434,7 @@ func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return SystemInfo{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -490,7 +476,7 @@ func (s *Client) GetFunction(ctx context.Context, name, namespace string) (types
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return types.FunctionStatus{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -535,6 +521,7 @@ func (s *Client) deploy(ctx context.Context, method string, spec types.FunctionD
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
@@ -542,7 +529,7 @@ func (s *Client) deploy(ctx context.Context, method string, spec types.FunctionD
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -586,13 +573,14 @@ func (s *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -644,13 +632,14 @@ func (s *Client) DeleteFunction(ctx context.Context, functionName, namespace str
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -704,7 +693,7 @@ func (s *Client) GetSecrets(ctx context.Context, namespace string) ([]types.Secr
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return []types.Secret{}, fmt.Errorf("unable to make HTTP request: %w", err)
 	}
@@ -741,6 +730,7 @@ func (s *Client) CreateSecret(ctx context.Context, spec types.Secret) (int, erro
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
@@ -748,7 +738,7 @@ func (s *Client) CreateSecret(ctx context.Context, spec types.Secret) (int, erro
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -788,6 +778,7 @@ func (s *Client) UpdateSecret(ctx context.Context, spec types.Secret) (int, erro
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
@@ -795,7 +786,7 @@ func (s *Client) UpdateSecret(ctx context.Context, spec types.Secret) (int, erro
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return http.StatusBadGateway, err
 	}
@@ -841,13 +832,14 @@ func (s *Client) DeleteSecret(ctx context.Context, secretName, namespace string)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", u.String(), err)
 	}
+	req.Header.Set("Content-Type", "application/json")
 
 	if s.ClientAuth != nil {
 		if err := s.ClientAuth.Set(req); err != nil {
 			return fmt.Errorf("unable to set Authorization header: %w", err)
 		}
 	}
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -924,7 +916,7 @@ func (s *Client) GetLogs(ctx context.Context, functionName, namespace string, fo
 		}
 	}
 
-	res, err := s.do(req)
+	res, err := s.client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("cannot connect to OpenFaaS on URL: %s, error: %s", s.GatewayURL, err)
 
@@ -969,44 +961,4 @@ func (s *Client) GetLogs(ctx context.Context, functionName, namespace string, fo
 		}
 	}
 	return logStream, nil
-}
-
-func dumpRequest(req *http.Request) (string, error) {
-	var sb strings.Builder
-
-	sb.WriteString(fmt.Sprintf("%s %s\n", req.Method, req.URL.String()))
-	for k, v := range req.Header {
-		if k == "Authorization" {
-			auth := "[REDACTED]"
-			if len(v) == 0 {
-				auth = "[NOT_SET]"
-			} else {
-				l, _, ok := strings.Cut(v[0], " ")
-				if ok && (l == "Basic" || l == "Bearer") {
-					auth = l + " [REDACTED]"
-				}
-			}
-			sb.WriteString(fmt.Sprintf("%s: %s\n", k, auth))
-
-		} else {
-			sb.WriteString(fmt.Sprintf("%s: %s\n", k, v))
-		}
-	}
-
-	if req.Body != nil {
-		r := io.NopCloser(req.Body)
-		buf := new(strings.Builder)
-		_, err := io.Copy(buf, r)
-		if err != nil {
-			return "", err
-		}
-		bodyDebug := buf.String()
-		if len(bodyDebug) > 0 {
-			sb.WriteString(fmt.Sprintf("%s\n", bodyDebug))
-
-		}
-		req.Body = io.NopCloser(strings.NewReader(buf.String()))
-	}
-
-	return sb.String(), nil
 }

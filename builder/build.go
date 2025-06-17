@@ -4,14 +4,14 @@
 package builder
 
 import (
+	"bytes"
 	"context"
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,6 +22,7 @@ import (
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
 	vcs "github.com/openfaas/faas-cli/versioncontrol"
+	"github.com/openfaas/go-sdk/builder"
 )
 
 // AdditionalPackageBuildArg holds the special build-arg keyname for use with build-opts.
@@ -84,31 +85,37 @@ func BuildImage(image string, handler string, functionName string, language stri
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
-			res, err := callBuilder(tarPath, remoteBuilder, functionName, payloadSecretPath)
+			// Get the HMAC secret used for payload authentication with the builder API.
+			payloadSecret, err := os.ReadFile(payloadSecretPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read payload secret: %w", err)
 			}
-			defer res.Body.Close()
+			payloadSecret = bytes.TrimSpace(payloadSecret)
 
-			data, _ := io.ReadAll(res.Body)
+			// Initialize a new builder client.
+			builderURL, _ := url.Parse(remoteBuilder)
+			b := builder.NewFunctionBuilder(builderURL, http.DefaultClient, builder.WithHmacAuth(string(payloadSecret)))
 
-			result := builderResult{}
-			if err := json.Unmarshal(data, &result); err != nil {
-				return err
+			stream, err := b.BuildWithStream(tarPath)
+			if err != nil {
+				return fmt.Errorf("failed to invoke builder: %w", err)
 			}
+			defer stream.Close()
 
-			if !quietBuild {
-				for _, logMsg := range result.Log {
-					fmt.Printf("%s\n", logMsg)
+			for result := range stream.Results() {
+				if !quietBuild {
+					for _, logMsg := range result.Log {
+						fmt.Printf("%s\n", logMsg)
+					}
+				}
+
+				switch result.Status {
+				case builder.BuildSuccess:
+					log.Printf("%s success building and pushing image: %s", functionName, result.Image)
+				case builder.BuildFailed:
+					return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Error)
 				}
 			}
-
-			if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
-				fmt.Println(res.StatusCode)
-				return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Status)
-			}
-
-			log.Printf("%s success building and pushing image: %s", functionName, result.Image)
 
 		} else {
 
