@@ -73,15 +73,21 @@ func BuildImage(image string, handler string, functionName string, language stri
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
-			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")
+			tempDir, err := os.MkdirTemp(os.TempDir(), "openfaas-build-*")
 			if err != nil {
-				return fmt.Errorf("failed to create temporary directory for %s, error: %w", functionName, err)
+				return fmt.Errorf("failed to create temporary directory: %w", err)
 			}
 			defer os.RemoveAll(tempDir)
 
 			tarPath := path.Join(tempDir, "req.tar")
 
-			if err := makeTar(buildConfig{Image: imageName, BuildArgs: buildArgMap}, path.Join("build", functionName), tarPath); err != nil {
+			buildConfig := builder.BuildConfig{
+				Image:     imageName,
+				BuildArgs: buildArgMap,
+			}
+
+			// Prepare a tar archive that contains the build config and build context.
+			if err := builder.MakeTar(tarPath, path.Join("build", functionName), &buildConfig); err != nil {
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 

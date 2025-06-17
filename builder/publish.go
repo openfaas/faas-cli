@@ -4,18 +4,14 @@
 package builder
 
 import (
-	"archive/tar"
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"strings"
 
 	v2execute "github.com/alexellis/go-execute/v2"
@@ -23,15 +19,6 @@ import (
 	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/go-sdk/builder"
 )
-
-type buildConfig struct {
-	Image     string            `json:"image"`
-	Frontend  string            `json:"frontend,omitempty"`
-	BuildArgs map[string]string `json:"buildArgs,omitempty"`
-	Platforms []string          `json:"platforms,omitempty"`
-}
-
-const BuilderConfigFilename = "com.openfaas.docker.config"
 
 // PublishImage will publish images as multi-arch
 // TODO: refactor signature to a struct to simplify the length of the method header
@@ -78,17 +65,23 @@ func PublishImage(image string, handler string, functionName string, language st
 				return fmt.Errorf("--pull is not supported with --remote-builder")
 			}
 
-			tempDir, err := os.MkdirTemp(os.TempDir(), "builder-*")
+			tempDir, err := os.MkdirTemp(os.TempDir(), "openfaas-build-*")
 			if err != nil {
-				return fmt.Errorf("failed to create temporary directory for %s, error: %w", functionName, err)
+				return fmt.Errorf("failed to create temporary directory: %w", err)
 			}
 			defer os.RemoveAll(tempDir)
 
 			tarPath := path.Join(tempDir, "req.tar")
 
 			builderPlatforms := strings.Split(platforms, ",")
+			buildConfig := builder.BuildConfig{
+				Image:     imageName,
+				BuildArgs: buildArgMap,
+				Platforms: builderPlatforms,
+			}
 
-			if err := makeTar(buildConfig{Image: imageName, BuildArgs: buildArgMap, Platforms: builderPlatforms}, path.Join("build", functionName), tarPath); err != nil {
+			// Prepare a tar archive that contains the build config and build context.
+			if err := builder.MakeTar(tarPath, path.Join("build", functionName), &buildConfig); err != nil {
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
@@ -206,55 +199,4 @@ func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 
 func applyTag(index int, baseImage, tag string) string {
 	return fmt.Sprintf("%s:%s", baseImage[:index], tag)
-}
-
-func makeTar(buildConfig buildConfig, base, tarPath string) error {
-	configBytes, _ := json.Marshal(buildConfig)
-	if err := os.WriteFile(path.Join(base, BuilderConfigFilename), configBytes, 0664); err != nil {
-		return err
-	}
-
-	tarFile, err := os.Create(tarPath)
-	if err != nil {
-		return err
-	}
-
-	tarWriter := tar.NewWriter(tarFile)
-	defer tarWriter.Close()
-
-	err = filepath.Walk(base, func(path string, f os.FileInfo, pathErr error) error {
-		if pathErr != nil {
-			return pathErr
-		}
-
-		targetFile, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-
-		header, err := tar.FileInfoHeader(f, f.Name())
-		if err != nil {
-			return err
-		}
-
-		header.Name = strings.TrimPrefix(path, base)
-		if header.Name != fmt.Sprintf("/%s", BuilderConfigFilename) {
-			header.Name = filepath.Join("context", header.Name)
-		}
-
-		header.Name = strings.TrimPrefix(header.Name, "/")
-
-		if err := tarWriter.WriteHeader(header); err != nil {
-			return err
-		}
-
-		if f.Mode().IsDir() {
-			return nil
-		}
-
-		_, err = io.Copy(tarWriter, targetFile)
-		return err
-	})
-
-	return err
 }
