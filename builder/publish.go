@@ -7,13 +7,12 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -22,8 +21,7 @@ import (
 	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
 	"github.com/openfaas/faas-cli/stack"
-
-	hmac "github.com/alexellis/hmac/v2"
+	"github.com/openfaas/go-sdk/builder"
 )
 
 type buildConfig struct {
@@ -31,12 +29,6 @@ type buildConfig struct {
 	Frontend  string            `json:"frontend,omitempty"`
 	BuildArgs map[string]string `json:"buildArgs,omitempty"`
 	Platforms []string          `json:"platforms,omitempty"`
-}
-
-type builderResult struct {
-	Log    []string `json:"log"`
-	Image  string   `json:"image"`
-	Status string   `json:"status"`
 }
 
 const BuilderConfigFilename = "com.openfaas.docker.config"
@@ -100,31 +92,37 @@ func PublishImage(image string, handler string, functionName string, language st
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
-			res, err := callBuilder(tarPath, remoteBuilder, functionName, payloadSecretPath)
+			// Get the HMAC secret used for payload authentication with the builder API.
+			payloadSecret, err := os.ReadFile(payloadSecretPath)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to read payload secret: %w", err)
 			}
-			defer res.Body.Close()
+			payloadSecret = bytes.TrimSpace(payloadSecret)
 
-			data, _ := io.ReadAll(res.Body)
+			// Initialize a new builder client.
+			builderURL, _ := url.Parse(remoteBuilder)
+			b := builder.NewFunctionBuilder(builderURL, http.DefaultClient, builder.WithHmacAuth(string(payloadSecret)))
 
-			result := builderResult{}
-			if err := json.Unmarshal(data, &result); err != nil {
-				return fmt.Errorf("error: %s, unable to unmarshal: %q", err, string(data))
+			stream, err := b.BuildWithStream(tarPath)
+			if err != nil {
+				return fmt.Errorf("failed to invoke builder:: %w", err)
 			}
+			defer stream.Close()
 
-			if !quietBuild {
-				for _, logMsg := range result.Log {
-					fmt.Printf("%s\n", logMsg)
+			for result := range stream.Results() {
+				if !quietBuild {
+					for _, logMsg := range result.Log {
+						fmt.Printf("%s\n", logMsg)
+					}
+				}
+
+				switch result.Status {
+				case builder.BuildSuccess:
+					log.Printf("%s success building and pushing image: %s", functionName, result.Image)
+				case builder.BuildFailed:
+					return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Error)
 				}
 			}
-
-			if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
-				fmt.Println(res.StatusCode)
-				return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Status)
-			}
-
-			log.Printf("%s success building and pushing image: %s", functionName, result.Image)
 
 		} else {
 			buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
@@ -259,42 +257,4 @@ func makeTar(buildConfig buildConfig, base, tarPath string) error {
 	})
 
 	return err
-}
-
-func callBuilder(tarPath, builderAddress, functionName, payloadSecretPath string) (*http.Response, error) {
-
-	payloadSecret, err := os.ReadFile(payloadSecretPath)
-	if err != nil {
-		return nil, err
-	}
-
-	tarFile, err := os.Open(tarPath)
-	if err != nil {
-		return nil, err
-	}
-	defer tarFile.Close()
-
-	tarFileBytes, err := io.ReadAll(tarFile)
-	if err != nil {
-		return nil, err
-	}
-
-	digest := hmac.Sign(tarFileBytes, bytes.TrimSpace(payloadSecret), sha256.New)
-	fmt.Println(hex.EncodeToString(digest))
-
-	r, err := http.NewRequest(http.MethodPost, builderAddress, bytes.NewReader(tarFileBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	r.Header.Set("X-Build-Signature", "sha256="+hex.EncodeToString(digest))
-	r.Header.Set("Content-Type", "application/octet-stream")
-
-	log.Printf("%s invoking the API for build at %s", functionName, builderAddress)
-	res, err := http.DefaultClient.Do(r)
-	if err != nil {
-		return nil, err
-	}
-
-	return res, nil
 }
