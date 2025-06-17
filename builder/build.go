@@ -53,13 +53,18 @@ func BuildImage(image string, handler string, functionName string, language stri
 			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
-		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
+		opts := []builder.BuildContextOption{}
+		if len(langTemplate.HandlerFolder) > 0 {
+			opts = append(opts, builder.WithHandlerOverlay(langTemplate.HandlerFolder))
+		}
+
+		buildContext, err := builder.CreateBuildContext(functionName, handler, language, copyExtraPaths, opts...)
 		if err != nil {
 			return err
 		}
 
 		if shrinkwrap {
-			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
+			fmt.Printf("%s shrink-wrapped to %s\n", functionName, buildContext)
 			return nil
 		}
 
@@ -152,7 +157,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			log.Printf("Build flags: %+v\n", args)
 
 			task := v2execute.ExecTask{
-				Cwd:         tempPath,
+				Cwd:         buildContext,
 				Command:     command,
 				Args:        args,
 				StreamStdio: !quietBuild,
@@ -306,101 +311,6 @@ type dockerBuild struct {
 	ForcePull bool
 }
 
-var defaultDirPermissions os.FileMode = 0700
-
-const defaultHandlerFolder string = "function"
-
-// isRunningInCI checks the ENV var CI and returns true if it's set to true or 1
-func isRunningInCI() bool {
-	if env, ok := os.LookupEnv("CI"); ok {
-		if env == "true" || env == "1" {
-			return true
-		}
-	}
-	return false
-}
-
-// createBuildContext creates temporary build folder to perform a Docker build with language template
-func createBuildContext(functionName string, handler string, language string, useFunction bool, handlerFolder string, copyExtraPaths []string) (string, error) {
-	tempPath := fmt.Sprintf("./build/%s/", functionName)
-
-	if err := os.RemoveAll(tempPath); err != nil {
-		return tempPath, fmt.Errorf("unable to clear temporary build folder: %s", tempPath)
-	}
-
-	functionPath := tempPath
-
-	if useFunction {
-		if handlerFolder == "" {
-			functionPath = path.Join(functionPath, defaultHandlerFolder)
-		} else {
-			functionPath = path.Join(functionPath, handlerFolder)
-		}
-	}
-
-	// fmt.Printf("Preparing: %s %s\n", handler+"/", functionPath)
-
-	if isRunningInCI() {
-		defaultDirPermissions = 0777
-	}
-
-	mkdirErr := os.MkdirAll(functionPath, defaultDirPermissions)
-	if mkdirErr != nil {
-		fmt.Printf("Error creating path: %s - %s.\n", functionPath, mkdirErr.Error())
-		return tempPath, mkdirErr
-	}
-
-	if useFunction {
-		if err := CopyFiles(path.Join("./template/", language), tempPath); err != nil {
-			fmt.Printf("Error copying template directory: %s.\n", err.Error())
-			return tempPath, err
-		}
-	}
-
-	// Overlay in user-function
-	// CopyFiles(handler, functionPath)
-	infos, err := os.ReadDir(handler)
-	if err != nil {
-		fmt.Printf("Error reading the handler: %s - %s.\n", handler, err.Error())
-		return tempPath, err
-	}
-
-	for _, info := range infos {
-		switch info.Name() {
-		case "build", "template":
-			fmt.Printf("Skipping \"%s\" folder\n", info.Name())
-			continue
-		default:
-			if err := CopyFiles(
-				filepath.Clean(path.Join(handler, info.Name())),
-				filepath.Clean(path.Join(functionPath, info.Name())),
-			); err != nil {
-				return tempPath, err
-			}
-		}
-	}
-
-	for _, extraPath := range copyExtraPaths {
-		extraPathAbs, err := pathInScope(extraPath, ".")
-		if err != nil {
-			return tempPath, err
-		}
-		// Note that if useFunction is false, ie is a `dockerfile` template, then
-		// functionPath == tempPath, the docker build context, not the `function` handler folder
-		// inside the docker build context
-		copyErr := CopyFiles(
-			extraPathAbs,
-			filepath.Clean(path.Join(functionPath, extraPath)),
-		)
-
-		if copyErr != nil {
-			return tempPath, copyErr
-		}
-	}
-
-	return tempPath, nil
-}
-
 // pathInScope returns the absolute path to `path` and ensures that it is located within the
 // provided scope. An error will be returned, if the path is outside of the provided scope.
 func pathInScope(path string, scope string) (string, error) {
@@ -535,8 +445,4 @@ func deDuplicate(buildOptPackages []string) []string {
 		}
 	}
 	return retPackages
-}
-
-func isLanguageTemplate(language string) bool {
-	return strings.ToLower(language) != "dockerfile"
 }

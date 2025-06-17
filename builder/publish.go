@@ -40,13 +40,18 @@ func PublishImage(image string, handler string, functionName string, language st
 			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
-		tempPath, err := createBuildContext(functionName, handler, language, isLanguageTemplate(language), langTemplate.HandlerFolder, copyExtraPaths)
+		opts := []builder.BuildContextOption{}
+		if len(langTemplate.HandlerFolder) > 0 {
+			opts = append(opts, builder.WithHandlerOverlay(langTemplate.HandlerFolder))
+		}
+
+		buildContext, err := builder.CreateBuildContext(functionName, handler, language, copyExtraPaths, opts...)
 		if err != nil {
 			return err
 		}
 
 		if shrinkwrap {
-			fmt.Printf("%s shrink-wrapped to %s\n", functionName, tempPath)
+			fmt.Printf("%s shrink-wrapped to %s\n", functionName, buildContext)
 			return nil
 		}
 
@@ -142,7 +147,7 @@ func PublishImage(image string, handler string, functionName string, language st
 			fmt.Printf("Publishing with command: %v %v\n", command, args)
 
 			task := v2execute.ExecTask{
-				Cwd:         tempPath,
+				Cwd:         buildContext,
 				Command:     command,
 				Args:        args,
 				StreamStdio: !quietBuild,
