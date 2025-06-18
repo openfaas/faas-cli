@@ -58,15 +58,15 @@ func init() {
 }
 
 var invokeCmd = &cobra.Command{
-	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query PARAM=VALUE] [--header PARAM=VALUE] [--method HTTP_METHOD]`,
+	Use:   `invoke FUNCTION_NAME [--gateway GATEWAY_URL] [--content-type CONTENT_TYPE] [--query KEY=VALUE] [--header "KEY: VALUE"] [--method HTTP_METHOD]`,
 	Short: "Invoke an OpenFaaS function",
 	Long:  `Invokes an OpenFaaS function and reads from STDIN for the body of the request`,
-	Example: `  faas-cli invoke echo --gateway https://host:port
+	Example: `  faas-cli invoke printer --gateway https://host:port <<< "Hello"
   faas-cli invoke echo --gateway https://host:port --content-type application/json
   faas-cli invoke env --query repo=faas-cli --query org=openfaas
-  faas-cli invoke env --header X-Ping-Url=http://request.bin/etc
-  faas-cli invoke resize-img --async -H "X-Callback-Url=http://gateway:8080/function/send2slack" < image.png
-  faas-cli invoke env -H X-Ping-Url=http://request.bin/etc
+  faas-cli invoke env --header "X-Ping-Url: http://request.bin/etc"
+  faas-cli invoke resize-img --async -H "X-Callback-Url: http://gateway:8080/function/send2slack" < image.png
+  faas-cli invoke env -H X-Ping-Url: http://request.bin/etc
   faas-cli invoke flask --method GET --namespace dev
   faas-cli invoke env --sign X-GitHub-Event --key yoursecret`,
 	RunE: runInvoke,
@@ -118,7 +118,10 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	httpHeader.Set("Content-Type", contentType)
+	if httpHeader.Get("Content-Type") == "" || cmd.Flag("content-type").Changed {
+		httpHeader.Set("Content-Type", contentType)
+	}
+
 	httpHeader.Set("User-Agent", fmt.Sprintf("faas-cli/%s (openfaas; %s; %s)", version.BuildVersion(), runtime.GOOS, runtime.GOARCH))
 
 	stat, _ := os.Stdin.Stat()
@@ -219,23 +222,49 @@ func missingSignFlag(header string, key string) bool {
 // parseHeaders parses header values from the header command flag
 func parseHeaders(headers []string) (http.Header, error) {
 	httpHeader := http.Header{}
+	warningShown := false
 
 	for _, header := range headers {
-		headerVal := strings.SplitN(header, "=", 2)
-		if len(headerVal) != 2 {
-			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value")
+		// First try the preferred Key: Value format
+		parts := strings.SplitN(header, ":", 2)
+		if len(parts) == 2 {
+			key := strings.TrimSpace(parts[0])
+			if key == "" {
+				return httpHeader, fmt.Errorf("the --header or -H flag must take the form of 'Key: Value' (empty key given)")
+			}
+
+			value := strings.TrimSpace(parts[1])
+			if value == "" {
+				return httpHeader, fmt.Errorf("the --header or -H flag must take the form of 'Key: Value' (empty value given)")
+			}
+
+			httpHeader.Add(key, value)
+			continue
 		}
 
-		key, value := headerVal[0], headerVal[1]
-		if key == "" {
-			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value (empty key given)")
+		// Fallback to deprecated key=value format
+		parts = strings.SplitN(header, "=", 2)
+		if len(parts) == 2 {
+			key := parts[0]
+			if key == "" {
+				return httpHeader, fmt.Errorf("the --header or -H flag must take the form of 'Key: Value' or 'key=value' (empty key given)")
+			}
+
+			value := parts[1]
+			if value == "" {
+				return httpHeader, fmt.Errorf("the --header or -H flag must take the form of 'Key: Value' or 'key=value' (empty value given)")
+			}
+
+			// Print deprecation warning only once
+			if !warningShown {
+				fmt.Fprintf(os.Stderr, "Warning: Using deprecated 'key=value' format for headers. Please use 'Key: Value' format instead.\n")
+				warningShown = true
+			}
+			httpHeader.Add(key, value)
+			continue
 		}
 
-		if value == "" {
-			return httpHeader, fmt.Errorf("the --header or -H flag must take the form of key=value (empty value given)")
-		}
-
-		httpHeader.Add(key, value)
+		return httpHeader, fmt.Errorf("the --header or -H flag must take the form of 'Key: Value' or 'key=value'")
 	}
 
 	return httpHeader, nil

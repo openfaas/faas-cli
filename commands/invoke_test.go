@@ -177,6 +177,29 @@ func Test_parseHeaders_valid(t *testing.T) {
 	}{
 		{
 			name:  "Header with key-value pair as value",
+			input: []string{`X-Hub-Signature: "sha1: "shashashaebaf43""`, "X-Hub-Signature-1: sha1: shashashaebaf43", "X-Hub-Signature-2:sha1:shashashaebaf43"},
+			want: http.Header{
+				"X-Hub-Signature":   []string{`"sha1: "shashashaebaf43""`},
+				"X-Hub-Signature-1": []string{"sha1: shashashaebaf43"},
+				"X-Hub-Signature-2": []string{"sha1:shashashaebaf43"},
+			},
+		},
+		{
+			name:  "Header with normal values",
+			input: []string{`X-Hub-Signature: "shashashaebaf43"`, "X-Hub-Signature-1: shashashaebaf43", "X-Hub-Signature-2:shashashaebaf43"},
+			want: http.Header{
+				"X-Hub-Signature":   []string{`"shashashaebaf43"`},
+				"X-Hub-Signature-1": []string{"shashashaebaf43"},
+				"X-Hub-Signature-2": []string{"shashashaebaf43"},
+			},
+		},
+		{
+			name:  "Header with base64 string value",
+			input: []string{`X-Hub-Signature: "shashashaebaf43="`},
+			want:  http.Header{"X-Hub-Signature": []string{`"shashashaebaf43="`}},
+		},
+		{
+			name:  "Deprecated header format with key-value pair as value",
 			input: []string{`X-Hub-Signature="sha1="shashashaebaf43""`, "X-Hub-Signature-1=sha1=shashashaebaf43"},
 			want: http.Header{
 				"X-Hub-Signature":   []string{`"sha1="shashashaebaf43""`},
@@ -184,12 +207,12 @@ func Test_parseHeaders_valid(t *testing.T) {
 			},
 		},
 		{
-			name:  "Header with normal values",
+			name:  "Deprecated header format with normal values",
 			input: []string{`X-Hub-Signature="shashashaebaf43"`, "X-Hub-Signature-1=shashashaebaf43"},
 			want:  http.Header{"X-Hub-Signature": []string{`"shashashaebaf43"`}, "X-Hub-Signature-1": []string{"shashashaebaf43"}},
 		},
 		{
-			name:  "Header with base64 string value",
+			name:  "Deprecated header format with base64 string value",
 			input: []string{`X-Hub-Signature="shashashaebaf43="`},
 			want:  http.Header{"X-Hub-Signature": []string{`"shashashaebaf43="`}},
 		},
@@ -221,10 +244,18 @@ func Test_parseHeaders_invalid(t *testing.T) {
 		},
 		{
 			name:  "Empty header key",
-			input: []string{"=shashashaebaf43"},
+			input: []string{":shashashaebaf43"},
 		},
 		{
 			name:  "Empty header value",
+			input: []string{"X-Hub-Signature:"},
+		},
+		{
+			name:  "Deprecated empty header key",
+			input: []string{"=shashashaebaf43"},
+		},
+		{
+			name:  "Deprecated empty header value",
 			input: []string{"X-Hub-Signature="},
 		},
 	}
