@@ -62,6 +62,12 @@ func PublishImage(image string, handler string, functionName string, language st
 
 		imageName := schema.BuildImageName(tagMode, image, version, branch)
 
+		buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
+		if err != nil {
+			return err
+		}
+		buildArgMap = appendAdditionalPackages(buildArgMap, buildOptPackages)
+
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
@@ -123,24 +129,17 @@ func PublishImage(image string, handler string, functionName string, language st
 			}
 
 		} else {
-			buildOptPackages, buildPackageErr := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
-
-			if buildPackageErr != nil {
-				return buildPackageErr
-			}
-
 			dockerBuildVal := dockerBuild{
-				Image:            imageName,
-				NoCache:          nocache,
-				Squash:           squash,
-				HTTPProxy:        os.Getenv("http_proxy"),
-				HTTPSProxy:       os.Getenv("https_proxy"),
-				BuildArgMap:      buildArgMap,
-				BuildOptPackages: buildOptPackages,
-				BuildLabelMap:    buildLabelMap,
-				Platforms:        platforms,
-				ExtraTags:        extraTags,
-				ForcePull:        forcePull,
+				Image:         imageName,
+				NoCache:       nocache,
+				Squash:        squash,
+				HTTPProxy:     os.Getenv("http_proxy"),
+				HTTPSProxy:    os.Getenv("https_proxy"),
+				BuildArgMap:   buildArgMap,
+				BuildLabelMap: buildLabelMap,
+				Platforms:     platforms,
+				ExtraTags:     extraTags,
+				ForcePull:     forcePull,
 			}
 
 			command, args := getDockerBuildxCommand(dockerBuildVal)
@@ -175,7 +174,7 @@ func PublishImage(image string, handler string, functionName string, language st
 
 func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap,
-		build.BuildOptPackages, build.BuildLabelMap, build.ForcePull)
+		build.BuildLabelMap, build.ForcePull)
 
 	// pushOnly defined at https://github.com/docker/buildx
 	const pushOnly = "--output=type=registry,push=true"
