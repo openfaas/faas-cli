@@ -3,6 +3,7 @@ package builder
 import (
 	"fmt"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -11,13 +12,12 @@ import (
 
 func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 	dockerBuildVal := dockerBuild{
-		Image:            "imagename:latest",
-		NoCache:          false,
-		Squash:           false,
-		HTTPProxy:        "",
-		HTTPSProxy:       "",
-		BuildArgMap:      make(map[string]string),
-		BuildOptPackages: []string{},
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		HTTPProxy:   "",
+		HTTPSProxy:  "",
+		BuildArgMap: make(map[string]string),
 	}
 
 	want := "build --tag imagename:latest ."
@@ -38,13 +38,12 @@ func Test_getDockerBuildCommand_NoOpts(t *testing.T) {
 
 func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 	dockerBuildVal := dockerBuild{
-		Image:            "imagename:latest",
-		NoCache:          true,
-		Squash:           false,
-		HTTPProxy:        "",
-		HTTPSProxy:       "",
-		BuildArgMap:      make(map[string]string),
-		BuildOptPackages: []string{},
+		Image:       "imagename:latest",
+		NoCache:     true,
+		Squash:      false,
+		HTTPProxy:   "",
+		HTTPSProxy:  "",
+		BuildArgMap: make(map[string]string),
 	}
 
 	want := "build --no-cache --tag imagename:latest ."
@@ -66,13 +65,12 @@ func Test_getDockerBuildCommand_WithNoCache(t *testing.T) {
 
 func Test_getDockerBuildCommand_WithProxies(t *testing.T) {
 	dockerBuildVal := dockerBuild{
-		Image:            "imagename:latest",
-		NoCache:          false,
-		Squash:           false,
-		HTTPProxy:        "http://127.0.0.1:3128",
-		HTTPSProxy:       "https://127.0.0.1:3128",
-		BuildArgMap:      make(map[string]string),
-		BuildOptPackages: []string{},
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		HTTPProxy:   "http://127.0.0.1:3128",
+		HTTPSProxy:  "https://127.0.0.1:3128",
+		BuildArgMap: make(map[string]string),
 	}
 
 	want := "build --build-arg http_proxy=http://127.0.0.1:3128 --build-arg https_proxy=https://127.0.0.1:3128 --tag imagename:latest ."
@@ -101,7 +99,6 @@ func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 			"USERNAME": "admin",
 			"PASSWORD": "1234",
 		},
-		BuildOptPackages: []string{},
 	}
 
 	_, values := getDockerBuildCommand(dockerBuildVal)
@@ -127,7 +124,6 @@ func Test_buildFlagSlice(t *testing.T) {
 		httpProxy     string
 		httpsProxy    string
 		buildArgMap   map[string]string
-		buildPackages []string
 		expectedSlice []string
 		buildLabelMap map[string]string
 	}{
@@ -138,7 +134,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "",
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache"},
 		},
 		{
@@ -148,7 +143,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "",
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash"},
 		},
 		{
@@ -158,7 +152,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "192.168.0.1",
 			httpsProxy:    "",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "http_proxy=192.168.0.1"},
 		},
 		{
@@ -168,7 +161,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "",
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -178,7 +170,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "192.168.0.1",
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "http_proxy=192.168.0.1", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -188,7 +179,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			httpProxy:     "192.168.0.1",
 			httpsProxy:    "127.0.0.1",
 			buildArgMap:   make(map[string]string),
-			buildPackages: []string{},
 			expectedSlice: []string{"--build-arg", "http_proxy=192.168.0.1", "--build-arg", "https_proxy=127.0.0.1"},
 		},
 		{
@@ -200,7 +190,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			buildArgMap: map[string]string{
 				"muppet": "ernie",
 			},
-			buildPackages: []string{},
 			expectedSlice: []string{"--build-arg", "muppet=ernie"},
 		},
 		{
@@ -212,7 +201,6 @@ func Test_buildFlagSlice(t *testing.T) {
 			buildArgMap: map[string]string{
 				"muppets": "burt and ernie",
 			},
-			buildPackages: []string{},
 			expectedSlice: []string{"--build-arg", "muppets=burt and ernie"},
 		},
 		{
@@ -225,7 +213,6 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppets":    "burt and ernie",
 				"playschool": "Jemima",
 			},
-			buildPackages: []string{},
 			expectedSlice: []string{"--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima"},
 		},
 		{
@@ -238,7 +225,6 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppets":    "burt and ernie",
 				"playschool": "Jemima",
 			},
-			buildPackages: []string{},
 			expectedSlice: []string{"--no-cache", "--squash", "--build-arg", "muppets=burt and ernie", "--build-arg", "playschool=Jemima"},
 		},
 		{
@@ -251,7 +237,6 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppets":    "burt and ernie",
 				"playschool": "Jemima",
 			},
-			buildPackages: []string{},
 			buildLabelMap: map[string]string{
 				"org.label-schema.name": "test function",
 			},
@@ -267,7 +252,6 @@ func Test_buildFlagSlice(t *testing.T) {
 				"muppets":    "burt and ernie",
 				"playschool": "Jemima",
 			},
-			buildPackages: []string{},
 			buildLabelMap: map[string]string{
 				"org.label-schema.name":        "test function",
 				"org.label-schema.description": "This is a test function",
@@ -281,7 +265,7 @@ func Test_buildFlagSlice(t *testing.T) {
 		t.Run(test.title, func(t *testing.T) {
 
 			forcePull := false
-			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildPackages, test.buildLabelMap, forcePull)
+			flagSlice := buildFlagSlice(test.nocache, test.squash, test.httpProxy, test.httpsProxy, test.buildArgMap, test.buildLabelMap, forcePull)
 			fmt.Println(flagSlice)
 			if len(flagSlice) != len(test.expectedSlice) {
 				t.Errorf("Slices differ in size - wanted: %d, found %d", len(test.expectedSlice), len(flagSlice))
@@ -511,6 +495,119 @@ func Test_pathInScope(t *testing.T) {
 				if abs != tc.expectedPath {
 					t.Fatalf("expected path %s, got %s", tc.expectedPath, abs)
 				}
+			}
+		})
+	}
+}
+
+func Test_appendAdditionalPackages(t *testing.T) {
+	var testCases = []struct {
+		title              string
+		buildArgs          map[string]string
+		additionalPackages []string
+		expectedBuildArgs  map[string]string
+	}{
+		{
+			title:              "empty inputs",
+			buildArgs:          make(map[string]string),
+			additionalPackages: []string{},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "",
+			},
+		},
+		{
+			title: "no ADDITIONAL_PACKAGE key in buildArgs",
+			buildArgs: map[string]string{
+				"OTHER_ARG": "some_value",
+			},
+			additionalPackages: []string{"package1", "package2"},
+			expectedBuildArgs: map[string]string{
+				"OTHER_ARG":               "some_value",
+				AdditionalPackageBuildArg: "package1 package2",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with single package",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "existing_package",
+			},
+			additionalPackages: []string{"new_package"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "existing_package new_package",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with multiple packages",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2 package3",
+			},
+			additionalPackages: []string{"package4", "package5"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2 package3 package4 package5",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with duplicates",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2",
+			},
+			additionalPackages: []string{"package2", "package3", "package1"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2 package3",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with duplicates in buildArgs value",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2 package1",
+			},
+			additionalPackages: []string{"package3", "package2"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2 package3",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with empty value",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "",
+			},
+			additionalPackages: []string{"package1", "package2"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1 package2",
+			},
+		},
+		{
+			title: "ADDITIONAL_PACKAGE key with spaces only",
+			buildArgs: map[string]string{
+				AdditionalPackageBuildArg: "   ",
+			},
+			additionalPackages: []string{"package1"},
+			expectedBuildArgs: map[string]string{
+				AdditionalPackageBuildArg: "package1",
+			},
+		},
+		{
+			title: "multiple build args with ADDITIONAL_PACKAGE",
+			buildArgs: map[string]string{
+				"BUILD_VERSION":           "1.0.0",
+				AdditionalPackageBuildArg: "existing_package",
+				"ENVIRONMENT":             "production",
+			},
+			additionalPackages: []string{"new_package"},
+			expectedBuildArgs: map[string]string{
+				"BUILD_VERSION":           "1.0.0",
+				AdditionalPackageBuildArg: "existing_package new_package",
+				"ENVIRONMENT":             "production",
+			},
+		},
+	}
+
+	for _, test := range testCases {
+		t.Run(test.title, func(t *testing.T) {
+			got := appendAdditionalPackages(test.buildArgs, test.additionalPackages)
+
+			if !reflect.DeepEqual(got, test.expectedBuildArgs) {
+				t.Errorf("Expected %v, got %v", test.expectedBuildArgs, got)
 			}
 		})
 	}

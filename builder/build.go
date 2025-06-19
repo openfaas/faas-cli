@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -75,6 +76,13 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 		imageName := schema.BuildImageName(tagFormat, image, version, branch)
 
+		buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
+		if err != nil {
+			return err
+
+		}
+		buildArgMap = appendAdditionalPackages(buildArgMap, buildOptPackages)
+
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
 		if remoteBuilder != "" {
@@ -129,23 +137,15 @@ func BuildImage(image string, handler string, functionName string, language stri
 			}
 
 		} else {
-
-			buildOptPackages, err := getBuildOptionPackages(buildOptions, language, langTemplate.BuildOptions)
-			if err != nil {
-				return err
-
-			}
-
 			dockerBuildVal := dockerBuild{
-				Image:            imageName,
-				NoCache:          nocache,
-				Squash:           squash,
-				HTTPProxy:        os.Getenv("http_proxy"),
-				HTTPSProxy:       os.Getenv("https_proxy"),
-				BuildArgMap:      buildArgMap,
-				BuildOptPackages: buildOptPackages,
-				BuildLabelMap:    buildLabelMap,
-				ForcePull:        forcePull,
+				Image:         imageName,
+				NoCache:       nocache,
+				Squash:        squash,
+				HTTPProxy:     os.Getenv("http_proxy"),
+				HTTPSProxy:    os.Getenv("https_proxy"),
+				BuildArgMap:   buildArgMap,
+				BuildLabelMap: buildLabelMap,
+				ForcePull:     forcePull,
 			}
 
 			command, args := getDockerBuildCommand(dockerBuildVal)
@@ -280,7 +280,7 @@ func hashFolder(contextPath string) (string, error) {
 }
 
 func getDockerBuildCommand(build dockerBuild) (string, []string) {
-	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildOptPackages, build.BuildLabelMap, build.ForcePull)
+	flagSlice := buildFlagSlice(build.NoCache, build.Squash, build.HTTPProxy, build.HTTPSProxy, build.BuildArgMap, build.BuildLabelMap, build.ForcePull)
 	args := []string{"build"}
 	args = append(args, flagSlice...)
 
@@ -292,15 +292,14 @@ func getDockerBuildCommand(build dockerBuild) (string, []string) {
 }
 
 type dockerBuild struct {
-	Image            string
-	Version          string
-	NoCache          bool
-	Squash           bool
-	HTTPProxy        string
-	HTTPSProxy       string
-	BuildArgMap      map[string]string
-	BuildOptPackages []string
-	BuildLabelMap    map[string]string
+	Image         string
+	Version       string
+	NoCache       bool
+	Squash        bool
+	HTTPProxy     string
+	HTTPSProxy    string
+	BuildArgMap   map[string]string
+	BuildLabelMap map[string]string
 
 	// Platforms for use with buildx and publish command
 	Platforms string
@@ -336,7 +335,7 @@ func pathInScope(path string, scope string) (string, error) {
 	return "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
 }
 
-func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildOptionPackages []string, buildLabelMap map[string]string, forcePull bool) []string {
+func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy string, buildArgMap map[string]string, buildLabelMap map[string]string, forcePull bool) []string {
 
 	var spaceSafeBuildFlags []string
 
@@ -356,16 +355,7 @@ func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy stri
 	}
 
 	for k, v := range buildArgMap {
-
-		if k != AdditionalPackageBuildArg {
-			spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
-		} else {
-			buildOptionPackages = append(buildOptionPackages, strings.Split(v, " ")...)
-		}
-	}
-	if len(buildOptionPackages) > 0 {
-		buildOptionPackages = deDuplicate(buildOptionPackages)
-		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", AdditionalPackageBuildArg, strings.Join(buildOptionPackages, " ")))
+		spaceSafeBuildFlags = append(spaceSafeBuildFlags, "--build-arg", fmt.Sprintf("%s=%s", k, v))
 	}
 
 	for k, v := range buildLabelMap {
@@ -377,6 +367,32 @@ func buildFlagSlice(nocache bool, squash bool, httpProxy string, httpsProxy stri
 	}
 
 	return spaceSafeBuildFlags
+}
+
+// appendAdditionalPackages appends additional packages  to the ADDITIONAL_PACKAGE build arg.
+// If the ADDITIONAL_PACKAGE build arg is not present, it is created.
+// If the ADDITIONAL_PACKAGE build arg is present, the packages are appended to the list.
+func appendAdditionalPackages(buildArgs map[string]string, additionalPackages []string) map[string]string {
+	for k, v := range buildArgs {
+		if k == AdditionalPackageBuildArg {
+			packages := strings.Split(v, " ")
+			for i := range packages {
+				packages[i] = strings.TrimSpace(packages[i])
+			}
+
+			// Remove empty strings
+			packages = slices.DeleteFunc(packages, func(s string) bool {
+				return len(s) == 0
+			})
+
+			additionalPackages = append(additionalPackages, packages...)
+		}
+	}
+	additionalPackages = deDuplicate(additionalPackages)
+	sort.Strings(additionalPackages)
+	buildArgs[AdditionalPackageBuildArg] = strings.Join(additionalPackages, " ")
+
+	return buildArgs
 }
 
 func ensureHandlerPath(handler string) error {
@@ -432,7 +448,6 @@ func getPackages(availableBuildOptions []stack.BuildOption, requestedBuildOption
 }
 
 func deDuplicate(buildOptPackages []string) []string {
-
 	seenPackages := map[string]bool{}
 	retPackages := []string{}
 
