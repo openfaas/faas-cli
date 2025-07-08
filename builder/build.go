@@ -112,7 +112,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 			payloadSecret = bytes.TrimSpace(payloadSecret)
 
 			// Initialize a new builder client.
-			builderURL, _ := url.Parse(remoteBuilder)
+			u, _ := url.Parse(remoteBuilder)
+			builderURL := &url.URL{
+				Scheme: u.Scheme,
+				Host:   u.Host,
+			}
 			b := builder.NewFunctionBuilder(builderURL, http.DefaultClient, builder.WithHmacAuth(string(payloadSecret)))
 
 			stream, err := b.BuildWithStream(tarPath)
