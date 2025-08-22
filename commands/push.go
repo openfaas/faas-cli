@@ -14,7 +14,7 @@ import (
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/schema"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -67,9 +67,9 @@ func runPush(cmd *cobra.Command, args []string) error {
 			imageList := strings.Join(invalidImages, "\n- ")
 			return fmt.Errorf(`
 Unable to push one or more of your functions to Docker Hub:
-- ` + imageList + `
+- %s
 
-You must provide a username or registry prefix to the Function's image such as user1/function1`)
+You must provide a username or registry prefix to the Function's image such as user1/function1`, imageList)
 		}
 
 		pushStack(&services, parallel, tagFormat)

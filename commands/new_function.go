@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/openfaas/faas-cli/builder"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 

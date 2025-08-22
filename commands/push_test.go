@@ -6,7 +6,7 @@ package commands
 import (
 	"testing"
 
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 func Test_PushValidation(t *testing.T) {

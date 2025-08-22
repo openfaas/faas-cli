@@ -1,6 +1,7 @@
 package builder
 
-// Copy "recursivelies copy a file object from source to dest while perserving
+// Copy a file object from source to dest while preserving the file mode.
+// If the source is a directory, it will recursively copy all files and directories.
 import (
 	"fmt"
 	"io"
@@ -57,33 +58,33 @@ func copyDir(src, dest string) error {
 func copyFile(src, dest string) error {
 	info, err := os.Stat(src)
 	if err != nil {
-		return fmt.Errorf("error reading src file stats: %s", err.Error())
+		return fmt.Errorf("error reading src file stats: %w", err)
 	}
 
 	err = ensureBaseDir(dest)
 	if err != nil {
-		return fmt.Errorf("error creating dest base directory: %s", err.Error())
+		return fmt.Errorf("error creating dest base directory: %w", err)
 	}
 
 	f, err := os.Create(dest)
 	if err != nil {
-		return fmt.Errorf("error creating dest file: %s", err.Error())
+		return fmt.Errorf("error creating dest file: %w", err)
 	}
 	defer f.Close()
 
 	if err = os.Chmod(f.Name(), info.Mode()); err != nil {
-		return fmt.Errorf("error setting dest file mode: %s", err.Error())
+		return fmt.Errorf("error setting dest file mode: %w", err)
 	}
 
 	s, err := os.Open(src)
 	if err != nil {
-		return fmt.Errorf("error opening src file: %s", err.Error())
+		return fmt.Errorf("error opening src file: %w", err)
 	}
 	defer s.Close()
 
 	_, err = io.Copy(f, s)
 	if err != nil {
-		return fmt.Errorf("Error copying dest file: %s\n" + err.Error())
+		return fmt.Errorf("error copying dest file: %w", err)
 	}
 
 	return nil

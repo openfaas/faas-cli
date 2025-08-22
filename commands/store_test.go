@@ -69,7 +69,7 @@ func getInputStoreFunctions(t *testing.T) []storeV2.StoreFunction {
 	var inputFunctions []storeV2.StoreFunction
 	err := json.Unmarshal(inputJSONBytes, &inputFunctions)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("error: %s", err.Error())
 	}
 
 	return inputFunctions
@@ -104,7 +104,7 @@ func Test_filterStoreList_x86_64(t *testing.T) {
 	var expectedOuputFunctions []storeV2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("error: %s", err.Error())
 	}
 
 	filteredFunctions := filterStoreList(inputFunctions, "x86_64")
@@ -141,7 +141,7 @@ func Test_filterStoreList_armhf(t *testing.T) {
 	var expectedOuputFunctions []storeV2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("error: %s", err.Error())
 	}
 
 	filteredFunctions := filterStoreList(inputFunctions, "armhf")
@@ -178,7 +178,7 @@ func Test_filterStoreList_arm64(t *testing.T) {
 	var expectedOuputFunctions []storeV2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("error: %s", err.Error())
 	}
 
 	filteredFunctions := filterStoreList(inputFunctions, "arm64")
@@ -193,7 +193,7 @@ func Test_filterStoreList_other(t *testing.T) {
 	var expectedOuputFunctions []storeV2.StoreFunction
 	err := json.Unmarshal(outputJSONBytes, &expectedOuputFunctions)
 	if err != nil {
-		t.Errorf(err.Error())
+		t.Errorf("error: %s", err.Error())
 	}
 
 	filteredFunctions := filterStoreList(inputFunctions, "other")

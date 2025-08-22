@@ -102,7 +102,7 @@ func Test_UpdateAuthConfig_Insert(t *testing.T) {
 	authConfig, err := LookupAuthConfig(gatewayURL)
 	if err != nil {
 		t.Errorf("got error %s", err.Error())
-		t.Errorf(authConfig.Token)
+		t.Errorf("token: %s", authConfig.Token)
 	}
 
 	user, pass, err := DecodeAuth(authConfig.Token)
@@ -389,7 +389,7 @@ func Test_UpdateAuthConfig_Oauth2Insert(t *testing.T) {
 	authConfig, err := LookupAuthConfig(gatewayURL)
 	if err != nil {
 		t.Errorf("got error %s", err.Error())
-		t.Errorf(authConfig.Token)
+		t.Errorf("token: %s", authConfig.Token)
 	}
 
 	if authConfig.Token != token {

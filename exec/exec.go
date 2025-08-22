@@ -23,7 +23,7 @@ func Command(tempPath string, builder []string) {
 	err := targetCmd.Wait()
 	if err != nil {
 		errString := fmt.Sprintf("ERROR - Could not execute command: %s", builder)
-		log.Fatalf(aec.RedF.Apply(errString))
+		log.Fatal(aec.RedF.Apply(errString))
 	}
 }
 
@@ -32,7 +32,8 @@ func CommandWithOutput(builder []string, skipFailure bool) string {
 	output, err := osexec.Command(builder[0], builder[1:]...).CombinedOutput()
 	if err != nil && !skipFailure {
 		errString := fmt.Sprintf("ERROR - Could not execute command: %s", builder)
-		log.Fatalf(aec.RedF.Apply(errString))
+		log.Fatal(aec.RedF.Apply(errString))
 	}
+
 	return string(output)
 }

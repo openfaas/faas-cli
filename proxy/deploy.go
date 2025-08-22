@@ -13,7 +13,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 
 	types "github.com/openfaas/faas-provider/types"
 )

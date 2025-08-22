@@ -43,6 +43,8 @@ github.com/go-git/go-git/v5 v5.13.2/go.mod h1:hWdW5P4YZRjmpGHwRH2v3zkWcNl6HeXaXQ
 github.com/google/go-cmp v0.2.0/go.mod h1:oXzfMopK8JAjlY9xF4vHSVASa0yLyX7SntLO5aqRK0M=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
+github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
+github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
 github.com/google/go-containerregistry v0.20.3 h1:oNx7IdTI936V8CQRveCjaxOiegWwvM7kqkbXTpyiovI=
 github.com/google/go-containerregistry v0.20.3/go.mod h1:w00pIgBRDVUDFM6bq+Qx8lwNWK+cxgCuX1vd3PIBDNI=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
@@ -78,10 +80,14 @@ github.com/opencontainers/image-spec v1.1.0 h1:8SG7/vwALn54lVB/0yZ/MMwhFrPYtpEHQ
 github.com/opencontainers/image-spec v1.1.0/go.mod h1:W4s4sFTMaBeK1BQLXbG4AdM2szdn85PY75RI83NrTrM=
 github.com/openfaas/faas-provider v0.25.7 h1:ZgJOk4AYElxDa8YOHkb5PvemYtG0eHpzBpYL6lLDAB8=
 github.com/openfaas/faas-provider v0.25.7/go.mod h1:rMXbj+AYVpn82UoHIOgWHiDeV118t0bSxyoC9d00jpc=
+github.com/openfaas/faas-provider v0.25.8 h1:3W1ZyhUvpqTOiNQoV7jzdZhDJeJJlJelosAtjFzMNyw=
+github.com/openfaas/faas-provider v0.25.8/go.mod h1:rMXbj+AYVpn82UoHIOgWHiDeV118t0bSxyoC9d00jpc=
 github.com/openfaas/faas/gateway v0.0.0-20241209094132-4e20249bc070 h1:aeRDLXgwSOcMwUmZzXZsKf5GLoplZDF122SJVR62WgQ=
 github.com/openfaas/faas/gateway v0.0.0-20241209094132-4e20249bc070/go.mod h1:j5eUH36/clgztwBYFoXZ/s1UFQ9Alzt8rb50gh7L5Ns=
 github.com/openfaas/go-sdk v0.2.18 h1:lSsI+GpUVkO6Z+bK75LtNfqSCrOA9n4OQFPMqRGgSeI=
 github.com/openfaas/go-sdk v0.2.18/go.mod h1:INay8mhhat7stnJxt5KudR504T2wcc5ARXLKC6wkGcM=
+github.com/openfaas/go-sdk v0.2.19 h1:L31+TzyKGMaRx56gDZQNE9mhAwWHq1WUsMY3ApjIOTo=
+github.com/openfaas/go-sdk v0.2.19/go.mod h1:9fPkKnpOt48xsRB9+fS5BoCnumbdtKAnWift0BupclU=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=

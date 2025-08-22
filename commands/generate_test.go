@@ -9,7 +9,7 @@ import (
 
 	"github.com/openfaas/faas-cli/schema"
 
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 var generateTestcases = []struct {

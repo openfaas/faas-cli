@@ -16,8 +16,8 @@ import (
 
 	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/go-sdk/builder"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 // PublishImage will publish images as multi-arch

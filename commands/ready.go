@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/openfaas/faas-cli/builder"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 func Test_pullAllTemplates(t *testing.T) {

@@ -15,8 +15,8 @@ import (
 	"syscall"
 
 	"github.com/moby/term"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 

@@ -14,8 +14,8 @@ import (
 	"github.com/alexellis/arkade/pkg/get"
 	"github.com/morikuni/aec"
 	"github.com/openfaas/faas-cli/proxy"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -141,7 +141,7 @@ func printLogo() {
 	if runtime.GOOS == "windows" {
 		figletColoured = aec.GreenF.Apply(figletStr)
 	}
-	fmt.Printf(figletColoured)
+	fmt.Printf("%s", figletColoured)
 }
 
 const figletStr = `  ___                   _____           ____

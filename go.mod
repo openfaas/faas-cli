@@ -1,8 +1,6 @@
 module github.com/openfaas/faas-cli
 
-go 1.23.0
-
-toolchain go1.23.3
+go 1.24
 
 require (
 	github.com/Masterminds/semver v1.5.0
@@ -13,15 +11,15 @@ require (
 	github.com/drone/envsubst v1.0.3
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/go-git/go-git/v5 v5.13.2
-	github.com/google/go-cmp v0.6.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/go-containerregistry v0.20.3
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/moby/term v0.5.2
 	github.com/morikuni/aec v1.0.0
-	github.com/openfaas/faas-provider v0.25.7
+	github.com/openfaas/faas-provider v0.25.8
 	github.com/openfaas/faas/gateway v0.0.0-20241209094132-4e20249bc070
-	github.com/openfaas/go-sdk v0.2.18
+	github.com/openfaas/go-sdk v0.2.19
 	github.com/pkg/errors v0.9.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/spf13/cobra v1.8.1

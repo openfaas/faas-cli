@@ -15,7 +15,7 @@ import (
 	"github.com/bep/debounce"
 	"github.com/fsnotify/fsnotify"
 	"github.com/go-git/go-git/v5/plumbing/format/gitignore"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 

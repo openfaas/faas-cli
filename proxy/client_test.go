@@ -115,7 +115,7 @@ func Test_addQueryParams(t *testing.T) {
 	for _, test := range testcases {
 		url, err := addQueryParams(test.URL, test.QueryParams)
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatalf("error: %s", err.Error())
 		}
 
 		if url != test.ExpectedURL {

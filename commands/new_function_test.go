@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/test"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 const (

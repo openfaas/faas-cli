@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 )
 
 func Test_getDockerBuildCommand_NoOpts(t *testing.T) {

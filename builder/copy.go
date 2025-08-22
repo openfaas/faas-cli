@@ -84,7 +84,7 @@ func copyFile(src, dest string) error {
 
 	_, err = io.Copy(f, s)
 	if err != nil {
-		return fmt.Errorf("Error copying dest file: %s\n" + err.Error())
+		return fmt.Errorf("Error copying dest file: %s", err.Error())
 	}
 
 	return nil

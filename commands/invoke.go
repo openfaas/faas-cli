@@ -16,8 +16,8 @@ import (
 	"strings"
 
 	"github.com/alexellis/hmac/v2"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/version"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 

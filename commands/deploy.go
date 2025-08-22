@@ -14,8 +14,8 @@ import (
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
-	"github.com/openfaas/faas-cli/stack"
 	"github.com/openfaas/faas-cli/util"
+	"github.com/openfaas/go-sdk/stack"
 
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v3"
@@ -492,7 +492,7 @@ func deployFailed(status map[string]int) error {
 		err := fmt.Errorf("function '%s' failed to deploy with status code: %d", funcName, funcStatus)
 		allErrors = append(allErrors, err.Error())
 	}
-	return fmt.Errorf(strings.Join(allErrors, "\n"))
+	return fmt.Errorf("%s", strings.Join(allErrors, "\n"))
 }
 
 func badStatusCode(statusCode int) bool {

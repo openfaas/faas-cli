@@ -17,7 +17,7 @@ import (
 
 	"github.com/openfaas/faas-cli/builder"
 	"github.com/openfaas/faas-cli/schema"
-	"github.com/openfaas/faas-cli/stack"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
