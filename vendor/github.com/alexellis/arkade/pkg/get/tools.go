@@ -47,6 +47,27 @@ func MakeTools() Tools {
 {{- else -}}
 {{.Name}}
 {{- end -}}`,
+		},
+
+		// opencode AI CLI
+		Tool{
+			Owner:       "sst",
+			Repo:        "opencode",
+			Name:        "opencode",
+			Description: "The opencode CLI for running AI agents and tools.",
+			BinaryTemplate: `{{ if HasPrefix .OS "ming" -}}
+{{.Name}}-windows-x64.zip
+{{- else if eq .OS "darwin" -}}
+  {{- if or (eq .Arch "arm64") (eq .Arch "aarch64") -}}
+{{.Name}}-darwin-arm64.zip
+  {{- else -}}
+{{.Name}}-darwin-x64.zip
+  {{- end -}}
+{{- else if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
+{{.Name}}-linux-arm64.zip
+{{- else -}}
+{{.Name}}-linux-x64.zip
+{{- end -}}`,
 		})
 
 	tools = append(tools,
@@ -403,6 +424,27 @@ https://dl.k8s.io/release/{{.Version}}/bin/{{$os}}/{{$arch}}/kubectl{{$ext}}`})
 	tools = append(tools,
 		Tool{
 			Owner:       "alexellis",
+			Repo:        "gha-bump",
+			Name:        "gha-bump",
+			Description: "GitHub Actions dependency bump tool.",
+			BinaryTemplate: `{{ if HasPrefix .OS "ming" -}}
+	{{.Name}}.exe
+	{{- else if eq .OS "darwin" -}}
+	{{.Name}}-darwin
+	{{- else if eq .Arch "armv6l" -}}
+	{{.Name}}-armhf
+	{{- else if eq .Arch "armv7l" -}}
+	{{.Name}}-armhf
+	{{- else if eq .Arch "aarch64" -}}
+	{{.Name}}-arm64
+	{{- else -}}
+	{{.Name}}
+	{{- end -}}`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "alexellis",
 			Repo:        "kubetrim",
 			Name:        "kubetrim",
 			Description: "Tidy up old Kubernetes clusters from kubeconfig.",
@@ -480,7 +522,7 @@ https://dl.k8s.io/release/{{.Version}}/bin/{{$os}}/{{$arch}}/kubectl{{$ext}}`})
 			Owner:       "bitnami-labs",
 			Repo:        "sealed-secrets",
 			Name:        "kubeseal",
-			Version:     "v0.19.5",
+			Version:     "v0.30.0",
 			Description: "A Kubernetes controller and tool for one-way encrypted Secrets",
 			BinaryTemplate: `{{$arch := ""}}
 		{{- if eq .Arch "aarch64" -}}
@@ -1585,6 +1627,9 @@ https://github.com/inlets/inletsctl/releases/download/{{.Version}}/{{$fileName}}
 				{{$versionString = "win"}}
 				{{- else if eq .OS "darwin" -}}
 				{{$versionString = "osx"}}
+					{{ if eq .Arch "arm64" -}}
+					{{$versionString = "osx-arm64"}}
+					{{- end -}}
 				{{- end -}}
 
 				{{$ext := ".tar.gz"}}
@@ -2527,9 +2572,11 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			BinaryTemplate: `
 				{{ $archStr := "" }}
 				{{ $osStr := "linux" }}
+				 {{ $ext := "tar.gz" }}
 
 				{{ if HasPrefix .OS "ming" -}}
 				{{ $osStr = "windows" }}
+				 {{ $ext = "zip" }}
 				{{- else if eq .OS "darwin" -}}
 				{{ $osStr = "darwin" }}
 				{{- end -}}
@@ -2544,7 +2591,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 				{{ $archStr = "arm7" }}
 				{{- end -}}
 
-				{{ .Name }}-{{ .Version }}-{{ $osStr }}-{{ $archStr }}.zip
+				{{ .Name }}-{{ .Version }}-{{ $osStr }}-{{ $archStr }}.{{$ext}}
 				`,
 		})
 
@@ -2727,6 +2774,42 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			Repo:        "prometheus",
 			Name:        "promtool",
 			Description: "Prometheus rule tester and debugging utility",
+			URLTemplate: `
+			{{$arch := ""}}
+			{{- if eq .Arch "x86_64" -}}
+			{{$arch = "amd64"}}
+			{{- else if eq .Arch "aarch64" -}}
+			{{$arch = "arm64"}}
+			{{- else if eq .Arch "arm64" -}}
+			{{$arch = "arm64"}}
+			{{- else if eq .Arch "armv7l" -}}
+			{{ $arch = "armv7" }}
+			{{- end -}}
+
+			{{$os := ""}}
+			{{ if HasPrefix .OS "ming" -}}
+			{{$os = "windows"}}
+			{{- else if eq .OS "linux" -}}
+			{{$os = "linux"}}
+			{{- else if eq .OS "darwin" -}}
+			{{$os = "darwin"}}
+			{{- end -}}
+			https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Repo}}-{{.VersionNumber}}.{{$os}}-{{$arch}}.tar.gz`,
+			BinaryTemplate: `
+			{{ if HasPrefix .OS "ming" -}}
+			{{ .Name }}.exe
+			{{- else -}}
+			{{ .Name }}
+			{{- end -}}
+			`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:       "prometheus",
+			Repo:        "node_exporter",
+			Name:        "node_exporter",
+			Description: "Prometheus exporter for monitoring server metrics",
 			URLTemplate: `
 			{{$arch := ""}}
 			{{- if eq .Arch "x86_64" -}}
@@ -3135,22 +3218,26 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			Owner:       "instrumenta",
 			Repo:        "kubeval",
 			Name:        "kubeval",
+			Version:     "v0.16.1",
 			Description: "Validate your Kubernetes configuration files, supports multiple Kubernetes versions",
 			BinaryTemplate: `
 				{{$os := .OS}}
 				{{$arch := .Arch}}
 				{{$ext := "tar.gz"}}
 
-				{{$arch := .Arch}}
 				{{- if or (eq .Arch "aarch64") (eq .Arch "arm64") -}}
 				{{$arch = "arm64"}}
 				{{- else if eq .Arch "x86_64" -}}
-				{{ $arch = "amd64" }}
+				{{$arch = "amd64"}}
 				{{- end -}}
 
 				{{ if HasPrefix .OS "ming" -}}
-				{{$os = "Windows"}}
+				{{$os = "windows"}}
 				{{$ext = "zip"}}
+				{{- else if eq .OS "darwin" -}}
+				{{$os = "darwin"}}
+				{{- else -}}
+				{{$os = "linux"}}
 				{{- end -}}
 
 				{{.Name}}-{{$os}}-{{$arch}}.{{$ext}}
@@ -3186,8 +3273,8 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 	tools = append(tools,
 		Tool{
 			Owner:       "temporalio",
-			Repo:        "tctl",
-			Name:        "tctl",
+			Repo:        "cli",
+			Name:        "temporal",
 			Description: "Temporal CLI.",
 			BinaryTemplate: `
 						{{$os := .OS}}
@@ -3206,7 +3293,7 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 						{{$ext = "zip"}}
 						{{- end -}}
 
-						{{.Name}}_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
+						{{.Name}}_cli_{{.VersionNumber}}_{{$os}}_{{$arch}}.{{$ext}}
 						`,
 		})
 
@@ -4466,6 +4553,125 @@ https://github.com/{{.Owner}}/{{.Repo}}/releases/download/{{.Version}}/{{.Name}}
 			
 							rclone-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}
 							`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "grafana",
+			Repo:            "alloy",
+			Name:            "alloy",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "OpenTelemetry Collector distribution with programmable pipelines",
+			URLTemplate: `
+{{$fileName := ""}}
+{{- if eq .OS "linux" -}}
+	{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+	    {{$fileName = "alloy-linux-arm64.zip"}}
+	{{ else if eq .Arch "x86_64" -}}
+        {{$fileName = "alloy-linux-amd64.zip"}}
+    {{- end -}}
+{{- else if eq .OS "darwin" -}}
+	{{- if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+	{{$fileName = "alloy-darwin-arm64.zip"}}
+	{{ else if eq .Arch "x86_64" -}}
+	{{$fileName = "alloy-darwin-amd64.zip"}}
+	{{- end -}}
+{{- else if HasPrefix .OS "ming" -}}
+    {{$fileName = "alloy-windows-amd64.exe.zip"}}
+{{- end -}}
+
+https://github.com/grafana/alloy/releases/download/{{.Version}}/{{$fileName}}`,
+
+			BinaryTemplate: `
+{{- if eq .OS "linux" -}}
+	{{- if eq .Arch "x86_64" -}}
+		{{.Name}}-linux-amd64
+	{{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+		{{.Name}}-linux-arm64
+		{{- end -}}
+{{- else if eq .OS "darwin" -}}
+	{{- if eq .Arch "x86_64" -}}
+		{{.Name}}-darwin-amd64
+	{{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+		{{.Name}}-darwin-arm64
+		{{- end -}}
+{{- else if HasPrefix .OS "ming" -}}
+	                                  {{.Name}}-windows-amd64
+									{{- end -}}
+								`,
+		})
+
+	tools = append(tools,
+		Tool{
+			Owner:           "dotenv-linter",
+			Repo:            "dotenv-linter",
+			Name:            "dotenv-linter",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "A lightning-fast linter for .env files.",
+			BinaryTemplate: `
+								{{$os := .OS}}
+								{{$arch := .Arch}}
+								{{$ext := "tar.gz"}}
+
+								{{- if HasPrefix .OS "ming" -}}
+									{{$os = "win"}}
+									{{- if eq .Arch "x86_64" -}}
+										{{$arch = "x64"}}
+									{{- end -}}
+									{{$ext = "zip"}}
+								{{- end -}}
+
+							{{.Name}}-{{$os}}-{{$arch}}.{{$ext}}
+							`,
+		})
+	tools = append(tools,
+		Tool{
+			Owner:           "sinclairtarget",
+			Repo:            "git-who",
+			Name:            "git-who",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "Git blame for file trees.",
+			BinaryTemplate: `
+									{{$os := .OS}}
+									{{$arch := .Arch}}
+									{{$ext := "tar.gz"}}
+	
+									{{- if eq .Arch "x86_64" -}}
+											{{$arch = "amd64"}}
+									{{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+											{{$arch = "arm64"}}
+									{{- else if eq .Arch "armv7l" -}}
+                                            {{$arch = "arm"}}
+									{{- end -}}
+	
+								gitwho_{{.Version}}_{{$os}}_{{$arch}}.{{$ext}}
+								`,
+		})
+	tools = append(tools,
+		Tool{
+			Owner:           "pulumi",
+			Repo:            "pulumi",
+			Name:            "pulumi",
+			VersionStrategy: GitHubVersionStrategy,
+			Description:     "Infrastructure as Code in any programming language.",
+			BinaryTemplate: `
+								{{$os := .OS}}
+								{{$arch := .Arch}}
+								{{$ext := "tar.gz"}}
+		
+								{{- if eq .Arch "x86_64" -}}
+									{{$arch = "x64"}}
+								{{- else if (or (eq .Arch "aarch64") (eq .Arch "arm64")) -}}
+									{{$arch = "arm64"}}
+								{{- end -}}
+								
+								{{- if HasPrefix .OS "ming" -}}
+									{{$os = "windows"}}
+									{{$ext = "zip"}}
+								{{- end -}}
+		
+								{{.Name}}-{{.Version}}-{{$os}}-{{$arch}}.{{$ext}}
+									`,
 		})
 	return tools
 }
