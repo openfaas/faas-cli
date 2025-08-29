@@ -6,6 +6,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"text/tabwriter"
 
@@ -32,6 +33,16 @@ var storeListCmd = &cobra.Command{
 
 func runStoreList(cmd *cobra.Command, args []string) error {
 	targetPlatform := getTargetPlatform(platformValue)
+
+	// Support priority order override.
+	// --url by default, unless OPENFAAS_STORE is given, in which
+	// case the flag takes precedence if it has been changed from its
+	// default
+	if v, ok := os.LookupEnv("OPENFAAS_STORE"); ok && len(v) > 0 {
+		if !storeCmd.Flags().Changed("url") {
+			storeAddress = v
+		}
+	}
 
 	storeList, err := storeList(storeAddress)
 	if err != nil {

@@ -6,6 +6,7 @@ package commands
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"text/tabwriter"
 
 	"github.com/mitchellh/go-wordwrap"
@@ -33,6 +34,13 @@ func runStoreDescribe(cmd *cobra.Command, args []string) error {
 	}
 
 	targetPlatform := getTargetPlatform(platformValue)
+
+	if v, ok := os.LookupEnv("OPENFAAS_STORE"); ok && len(v) > 0 {
+		if !storeCmd.Flags().Changed("url") {
+			storeAddress = v
+		}
+	}
+
 	storeItems, err := storeList(storeAddress)
 	if err != nil {
 		return err
