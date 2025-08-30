@@ -177,6 +177,11 @@ Download templates:
 		}
 
 		fileName = appendFile
+
+		if err := addEofNewlines("./" + fileName); err != nil {
+			return err
+		}
+
 		outputMsg = fmt.Sprintf("Stack file updated: %s\n", fileName)
 
 	} else {
@@ -367,6 +372,31 @@ func duplicateFunctionName(functionName string, appendFile string) error {
 		return fmt.Errorf(`
 Function %s already exists in %s file. 
 Cannot have duplicate function names in same yaml file`, functionName, appendFile)
+	}
+
+	return nil
+}
+
+func addEofNewlines(fileName string) error {
+	bytes, err := os.ReadFile(fileName)
+	if err != nil {
+		return fmt.Errorf("could not open '%s' to check for new lines %s", fileName, err)
+	}
+
+	content := string(bytes)
+	hasLastNewline := strings.HasSuffix(content, "\n")
+	if hasLastNewline {
+		return nil
+	}
+
+	file, err := os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return fmt.Errorf("could not open '%s' to append new lines %s", fileName, err)
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString("\n\n"); err != nil {
+		return fmt.Errorf("could not write to '%s' to append new lines %s", fileName, err)
 	}
 
 	return nil

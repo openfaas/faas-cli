@@ -461,6 +461,11 @@ func tearDownNewFunction(t *testing.T, functionName, functionStackYml string) {
 			t.Log(err)
 		}
 	}
+	if _, err := os.Stat("stack.yml"); err == nil {
+		if err := os.Remove("stack.yml"); err != nil {
+			t.Log(err)
+		}
+	}
 	hDir := handlerDir
 	if len(hDir) == 0 {
 		hDir = functionName
@@ -516,5 +521,70 @@ func Test_getPrefixValue_Flag(t *testing.T) {
 	val := getPrefixValue()
 	if val != want {
 		t.Errorf("want %s, got %s", want, val)
+	}
+}
+
+func Test_addEofNewlines_works(t *testing.T) {
+	table := []struct {
+		funcName string
+	}{
+		// TODO: after #906 is fixed
+		// -f or --yaml will work
+		// and we can change stack to func1
+		{"stack"},
+		{"func2"},
+		{"func3"},
+	}
+	resetForTest()
+	templatePullLocalTemplateRepo(t)
+
+	defer tearDownFetchTemplates(t)
+	const stackFile = "stack.yml"
+
+	for i, row := range table {
+		const functionLang = "ruby"
+
+		parameters := []string{
+			"new",
+			row.funcName,
+			"--lang=" + functionLang,
+		}
+
+		if i == 0 {
+			// there's a bug where this doesn't get honored
+			// as a workaround, func1 is "stack" in the test table
+			// this way we predictability create stack.yml
+			parameters = append(parameters, "--yaml="+stackFile)
+		} else {
+			parameters = append(parameters, "--append="+stackFile)
+		}
+
+		faasCmd.SetArgs(nil)
+		faasCmd.SetArgs(parameters)
+		faasCmd.Execute()
+
+		// drop last two bytes (\n\n) for the first function
+		if i == 0 {
+			func(fileName string) {
+				file, _ := os.OpenFile(fileName, os.O_RDWR, 0600)
+				defer file.Close()
+				fileStats, _ := file.Stat()
+				file.Truncate(fileStats.Size() - 2)
+			}(stackFile)
+		} else {
+			func(fileName string) {
+				bytes, _ := os.ReadFile(fileName)
+				want := "\n\n"
+				got := string(bytes)
+				matches := strings.HasSuffix(got, want)
+				if !matches {
+					t.Fatalf("%q must end with: %q\n", fileName, want)
+				}
+			}(stackFile)
+		}
+	}
+
+		for _, row := range table {
+		defer tearDownNewFunction(t, row.funcName)
 	}
 }
