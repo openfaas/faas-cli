@@ -9,54 +9,52 @@ import (
 	"github.com/openfaas/go-sdk/stack"
 )
 
-func Test_pullAllTemplates(t *testing.T) {
+func Test_pullStackTemplates(t *testing.T) {
 	tests := []struct {
-		title             string
-		existingTemplates []stack.TemplateSource
-		expectedError     bool
+		title            string
+		templateSources  []stack.TemplateSource
+		missingTemplates []string
+		expectedError    bool
 	}{
 		{
-			title: "Pull specific Template",
-			existingTemplates: []stack.TemplateSource{
+			title: "Pull specific template",
+			templateSources: []stack.TemplateSource{
 				{Name: "my_powershell", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
 				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
 			},
-			expectedError: false,
+			missingTemplates: []string{"my_powershell"},
+			expectedError:    false,
 		},
 		{
 			title: "Pull all templates",
-			existingTemplates: []stack.TemplateSource{
+			templateSources: []stack.TemplateSource{
 				{Name: "my_powershell", Source: "https://github.com/openfaas-incubator/powershell-http-template"},
 				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
 			},
-			expectedError: false,
+			missingTemplates: []string{"my_powershell", "my_rust"},
+			expectedError:    false,
 		},
 		{
 			title: "Pull custom template and template from store without source",
-			existingTemplates: []stack.TemplateSource{
+			templateSources: []stack.TemplateSource{
 				{Name: "perl-alpine"},
 				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
 			},
-			expectedError: false,
+			missingTemplates: []string{"perl-alpine"},
+			expectedError:    false,
 		},
 		{
-			title: "Pull non-existant template",
-			existingTemplates: []stack.TemplateSource{
+			title: "Pull template from invalid URL",
+			templateSources: []stack.TemplateSource{
 				{Name: "my_powershell", Source: "invalidURL"},
 				{Name: "my_rust", Source: "https://github.com/openfaas-incubator/openfaas-rust-template"},
 			},
-			expectedError: true,
+			missingTemplates: []string{"my_powershell"},
+			expectedError:    true,
 		},
 		{
-			title: "Pull template with invalid URL",
-			existingTemplates: []stack.TemplateSource{
-				{Name: "my_powershell", Source: "invalidURL"},
-			},
-			expectedError: true,
-		},
-		{
-			title: "Pull template which does not exist in store",
-			existingTemplates: []stack.TemplateSource{
+			title: "Pull template which does not exist in store, which has no URL given",
+			templateSources: []stack.TemplateSource{
 				{Name: "my_powershell"},
 			},
 			expectedError: true,
@@ -64,7 +62,7 @@ func Test_pullAllTemplates(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.title, func(t *testing.T) {
-			actualError := pullStackTemplates(test.existingTemplates, templatePullStackCmd)
+			actualError := pullStackTemplates(test.missingTemplates, test.templateSources, templatePullStackCmd)
 			if actualError != nil && test.expectedError == false {
 				t.Errorf("Unexpected error: %s", actualError.Error())
 			}
@@ -72,21 +70,61 @@ func Test_pullAllTemplates(t *testing.T) {
 	}
 }
 
-func Test_filterExistingTemplates(t *testing.T) {
+func Test_getMissingTemplates_finds_missing_template(t *testing.T) {
 	templatesDir := "./template"
 	defer os.RemoveAll(templatesDir)
 
-	templates := []stack.TemplateSource{
-		{Name: "dockerfile", Source: "https://github.com/openfaas/templates"},
-		{Name: "ruby", Source: "https://github.com/openfaas/classic-templates"},
-		{Name: "perl", Source: "https://github.com/openfaas-incubator/perl-template"},
+	stackYaml := `version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+functions:
+  docker-fn:
+    lang: dockerfile
+    handler: ./dockerfile
+  ruby-fn:
+    lang: ruby
+    handler: ./ruby
+    image: ttl.sh/alexellis/ruby:latest
+  perl-fn:
+    lang: perl
+    handler: ./perl
+    image: ttl.sh/alexellis/perl:latest
+
+configuration:
+  templates:
+   - name: dockerfile
+     source: https://github.com/openfaas/templates
+   - name: ruby
+     source: https://github.com/openfaas/classic-templates
+   - name: perl
+     source: https://github.com/openfaas-incubator/perl-template
+`
+
+	parsedFns, err := stack.ParseYAMLData([]byte(stackYaml), "", "", false)
+	if err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
 	}
+
+	functions := parsedFns.Functions
 
 	// Copy the submodule to temp directory to avoid altering it during tests
 	testRepoGit := filepath.Join("testdata", "templates", "template")
 	builder.CopyFiles(testRepoGit, templatesDir)
 
-	newTemplateInfos, err := filterExistingTemplates(templates, templatesDir)
+	// Assert that dockerfile and ruby exist, and that perl is missing
+
+	if _, err := os.Stat(filepath.Join(templatesDir, "dockerfile")); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+	if _, err := os.Stat(filepath.Join(templatesDir, "ruby")); err != nil {
+		t.Errorf("Unexpected error: %s", err.Error())
+	}
+	if _, err := os.Stat(filepath.Join(templatesDir, "perl")); err == nil {
+		t.Errorf("perl should not exist at this point")
+	}
+
+	newTemplateInfos, err := getMissingTemplates(functions, templatesDir)
 	if err != nil {
 		t.Errorf("Unexpected error: %s", err.Error())
 	}
@@ -95,7 +133,9 @@ func Test_filterExistingTemplates(t *testing.T) {
 		t.Errorf("Wanted new templates: `%d` got `%d`", 1, len(newTemplateInfos))
 	}
 
-	if newTemplateInfos[0].Name != "perl" {
-		t.Errorf("Wanted template: `%s` got `%s`", "perl", newTemplateInfos[0].Name)
+	wantMissingName := "perl"
+	gotMissingName := newTemplateInfos[0]
+	if gotMissingName != wantMissingName {
+		t.Errorf("Wanted template: `%s` got `%s`", wantMissingName, gotMissingName)
 	}
 }

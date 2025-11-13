@@ -5,7 +5,9 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -61,6 +63,9 @@ func init() {
 	buildCmd.Flags().BoolVar(&disableStackPull, "disable-stack-pull", false, "Disables the template configuration in the stack.yaml")
 	buildCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
+	buildCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output when pulling templates")
+	buildCmd.Flags().BoolVar(&overwrite, "overwrite", true, "Overwrite existing templates from the template repository")
+
 	// Set bash-completion.
 	_ = buildCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -81,23 +86,23 @@ var buildCmd = &cobra.Command{
                  [--build-arg KEY=VALUE]
                  [--build-option VALUE]
                  [--copy-extra PATH]
-                 [--tag <sha|branch|describe>]
+                 [--tag <digest|sha|branch|describe>]
 				 [--forcePull]`,
 	Short: "Builds OpenFaaS function containers",
 	Long: `Builds OpenFaaS function containers either via the supplied YAML config using
 the "--yaml" flag (which may contain multiple function definitions), or directly
 via flags.`,
 	Example: `  faas-cli build -f https://domain/path/myfunctions.yml
-  faas-cli build -f stack.yaml --no-cache --build-arg NPM_VERSION=0.2.2
-  faas-cli build -f stack.yaml --build-option dev
-  faas-cli build -f stack.yaml --tag sha
-  faas-cli build -f stack.yaml --tag branch
-  faas-cli build -f stack.yaml --tag describe
-  faas-cli build -f stack.yaml --filter "*gif*"
-  faas-cli build -f stack.yaml --regex "fn[0-9]_.*"
+  faas-cli build -f functions.yaml
+  faas-cli build --no-cache --build-arg NPM_VERSION=0.2.2
+  faas-cli build --build-option dev
+  faas-cli build --tag sha
+  faas-cli build --parallel 4
+  faas-cli build --filter "*gif*"
+  faas-cli build --regex "fn[0-9]_.*"
   faas-cli build --image=my_image --lang=python --handler=/path/to/fn/ \
                  --name=my_fn --squash
-  faas-cli build -f stack.yaml --build-label org.label-schema.label-name="value"`,
+  faas-cli build --build-label org.label-schema.label-name="value"`,
 	PreRunE: preRunBuild,
 	RunE:    runBuild,
 }
@@ -154,8 +159,6 @@ func parseBuildArgs(args []string) (map[string]string, error) {
 
 func runBuild(cmd *cobra.Command, args []string) error {
 
-	templateName := "" // templateName may not be known at this point
-
 	var services stack.Services
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
@@ -168,24 +171,42 @@ func runBuild(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	cwd, _ := os.Getwd()
+	templatesPath := filepath.Join(cwd, TemplateDirectory)
+
 	if len(services.StackConfiguration.TemplateConfigs) > 0 && !disableStackPull {
-		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
+		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
 		if err != nil {
-			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
+			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
 		}
 
-		if err = pullStackTemplates(newTemplateInfos, cmd); err != nil {
-			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
+		if err := pullStackTemplates(missingTemplates, services.StackConfiguration.TemplateConfigs, cmd); err != nil {
+			return fmt.Errorf("error pulling templates: %s", err.Error())
 		}
+		if len(missingTemplates) > 0 {
+			log.Printf("Pulled templates: %v", missingTemplates)
+		}
+
 	} else {
-		templateAddress := getTemplateURL("", os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-		if err := pullTemplates(templateAddress, templateName); err != nil {
-			return fmt.Errorf("could not pull templates: %v", err)
+
+		// When the configuration.templates section is empty, it's only possible to pull from the store
+		// this store can be overridden by a flag or environment variable
+
+		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
+		if err != nil {
+			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
 		}
+
+		for _, missingTemplate := range missingTemplates {
+
+			if err := runTemplateStorePull(cmd, []string{missingTemplate}); err != nil {
+				return fmt.Errorf("error pulling template: %s", err.Error())
+			}
+		}
+
 	}
 
 	if len(services.Functions) == 0 {
-
 		if len(image) == 0 {
 			return fmt.Errorf("please provide a valid --image name for your Docker image")
 		}
@@ -306,18 +327,22 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 
 // pullTemplates pulls templates from specified git remote. templateURL may be a pinned repository.
 func pullTemplates(templateURL, templateName string) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("can't get current working directory: %s", err)
+	}
 
-	if _, err := os.Stat("./template"); err != nil {
+	templatePath := filepath.Join(cwd, TemplateDirectory)
+
+	if _, err := os.Stat(templatePath); err != nil {
 		if os.IsNotExist(err) {
-
 			fmt.Printf("No templates found in current directory.\n")
 
 			templateURL, refName := versioncontrol.ParsePinnedRemote(templateURL)
-			if err := fetchTemplates(templateURL, refName, templateName, false); err != nil {
+			if err := fetchTemplates(templateURL, refName, templateName, overwrite); err != nil {
 				return err
 			}
 		} else {
-
 			// Perhaps there was a permissions issue or something else.
 			return err
 		}

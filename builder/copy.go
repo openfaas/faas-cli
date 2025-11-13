@@ -33,8 +33,8 @@ func copyDir(src, dest string) error {
 		return fmt.Errorf("error reading dest stats: %s", err.Error())
 	}
 
-	if err := os.MkdirAll(dest, info.Mode()); err != nil {
-		return fmt.Errorf("error creating path: %s - %s", dest, err.Error())
+	if err := os.MkdirAll(dest, info.Mode()); err != nil && !os.IsExist(err) {
+		return fmt.Errorf("error creating directory: %s - %w", dest, err)
 	}
 
 	infos, err := ioutil.ReadDir(src)

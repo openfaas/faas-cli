@@ -5,7 +5,9 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -54,6 +56,9 @@ func init() {
 	publishCmd.Flags().StringVar(&payloadSecretPath, "payload-secret", "", "Path to payload secret file")
 	publishCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
+	publishCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output when pulling templates")
+	publishCmd.Flags().BoolVar(&overwrite, "overwrite", true, "Overwrite existing templates from the template repository")
+
 	// Set bash-completion.
 	_ = publishCmd.Flags().SetAnnotation("handler", cobra.BashCompSubdirsInDir, []string{})
 
@@ -92,7 +97,7 @@ correctly configured TARGETPLATFORM and BUILDPLATFORM arguments.
 See also: faas-cli build`,
 	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64
   faas-cli publish --platforms linux/arm64 --filter webhook-arm
-  faas-cli publish -f go.yml --no-cache --build-arg NPM_VERSION=0.2.2
+  faas-cli publish -f custom.yml --no-cache --build-arg NPM_VERSION=0.2.2
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
   faas-cli publish --reset-qemu
@@ -126,8 +131,8 @@ func preRunPublish(cmd *cobra.Command, args []string) error {
 }
 
 func runPublish(cmd *cobra.Command, args []string) error {
-
 	var services stack.Services
+
 	if len(yamlFile) > 0 {
 		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
 		if err != nil {
@@ -139,35 +144,37 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	needTemplates := false
-	for _, function := range services.Functions {
-		if len(function.Language) > 0 {
-			needTemplates = true
-			break
+	cwd, _ := os.Getwd()
+	templatesPath := filepath.Join(cwd, TemplateDirectory)
+
+	if len(services.StackConfiguration.TemplateConfigs) > 0 && !disableStackPull {
+		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
+		if err != nil {
+			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
 		}
-	}
 
-	templatesFound := false
-	if stat, err := os.Stat("./template"); err == nil && stat.IsDir() {
-		templatesFound = true
-	}
+		if err := pullStackTemplates(missingTemplates, services.StackConfiguration.TemplateConfigs, cmd); err != nil {
+			return fmt.Errorf("error pulling templates: %s", err.Error())
+		}
+		if len(missingTemplates) > 0 {
+			log.Printf("Pulled templates: %v", missingTemplates)
+		}
+	} else {
+		// When the configuration.templates section is empty, it's only possible to pull from the store
+		// this store can be overridden by a flag or environment variable
 
-	// if no templates are configured, but they exist in the configuration section,
-	// attempt to pull them first
-	if !templatesFound && needTemplates {
-		if len(services.StackConfiguration.TemplateConfigs) > 0 {
-			if err := pullStackTemplates(services.StackConfiguration.TemplateConfigs, cmd); err != nil {
-				return err
+		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
+		if err != nil {
+			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
+		}
+
+		for _, missingTemplate := range missingTemplates {
+
+			if err := runTemplateStorePull(cmd, []string{missingTemplate}); err != nil {
+				return fmt.Errorf("error pulling template: %s", err.Error())
 			}
-
 		}
-	}
 
-	if needTemplates {
-		if _, err := os.Stat("./template"); err != nil && os.IsNotExist(err) {
-
-			return fmt.Errorf(`the "template" directory is missing but required by at least one function`)
-		}
 	}
 
 	if resetQemu {
@@ -223,14 +230,13 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	}
 
 	if len(services.StackConfiguration.TemplateConfigs) != 0 && !disableStackPull {
-		newTemplateInfos, err := filterExistingTemplates(services.StackConfiguration.TemplateConfigs, "./template")
+		newTemplateInfos, err := getMissingTemplates(services.Functions, "./template")
 		if err != nil {
-			return fmt.Errorf("already pulled templates directory has issue: %s", err.Error())
+			return fmt.Errorf("already pulled templates directory has issue: %w", err)
 		}
 
-		err = pullStackTemplates(newTemplateInfos, cmd)
-		if err != nil {
-			return fmt.Errorf("could not pull templates from function yaml file: %s", err.Error())
+		if err := pullStackTemplates(newTemplateInfos, services.StackConfiguration.TemplateConfigs, cmd); err != nil {
+			return fmt.Errorf("could not pull templates from function yaml file: %w", err)
 		}
 	}
 

@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	templatePullStackCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
+	templatePullStackCmd.Flags().BoolVar(&overwrite, "overwrite", true, "Overwrite existing templates?")
 	templatePullStackCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
 
 	templatePullCmd.AddCommand(templatePullStackCmd)
@@ -40,7 +40,8 @@ func runTemplatePullStack(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	return pullStackTemplates(templatesConfig, cmd)
+
+	return pullStackTemplates([]string{}, templatesConfig, cmd)
 }
 
 func loadTemplateConfig() ([]stack.TemplateSource, error) {
@@ -68,35 +69,47 @@ func readStackConfig() (stack.Configuration, error) {
 	return configField, nil
 }
 
-func pullStackTemplates(templateInfo []stack.TemplateSource, cmd *cobra.Command) error {
-	for _, val := range templateInfo {
-		fmt.Printf("Pulling template: %s from configuration file: %s\n", val.Name, yamlFile)
-		if len(val.Source) == 0 {
-			pullErr := runTemplateStorePull(cmd, []string{val.Name})
-			if pullErr != nil {
-				return pullErr
+func pullStackTemplates(missingTemplates []string, templateSources []stack.TemplateSource, cmd *cobra.Command) error {
+
+	for _, val := range missingTemplates {
+
+		var templateConfig stack.TemplateSource
+		for _, config := range templateSources {
+			if config.Name == val {
+				templateConfig = config
+				break
+			}
+		}
+
+		if templateConfig.Source == "" {
+			fmt.Printf("Pulling template: %s from store\n", val)
+
+			if err := runTemplateStorePull(cmd, []string{val}); err != nil {
+				return err
 			}
 		} else {
+			fmt.Printf("Pulling template: %s from %s\n", val, templateConfig.Source)
 
-			templateName := val.Name
-			pullErr := pullTemplate(val.Source, templateName)
-			if pullErr != nil {
-				return pullErr
+			templateName := templateConfig.Name
+			if err := pullTemplate(templateConfig.Source, templateName, overwrite); err != nil {
+				return err
 			}
 		}
 	}
+
 	return nil
 }
 
 // filter templates which are already available on filesystem
-func filterExistingTemplates(templateInfo []stack.TemplateSource, templatesDir string) ([]stack.TemplateSource, error) {
-	var newTemplates []stack.TemplateSource
-	for _, info := range templateInfo {
-		templatePath := fmt.Sprintf("%s/%s", templatesDir, info.Name)
+func getMissingTemplates(functions map[string]stack.Function, templatesDir string) ([]string, error) {
+	var missing []string
+
+	for _, function := range functions {
+		templatePath := fmt.Sprintf("%s/%s", templatesDir, function.Language)
 		if _, err := os.Stat(templatePath); err != nil && os.IsNotExist(err) {
-			newTemplates = append(newTemplates, info)
+			missing = append(missing, function.Language)
 		}
 	}
 
-	return newTemplates, nil
+	return missing, nil
 }

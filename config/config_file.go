@@ -131,8 +131,8 @@ func EnsureFile() (string, error) {
 	}
 
 	filePath := path.Clean(filepath.Join(dirPath, DefaultFile))
-	if err := os.MkdirAll(filepath.Dir(filePath), permission); err != nil {
-		return "", err
+	if err := os.MkdirAll(filepath.Dir(filePath), permission); err != nil && !os.IsExist(err) {
+		return "", fmt.Errorf("error creating directory: %s - %w", filepath.Dir(filePath), err)
 	}
 
 	if _, err := os.Stat(filePath); err != nil && os.IsNotExist(err) {

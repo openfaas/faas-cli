@@ -6,6 +6,7 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -32,33 +33,46 @@ var templateStorePullCmd = &cobra.Command{
 
 func runTemplateStorePull(cmd *cobra.Command, args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("\nNeed to specify one of the store templates, check available ones by running the command:\n\nfaas-cli template store list\n")
+		return fmt.Errorf("need to specify one of the store templates, check available ones by running the command:\n\nfaas-cli template store list")
 	}
 	if len(args) > 1 {
-		return fmt.Errorf("\nNeed to specify single template from the store, check available ones by running the command:\n\nfaas-cli template store list\n")
+		return fmt.Errorf("need to specify single template from the store, check available ones by running the command:\n\nfaas-cli template store list")
 	}
 
 	envTemplateRepoStore := os.Getenv(templateStoreURLEnvironment)
 	storeURL := getTemplateStoreURL(templateStoreURL, envTemplateRepoStore, DefaultTemplatesStore)
 
-	storeTemplates, templatesErr := getTemplateInfo(storeURL)
-	if templatesErr != nil {
-		return fmt.Errorf("error while fetching templates from store: %s", templatesErr)
+	storeTemplates, err := getTemplateInfo(storeURL)
+	if err != nil {
+		return fmt.Errorf("error while fetching templates from store: %s", err)
 	}
 
 	templateName := args[0]
 	found := false
+
 	for _, storeTemplate := range storeTemplates {
+
+		_, ref, _ := strings.Cut(templateName, "@")
+
 		sourceName := fmt.Sprintf("%s/%s", storeTemplate.Source, storeTemplate.TemplateName)
-		if templateName == storeTemplate.TemplateName || templateName == sourceName {
-			err := runTemplatePull(cmd, []string{storeTemplate.Repository})
-			if err != nil {
+
+		// len(ref) > 0 && storeTemplate.TemplateName+"@"+ref == templateName+"@"+ref
+		if templateName == storeTemplate.TemplateName || (len(ref) > 0 && templateName == storeTemplate.TemplateName+"@"+ref) || templateName == sourceName {
+
+			repository := storeTemplate.Repository
+			if ref != "" {
+				repository = repository + "#" + ref
+			}
+
+			if err := runTemplatePull(cmd, []string{repository}); err != nil {
 				return fmt.Errorf("error while pulling template: %s : %s", storeTemplate.TemplateName, err.Error())
 			}
+
 			found = true
 			break
 		}
 	}
+
 	if !found {
 		return fmt.Errorf("template with name: `%s` does not exist in the repo", templateName)
 	}

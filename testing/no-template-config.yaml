@@ -1,0 +1,20 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+
+functions:
+  go-latest:
+    lang: golang-middleware
+    handler: ./go-latest
+    image: ttl.sh/alexellis/go-latest:latest
+
+  go-090:
+    lang: golang-middleware@0.9.0
+    handler: ./go-090
+    image: ttl.sh/alexellis/go-090:latest
+
+  go-sha-2e6e262:
+    lang: golang-middleware@sha-2e6e262
+    handler: ./go-sha-2e6e262
+    image: ttl.sh/alexellis/go-sha-2e6e262:latest

@@ -108,7 +108,7 @@ func runNewFunction(cmd *cobra.Command, args []string) error {
 	if list {
 		var availableTemplates []string
 
-		templateFolders, err := os.ReadDir(templateDirectory)
+		templateFolders, err := os.ReadDir(TemplateDirectory)
 		if err != nil {
 			return fmt.Errorf(`no language templates were found.
 
@@ -140,9 +140,11 @@ Download templates:
 			return fmt.Errorf("error while getting templates info: %s", err)
 		}
 
+		_, ref, _ := strings.Cut(language, "@")
+
 		var templateInfo *TemplateInfo
 		for _, info := range templatesInfo {
-			if info.TemplateName == language {
+			if info.TemplateName == language || (info.TemplateName+"@"+ref == language) {
 				templateInfo = &info
 				break
 			}
@@ -153,8 +155,12 @@ Download templates:
 		}
 
 		templateName := templateInfo.TemplateName
+		if ref != "" {
+			// Reformat as a Git-native reference
+			templateName += "#" + ref
+		}
 
-		if err := pullTemplate(templateInfo.Repository, templateName); err != nil {
+		if err := pullTemplate(templateInfo.Repository, templateName, overwrite); err != nil {
 			return fmt.Errorf("error while pulling template: %s", err)
 		}
 
@@ -225,7 +231,10 @@ Download templates:
 	fromTemplateHandler := filepath.Join("template", language, templateHandlerFolder)
 
 	// Create function directory from template.
-	builder.CopyFiles(fromTemplateHandler, handlerDir)
+	if err := builder.CopyFiles(fromTemplateHandler, handlerDir); err != nil {
+		return fmt.Errorf("error copying template handler: %s", err)
+	}
+
 	printLogo()
 	fmt.Printf("\nFunction created in folder: %s\n", handlerDir)
 

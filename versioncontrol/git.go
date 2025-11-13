@@ -1,20 +1,30 @@
 package versioncontrol
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/openfaas/faas-cli/exec"
 )
 
-// GitClone defines the command to clone a repo into a directory
-var GitClone = &vcsCmd{
+// GitCloneBranch clones a specific branch of a repo into a directory
+var GitCloneBranch = &vcsCmd{
 	name:   "Git",
 	cmd:    "git",
 	cmds:   []string{"clone {repo} {dir} --depth=1 --config core.autocrlf=false -b {refname}"},
 	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
 }
 
-// GitClone defines the command to clone the default branch of a repo into a directory
+// GitCloneFullDepth clones a repo into a directory with full depth so that a
+// SHA can be checked out after
+var GitCloneFullDepth = &vcsCmd{
+	name:   "Git",
+	cmd:    "git",
+	cmds:   []string{"clone {repo} {dir} --config core.autocrlf=false"},
+	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
+}
+
+// GitCloneDefault clones the default branch of a repo into a directory
 var GitCloneDefault = &vcsCmd{
 	name:   "Git",
 	cmd:    "git",
@@ -22,7 +32,7 @@ var GitCloneDefault = &vcsCmd{
 	scheme: []string{"git", "https", "http", "git+ssh", "ssh"},
 }
 
-// GitCheckout defines the command to clone a specific REF of repo into a directory
+// GitCheckout checks out a specific REF of a repo into a directory
 var GitCheckout = &vcsCmd{
 	name:   "Git",
 	cmd:    "git",
@@ -85,6 +95,23 @@ func GetGitDescribe() string {
 	sha = strings.TrimSuffix(sha, "\n")
 
 	return sha
+}
+
+// GetGitSHA returns the short Git commit SHA from local repo
+func GetGitSHAFor(path string, short bool) (string, error) {
+	args := []string{"-C", path, "rev-parse"}
+	if short {
+		args = append(args, "--short")
+	}
+	args = append(args, "HEAD")
+	getShaCommand := []string{"git"}
+	getShaCommand = append(getShaCommand, args...)
+	sha := exec.CommandWithOutput(getShaCommand, true)
+	if strings.Contains(sha, "Not a git repository") {
+		return "", fmt.Errorf("not a git repository")
+	}
+
+	return strings.TrimSpace(sha), nil
 }
 
 // GetGitSHA returns the short Git commit SHA from local repo

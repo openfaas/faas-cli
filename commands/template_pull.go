@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	templatePullCmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite existing templates?")
+	templatePullCmd.Flags().BoolVar(&overwrite, "overwrite", true, "Overwrite existing templates?")
 	templatePullCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output")
 
 	templateCmd.AddCommand(templatePullCmd)
@@ -35,7 +35,9 @@ directory from the root of the repo, if it exists.
   faas-cli template pull https://github.com/openfaas/templates
   faas-cli template pull https://github.com/openfaas/templates#1.0
 `,
-	RunE: runTemplatePull,
+	RunE:          runTemplatePull,
+	SilenceErrors: true,
+	SilenceUsage:  true,
 }
 
 func runTemplatePull(cmd *cobra.Command, args []string) error {
@@ -44,10 +46,15 @@ func runTemplatePull(cmd *cobra.Command, args []string) error {
 		repository = args[0]
 	}
 
-	templateName := "" // templateName may not be known at this point
+	return templatePull(repository, overwrite)
+}
+
+func templatePull(repository string, overwriteTemplates bool) error {
+	templateName := ""
 
 	repository = getTemplateURL(repository, os.Getenv(templateURLEnvironment), DefaultTemplateRepository)
-	return pullTemplate(repository, templateName)
+
+	return pullTemplate(repository, templateName, overwriteTemplates)
 }
 
 func pullDebugPrint(message string) {

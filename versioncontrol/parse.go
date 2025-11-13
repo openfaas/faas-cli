@@ -6,9 +6,9 @@ import (
 )
 
 const (
-	pinCharater              = `#`
+	pinCharacter             = `#`
 	gitRemoteRegexpStr       = `(git|ssh|https?|git@[-\w.]+):(\/\/)?([^#]*?(?:\.git)?\/?)`
-	gitPinnedRemoteRegexpStr = gitRemoteRegexpStr + pinCharater + `[-\/\d\w._]+$`
+	gitPinnedRemoteRegexpStr = gitRemoteRegexpStr + pinCharacter + `[-\/\d\w._]+$`
 	gitRemoteRepoRegexpStr   = gitRemoteRegexpStr + `$`
 )
 
@@ -50,10 +50,13 @@ func ParsePinnedRemote(repoURL string) (remoteURL, refName string) {
 
 	// handle ssh special case
 
-	atIndex := strings.LastIndex(repoURL, pinCharater)
+	atIndex := strings.LastIndex(repoURL, pinCharacter)
 	if atIndex > 0 {
-		refName = repoURL[atIndex+len(pinCharater):]
-		remoteURL = repoURL[:atIndex]
+
+		remoteURL, refName, _ = strings.Cut(repoURL, pinCharacter)
+
+		// refName = repoURL[atIndex+len(pinCharacter):]
+		// remoteURL = repoURL[:atIndex]
 	}
 
 	if !IsGitRemote(remoteURL) {

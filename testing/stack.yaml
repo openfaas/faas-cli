@@ -1,0 +1,17 @@
+version: 1.0
+provider:
+  name: openfaas
+  gateway: http://127.0.0.1:8080
+
+functions:
+
+  inproc-fn:
+    lang: golang-middleware-inproc
+    handler: ./inproc-fn
+    image: ttl.sh/go-inproc-fn:latest
+
+  go-fn:
+    lang: golang-middleware
+    handler: ./inproc-fn
+    image: ttl.sh/go-middleware-fn:latest
+

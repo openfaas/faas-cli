@@ -61,18 +61,18 @@ func Test_IsPinnedGitRemote(t *testing.T) {
 		name string
 		url  string
 	}{
-		{name: "git protocol without .git suffix", url: "git://host.xz/path/to/repo" + pinCharater + "feature-branch"},
-		{name: "git protocol", url: "git://host.xz/path/to/repo.git/" + pinCharater + "tagname"},
-		{name: "scp style with ip address", url: "git@192.168.101.127:user/project.git" + pinCharater + "v1.2.3"},
-		{name: "scp style with hostname", url: "git@github.com:user/project.git" + pinCharater + "feature-branch"},
-		{name: "http protocol with ip address", url: "http://192.168.101.127/user/project.git" + pinCharater + "tagname"},
-		{name: "http protocol", url: "http://github.com/user/project.git" + pinCharater + "v1.2.3"},
-		{name: "http protocol without .git suffix", url: "http://github.com/user/project" + pinCharater + "feature-branch"},
-		{name: "https protocol with ip address", url: "https://192.168.101.127/user/project.git" + pinCharater + "tagname"},
-		{name: "https protocol with hostname", url: "https://github.com/user/project.git" + pinCharater + "v1.2.3"},
-		{name: "https protocol with basic auth", url: "https://username:password@github.com/username/repository.git" + pinCharater + "feature/branch"},
-		{name: "ssh protocol with hostname no port", url: "ssh://user@host.xz/path/to/repo.git/" + pinCharater + "v1.2.3"},
-		{name: "ssh protocol with hostname and port", url: "ssh://user@host.xz:port/path/to/repo.git/" + pinCharater + "tagname"},
+		{name: "git protocol without .git suffix", url: "git://host.xz/path/to/repo" + pinCharacter + "feature-branch"},
+		{name: "git protocol", url: "git://host.xz/path/to/repo.git/" + pinCharacter + "tagname"},
+		{name: "scp style with ip address", url: "git@192.168.101.127:user/project.git" + pinCharacter + "v1.2.3"},
+		{name: "scp style with hostname", url: "git@github.com:user/project.git" + pinCharacter + "feature-branch"},
+		{name: "http protocol with ip address", url: "http://192.168.101.127/user/project.git" + pinCharacter + "tagname"},
+		{name: "http protocol", url: "http://github.com/user/project.git" + pinCharacter + "v1.2.3"},
+		{name: "http protocol without .git suffix", url: "http://github.com/user/project" + pinCharacter + "feature-branch"},
+		{name: "https protocol with ip address", url: "https://192.168.101.127/user/project.git" + pinCharacter + "tagname"},
+		{name: "https protocol with hostname", url: "https://github.com/user/project.git" + pinCharacter + "v1.2.3"},
+		{name: "https protocol with basic auth", url: "https://username:password@github.com/username/repository.git" + pinCharacter + "feature/branch"},
+		{name: "ssh protocol with hostname no port", url: "ssh://user@host.xz/path/to/repo.git/" + pinCharacter + "v1.2.3"},
+		{name: "ssh protocol with hostname and port", url: "ssh://user@host.xz:port/path/to/repo.git/" + pinCharacter + "tagname"},
 	}
 
 	for _, scenario := range validURLs {
@@ -95,8 +95,8 @@ func Test_IsPinnedGitRemote(t *testing.T) {
 		{name: "git protocol without .git suffix and no tag", url: "git://host.xz/path/to/repo"},
 		{name: "git protocol with hash", url: "git://github.com/openfaas/faas.git#ff78lf9h@feature/branch"},
 		{name: "local repo file protocol", url: "file:///path/to/repo.git/@feature/branch"},
-		{name: "ssh missing username and port", url: "host.xz:/path/to/repo.git" + pinCharater + "feature-branch"},
-		{name: "ssh username and missing port", url: "user@host.xz:path/to/repo.git" + pinCharater + "v1.2.3"},
+		{name: "ssh missing username and port", url: "host.xz:/path/to/repo.git" + pinCharacter + "feature-branch"},
+		{name: "ssh username and missing port", url: "user@host.xz:path/to/repo.git" + pinCharacter + "v1.2.3"},
 		{name: "relative local path", url: "path/to/repo.git/@feature/branch"},
 		{name: "magic relative local", url: "~/path/to/repo.git@feature/branch"},
 	}
@@ -129,11 +129,12 @@ func Test_ParsePinnedRemote(t *testing.T) {
 		{name: "https protocol with basic auth", url: "https://username:password@github.com/username/repository.git", refName: "feature/branch"},
 		{name: "ssh protocol with hostname no port", url: "ssh://user@host.xz/path/to/repo.git/", refName: "v1.2.3"},
 		{name: "ssh protocol with hostname and port", url: "ssh://user@host.xz:port/path/to/repo.git/", refName: "tagname"},
+		{name: "https with custom pinned SHA", url: "https://github.com/user/project.git", refName: "sha-1234567890"},
 	}
 
 	for _, scenario := range cases {
 		t.Run(fmt.Sprintf("can parse refname from url with %s", scenario.name), func(t *testing.T) {
-			remote, refName := ParsePinnedRemote(scenario.url + pinCharater + scenario.refName)
+			remote, refName := ParsePinnedRemote(scenario.url + pinCharacter + scenario.refName)
 			if remote != scenario.url {
 				t.Errorf("expected remote url: %s, got: %s", scenario.url, remote)
 			}

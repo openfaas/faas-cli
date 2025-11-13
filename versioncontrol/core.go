@@ -5,6 +5,7 @@ package versioncontrol
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -46,6 +47,10 @@ func (v *vcsCmd) run(dir string, cmdline string, keyval map[string]string, verbo
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "missing %s command", v.name)
 		return nil, err
+	}
+
+	if os.Getenv("FAAS_DEBUG") == "1" {
+		log.Printf("[git] %s %s", v.cmd, strings.Join(args, " "))
 	}
 
 	cmd := exec.Command(v.cmd, args...)

@@ -29,10 +29,11 @@ func Test_PullTemplates(t *testing.T) {
 		}
 	})
 
+	overwrite := true
 	t.Run("fetchTemplates with master ref", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
-		if err := fetchTemplates(localTemplateRepository, "master", templateName, false); err != nil {
+		if err := fetchTemplates(localTemplateRepository, "master", templateName, overwrite); err != nil {
 			t.Fatal(err)
 		}
 
@@ -42,7 +43,7 @@ func Test_PullTemplates(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
 		templateName := ""
-		if err := fetchTemplates(localTemplateRepository, "", templateName, false); err != nil {
+		if err := fetchTemplates(localTemplateRepository, "", templateName, overwrite); err != nil {
 			t.Error(err)
 		}
 
@@ -105,14 +106,21 @@ func setupLocalTemplateRepo(t *testing.T) string {
 // tearDownFetchTemplates cleans all files and directories created by the test
 func tearDownFetchTemplates(t *testing.T) {
 
-	// Remove existing templates folder, if it exist
-	if _, err := os.Stat("./template/"); err == nil {
-		t.Log("Found a ./template/ directory, removing it.")
+	cwd, err := os.Getwd()
+	if err != nil {
+		t.Logf("Could not get current working directory: %s", err)
+		return
+	}
 
-		if err := os.RemoveAll("./template/"); err != nil {
+	fullPath := filepath.Join(cwd, TemplateDirectory)
+	// Remove existing templates folder, if it exist
+	if _, err := os.Stat(fullPath); err == nil {
+		t.Log("Found a template directory, removing it.")
+
+		if err := os.RemoveAll(fullPath); err != nil {
 			t.Log(err)
 		}
 	} else {
-		t.Logf("Directory template was not created: %s", err)
+		t.Logf("Template directory %s was not created: %s", fullPath, err)
 	}
 }

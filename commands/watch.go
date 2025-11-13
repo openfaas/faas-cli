@@ -36,7 +36,7 @@ func watchLoop(cmd *cobra.Command, args []string, onChange func(cmd *cobra.Comma
 	}
 
 	fnNames := []string{}
-	for name, _ := range services.Functions {
+	for name := range services.Functions {
 		fnNames = append(fnNames, name)
 	}
 

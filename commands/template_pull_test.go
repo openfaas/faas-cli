@@ -3,11 +3,9 @@
 package commands
 
 import (
-	"bytes"
 	"fmt"
-	"log"
 	"os"
-	"regexp"
+	"os/exec"
 	"strings"
 	"testing"
 )
@@ -20,52 +18,38 @@ func Test_templatePull(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
 		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		err := faasCmd.Execute()
-		if err != nil {
-			t.Errorf("unexpected error while puling valid repo: %s", err.Error())
+		if err := faasCmd.Execute(); err != nil {
+			t.Fatalf("unexpected error while puling valid repo (%q): %s", localTemplateRepository, err.Error())
 		}
 
 		// Verify created directories
 		if _, err := os.Stat("template"); err != nil {
 			t.Fatalf("The directory %s was not created", "template")
 		}
+
 	})
 
 	t.Run("WithOverwriting", func(t *testing.T) {
 		defer tearDownFetchTemplates(t)
 
-		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		err := faasCmd.Execute()
+		if err := templatePull(localTemplateRepository, true); err != nil {
+			t.Fatalf("unexpected error while executing initial template pull: %s", err.Error())
+		}
+
+		//execute command to ls in the template directory
+
+		lsCmd := exec.Command("ls", "template")
+		_, err := lsCmd.CombinedOutput()
 		if err != nil {
-			t.Errorf("unexpected error while executing template pull: %s", err.Error())
+			t.Fatalf("error while listing template directory: %s", err.Error())
 		}
 
-		var buf bytes.Buffer
-		log.SetOutput(&buf)
-
-		r := regexp.MustCompile(`(?m:Cannot overwrite the following \d+ template\(s\):)`)
-
-		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository})
-		err = faasCmd.Execute()
-		if err != nil {
-			t.Errorf("unexpected error while executing template pull: %s", err.Error())
+		if err := templatePull(localTemplateRepository, false); err == nil {
+			t.Fatalf("error expected overwriting existing templates with --overwrite=false:")
 		}
 
-		if !r.MatchString(buf.String()) {
-			t.Fatal(buf.String())
-		}
-
-		buf.Reset()
-
-		faasCmd.SetArgs([]string{"template", "pull", localTemplateRepository, "--overwrite"})
-		err = faasCmd.Execute()
-		if err != nil {
-			t.Errorf("unexpected error while executing template pull with --overwrite: %s", err.Error())
-		}
-
-		str := buf.String()
-		if r.MatchString(str) {
-			t.Fatal()
+		if err := templatePull(localTemplateRepository, true); err != nil {
+			t.Fatalf("unexpected error while executing template pull with --overwrite: %s", err.Error())
 		}
 
 		// Verify created directories
@@ -80,10 +64,11 @@ func Test_templatePull(t *testing.T) {
 		want := "the repository URL must be a valid git repo uri"
 		got := err.Error()
 		if !strings.Contains(err.Error(), want) {
-			t.Errorf("The error should contain:\n%q\n, but was:\n%q", want, got)
+			t.Fatalf("The error should contain:\n%q\n, but was:\n%q", want, got)
 		}
 	})
 }
+
 func Test_templatePullPriority(t *testing.T) {
 	templateURLs := []struct {
 		name      string
@@ -113,7 +98,7 @@ func Test_templatePullPriority(t *testing.T) {
 		},
 	}
 	for _, scenario := range templateURLs {
-		t.Run(fmt.Sprintf("%s", scenario.name), func(t *testing.T) {
+		t.Run(scenario.name, func(t *testing.T) {
 			repository = getTemplateURL(scenario.cliURL, scenario.envURL, DefaultTemplateRepository)
 			if repository != scenario.resultURL {
 				t.Errorf("result URL,  want %s got %s", scenario.resultURL, repository)

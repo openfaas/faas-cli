@@ -362,9 +362,8 @@ func buildDockerRun(ctx context.Context, name string, fnc stack.Function, opts r
 			return nil, fmt.Errorf("can't determine secrets folder: %w", err)
 		}
 
-		err = os.MkdirAll(secretsPath, 0700)
-		if err != nil {
-			return nil, fmt.Errorf("can't create local secrets folder %q: %w", secretsPath, err)
+		if err = os.MkdirAll(secretsPath, 0700); err != nil && !os.IsExist(err) {
+			return nil, fmt.Errorf("error creating local secrets folder %q: %w", secretsPath, err)
 		}
 
 		if !opts.print {
