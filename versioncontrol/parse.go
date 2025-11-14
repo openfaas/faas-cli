@@ -52,11 +52,7 @@ func ParsePinnedRemote(repoURL string) (remoteURL, refName string) {
 
 	atIndex := strings.LastIndex(repoURL, pinCharacter)
 	if atIndex > 0 {
-
 		remoteURL, refName, _ = strings.Cut(repoURL, pinCharacter)
-
-		// refName = repoURL[atIndex+len(pinCharacter):]
-		// remoteURL = repoURL[:atIndex]
 	}
 
 	if !IsGitRemote(remoteURL) {
