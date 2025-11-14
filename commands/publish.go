@@ -147,12 +147,12 @@ func runPublish(cmd *cobra.Command, args []string) error {
 	cwd, _ := os.Getwd()
 	templatesPath := filepath.Join(cwd, TemplateDirectory)
 
-	if len(services.StackConfiguration.TemplateConfigs) > 0 && !disableStackPull {
-		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
-		if err != nil {
-			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
-		}
+	missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
+	if err != nil {
+		return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
+	}
 
+	if len(services.StackConfiguration.TemplateConfigs) > 0 && !disableStackPull {
 		if err := pullStackTemplates(missingTemplates, services.StackConfiguration.TemplateConfigs, cmd); err != nil {
 			return fmt.Errorf("error pulling templates: %s", err.Error())
 		}
@@ -163,18 +163,11 @@ func runPublish(cmd *cobra.Command, args []string) error {
 		// When the configuration.templates section is empty, it's only possible to pull from the store
 		// this store can be overridden by a flag or environment variable
 
-		missingTemplates, err := getMissingTemplates(services.Functions, templatesPath)
-		if err != nil {
-			return fmt.Errorf("error accessing existing templates folder: %s", err.Error())
-		}
-
 		for _, missingTemplate := range missingTemplates {
-
 			if err := runTemplateStorePull(cmd, []string{missingTemplate}); err != nil {
 				return fmt.Errorf("error pulling template: %s", err.Error())
 			}
 		}
-
 	}
 
 	if resetQemu {
