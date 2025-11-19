@@ -155,6 +155,8 @@ func canWriteLanguage(existingLanguages []string, language string, overwriteTemp
 // It returns the existing languages and the fetched languages
 // It also returns an error if the templates cannot be read
 func moveTemplates(localTemplatesDir, extractedPath, templateName string, overwriteTemplate bool, repository string, refName string, sha string) ([]string, []string, error) {
+	// Get the template name without prefix
+	template := strings.SplitN(templateName, "@", 2)[0]
 
 	var (
 		existingLanguages  []string
@@ -197,13 +199,29 @@ func moveTemplates(localTemplatesDir, extractedPath, templateName string, overwr
 			refSuffix = "@" + refName
 		}
 
+		// Only copy the requested template when a template name is provided
+		// copy all templates otherwise.
+		if len(template) > 0 && language != template {
+			continue
+		}
+
 		if canWriteLanguage(existingLanguages, language, overwriteTemplate) {
 			// Do cp here
 			languageSrc := filepath.Join(extractedPath, TemplateDirectory, language)
-			languageDest := filepath.Join(localTemplatesDir, language)
+
+			var languageDest string
+
+			if len(templateName) > 0 {
+				languageDest = filepath.Join(localTemplatesDir, templateName)
+			} else {
+				languageDest = filepath.Join(localTemplatesDir, language)
+				if refName != "" {
+					languageDest += "@" + refName
+				}
+			}
+
 			langName := language
 			if refName != "" {
-				languageDest += "@" + refName
 				langName = language + "@" + refName
 			}
 			fetchedLanguages = append(fetchedLanguages, langName)
