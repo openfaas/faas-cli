@@ -41,7 +41,7 @@ func runTemplatePullStack(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	return pullStackTemplates([]string{}, templatesConfig, cmd)
+	return pullConfigTemplates(templatesConfig)
 }
 
 func loadTemplateConfig() ([]stack.TemplateSource, error) {
@@ -67,6 +67,17 @@ func readStackConfig() (stack.Configuration, error) {
 		return configField, fmt.Errorf("can't read configuration: no template repos currently configured")
 	}
 	return configField, nil
+}
+
+func pullConfigTemplates(templateSources []stack.TemplateSource) error {
+	for _, config := range templateSources {
+		fmt.Printf("Pulling template: %s from %s\n", config.Name, config.Source)
+
+		if err := pullTemplate(config.Source, config.Name, overwrite); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func pullStackTemplates(missingTemplates []string, templateSources []stack.TemplateSource, cmd *cobra.Command) error {
