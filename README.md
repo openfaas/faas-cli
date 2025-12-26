@@ -15,6 +15,82 @@ New user? See how it works: [Morning coffee with the faas-cli](https://blog.alex
 Already an OpenFaaS user? Try [5 tips and tricks for the OpenFaaS CLI](https://www.openfaas.com/blog/five-cli-tips/)
 
 ### Get started: Install the CLI
+#  Quick Start: Install the OpenFaaS CLI
+
+The OpenFaaS CLI (`faas-cli`) enables you to build, deploy, and manage serverless functions with ease.
+
+---
+
+##  Installation Options
+
+###  Recommended: Install via Arkade
+
+[Arkade](https://github.com/alexellis/arkade) simplifies the installation of `faas-cli` and other DevOps tools. 
+```bash
+curl -sSL https://get.arkade.dev | sudo -E sh
+arkade get faas-cli
+```
+
+> Note: Re-running the `arkade get` command updates `faas-cli` to the latest version.
+
+---
+
+###  Linux/macOS: Install via Bash Script
+
+```bash
+curl -sSL https://cli.openfaas.com | sudo -E sh
+```
+
+For non-root installation:
+
+```bash
+curl -sSL https://cli.openfaas.com | sh
+```
+
+---
+
+###  macOS: Install via Homebrew
+
+```bash
+brew install faas-cli
+```
+
+> Note: Homebrew versions may lag behind the latest release. For the most up-to-date version, consider using Arkade.
+
+---
+
+###  Windows: Install via PowerShell
+
+```powershell
+$version = (Invoke-WebRequest "https://api.github.com/repos/openfaas/faas-cli/releases/latest" | ConvertFrom-Json).tag_name
+Invoke-WebRequest "https://github.com/openfaas/faas-cli/releases/download/$version/faas-cli.exe" -OutFile "faas-cli.exe"
+```
+
+---
+
+## ✅ Verify Installation
+
+After installation, confirm that `faas-cli` is accessible:
+
+```bash
+faas-cli version
+```
+
+---
+
+## First Steps with `faas-cli`
+
+Once installed, you can start creating and deploying functions:
+
+```bash
+faas-cli new hello-python --lang python3
+faas-cli up -f hello-python.yml
+```
+
+This will scaffold a new Python function and deploy it to your OpenFaaS gateway.
+## Need Help?
+
+- 💬 [Community Support](https://docs.openfaas.com/community/)
 
 You can install the CLI with a `curl` utility script, `brew` or by downloading the binary from the releases page. Once installed you'll get the `faas-cli` command and `faas` alias.
 
