@@ -162,7 +162,10 @@ func (c *Client) deploy(context context.Context, spec *DeployFunctionSpec, updat
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {

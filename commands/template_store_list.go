@@ -125,7 +125,10 @@ func getTemplateInfo(repository string) ([]TemplateInfo, error) {
 	if res.Body == nil {
 		return nil, fmt.Errorf("error empty response body from: %s", templateStoreURL)
 	}
-	defer res.Body.Close()
+	defer func() {
+		_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+		_ = res.Body.Close()
+	}()
 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("unexpected status code wanted: %d got: %d", http.StatusOK, res.StatusCode)

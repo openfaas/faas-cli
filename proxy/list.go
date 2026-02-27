@@ -44,7 +44,10 @@ func (c *Client) ListFunctions(ctx context.Context, namespace string) ([]types.F
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {

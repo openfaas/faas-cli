@@ -31,7 +31,10 @@ func (c *Client) GetSystemInfo(ctx context.Context) (types.GatewayInfo, error) {
 	}
 
 	if response.Body != nil {
-		defer response.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, response.Body) // drain to EOF
+			_ = response.Body.Close()
+		}()
 	}
 
 	switch response.StatusCode {

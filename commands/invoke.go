@@ -159,7 +159,10 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to invoke function: %s", err)
 	}
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	if !authenticate && res.StatusCode == http.StatusUnauthorized {
@@ -182,7 +185,10 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("failed to invoke function: %s", err)
 			}
 			if res.Body != nil {
-				defer res.Body.Close()
+				defer func() {
+					_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+					_ = res.Body.Close()
+				}()
 			}
 		}
 	}

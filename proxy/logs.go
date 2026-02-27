@@ -40,7 +40,10 @@ func (c *Client) GetLogs(ctx context.Context, params logs.Request) (<-chan logs.
 	case http.StatusOK:
 		go func() {
 			defer close(logStream)
-			defer res.Body.Close()
+			defer func() {
+				_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+				_ = res.Body.Close()
+			}()
 
 			decoder := json.NewDecoder(res.Body)
 			for decoder.More() {

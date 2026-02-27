@@ -41,7 +41,10 @@ func (c *Client) GetSecretList(ctx context.Context, namespace string) ([]types.S
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {
@@ -91,7 +94,10 @@ func (c *Client) UpdateSecret(ctx context.Context, secret types.Secret) (int, st
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {
@@ -132,7 +138,10 @@ func (c *Client) RemoveSecret(ctx context.Context, secret types.Secret) error {
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {
@@ -174,7 +183,10 @@ func (c *Client) CreateSecret(ctx context.Context, secret types.Secret) (int, st
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {

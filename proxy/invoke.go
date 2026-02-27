@@ -81,7 +81,10 @@ func InvokeFunction(gateway string, name string, bytesIn *[]byte, contentType st
 	}
 
 	if res.Body != nil {
-		defer res.Body.Close()
+		defer func() {
+			_, _ = io.Copy(io.Discard, res.Body) // drain to EOF
+			_ = res.Body.Close()
+		}()
 	}
 
 	switch res.StatusCode {
