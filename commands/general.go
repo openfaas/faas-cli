@@ -29,7 +29,7 @@ func GetDefaultCLITransport(tlsInsecure bool, timeout *time.Duration) *http.Tran
 				Timeout: *timeout,
 			}).DialContext
 
-			tr.IdleConnTimeout = 120 * time.Millisecond
+			tr.IdleConnTimeout = 5 * time.Second
 			tr.ExpectContinueTimeout = 1500 * time.Millisecond
 		}
 
