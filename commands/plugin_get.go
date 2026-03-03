@@ -157,11 +157,19 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	}
 
 	if cmd.Flags().Changed("path") {
-		fmt.Printf("Wrote: %s (%s/%s) in (%s)\n", path.Join(pluginPath, pluginName), clientOS, clientArch, time.Since(st).Round(time.Millisecond))
+		fmt.Printf("Wrote: %s (%s/%s) in (%s)\n", path.Join(pluginPath, pluginName), clientOS, clientArch, formatDownloadDuration(time.Since(st)))
 	} else {
-		fmt.Printf("Downloaded in (%s)\n\nUsage:\n  faas-cli %s\n", time.Since(st).Round(time.Millisecond), pluginName)
+		fmt.Printf("Downloaded in (%s)\n\nUsage:\n  faas-cli %s\n", formatDownloadDuration(time.Since(st)), pluginName)
 	}
 	return nil
+}
+
+func formatDownloadDuration(downloadTime time.Duration) string {
+	if downloadTime < time.Millisecond {
+		return "<1ms"
+	}
+
+	return downloadTime.Round(time.Millisecond).String()
 }
 
 func getClientArch() (arch string, os string) {
