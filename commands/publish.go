@@ -21,12 +21,14 @@ import (
 )
 
 var (
-	platforms         string
-	extraTags         []string
-	resetQemu         bool
-	mountSSH          bool
-	remoteBuilder     string
-	payloadSecretPath string
+	platforms            string
+	extraTags            []string
+	resetQemu            bool
+	mountSSH             bool
+	remoteBuilder        string
+	payloadSecretPath    string
+	builderPublicKeyPath string
+	builderKeyID         string
 )
 
 func init() {
@@ -53,7 +55,9 @@ func init() {
 	publishCmd.Flags().StringArrayVar(&extraTags, "extra-tag", []string{}, "Additional extra image tag")
 	publishCmd.Flags().BoolVar(&resetQemu, "reset-qemu", false, "Runs \"docker run multiarch/qemu-user-static --reset -p yes\" to enable multi-arch builds. Compatible with AMD64 machines only.")
 	publishCmd.Flags().StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
-	publishCmd.Flags().StringVar(&payloadSecretPath, "payload-secret", "", "Path to payload secret file")
+	publishCmd.Flags().StringVar(&payloadSecretPath, "payload-secret", "", "Path to the payload secret file")
+	publishCmd.Flags().StringVar(&builderPublicKeyPath, "builder-public-key", "", "Builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from /public-key")
+	publishCmd.Flags().StringVar(&builderKeyID, "builder-key-id", "", "Key ID for the pinned builder public key when using a raw base64 key file")
 	publishCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
 	publishCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output when pulling templates")
@@ -82,7 +86,7 @@ var publishCmd = &cobra.Command{
                    [--tag <sha|branch|describe>]
                    [--platforms linux/amd64,linux/arm64]
                    [--reset-qemu]
-                   [--remote-builder http://127.0.0.1:8081/build]`,
+                   [--remote-builder http://127.0.0.1:8081]`,
 	Short: "Builds and pushes multi-arch OpenFaaS container images",
 	Long: `Builds and pushes multi-arch OpenFaaS container images using Docker buildx.
 Most users will want faas-cli build or faas-cli up for development and testing.
@@ -101,7 +105,7 @@ See also: faas-cli build`,
   faas-cli publish --build-option dev
   faas-cli publish --tag sha
   faas-cli publish --reset-qemu
-  faas-cli publish --remote-builder http://127.0.0.1:8081/build
+  faas-cli publish --remote-builder http://127.0.0.1:8081 --payload-secret /var/openfaas/secrets/payload-secret -f stack.yml
   `,
 	PreRunE: preRunPublish,
 	RunE:    runPublish,
@@ -109,6 +113,8 @@ See also: faas-cli build`,
 
 // preRunPublish validates args & flags
 func preRunPublish(cmd *cobra.Command, args []string) error {
+	applyRemoteBuilderEnvironment()
+
 	language, _ = validateLanguageFlag(language)
 
 	mapped, err := parseBuildArgs(buildArgs)
@@ -279,10 +285,13 @@ func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild, m
 						buildLabelMap,
 						quietBuild,
 						combinedExtraPaths,
+						function.BuildSecrets,
 						platforms,
 						extraTags,
 						remoteBuilder,
 						payloadSecretPath,
+						builderPublicKeyPath,
+						builderKeyID,
 						forcePull,
 					)
 

@@ -284,6 +284,33 @@ for _, logMsg := range result.Log {
 
 Take a look at the [function builder examples](https://github.com/openfaas/function-builder-examples) for a complete example.
 
+### Build with encrypted BuildKit secrets
+
+If the builder has `enable_encrypted_build_secrets=true`, you can keep the tar archive unchanged and send per-request BuildKit secrets in an encrypted multipart request. The public key is the base64 value returned by `GET /public-key` or generated up front with `faas-cli pro build-secrets keygen`:
+
+```go
+publicKey, err := os.ReadFile("/var/openfaas/secrets/pro-builder-public-key")
+if err != nil {
+	log.Fatal(err)
+}
+
+b := builder.NewFunctionBuilder(
+	builderURL,
+	http.DefaultClient,
+	builder.WithHmacAuth(string(payloadSecret)),
+	builder.WithEncryptedBuildSecretsKey("builder-key-1", publicKey),
+)
+
+result, err := b.BuildWithEncryptedSecrets(tarPath, map[string]string{
+	"pip_token": "s3cr3t",
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+fmt.Println(result.Status)
+```
+
 ### Stream build logs
 
 ```go

@@ -4,11 +4,8 @@
 package builder
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -16,14 +13,14 @@ import (
 
 	v2execute "github.com/alexellis/go-execute/v2"
 	"github.com/openfaas/faas-cli/schema"
-	"github.com/openfaas/go-sdk/builder"
+	sdkbuilder "github.com/openfaas/go-sdk/builder"
 	"github.com/openfaas/go-sdk/stack"
 )
 
 // PublishImage will publish images as multi-arch
 // TODO: refactor signature to a struct to simplify the length of the method header
 func PublishImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string,
-	buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, platforms string, extraTags []string, remoteBuilder, payloadSecretPath string, forcePull bool) error {
+	buildOptions []string, tagMode schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, buildSecrets map[string]string, platforms string, extraTags []string, remoteBuilder, payloadSecretPath, builderPublicKeyPath, builderKeyID string, forcePull bool) error {
 
 	if stack.IsValidTemplate(language) {
 		pathToTemplateYAML := fmt.Sprintf("./template/%s/template.yml", language)
@@ -40,12 +37,12 @@ func PublishImage(image string, handler string, functionName string, language st
 			return fmt.Errorf("building %s, %s is an invalid path", functionName, handler)
 		}
 
-		opts := []builder.BuildContextOption{}
+		opts := []sdkbuilder.BuildContextOption{}
 		if len(langTemplate.HandlerFolder) > 0 {
-			opts = append(opts, builder.WithHandlerOverlay(langTemplate.HandlerFolder))
+			opts = append(opts, sdkbuilder.WithHandlerOverlay(langTemplate.HandlerFolder))
 		}
 
-		buildContext, err := builder.CreateBuildContext(functionName, handler, language, copyExtraPaths, opts...)
+		buildContext, err := sdkbuilder.CreateBuildContext(functionName, handler, language, copyExtraPaths, opts...)
 		if err != nil {
 			return err
 		}
@@ -85,51 +82,24 @@ func PublishImage(image string, handler string, functionName string, language st
 			tarPath := path.Join(tempDir, "req.tar")
 
 			builderPlatforms := strings.Split(platforms, ",")
-			buildConfig := builder.BuildConfig{
+			buildConfig := sdkbuilder.BuildConfig{
 				Image:     imageName,
 				BuildArgs: buildArgMap,
 				Platforms: builderPlatforms,
 			}
 
 			// Prepare a tar archive that contains the build config and build context.
-			if err := builder.MakeTar(tarPath, path.Join("build", functionName), &buildConfig); err != nil {
+			if err := sdkbuilder.MakeTar(tarPath, path.Join("build", functionName), &buildConfig); err != nil {
 				return fmt.Errorf("failed to create tar file for %s, error: %w", functionName, err)
 			}
 
-			// Get the HMAC secret used for payload authentication with the builder API.
-			payloadSecret, err := os.ReadFile(payloadSecretPath)
-			if err != nil {
-				return fmt.Errorf("failed to read payload secret: %w", err)
-			}
-			payloadSecret = bytes.TrimSpace(payloadSecret)
-
-			// Initialize a new builder client.
 			u, _ := url.Parse(remoteBuilder)
 			builderURL := &url.URL{
 				Scheme: u.Scheme,
 				Host:   u.Host,
 			}
-			b := builder.NewFunctionBuilder(builderURL, http.DefaultClient, builder.WithHmacAuth(string(payloadSecret)))
-
-			stream, err := b.BuildWithStream(tarPath)
-			if err != nil {
-				return fmt.Errorf("failed to invoke builder:: %w", err)
-			}
-			defer stream.Close()
-
-			for result := range stream.Results() {
-				if !quietBuild {
-					for _, logMsg := range result.Log {
-						fmt.Printf("%s\n", logMsg)
-					}
-				}
-
-				switch result.Status {
-				case builder.BuildSuccess:
-					log.Printf("%s success building and pushing image: %s", functionName, result.Image)
-				case builder.BuildFailed:
-					return fmt.Errorf("%s failure while building or pushing image %s: %s", functionName, imageName, result.Error)
-				}
+			if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, builderPublicKeyPath, builderKeyID, buildSecrets, quietBuild, functionName, imageName); err != nil {
+				return fmt.Errorf("failed to invoke builder: %w", err)
 			}
 
 		} else {

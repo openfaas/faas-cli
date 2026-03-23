@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/alexellis/hmac/v2"
+	hmac "github.com/alexellis/hmac/v2"
 	"github.com/openfaas/go-sdk/internal/httpclient"
 )
 
@@ -68,6 +68,9 @@ type FunctionBuilder struct {
 
 	// HMAC secret used for hashing request payloads.
 	hmacSecret string
+
+	sealConfig      sealConfig
+	buildSecretsErr error
 }
 
 type BuilderOption func(*FunctionBuilder)
@@ -96,16 +99,30 @@ func NewFunctionBuilder(url *url.URL, client *http.Client, options ...BuilderOpt
 	return b
 }
 
-func (b *FunctionBuilder) build(tarPath string, stream bool) (*http.Response, error) {
-	tarFile, err := os.Open(tarPath)
+func (b *FunctionBuilder) build(tarPath string, stream bool, buildSecrets map[string]string) (*http.Response, error) {
+	tarFileBytes, err := os.ReadFile(tarPath)
 	if err != nil {
 		return nil, err
 	}
-	defer tarFile.Close()
 
-	tarFileBytes, err := io.ReadAll(tarFile)
-	if err != nil {
-		return nil, err
+	if b.buildSecretsErr != nil {
+		return nil, b.buildSecretsErr
+	}
+
+	if len(buildSecrets) > 0 {
+		if len(b.sealConfig.PublicKey) == 0 {
+			return nil, fmt.Errorf("build secrets provided but no build secrets key configured, use WithBuildSecretsKey")
+		}
+
+		sealedData, err := sealBuildSecrets(b.sealConfig, buildSecrets)
+		if err != nil {
+			return nil, fmt.Errorf("sealing build secrets: %w", err)
+		}
+
+		tarFileBytes, err = appendToTar(tarFileBytes, BuildSecretsFileName, sealedData)
+		if err != nil {
+			return nil, fmt.Errorf("adding sealed secrets to tar: %w", err)
+		}
 	}
 
 	u := b.URL.JoinPath("/build")
@@ -127,10 +144,78 @@ func (b *FunctionBuilder) build(tarPath string, stream bool) (*http.Response, er
 	return b.client.Do(req)
 }
 
+// appendToTar appends a file entry to an existing tar archive.
+func appendToTar(tarBytes []byte, name string, data []byte) ([]byte, error) {
+	// A tar archive ends with two 512-byte zero blocks.
+	// Trim them so we can append before the end.
+	trimmed := tarBytes
+	for len(trimmed) >= 512 && isZeroBlock(trimmed[len(trimmed)-512:]) {
+		trimmed = trimmed[:len(trimmed)-512]
+	}
+
+	var buf bytes.Buffer
+	buf.Write(trimmed)
+
+	tw := tar.NewWriter(&buf)
+	if err := tw.WriteHeader(&tar.Header{
+		Name: name,
+		Mode: 0600,
+		Size: int64(len(data)),
+	}); err != nil {
+		return nil, err
+	}
+	if _, err := tw.Write(data); err != nil {
+		return nil, err
+	}
+	if err := tw.Close(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func isZeroBlock(b []byte) bool {
+	for _, v := range b {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // Build invokes the function builder API with the provided tar archive containing the build config and context
 // to build and push a function image.
 func (b *FunctionBuilder) Build(tarPath string) (BuildResult, error) {
-	res, err := b.build(tarPath, false)
+	res, err := b.build(tarPath, false, nil)
+	if err != nil {
+		return BuildResult{}, err
+	}
+
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
+		return BuildResult{}, fmt.Errorf("failed to build function, builder responded with status code %d", res.StatusCode)
+	}
+
+	result := BuildResult{}
+	if res.Body != nil {
+		defer res.Body.Close()
+
+		data, err := io.ReadAll(res.Body)
+		if err != nil {
+			return BuildResult{}, err
+		}
+		if err := json.Unmarshal(data, &result); err != nil {
+			return BuildResult{}, err
+		}
+	}
+
+	return result, nil
+}
+
+// BuildWithSecrets invokes the function builder API using the provided
+// tar archive plus sealed per-build BuildKit secrets.
+// The secrets are sealed and appended to the tar before sending.
+func (b *FunctionBuilder) BuildWithSecrets(tarPath string, buildSecrets map[string]string) (BuildResult, error) {
+	res, err := b.build(tarPath, false, buildSecrets)
 	if err != nil {
 		return BuildResult{}, err
 	}
@@ -160,7 +245,22 @@ func (b *FunctionBuilder) Build(tarPath string) (BuildResult, error) {
 //
 // The function returns a sequence of build results. The sequence is closed when the build is complete.
 func (b *FunctionBuilder) BuildWithStream(tarPath string) (*BuildResultStream, error) {
-	res, err := b.build(tarPath, true)
+	res, err := b.build(tarPath, true, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
+		return nil, fmt.Errorf("failed to build function, builder responded with status code %d", res.StatusCode)
+	}
+
+	return &BuildResultStream{r: res.Body}, nil
+}
+
+// BuildWithSecretsStream invokes the function builder API using the provided
+// tar archive plus sealed per-build BuildKit secrets and requests streamed logs.
+func (b *FunctionBuilder) BuildWithSecretsStream(tarPath string, buildSecrets map[string]string) (*BuildResultStream, error) {
+	res, err := b.build(tarPath, true, buildSecrets)
 	if err != nil {
 		return nil, err
 	}
