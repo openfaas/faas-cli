@@ -144,11 +144,8 @@ func makeHTTPClient(timeout *time.Duration) http.Client {
 				Proxy: http.ProxyFromEnvironment,
 				DialContext: (&net.Dialer{
 					Timeout: *timeout,
-					// KeepAlive: 0,
 				}).DialContext,
-				// MaxIdleConns:          1,
-				// DisableKeepAlives:     true,
-				IdleConnTimeout:       120 * time.Millisecond,
+				IdleConnTimeout:       5 * time.Second,
 				ExpectContinueTimeout: 1500 * time.Millisecond,
 			},
 		}

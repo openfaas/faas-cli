@@ -109,6 +109,8 @@ via flags.`,
 
 // preRunBuild validates args & flags
 func preRunBuild(cmd *cobra.Command, args []string) error {
+	applyRemoteBuilderEnvironment()
+
 	language, _ = validateLanguageFlag(language)
 
 	mapped, err := parseBuildArgs(buildArgs)
@@ -230,8 +232,11 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			buildLabelMap,
 			quietBuild,
 			copyExtra,
+			nil,
 			remoteBuilder,
 			payloadSecretPath,
+			builderPublicKeyPath,
+			builderKeyID,
 			forcePull,
 		); err != nil {
 			return err
@@ -287,8 +292,11 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						buildLabelMap,
 						quietBuild,
 						combinedExtraPaths,
+						function.BuildSecrets,
 						remoteBuilder,
 						payloadSecretPath,
+						builderPublicKeyPath,
+						builderKeyID,
 						forcePull,
 					)
 

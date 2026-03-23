@@ -18,7 +18,7 @@ require (
 	github.com/morikuni/aec v1.0.0
 	github.com/openfaas/faas-provider v0.25.10
 	github.com/openfaas/faas/gateway v0.0.0-20250422101858-7803ea1861f2
-	github.com/openfaas/go-sdk v0.2.19
+	github.com/openfaas/go-sdk v0.2.21
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/pflag v1.0.7
@@ -62,7 +62,8 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/vbatts/tar-split v0.12.1 // indirect
-	golang.org/x/net v0.43.0 // indirect
+	golang.org/x/crypto v0.41.0 // indirect
+	golang.org/x/net v0.42.0 // indirect
 	golang.org/x/sys v0.35.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect

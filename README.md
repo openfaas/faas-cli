@@ -357,8 +357,30 @@ $ uname -a | curl http://127.0.0.1:8080/function/nodejs-echo--data-binary @-
 * `OPENFAAS_TEMPLATE_URL` - to set the default URL to pull templates from
 * `OPENFAAS_PREFIX` - for use with `faas-cli new` - this can act in place of `--prefix`
 * `OPENFAAS_URL` - to override the default gateway URL
+* `OPENFAAS_REMOTE_BUILDER` - default value for `--remote-builder`
+* `OPENFAAS_PAYLOAD_SECRET` - default value for `--payload-secret`
+* `OPENFAAS_BUILDER_PUBLIC_KEY` - builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from `/public-key`
+* `OPENFAAS_BUILDER_KEY_ID` - default value for `--builder-key-id` when pinning a raw base64 public key file
 * `OPENFAAS_CONFIG` - to override the location of the configuration folder, which contains auth configuration.
 * `CI` - to override the location of the configuration folder, when true, the configuration folder is `.openfaas` in the current working directory. This value is ignored if `OPENFAAS_CONFIG` is set.
+
+For encrypted remote-builder builds, the safest option is to read the builder public key from a file rather than putting the key inline on the command line. The file can contain either:
+
+* the raw base64 public key
+* or the JSON document returned by `GET /public-key`
+
+The `--builder-public-key` flag and `OPENFAAS_BUILDER_PUBLIC_KEY` env var also accept a literal value directly. If the value points to an existing file, the CLI reads the file; otherwise it treats the value itself as the key material.
+
+Basic remote-builder example using automatic `GET /public-key` discovery:
+
+```sh
+faas-cli publish \
+  --remote-builder http://127.0.0.1:8081 \
+  --payload-secret /var/openfaas/secrets/payload-secret \
+  -f stack.yml
+```
+
+If any functions in `stack.yml` define `build_secrets`, the CLI will fetch `/public-key` from the builder automatically unless `--builder-public-key` is set.
 
 ### Contributing
 

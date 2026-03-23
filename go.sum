@@ -95,8 +95,8 @@ github.com/openfaas/faas-provider v0.25.10 h1:fCf2i1vCx3UL8o9gjYPt7CcX8Kko2dc6xm
 github.com/openfaas/faas-provider v0.25.10/go.mod h1:rMXbj+AYVpn82UoHIOgWHiDeV118t0bSxyoC9d00jpc=
 github.com/openfaas/faas/gateway v0.0.0-20250422101858-7803ea1861f2 h1:Reu1wD3BZ/+t+cCnWGYUuFREa8cC7/01tirlkc5rUmk=
 github.com/openfaas/faas/gateway v0.0.0-20250422101858-7803ea1861f2/go.mod h1:j5eUH36/clgztwBYFoXZ/s1UFQ9Alzt8rb50gh7L5Ns=
-github.com/openfaas/go-sdk v0.2.19 h1:L31+TzyKGMaRx56gDZQNE9mhAwWHq1WUsMY3ApjIOTo=
-github.com/openfaas/go-sdk v0.2.19/go.mod h1:9fPkKnpOt48xsRB9+fS5BoCnumbdtKAnWift0BupclU=
+github.com/openfaas/go-sdk v0.2.21 h1:uJ/DMGI15VFzN+NsjQ37Dg5siwfcEepftuW2wIhABn8=
+github.com/openfaas/go-sdk v0.2.21/go.mod h1:5SfWFQBqXlynQhqAreIi5ZBawGQ9+dhWSQRcyZ9DS/U=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
@@ -132,8 +132,10 @@ github.com/vbatts/tar-split v0.12.1 h1:CqKoORW7BUWBe7UL/iqTVvkTBOF8UvOMKOIZykxnn
 github.com/vbatts/tar-split v0.12.1/go.mod h1:eF6B6i6ftWQcDqEn3/iGFRFRo8cBIMSJVOpnNdfTMFA=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=
 go.uber.org/goleak v1.3.0/go.mod h1:CoHD4mav9JJNrW/WLlf7HGZPjdw8EucARQHekz1X6bE=
-golang.org/x/net v0.43.0 h1:lat02VYK2j4aLzMzecihNvTlJNQUq316m2Mr9rnM6YE=
-golang.org/x/net v0.43.0/go.mod h1:vhO1fvI4dGsIjh73sWfUVjj3N7CA9WkKJNQm2svM6Jg=
+golang.org/x/crypto v0.41.0 h1:WKYxWedPGCTVVl5+WHSSrOBT0O8lx32+zxmHxijgXp4=
+golang.org/x/crypto v0.41.0/go.mod h1:pO5AFd7FA68rFak7rOAGVuygIISepHftHnr8dr6+sUc=
+golang.org/x/net v0.42.0 h1:jzkYrhi3YQWD6MLBJcsklgQsoAcw89EcZbJw8Z614hs=
+golang.org/x/net v0.42.0/go.mod h1:FF1RA5d3u7nAYA4z2TkclSCKh68eSXtiFwcWQpPXdt8=
 golang.org/x/sync v0.16.0 h1:ycBJEhp9p4vXvUZNszeOq0kGTPghopOL8q0fq3vstxw=
 golang.org/x/sync v0.16.0/go.mod h1:1dzgHSNfp02xaA81J2MS99Qcpr2w7fw1gpm99rleRqA=
 golang.org/x/sys v0.0.0-20210616094352-59db8d763f22/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
