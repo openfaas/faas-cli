@@ -32,9 +32,9 @@ func TestSecretGenerateToFile(t *testing.T) {
 		t.Fatalf("ReadFile: %v", err)
 	}
 
-	// 32 bytes hex-encoded = 64 chars
-	if len(data) != 64 {
-		t.Fatalf("want 64 hex chars, got %d", len(data))
+	// 32 bytes base64-encoded = 44 chars
+	if len(data) != 44 {
+		t.Fatalf("want 44 base64 chars, got %d", len(data))
 	}
 
 	info, _ := os.Stat(outPath)
