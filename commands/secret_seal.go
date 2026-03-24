@@ -10,42 +10,38 @@ import (
 )
 
 var (
-	sealPublicKeyPath string
-	sealKeyID         string
-	sealOutput        string
-	sealFromLiteral   []string
-	sealFromFile      []string
+	sealKeyID       string
+	sealOutput      string
+	sealFromLiteral []string
+	sealFromFile    []string
 )
 
 var secretSealCmd = &cobra.Command{
-	Use:   "seal",
+	Use:   "seal [public-key-file]",
 	Short: "Seal build secrets into an encrypted file",
 	Long:  "Seal key/value pairs using a public key. The output file can be included in a build tar or committed to git.",
 	Example: `  # Seal literal values
-  faas-cli secret seal \
-    --public-key ./key.pub \
+  faas-cli secret seal key.pub \
     --from-literal pip_token=s3cr3t \
     --from-literal npm_token=tok123
 
   # Seal from files (binary-safe)
-  faas-cli secret seal \
-    --public-key ./key.pub \
+  faas-cli secret seal key.pub \
     --from-file ca.crt=./certs/ca.crt \
     --from-literal api_key=sk-1234
 
   # Specify key ID and output path
-  faas-cli secret seal \
-    --public-key ./key.pub \
+  faas-cli secret seal key.pub \
     --key-id builder-key-1 \
     --from-literal token=s3cr3t \
     -o ./build/com.openfaas.secrets
 `,
+	Args:    cobra.ExactArgs(1),
 	RunE:    runSecretSeal,
 	PreRunE: preRunSecretSeal,
 }
 
 func init() {
-	secretSealCmd.Flags().StringVar(&sealPublicKeyPath, "public-key", "", "Path to the recipient's public key file")
 	secretSealCmd.Flags().StringVar(&sealKeyID, "key-id", "", "Key ID for rotation tracking (optional)")
 	secretSealCmd.Flags().StringVarP(&sealOutput, "output", "o", "com.openfaas.secrets", "Output file path")
 	secretSealCmd.Flags().StringArrayVar(&sealFromLiteral, "from-literal", nil, "Literal secret in key=value format (can be repeated)")
@@ -55,10 +51,6 @@ func init() {
 }
 
 func preRunSecretSeal(cmd *cobra.Command, args []string) error {
-	if sealPublicKeyPath == "" {
-		return fmt.Errorf("--public-key is required")
-	}
-
 	if len(sealFromLiteral) == 0 && len(sealFromFile) == 0 {
 		return fmt.Errorf("provide at least one secret via --from-literal or --from-file")
 	}
@@ -67,7 +59,7 @@ func preRunSecretSeal(cmd *cobra.Command, args []string) error {
 }
 
 func runSecretSeal(cmd *cobra.Command, args []string) error {
-	pubKey, err := os.ReadFile(sealPublicKeyPath)
+	pubKey, err := os.ReadFile(args[0])
 	if err != nil {
 		return fmt.Errorf("reading public key: %w", err)
 	}

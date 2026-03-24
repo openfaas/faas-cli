@@ -23,13 +23,12 @@ func TestSecretSealFromLiteral(t *testing.T) {
 
 	outPath := filepath.Join(dir, "com.openfaas.secrets")
 
-	sealPublicKeyPath = pubPath
 	sealKeyID = "test-key"
 	sealOutput = outPath
 	sealFromLiteral = []string{"pip_token=s3cr3t", "npm_token=tok123"}
 	sealFromFile = nil
 
-	if err := runSecretSeal(nil, nil); err != nil {
+	if err := runSecretSeal(nil, []string{pubPath}); err != nil {
 		t.Fatalf("runSecretSeal: %v", err)
 	}
 
@@ -73,13 +72,12 @@ func TestSecretSealFromFile(t *testing.T) {
 
 	outPath := filepath.Join(dir, "com.openfaas.secrets")
 
-	sealPublicKeyPath = pubPath
 	sealKeyID = ""
 	sealOutput = outPath
 	sealFromLiteral = []string{"token=abc"}
 	sealFromFile = []string{"ca.crt=" + certPath}
 
-	if err := runSecretSeal(nil, nil); err != nil {
+	if err := runSecretSeal(nil, []string{pubPath}); err != nil {
 		t.Fatalf("runSecretSeal: %v", err)
 	}
 
@@ -102,15 +100,9 @@ func TestSecretSealFromFile(t *testing.T) {
 }
 
 func TestSecretSealPreRunValidation(t *testing.T) {
-	sealPublicKeyPath = ""
 	sealFromLiteral = nil
 	sealFromFile = nil
 
-	if err := preRunSecretSeal(nil, nil); err == nil {
-		t.Fatal("expected error when --public-key is missing")
-	}
-
-	sealPublicKeyPath = "some.pub"
 	if err := preRunSecretSeal(nil, nil); err == nil {
 		t.Fatal("expected error when no secrets provided")
 	}
