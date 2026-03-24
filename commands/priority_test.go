@@ -6,12 +6,10 @@ func TestApplyRemoteBuilderEnvironmentUsesEnvFallbacks(t *testing.T) {
 	t.Setenv(remoteBuilderEnvironment, "http://builder.example.com")
 	t.Setenv(payloadSecretEnvironment, "/var/run/secrets/payload-secret")
 	t.Setenv(builderPublicKeyEnvironment, "/var/run/secrets/builder-public-key")
-	t.Setenv(builderKeyIDEnvironment, "builder-key-1")
 
 	remoteBuilder = ""
 	payloadSecretPath = ""
 	builderPublicKeyPath = ""
-	builderKeyID = ""
 
 	applyRemoteBuilderEnvironment()
 
@@ -24,21 +22,16 @@ func TestApplyRemoteBuilderEnvironmentUsesEnvFallbacks(t *testing.T) {
 	if builderPublicKeyPath != "/var/run/secrets/builder-public-key" {
 		t.Fatalf("want builderPublicKeyPath from env, got %q", builderPublicKeyPath)
 	}
-	if builderKeyID != "builder-key-1" {
-		t.Fatalf("want builderKeyID from env, got %q", builderKeyID)
-	}
 }
 
 func TestApplyRemoteBuilderEnvironmentPreservesFlags(t *testing.T) {
 	t.Setenv(remoteBuilderEnvironment, "http://builder.example.com")
 	t.Setenv(payloadSecretEnvironment, "/var/run/secrets/payload-secret")
 	t.Setenv(builderPublicKeyEnvironment, "/var/run/secrets/builder-public-key")
-	t.Setenv(builderKeyIDEnvironment, "builder-key-1")
 
 	remoteBuilder = "http://flag-builder.example.com"
 	payloadSecretPath = "/tmp/payload-secret"
 	builderPublicKeyPath = "/tmp/public-key"
-	builderKeyID = "flag-key-id"
 
 	applyRemoteBuilderEnvironment()
 
@@ -50,8 +43,5 @@ func TestApplyRemoteBuilderEnvironmentPreservesFlags(t *testing.T) {
 	}
 	if builderPublicKeyPath != "/tmp/public-key" {
 		t.Fatalf("want builderPublicKeyPath flag value, got %q", builderPublicKeyPath)
-	}
-	if builderKeyID != "flag-key-id" {
-		t.Fatalf("want builderKeyID flag value, got %q", builderKeyID)
 	}
 }

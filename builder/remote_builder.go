@@ -22,7 +22,7 @@ type remoteBuilderPublicKeyResponse struct {
 	PublicKey string `json:"public_key"`
 }
 
-func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPublicKeyPath, builderKeyID string, buildSecrets map[string]string, quietBuild bool, functionName, imageName string) error {
+func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPublicKeyPath string, buildSecrets map[string]string, quietBuild bool, functionName, imageName string) error {
 	payloadSecret, err := os.ReadFile(payloadSecretPath)
 	if err != nil {
 		return fmt.Errorf("failed to read payload secret: %w", err)
@@ -34,11 +34,11 @@ func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPubl
 	}
 
 	if len(buildSecrets) > 0 {
-		publicKey, err := resolveRemoteBuilderPublicKey(builderURL, builderPublicKeyPath, builderKeyID)
+		publicKey, err := resolveRemoteBuilderPublicKey(builderURL, builderPublicKeyPath)
 		if err != nil {
 			return err
 		}
-		opts = append(opts, sdkbuilder.WithBuildSecretsKey(publicKey.KeyID, []byte(publicKey.PublicKey)))
+		opts = append(opts, sdkbuilder.WithBuildSecretsKey([]byte(publicKey.PublicKey)))
 	}
 
 	b := sdkbuilder.NewFunctionBuilder(builderURL, http.DefaultClient, opts...)
@@ -57,7 +57,7 @@ func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPubl
 	return consumeBuildStream(stream, quietBuild, functionName, imageName)
 }
 
-func resolveRemoteBuilderPublicKey(builderURL *url.URL, builderPublicKeyPath, builderKeyID string) (*remoteBuilderPublicKeyResponse, error) {
+func resolveRemoteBuilderPublicKey(builderURL *url.URL, builderPublicKeyPath string) (*remoteBuilderPublicKeyResponse, error) {
 	if builderPublicKeyPath == "" {
 		return fetchRemoteBuilderPublicKey(builderURL)
 	}
@@ -67,20 +67,7 @@ func resolveRemoteBuilderPublicKey(builderURL *url.URL, builderPublicKeyPath, bu
 		return nil, err
 	}
 
-	publicKey, err := parseRemoteBuilderPublicKey(publicKeyData)
-	if err != nil {
-		return nil, err
-	}
-
-	if builderKeyID != "" {
-		publicKey.KeyID = builderKeyID
-	}
-
-	if publicKey.KeyID == "" {
-		return nil, fmt.Errorf("builder key id is required when using a pinned builder public key")
-	}
-
-	return publicKey, nil
+	return parseRemoteBuilderPublicKey(publicKeyData)
 }
 
 func readBuilderPublicKeyInput(value string) ([]byte, error) {
@@ -134,7 +121,7 @@ func fetchRemoteBuilderPublicKey(builderURL *url.URL) (*remoteBuilderPublicKeyRe
 		algorithm = naclBoxAlgorithm
 	}
 	if algorithm != naclBoxAlgorithm {
-		return nil, fmt.Errorf("unsupported encrypted build secrets algorithm: %s", publicKey.Algorithm)
+		return nil, fmt.Errorf("unsupported build secrets algorithm: %s", publicKey.Algorithm)
 	}
 	if publicKey.PublicKey == "" {
 		return nil, fmt.Errorf("builder public key response did not include a public key")
@@ -160,7 +147,7 @@ func parseRemoteBuilderPublicKey(data []byte) (*remoteBuilderPublicKeyResponse, 
 			algorithm = naclBoxAlgorithm
 		}
 		if algorithm != naclBoxAlgorithm {
-			return nil, fmt.Errorf("unsupported encrypted build secrets algorithm: %s", publicKey.Algorithm)
+			return nil, fmt.Errorf("unsupported build secrets algorithm: %s", publicKey.Algorithm)
 		}
 		if publicKey.PublicKey == "" {
 			return nil, fmt.Errorf("builder public key JSON did not include a public key")

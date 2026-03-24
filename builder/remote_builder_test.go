@@ -108,7 +108,7 @@ func TestRunRemoteBuildWithSecrets(t *testing.T) {
 		t.Fatalf("url.Parse returned error: %v", err)
 	}
 
-	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, "", "", map[string]string{
+	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, "", map[string]string{
 		"pip_token": "s3cr3t",
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)
@@ -159,7 +159,7 @@ func TestRunRemoteBuildWithPinnedPublicKey(t *testing.T) {
 		t.Fatalf("url.Parse returned error: %v", err)
 	}
 
-	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, publicKeyPath, "", map[string]string{
+	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, publicKeyPath, map[string]string{
 		"pip_token": "s3cr3t",
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)
@@ -197,7 +197,7 @@ func TestRunRemoteBuildWithLiteralPublicKey(t *testing.T) {
 		t.Fatalf("url.Parse returned error: %v", err)
 	}
 
-	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, string(pub), "builder-key-1", map[string]string{
+	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, string(pub), map[string]string{
 		"pip_token": "s3cr3t",
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)

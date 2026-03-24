@@ -56,8 +56,7 @@ func init() {
 	publishCmd.Flags().BoolVar(&resetQemu, "reset-qemu", false, "Runs \"docker run multiarch/qemu-user-static --reset -p yes\" to enable multi-arch builds. Compatible with AMD64 machines only.")
 	publishCmd.Flags().StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
 	publishCmd.Flags().StringVar(&payloadSecretPath, "payload-secret", "", "Path to the payload secret file")
-	publishCmd.Flags().StringVar(&builderPublicKeyPath, "builder-public-key", "", "Builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from /public-key")
-	publishCmd.Flags().StringVar(&builderKeyID, "builder-key-id", "", "Key ID for the pinned builder public key when using a raw base64 key file")
+	publishCmd.Flags().StringVar(&builderPublicKeyPath, "builder-public-key", "", "Builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from /publickey")
 	publishCmd.Flags().BoolVar(&forcePull, "pull", false, "Force a re-pull of base images in template during build, useful for publishing images")
 
 	publishCmd.Flags().BoolVar(&pullDebug, "debug", false, "Enable debug output when pulling templates")
@@ -291,7 +290,6 @@ func publish(services *stack.Services, queueDepth int, shrinkwrap, quietBuild, m
 						remoteBuilder,
 						payloadSecretPath,
 						builderPublicKeyPath,
-						builderKeyID,
 						forcePull,
 					)
 

@@ -236,7 +236,6 @@ func runBuild(cmd *cobra.Command, args []string) error {
 			remoteBuilder,
 			payloadSecretPath,
 			builderPublicKeyPath,
-			builderKeyID,
 			forcePull,
 		); err != nil {
 			return err
@@ -296,7 +295,6 @@ func build(services *stack.Services, queueDepth int, shrinkwrap, quietBuild bool
 						remoteBuilder,
 						payloadSecretPath,
 						builderPublicKeyPath,
-						builderKeyID,
 						forcePull,
 					)
 

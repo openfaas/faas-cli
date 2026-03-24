@@ -23,7 +23,6 @@ func TestSecretSealFromLiteral(t *testing.T) {
 
 	outPath := filepath.Join(dir, "com.openfaas.secrets")
 
-	sealKeyID = "test-key"
 	sealOutput = outPath
 	sealFromLiteral = []string{"pip_token=s3cr3t", "npm_token=tok123"}
 	sealFromFile = nil
@@ -72,7 +71,6 @@ func TestSecretSealFromFile(t *testing.T) {
 
 	outPath := filepath.Join(dir, "com.openfaas.secrets")
 
-	sealKeyID = ""
 	sealOutput = outPath
 	sealFromLiteral = []string{"token=abc"}
 	sealFromFile = []string{"ca.crt=" + certPath}

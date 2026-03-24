@@ -32,8 +32,7 @@ func init() {
 	upFlagset.BoolVar(&skipDeploy, "skip-deploy", false, "Skip function deployment")
 	upFlagset.StringVar(&remoteBuilder, "remote-builder", "", "URL to the builder")
 	upFlagset.StringVar(&payloadSecretPath, "payload-secret", "", "Path to the payload secret file")
-	upFlagset.StringVar(&builderPublicKeyPath, "builder-public-key", "", "Builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from /public-key")
-	upFlagset.StringVar(&builderKeyID, "builder-key-id", "", "Key ID for the pinned builder public key when using a raw base64 key file")
+	upFlagset.StringVar(&builderPublicKeyPath, "builder-public-key", "", "Builder public key as a literal value, or a path to a file containing raw base64 or the JSON response from /publickey")
 
 	upFlagset.BoolVar(&watch, "watch", false, "Watch for changes in files and re-deploy")
 	upCmd.Flags().AddFlagSet(upFlagset)

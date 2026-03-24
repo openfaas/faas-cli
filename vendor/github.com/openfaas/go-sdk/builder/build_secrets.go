@@ -13,13 +13,12 @@ import (
 const BuildSecretsFileName = "com.openfaas.secrets"
 
 type sealConfig struct {
-	KeyID     string
 	PublicKey []byte
 }
 
 // WithBuildSecretsKey configures the public key used to seal per-build secrets
 // into the build tar. The key must be a valid base64-encoded 32-byte Curve25519 public key.
-func WithBuildSecretsKey(keyID string, publicKey []byte) BuilderOption {
+func WithBuildSecretsKey(publicKey []byte) BuilderOption {
 	return func(b *FunctionBuilder) {
 		raw, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(publicKey)))
 		if err != nil || len(raw) != 32 {
@@ -28,7 +27,6 @@ func WithBuildSecretsKey(keyID string, publicKey []byte) BuilderOption {
 		}
 
 		b.sealConfig = sealConfig{
-			KeyID:     keyID,
 			PublicKey: publicKey,
 		}
 	}
@@ -40,5 +38,5 @@ func sealBuildSecrets(cfg sealConfig, secrets map[string]string) ([]byte, error)
 		values[k] = []byte(v)
 	}
 
-	return seal.Seal(cfg.PublicKey, values, cfg.KeyID)
+	return seal.Seal(cfg.PublicKey, values)
 }

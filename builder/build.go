@@ -67,7 +67,7 @@ func getTemplate(lang string) (string, *stack.LanguageTemplate, error) {
 
 // BuildImage construct Docker image from function parameters
 // TODO: refactor signature to a struct to simplify the length of the method header
-func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, buildSecrets map[string]string, remoteBuilder, payloadSecretPath, builderPublicKeyPath, builderKeyID string, forcePull bool) error {
+func BuildImage(image string, handler string, functionName string, language string, nocache bool, squash bool, shrinkwrap bool, buildArgMap map[string]string, buildOptions []string, tagFormat schema.BuildFormat, buildLabelMap map[string]string, quietBuild bool, copyExtraPaths []string, buildSecrets map[string]string, remoteBuilder, payloadSecretPath, builderPublicKeyPath string, forcePull bool) error {
 
 	_, langTemplate, err := getTemplate(language)
 	if err != nil {
@@ -138,7 +138,7 @@ func BuildImage(image string, handler string, functionName string, language stri
 			Scheme: u.Scheme,
 			Host:   u.Host,
 		}
-		if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, builderPublicKeyPath, builderKeyID, buildSecrets, quietBuild, functionName, imageName); err != nil {
+		if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, builderPublicKeyPath, buildSecrets, quietBuild, functionName, imageName); err != nil {
 			return fmt.Errorf("failed to invoke builder: %w", err)
 		}
 

@@ -54,8 +54,14 @@ func runSecretKeygen(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("writing public key: %w", err)
 	}
 
+	keyID, err := seal.DeriveKeyID(pub)
+	if err != nil {
+		return fmt.Errorf("deriving key ID: %w", err)
+	}
+
 	fmt.Printf("Wrote private key: %s\n", privPath)
 	fmt.Printf("Wrote public key:  %s\n", pubPath)
+	fmt.Printf("Key ID:            %s\n", keyID)
 
 	return nil
 }

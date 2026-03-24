@@ -35,14 +35,28 @@ type Envelope struct {
 	Secrets   map[string]string `yaml:"secrets"`
 }
 
+// DeriveKeyID returns a short fingerprint (first 8 chars of the base64-encoded
+// public key) suitable for identifying a keypair. The same key always produces
+// the same ID.
+func DeriveKeyID(publicKey []byte) (string, error) {
+	k, err := decodeKey(publicKey)
+	if err != nil {
+		return "", fmt.Errorf("invalid public key: %w", err)
+	}
+	return base64.StdEncoding.EncodeToString(k[:])[:8], nil
+}
+
 // Seal encrypts each value independently using a shared keypair.
 // Each sealed value is base64(24-byte nonce || ciphertext).
 // Key names are stored in cleartext for auditability and git diffs.
-func Seal(publicKey []byte, values map[string][]byte, keyID string) ([]byte, error) {
+// The key_id is derived automatically from the recipient's public key.
+func Seal(publicKey []byte, values map[string][]byte) ([]byte, error) {
 	recipient, err := decodeKey(publicKey)
 	if err != nil {
 		return nil, fmt.Errorf("invalid public key: %w", err)
 	}
+
+	keyID := base64.StdEncoding.EncodeToString(recipient[:])[:8]
 
 	pub, priv, err := box.GenerateKey(rand.Reader)
 	if err != nil {

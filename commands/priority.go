@@ -14,7 +14,6 @@ const (
 	remoteBuilderEnvironment    = "OPENFAAS_REMOTE_BUILDER"
 	payloadSecretEnvironment    = "OPENFAAS_PAYLOAD_SECRET"
 	builderPublicKeyEnvironment = "OPENFAAS_BUILDER_PUBLIC_KEY"
-	builderKeyIDEnvironment     = "OPENFAAS_BUILDER_KEY_ID"
 	templateURLEnvironment      = "OPENFAAS_TEMPLATE_URL"
 	templateStoreURLEnvironment = "OPENFAAS_TEMPLATE_STORE_URL"
 	defaultFunctionNamespace    = ""
@@ -91,5 +90,4 @@ func applyRemoteBuilderEnvironment() {
 	remoteBuilder = getStringValue(remoteBuilder, os.Getenv(remoteBuilderEnvironment))
 	payloadSecretPath = getStringValue(payloadSecretPath, os.Getenv(payloadSecretEnvironment))
 	builderPublicKeyPath = getStringValue(builderPublicKeyPath, os.Getenv(builderPublicKeyEnvironment))
-	builderKeyID = getStringValue(builderKeyID, os.Getenv(builderKeyIDEnvironment))
 }

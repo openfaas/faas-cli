@@ -24,7 +24,7 @@ func TestSecretUnsealAll(t *testing.T) {
 	sealed, err := seal.Seal(pub, map[string][]byte{
 		"token": []byte("s3cr3t"),
 		"url":   []byte("https://example.com"),
-	}, "test")
+	})
 	if err != nil {
 		t.Fatalf("Seal: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestSecretUnsealSingleKey(t *testing.T) {
 
 	sealed, err := seal.Seal(pub, map[string][]byte{
 		"token": []byte("s3cr3t"),
-	}, "")
+	})
 	if err != nil {
 		t.Fatalf("Seal: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestSecretUnsealMissingKey(t *testing.T) {
 		t.Fatalf("WriteFile: %v", err)
 	}
 
-	sealed, err := seal.Seal(pub, map[string][]byte{"a": []byte("b")}, "")
+	sealed, err := seal.Seal(pub, map[string][]byte{"a": []byte("b")})
 	if err != nil {
 		t.Fatalf("Seal: %v", err)
 	}

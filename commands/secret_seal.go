@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	sealKeyID       string
 	sealOutput      string
 	sealFromLiteral []string
 	sealFromFile    []string
@@ -30,9 +29,8 @@ var secretSealCmd = &cobra.Command{
     --from-file ca.crt=./certs/ca.crt \
     --from-literal api_key=sk-1234
 
-  # Specify key ID and output path
+  # Specify output path
   faas-cli secret seal key.pub \
-    --key-id builder-key-1 \
     --from-literal token=s3cr3t \
     -o ./build/com.openfaas.secrets
 `,
@@ -42,7 +40,6 @@ var secretSealCmd = &cobra.Command{
 }
 
 func init() {
-	secretSealCmd.Flags().StringVar(&sealKeyID, "key-id", "", "Key ID for rotation tracking (optional)")
 	secretSealCmd.Flags().StringVarP(&sealOutput, "output", "o", "com.openfaas.secrets", "Output file path")
 	secretSealCmd.Flags().StringArrayVar(&sealFromLiteral, "from-literal", nil, "Literal secret in key=value format (can be repeated)")
 	secretSealCmd.Flags().StringArrayVar(&sealFromFile, "from-file", nil, "Secret from file in key=path format (can be repeated)")
@@ -86,7 +83,7 @@ func runSecretSeal(cmd *cobra.Command, args []string) error {
 		values[k] = data
 	}
 
-	sealed, err := seal.Seal(pubKey, values, sealKeyID)
+	sealed, err := seal.Seal(pubKey, values)
 	if err != nil {
 		return fmt.Errorf("sealing secrets: %w", err)
 	}
@@ -95,7 +92,8 @@ func runSecretSeal(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("writing sealed file: %w", err)
 	}
 
-	fmt.Printf("Sealed %d secret(s) to %s\n", len(values), sealOutput)
+	keyID, _ := seal.DeriveKeyID(pubKey)
+	fmt.Printf("Sealed %d secret(s) to %s (key ID: %s)\n", len(values), sealOutput, keyID)
 
 	return nil
 }
