@@ -67,6 +67,11 @@ func PublishImage(image string, handler string, functionName string, language st
 
 		fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
+		buildSecrets, err = resolveSecretPaths(buildSecrets)
+		if err != nil {
+			return err
+		}
+
 		if remoteBuilder != "" {
 
 			if forcePull {
@@ -114,6 +119,7 @@ func PublishImage(image string, handler string, functionName string, language st
 				Platforms:     platforms,
 				ExtraTags:     extraTags,
 				ForcePull:     forcePull,
+				BuildSecrets:  buildSecrets,
 			}
 
 			command, args := getDockerBuildxCommand(dockerBuildVal)
@@ -168,6 +174,12 @@ func getDockerBuildxCommand(build dockerBuild) (string, []string) {
 			tag = applyTag(len(build.Image)-1, build.Image, t)
 		}
 		args = append(args, "--tag", tag)
+	}
+
+	if len(build.BuildSecrets) > 0 {
+		for k, v := range build.BuildSecrets {
+			args = append(args, "--secret", fmt.Sprintf("id=%s,src=%s", k, v))
+		}
 	}
 
 	command := "docker"

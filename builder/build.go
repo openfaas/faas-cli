@@ -114,6 +114,11 @@ func BuildImage(image string, handler string, functionName string, language stri
 
 	fmt.Printf("Building: %s with %s template. Please wait..\n", imageName, language)
 
+	buildSecrets, err = resolveSecretPaths(buildSecrets)
+	if err != nil {
+		return err
+	}
+
 	if remoteBuilder != "" {
 		tempDir, err := os.MkdirTemp(os.TempDir(), "openfaas-build-*")
 		if err != nil {
@@ -152,12 +157,13 @@ func BuildImage(image string, handler string, functionName string, language stri
 			BuildArgMap:   buildArgMap,
 			BuildLabelMap: buildLabelMap,
 			ForcePull:     forcePull,
+			BuildSecrets:  buildSecrets,
 		}
 
 		command, args := getDockerBuildCommand(dockerBuildVal)
 
 		envs := os.Environ()
-		if mountSSH {
+		if mountSSH || len(buildSecrets) > 0 {
 			envs = append(envs, "DOCKER_BUILDKIT=1")
 		}
 		log.Printf("Build flags: %+v\n", args)
@@ -289,6 +295,12 @@ func getDockerBuildCommand(build dockerBuild) (string, []string) {
 
 	args = append(args, "--tag", build.Image, ".")
 
+	if len(build.BuildSecrets) > 0 {
+		for k, v := range build.BuildSecrets {
+			args = append(args, "--secret", fmt.Sprintf("id=%s,src=%s", k, v))
+		}
+	}
+
 	command := "docker"
 
 	return command, args
@@ -311,6 +323,8 @@ type dockerBuild struct {
 	ExtraTags []string
 
 	ForcePull bool
+
+	BuildSecrets map[string]string
 }
 
 // pathInScope returns the absolute path to `path` and ensures that it is located within the
@@ -448,6 +462,26 @@ func getPackages(availableBuildOptions []stack.BuildOption, requestedBuildOption
 	}
 
 	return deDuplicate(buildPackages), true
+}
+
+// resolveSecretPaths converts relative build secret file paths to absolute
+// paths. Relative paths are resolved against the current working directory,
+// consistent with how other relative paths (e.g. handler) are handled in
+// faas-cli. Absolute paths are returned unchanged.
+func resolveSecretPaths(secrets map[string]string) (map[string]string, error) {
+	if len(secrets) == 0 {
+		return secrets, nil
+	}
+
+	resolved := make(map[string]string, len(secrets))
+	for k, v := range secrets {
+		absPath, err := filepath.Abs(v)
+		if err != nil {
+			return nil, fmt.Errorf("unable to resolve path for build secret %q: %w", k, err)
+		}
+		resolved[k] = absPath
+	}
+	return resolved, nil
 }
 
 func deDuplicate(buildOptPackages []string) []string {
