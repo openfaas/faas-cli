@@ -2,6 +2,7 @@ package builder
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -112,6 +113,87 @@ func Test_getDockerBuildCommand_WithBuildArg(t *testing.T) {
 	}
 	if strings.Contains(joined, wantArg2) == false {
 		t.Errorf("want %s in %s, but didn't find it", wantArg2, joined)
+	}
+}
+
+func Test_getDockerBuildCommand_WithBuildSecrets(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		BuildArgMap: make(map[string]string),
+		BuildSecrets: map[string]string{
+			"npmrc": "/home/user/.npmrc",
+			"netrc": "/home/user/.netrc",
+		},
+	}
+
+	_, values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	wantSecret1 := "--secret id=npmrc,src=/home/user/.npmrc"
+	wantSecret2 := "--secret id=netrc,src=/home/user/.netrc"
+
+	if !strings.Contains(joined, wantSecret1) {
+		t.Errorf("want %s in %s, but didn't find it", wantSecret1, joined)
+	}
+	if !strings.Contains(joined, wantSecret2) {
+		t.Errorf("want %s in %s, but didn't find it", wantSecret2, joined)
+	}
+}
+
+func Test_getDockerBuildCommand_NoBuildSecrets(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		BuildArgMap: make(map[string]string),
+	}
+
+	_, values := getDockerBuildCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	if strings.Contains(joined, "--secret") {
+		t.Errorf("did not expect --secret in %s", joined)
+	}
+}
+
+func Test_getDockerBuildxCommand_WithBuildSecrets(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		BuildArgMap: make(map[string]string),
+		Platforms:   "linux/amd64",
+		BuildSecrets: map[string]string{
+			"pipconf": "/home/user/.config/pip/pip.conf",
+		},
+	}
+
+	_, values := getDockerBuildxCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	wantSecret := "--secret id=pipconf,src=/home/user/.config/pip/pip.conf"
+
+	if !strings.Contains(joined, wantSecret) {
+		t.Errorf("want %s in %s, but didn't find it", wantSecret, joined)
+	}
+}
+
+func Test_getDockerBuildxCommand_NoBuildSecrets(t *testing.T) {
+	dockerBuildVal := dockerBuild{
+		Image:       "imagename:latest",
+		NoCache:     false,
+		Squash:      false,
+		BuildArgMap: make(map[string]string),
+		Platforms:   "linux/amd64",
+	}
+
+	_, values := getDockerBuildxCommand(dockerBuildVal)
+
+	joined := strings.Join(values, " ")
+	if strings.Contains(joined, "--secret") {
+		t.Errorf("did not expect --secret in %s", joined)
 	}
 }
 
@@ -610,5 +692,69 @@ func Test_appendAdditionalPackages(t *testing.T) {
 				t.Errorf("Expected %v, got %v", test.expectedBuildArgs, got)
 			}
 		})
+	}
+}
+
+func Test_resolveSecretPaths_RelativePaths(t *testing.T) {
+	secrets := map[string]string{
+		"npmrc":   ".secrets/npmrc",
+		"api_key": "secrets/api_key.txt",
+	}
+
+	resolved, err := resolveSecretPaths(secrets)
+	if err != nil {
+		t.Fatalf("resolveSecretPaths returned error: %v", err)
+	}
+
+	for k, v := range resolved {
+		if !filepath.IsAbs(v) {
+			t.Errorf("expected absolute path for %q, got %q", k, v)
+		}
+	}
+
+	// Verify relative paths were resolved against CWD
+	cwd, _ := os.Getwd()
+	if want := filepath.Join(cwd, ".secrets/npmrc"); resolved["npmrc"] != want {
+		t.Errorf("want %q, got %q", want, resolved["npmrc"])
+	}
+	if want := filepath.Join(cwd, "secrets/api_key.txt"); resolved["api_key"] != want {
+		t.Errorf("want %q, got %q", want, resolved["api_key"])
+	}
+}
+
+func Test_resolveSecretPaths_AbsolutePaths(t *testing.T) {
+	secrets := map[string]string{
+		"npmrc": "/home/user/.npmrc",
+		"netrc": "/home/user/.netrc",
+	}
+
+	resolved, err := resolveSecretPaths(secrets)
+	if err != nil {
+		t.Fatalf("resolveSecretPaths returned error: %v", err)
+	}
+
+	if resolved["npmrc"] != "/home/user/.npmrc" {
+		t.Errorf("expected absolute path unchanged, got %q", resolved["npmrc"])
+	}
+	if resolved["netrc"] != "/home/user/.netrc" {
+		t.Errorf("expected absolute path unchanged, got %q", resolved["netrc"])
+	}
+}
+
+func Test_resolveSecretPaths_EmptyMap(t *testing.T) {
+	resolved, err := resolveSecretPaths(nil)
+	if err != nil {
+		t.Fatalf("resolveSecretPaths returned error: %v", err)
+	}
+	if resolved != nil {
+		t.Errorf("expected nil for nil input, got %v", resolved)
+	}
+
+	resolved, err = resolveSecretPaths(map[string]string{})
+	if err != nil {
+		t.Fatalf("resolveSecretPaths returned error: %v", err)
+	}
+	if len(resolved) != 0 {
+		t.Errorf("expected empty map, got %v", resolved)
 	}
 }
