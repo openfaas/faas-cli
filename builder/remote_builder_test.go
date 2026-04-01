@@ -109,7 +109,7 @@ func TestRunRemoteBuildWithSecrets(t *testing.T) {
 	}
 
 	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, "", map[string]string{
-		"pip_token": "s3cr3t",
+		"pip_token": writeTempSecret(t, "s3cr3t"),
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)
 	}
@@ -160,7 +160,7 @@ func TestRunRemoteBuildWithPinnedPublicKey(t *testing.T) {
 	}
 
 	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, publicKeyPath, map[string]string{
-		"pip_token": "s3cr3t",
+		"pip_token": writeTempSecret(t, "s3cr3t"),
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)
 	}
@@ -198,7 +198,7 @@ func TestRunRemoteBuildWithLiteralPublicKey(t *testing.T) {
 	}
 
 	if err := runRemoteBuild(builderURL, tarPath, payloadSecretPath, string(pub), map[string]string{
-		"pip_token": "s3cr3t",
+		"pip_token": writeTempSecret(t, "s3cr3t"),
 	}, true, "fn", "ttl.sh/test:latest"); err != nil {
 		t.Fatalf("runRemoteBuild returned error: %v", err)
 	}
@@ -223,4 +223,55 @@ func createTestTar(t *testing.T) []byte {
 		t.Fatalf("tar.Close: %v", err)
 	}
 	return buf.Bytes()
+}
+
+func writeTempSecret(t *testing.T, content string) string {
+	t.Helper()
+	p := filepath.Join(t.TempDir(), "secret")
+	if err := os.WriteFile(p, []byte(content), 0o600); err != nil {
+		t.Fatalf("os.WriteFile returned error: %v", err)
+	}
+	return p
+}
+
+func TestReadBuildSecrets(t *testing.T) {
+	secretDir := t.TempDir()
+
+	npmrcPath := filepath.Join(secretDir, ".npmrc")
+	if err := os.WriteFile(npmrcPath, []byte("//registry.npmjs.org/:_authToken=TOKEN123"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	netrcPath := filepath.Join(secretDir, ".netrc")
+	if err := os.WriteFile(netrcPath, []byte("machine github.com login user password pat"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	secrets := map[string]string{
+		"npmrc": npmrcPath,
+		"netrc": netrcPath,
+	}
+
+	resolved, err := readBuildSecrets(secrets)
+	if err != nil {
+		t.Fatalf("readBuildSecrets returned error: %v", err)
+	}
+
+	if got := resolved["npmrc"]; got != "//registry.npmjs.org/:_authToken=TOKEN123" {
+		t.Errorf("want npmrc %q, got %q", "//registry.npmjs.org/:_authToken=TOKEN123", got)
+	}
+	if got := resolved["netrc"]; got != "machine github.com login user password pat" {
+		t.Errorf("want netrc %q, got %q", "machine github.com login user password pat", got)
+	}
+}
+
+func TestReadBuildSecrets_FileNotFound(t *testing.T) {
+	secrets := map[string]string{
+		"missing": "/nonexistent/path/secret.txt",
+	}
+
+	_, err := readBuildSecrets(secrets)
+	if err == nil {
+		t.Fatal("expected error for missing file, got nil")
+	}
 }

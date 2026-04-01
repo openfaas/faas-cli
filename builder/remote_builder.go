@@ -45,7 +45,11 @@ func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPubl
 
 	var stream *sdkbuilder.BuildResultStream
 	if len(buildSecrets) > 0 {
-		stream, err = b.BuildWithSecretsStream(tarPath, buildSecrets)
+		resolvedSecrets, err := readBuildSecrets(buildSecrets)
+		if err != nil {
+			return err
+		}
+		stream, err = b.BuildWithSecretsStream(tarPath, resolvedSecrets)
 	} else {
 		stream, err = b.BuildWithStream(tarPath)
 	}
@@ -55,6 +59,21 @@ func runRemoteBuild(builderURL *url.URL, tarPath, payloadSecretPath, builderPubl
 	defer stream.Close()
 
 	return consumeBuildStream(stream, quietBuild, functionName, imageName)
+}
+
+// readBuildSecrets resolves build secret values by reading file contents.
+// Each value in the buildSecrets map is treated as a file path. The file
+// is read and its contents replace the path in the returned map.
+func readBuildSecrets(buildSecrets map[string]string) (map[string]string, error) {
+	resolved := make(map[string]string, len(buildSecrets))
+	for k, v := range buildSecrets {
+		data, err := os.ReadFile(v)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read build secret %q from %s: %w", k, v, err)
+		}
+		resolved[k] = string(data)
+	}
+	return resolved, nil
 }
 
 func resolveRemoteBuilderPublicKey(builderURL *url.URL, builderPublicKeyPath string) (*remoteBuilderPublicKeyResponse, error) {
