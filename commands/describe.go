@@ -5,6 +5,7 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -30,17 +31,19 @@ func init() {
 	describeCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	describeCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
 	describeCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose output")
+	describeCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output function details as JSON")
 
 	faasCmd.AddCommand(describeCmd)
 }
 
 var describeCmd = &cobra.Command{
-	Use:   "describe FUNCTION_NAME [--gateway GATEWAY_URL]",
+	Use:   "describe FUNCTION_NAME [--gateway GATEWAY_URL] [--json]",
 	Short: "Describe an OpenFaaS function",
 	Long:  `Display details of an OpenFaaS function`,
-	Example: `faas-cli describe figlet
-faas-cli describe env --gateway http://127.0.0.1:8080
-faas-cli describe echo -g http://127.0.0.1.8080`,
+	Example: `  faas-cli describe figlet
+  faas-cli describe env --gateway http://127.0.0.1:8080
+  faas-cli describe echo -g http://127.0.0.1.8080
+  faas-cli describe env --json`,
 	PreRunE: preRunDescribe,
 	RunE:    runDescribe,
 }
@@ -115,7 +118,15 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 		AsyncURL:        asyncURL,
 	}
 
-	printFunctionDescription(cmd.OutOrStdout(), funcDesc, verbose)
+	if jsonOutput {
+		data, err := json.MarshalIndent(funcDesc, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	} else {
+		printFunctionDescription(cmd.OutOrStdout(), funcDesc, verbose)
+	}
 
 	return nil
 }

@@ -30,17 +30,17 @@ func init() {
 		Short: "Get a plugin",
 		Long: `Download and extract a plugin for faas-cli from a container
 registry`,
-		Example: `# Download a plugin by name:
-faas-cli plugin get NAME
+		Example: `  # Download a plugin by name:
+  faas-cli plugin get NAME
 
-# Give a version
-faas-cli plugin get NAME --version 0.0.1
+  # Give a version
+  faas-cli plugin get NAME --version 0.0.1
 
-# Give an explicit OS and architecture
-faas-cli plugin get NAME --arch armhf --os linux
+  # Give an explicit OS and architecture
+  faas-cli plugin get NAME --arch armhf --os linux
 
-# Use a custom registry
-faas-cli plugin get NAME --registry ghcr.io/openfaasltd`,
+  # Use a custom registry
+  faas-cli plugin get NAME --registry ghcr.io/openfaasltd`,
 		RunE: runPluginGetCmd,
 	}
 

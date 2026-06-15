@@ -39,13 +39,14 @@ func init() {
 	templateStoreListCmd.Flags().StringVarP(&inputPlatform, "platform", "p", mainPlatform, "Shows the platform if the output is verbose")
 	templateStoreListCmd.Flags().BoolVarP(&recommended, "recommended", "r", false, "Shows only recommended templates")
 	templateStoreListCmd.Flags().BoolVarP(&official, "official", "o", false, "Shows only official templates")
+	templateStoreListCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output templates as JSON")
 
 	templateStoreCmd.AddCommand(templateStoreListCmd)
 }
 
 // templateStoreListCmd lists templates from default store or custom store if set
 var templateStoreListCmd = &cobra.Command{
-	Use:     `list`,
+	Use:     `list [--json]`,
 	Short:   `List templates from OpenFaaS organizations`,
 	Aliases: []string{"ls"},
 	Long: `List templates from a template store manifest file, by default the 
@@ -68,7 +69,10 @@ official list maintained by the OpenFaaS community is used. You can override thi
   faas-cli template store ls --verbose=true
 
   # Filter by platform for arm64 only
-  faas-cli template store list --platform arm64 
+  faas-cli template store list --platform arm64
+
+  # Output as JSON
+  faas-cli template store list --json
 `,
 	RunE: runTemplateStoreList,
 }
@@ -99,9 +103,16 @@ func runTemplateStoreList(cmd *cobra.Command, args []string) error {
 		list = templatesInfo
 	}
 
-	formattedOutput := formatTemplatesOutput(list, verbose, inputPlatform)
-
-	fmt.Fprintf(cmd.OutOrStdout(), "%s", formattedOutput)
+	if jsonOutput {
+		data, err := json.MarshalIndent(list, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	} else {
+		formattedOutput := formatTemplatesOutput(list, verbose, inputPlatform)
+		fmt.Fprintf(cmd.OutOrStdout(), "%s", formattedOutput)
+	}
 
 	return nil
 }

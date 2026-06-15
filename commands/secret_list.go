@@ -6,6 +6,7 @@ package commands
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -17,12 +18,13 @@ import (
 
 // secretListCmd represents the secretCreate command
 var secretListCmd = &cobra.Command{
-	Use:     `list [--tls-no-verify]`,
+	Use:     `list [--tls-no-verify] [--json]`,
 	Aliases: []string{"ls"},
 	Short:   "List all secrets",
 	Long:    `List all secrets`,
-	Example: `faas-cli secret list
-faas-cli secret list --gateway=http://127.0.0.1:8080`,
+	Example: `  faas-cli secret list
+  faas-cli secret list --gateway=http://127.0.0.1:8080
+  faas-cli secret list --json`,
 	RunE:    runSecretList,
 	PreRunE: preRunSecretListCmd,
 }
@@ -32,6 +34,7 @@ func init() {
 	secretListCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	secretListCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	secretListCmd.Flags().StringVarP(&functionNamespace, "namespace", "n", "", "Namespace of the function")
+	secretListCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output secrets as JSON")
 
 	secretCmd.AddCommand(secretListCmd)
 }
@@ -45,7 +48,9 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
-		fmt.Println(msg)
+		if !jsonOutput {
+			fmt.Println(msg)
+		}
 	}
 
 	cliAuth, err := proxy.NewCLIAuth(token, gatewayAddress)
@@ -61,6 +66,15 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 	secrets, err := client.GetSecretList(context.Background(), functionNamespace)
 	if err != nil {
 		return err
+	}
+
+	if jsonOutput {
+		data, err := json.MarshalIndent(secrets, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+		return nil
 	}
 
 	if len(secrets) == 0 {

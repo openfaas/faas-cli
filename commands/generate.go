@@ -60,11 +60,11 @@ var generateCmd = &cobra.Command{
 	Use:   "generate --api=openfaas.com/v1 --yaml stack.yaml --tag sha --namespace=openfaas-fn",
 	Short: "Generate Kubernetes CRD YAML file",
 	Long:  `The generate command creates kubernetes CRD YAML file for functions`,
-	Example: `faas-cli generate --api=openfaas.com/v1 --yaml stack.yaml | kubectl apply  -f -
-faas-cli generate --api=openfaas.com/v1 -f stack.yaml
-faas-cli generate --api=serving.knative.dev/v1 -f stack.yaml
-faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yaml
-faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn`,
+	Example: `  faas-cli generate --api=openfaas.com/v1 --yaml stack.yaml | kubectl apply  -f -
+  faas-cli generate --api=openfaas.com/v1 -f stack.yaml
+  faas-cli generate --api=serving.knative.dev/v1 -f stack.yaml
+  faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yaml
+  faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn`,
 	PreRunE: preRunGenerate,
 	RunE:    runGenerate,
 }

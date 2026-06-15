@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -14,7 +15,7 @@ var (
 )
 
 var secretUnsealCmd = &cobra.Command{
-	Use:   "unseal [private-key-file]",
+	Use:   "unseal [private-key-file] [--json]",
 	Short: "Unseal and inspect a sealed secrets file",
 	Long:  "Decrypt a sealed secrets file using a private key and print the key/value pairs",
 	Example: `  # Print all secrets
@@ -25,6 +26,9 @@ var secretUnsealCmd = &cobra.Command{
 
   # Specify a different sealed file
   faas-cli secret unseal key --in ./build/com.openfaas.secrets
+
+  # Output as JSON
+  faas-cli secret unseal key --json
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: runSecretUnseal,
@@ -33,6 +37,7 @@ var secretUnsealCmd = &cobra.Command{
 func init() {
 	secretUnsealCmd.Flags().StringVar(&unsealInput, "in", "com.openfaas.secrets", "Path to the sealed secrets file")
 	secretUnsealCmd.Flags().StringVar(&unsealKey, "key", "", "Unseal a single key (omit to print all)")
+	secretUnsealCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output secrets as JSON")
 
 	secretCmd.AddCommand(secretUnsealCmd)
 }
@@ -53,7 +58,15 @@ func runSecretUnseal(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Print(string(value))
+		if jsonOutput {
+			data, err := json.MarshalIndent(map[string]string{unsealKey: string(value)}, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(data))
+		} else {
+			fmt.Print(string(value))
+		}
 		return nil
 	}
 
@@ -62,8 +75,20 @@ func runSecretUnseal(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	for k, v := range values {
-		fmt.Printf("%s=%s\n", k, string(v))
+	if jsonOutput {
+		result := map[string]string{}
+		for k, v := range values {
+			result[k] = string(v)
+		}
+		data, err := json.MarshalIndent(result, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(data))
+	} else {
+		for k, v := range values {
+			fmt.Printf("%s=%s\n", k, string(v))
+		}
 	}
 
 	return nil

@@ -5,6 +5,7 @@ package commands
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -14,16 +15,18 @@ import (
 
 func init() {
 	templateStoreDescribeCmd.PersistentFlags().StringVarP(&templateStoreURL, "url", "u", DefaultTemplatesStore, "Use as alternative store for templates")
+	templateStoreDescribeCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output template details as JSON")
 
 	templateStoreCmd.AddCommand(templateStoreDescribeCmd)
 }
 
 var templateStoreDescribeCmd = &cobra.Command{
-	Use:   `describe`,
+	Use:   `describe [--json]`,
 	Short: `Describe the template`,
 	Long:  `Describe the template by outputting all the fields that the template struct has`,
 	Example: `  faas-cli template store describe golang-http
-  faas-cli template store describe haskell --url https://raw.githubusercontent.com/custom/store/master/templates.json`,
+  faas-cli template store describe haskell --url https://raw.githubusercontent.com/custom/store/master/templates.json
+  faas-cli template store describe golang-http --json`,
 	RunE: runTemplateStoreDescribe,
 }
 
@@ -47,8 +50,16 @@ func runTemplateStoreDescribe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("error while searching for template in store: %s", templateErr.Error())
 	}
 
-	templateInfo := formatTemplateOutput(storeTemplate)
-	fmt.Fprintf(cmd.OutOrStdout(), "%s", templateInfo)
+	if jsonOutput {
+		data, err := json.MarshalIndent(storeTemplate, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	} else {
+		templateInfo := formatTemplateOutput(storeTemplate)
+		fmt.Fprintf(cmd.OutOrStdout(), "%s", templateInfo)
+	}
 
 	return nil
 }

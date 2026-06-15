@@ -20,12 +20,12 @@ var secretUpdateCmd = &cobra.Command{
 	Aliases: []string{"u"},
 	Short:   "Update a secret",
 	Long:    `Update a secret by name`,
-	Example: `faas-cli secret update NAME
-faas-cli secret update NAME --from-literal=secret-value
-faas-cli secret update NAME --from-file=/path/to/secret/file
-faas-cli secret update NAME --from-file=/path/to/secret/file --trim=false
-faas-cli secret update NAME --from-literal=secret-value --gateway=http://127.0.0.1:8080
-cat /path/to/secret/file | faas-cli secret update NAME`,
+	Example: `  faas-cli secret update NAME
+  faas-cli secret update NAME --from-literal=secret-value
+  faas-cli secret update NAME --from-file=/path/to/secret/file
+  faas-cli secret update NAME --from-file=/path/to/secret/file --trim=false
+  faas-cli secret update NAME --from-literal=secret-value --gateway=http://127.0.0.1:8080
+  cat /path/to/secret/file | faas-cli secret update NAME`,
 	RunE:    runSecretUpdate,
 	PreRunE: preRunSecretUpdate,
 }
