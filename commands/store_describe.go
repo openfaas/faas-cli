@@ -5,6 +5,7 @@ package commands
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -15,14 +16,16 @@ import (
 )
 
 func init() {
+	storeDescribeCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output function details as JSON")
 	storeCmd.AddCommand(storeDescribeCmd)
 }
 
 var storeDescribeCmd = &cobra.Command{
-	Use:   `describe (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL]`,
+	Use:   `describe (FUNCTION_NAME|FUNCTION_TITLE) [--url STORE_URL] [--json]`,
 	Short: "Show details of OpenFaaS function from a store",
 	Example: `  faas-cli store describe nodeinfo
   faas-cli store describe nodeinfo --url https://host:port/store.json
+  faas-cli store describe nodeinfo --json
 `,
 	Aliases: []string{"inspect"},
 	RunE:    runStoreDescribe,
@@ -54,8 +57,16 @@ func runStoreDescribe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("function '%s' not found for platform '%s'", functionName, targetPlatform)
 	}
 
-	content := storeRenderItem(item, targetPlatform)
-	fmt.Print(content)
+	if jsonOutput {
+		data, err := json.MarshalIndent(item, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	} else {
+		content := storeRenderItem(item, targetPlatform)
+		fmt.Print(content)
+	}
 
 	return nil
 }

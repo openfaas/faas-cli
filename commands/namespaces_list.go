@@ -2,7 +2,9 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -12,6 +14,7 @@ func init() {
 	namespacesCmd.Flags().StringVarP(&gateway, "gateway", "g", defaultGateway, "Gateway URL starting with http(s)://")
 	namespacesCmd.Flags().BoolVar(&tlsInsecure, "tls-no-verify", false, "Disable TLS validation")
 	namespacesCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
+	namespaceListCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output namespaces as JSON")
 
 	faasCmd.AddCommand(namespacesCmd)
 	namespaceCmd.AddCommand(namespaceListCmd)
@@ -29,12 +32,13 @@ var namespacesCmd = &cobra.Command{
 }
 
 var namespaceListCmd = &cobra.Command{
-	Use:     `list`,
+	Use:     `list [--json]`,
 	Aliases: []string{"ls"},
 	Short:   "List OpenFaaS namespaces",
 	Long:    `Lists OpenFaaS namespaces for the given gateway URL`,
-	Example: `faas-cli namespace list`,
-	RunE:    runNamespaces,
+	Example: `  faas-cli namespace list
+  faas-cli namespace list --json`,
+	RunE: runNamespaces,
 }
 
 func runNamespaces(cmd *cobra.Command, args []string) error {
@@ -52,8 +56,17 @@ func runNamespaces(cmd *cobra.Command, args []string) error {
 }
 
 func printNamespaces(namespaces []string) {
-	fmt.Print("Namespaces:\n")
-	for _, v := range namespaces {
-		fmt.Printf(" - %s\n", v)
+	if jsonOutput {
+		data, err := json.MarshalIndent(namespaces, "", "  ")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed to marshal JSON: %v\n", err)
+			return
+		}
+		fmt.Println(string(data))
+	} else {
+		fmt.Print("Namespaces:\n")
+		for _, v := range namespaces {
+			fmt.Printf(" - %s\n", v)
+		}
 	}
 }

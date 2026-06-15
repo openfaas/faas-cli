@@ -36,11 +36,11 @@ var readyCmd = &cobra.Command{
 
   # Block until the env function is ready
   faas-cli store deploy env && \
-    faas-cli ready env
+  faas-cli ready env
 
   # Block until the env function is ready in staging-fn namespace
   faas-cli store deploy env --namespace staging-fn && \
-    faas-cli ready env --namespace staging-fn
+  faas-cli ready env --namespace staging-fn
 `,
 	RunE: runReadyCmd,
 }

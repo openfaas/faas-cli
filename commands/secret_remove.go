@@ -18,8 +18,8 @@ var secretRemoveCmd = &cobra.Command{
 	Aliases: []string{"rm", "delete"},
 	Short:   "remove a secret",
 	Long:    `Remove a secret by name`,
-	Example: `faas-cli secret remove NAME
-faas-cli secret remove NAME --gateway=http://127.0.0.1:8080`,
+	Example: `  faas-cli secret remove NAME
+  faas-cli secret remove NAME --gateway=http://127.0.0.1:8080`,
 	RunE:    runSecretRemove,
 	PreRunE: preRunSecretRemoveCmd,
 }

@@ -44,11 +44,12 @@ func init() {
 }
 
 var functionLogsCmd = &cobra.Command{
-	Use:   `logs <NAME> [--tls-no-verify] [--gateway] [--output=text/json]`,
+	Use:   `logs <NAME> [--tls-no-verify] [--gateway] [--output=text/json] [--json]`,
 	Short: "Fetch logs for a functions",
 	Long:  "Fetch logs for a given function name in plain text or JSON format.",
 	Example: `  faas-cli logs FN
   faas-cli logs FN --output=json
+  faas-cli logs FN --json
   faas-cli logs FN --lines=5
   faas-cli logs FN --tail=false --since=10m
   faas-cli logs FN --tail=false --since=2010-01-01T00:00:00Z
@@ -86,12 +87,13 @@ func initLogCmdFlags(cmd *cobra.Command) {
 	cmd.Flags().Var(&logFlagValues.timeFormat, "time-format", "string format for the timestamp, any value go time format string is allowed, empty will not print the timestamp")
 	cmd.Flags().BoolVar(&logFlagValues.includeName, "name", false, "print the function name")
 	cmd.Flags().BoolVar(&logFlagValues.includeInstance, "instance", false, "print the function instance name/id")
+	cmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output logs as JSON (equivalent to --output=json)")
 }
 
 func runLogs(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 && !jsonOutput {
 		fmt.Println(msg)
 	}
 
@@ -112,6 +114,9 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	formatter := GetLogFormatter(string(logFlagValues.logFormat))
+	if jsonOutput {
+		formatter = GetLogFormatter(string(flags.JSONLogFormat))
+	}
 	for logMsg := range logEvents {
 		fmt.Fprintln(os.Stdout, formatter(logMsg, logFlagValues.timeFormat.String(), logFlagValues.includeName, logFlagValues.includeInstance))
 	}

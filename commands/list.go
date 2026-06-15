@@ -5,6 +5,7 @@ package commands
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"sort"
@@ -19,6 +20,7 @@ var (
 	verboseList bool
 	token       string
 	sortOrder   string
+	jsonOutput  bool
 )
 
 func init() {
@@ -32,17 +34,19 @@ func init() {
 	listCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
 	listCmd.Flags().StringVarP(&token, "token", "k", "", "Pass a JWT token to use instead of basic auth")
 	listCmd.Flags().StringVar(&sortOrder, "sort", "name", "Sort the functions by \"name\" or \"invocations\"")
+	listCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output functions as JSON")
 
 	faasCmd.AddCommand(listCmd)
 }
 
 var listCmd = &cobra.Command{
-	Use:     `list [--gateway GATEWAY_URL] [--verbose] [--tls-no-verify]`,
+	Use:     `list [--gateway GATEWAY_URL] [--verbose] [--tls-no-verify] [--json]`,
 	Aliases: []string{"ls"},
 	Short:   "List OpenFaaS functions",
 	Long:    `Lists OpenFaaS functions either on a local or remote gateway`,
 	Example: `  faas-cli list
-  faas-cli list --gateway https://127.0.0.1:8080 --verbose`,
+  faas-cli list --gateway https://127.0.0.1:8080 --verbose
+  faas-cli list --json`,
 	RunE: runList,
 }
 
@@ -86,7 +90,13 @@ func runList(cmd *cobra.Command, args []string) error {
 		sort.Sort(byCreation(functions))
 	}
 
-	if quiet {
+	if jsonOutput {
+		data, err := json.MarshalIndent(functions, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+	} else if quiet {
 		for _, function := range functions {
 			fmt.Printf("%s\n", function.Name)
 		}

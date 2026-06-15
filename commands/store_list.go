@@ -5,6 +5,7 @@ package commands
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
@@ -17,17 +18,19 @@ import (
 func init() {
 	// Setup flags used by store command
 	storeListCmd.Flags().BoolVarP(&verbose, "verbose", "v", true, "Enable verbose output to see the full description of each function in the store")
+	storeListCmd.Flags().BoolVarP(&jsonOutput, "json", "j", false, "Output functions as JSON")
 
 	storeCmd.AddCommand(storeListCmd)
 }
 
 var storeListCmd = &cobra.Command{
-	Use:     `list [--url STORE_URL]`,
+	Use:     `list [--url STORE_URL] [--json]`,
 	Aliases: []string{"ls"},
 	Short:   "List available OpenFaaS functions in a store",
 	Example: `  faas-cli store list
   faas-cli store list --verbose
-  faas-cli store list --url https://host:port/store.json`,
+  faas-cli store list --url https://host:port/store.json
+  faas-cli store list --json`,
 	RunE: runStoreList,
 }
 
@@ -50,6 +53,18 @@ func runStoreList(cmd *cobra.Command, args []string) error {
 	}
 
 	filteredFunctions := filterStoreList(storeList, targetPlatform)
+
+	if jsonOutput {
+		if filteredFunctions == nil {
+			filteredFunctions = []storeV2.StoreFunction{}
+		}
+		data, err := json.MarshalIndent(filteredFunctions, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to marshal JSON: %w", err)
+		}
+		fmt.Fprintln(cmd.OutOrStdout(), string(data))
+		return nil
+	}
 
 	if len(filteredFunctions) == 0 {
 		availablePlatforms := getStorePlatforms(storeList)
