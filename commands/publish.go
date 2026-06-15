@@ -45,7 +45,7 @@ func init() {
 	publishCmd.Flags().BoolVar(&shrinkwrap, "shrinkwrap", false, "Just write files to ./build/ folder for shrink-wrapping")
 	publishCmd.Flags().StringArrayVarP(&buildArgs, "build-arg", "b", []string{}, "Add a build-arg for Docker (KEY=VALUE)")
 	publishCmd.Flags().StringArrayVarP(&buildOptions, "build-option", "o", []string{}, "Set a build option, e.g. dev")
-	publishCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'latest', 'sha', 'branch', or 'describe'")
+	publishCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', or 'describe'")
 	publishCmd.Flags().StringArrayVar(&buildLabels, "build-label", []string{}, "Add a label for Docker image (LABEL=VALUE)")
 	publishCmd.Flags().StringArrayVar(&copyExtra, "copy-extra", []string{}, "Extra paths that will be copied into the function build context")
 	publishCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
@@ -82,7 +82,7 @@ var publishCmd = &cobra.Command{
                    [--build-arg KEY=VALUE]
                    [--build-option VALUE]
                    [--copy-extra PATH]
-                   [--tag <sha|branch|describe>]
+                   [--tag <digest|sha|branch|describe>]
                    [--platforms linux/amd64,linux/arm64]
                    [--reset-qemu]
                    [--remote-builder http://127.0.0.1:8081]`,
@@ -99,13 +99,14 @@ correctly configured TARGETPLATFORM and BUILDPLATFORM arguments.
 
 See also: faas-cli build`,
 	Example: `  faas-cli publish --platforms linux/amd64,linux/arm64
-  faas-cli publish --platforms linux/arm64 --filter webhook-arm
-  faas-cli publish -f custom.yml --no-cache --build-arg NPM_VERSION=0.2.2
-  faas-cli publish --build-option dev
-  faas-cli publish --tag sha
-  faas-cli publish --reset-qemu
-  faas-cli publish --remote-builder http://127.0.0.1:8081 --payload-secret /var/openfaas/secrets/payload-secret -f stack.yml
-  `,
+   faas-cli publish --platforms linux/arm64 --filter webhook-arm
+   faas-cli publish -f custom.yml --no-cache --build-arg NPM_VERSION=0.2.2
+   faas-cli publish --build-option dev
+   faas-cli publish --tag sha
+   faas-cli publish --tag digest
+   faas-cli publish --reset-qemu
+   faas-cli publish --remote-builder http://127.0.0.1:8081 --payload-secret /var/openfaas/secrets/payload-secret -f stack.yml
+   `,
 	PreRunE: preRunPublish,
 	RunE:    runPublish,
 }

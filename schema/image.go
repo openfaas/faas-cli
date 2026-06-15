@@ -43,6 +43,8 @@ func (i *BuildFormat) String() string {
 		return "branch"
 	case DescribeFormat:
 		return "describe"
+	case DigestFormat:
+		return "digest"
 	default:
 		return "latest"
 	}
