@@ -93,7 +93,8 @@ func initLogCmdFlags(cmd *cobra.Command) {
 func runLogs(cmd *cobra.Command, args []string) error {
 
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
-	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 && !jsonOutput {
+	jsonLogs := jsonOutput || logFlagValues.logFormat == flags.JSONLogFormat
+	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 && !jsonLogs {
 		fmt.Println(msg)
 	}
 
@@ -114,7 +115,7 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	formatter := GetLogFormatter(string(logFlagValues.logFormat))
-	if jsonOutput {
+	if jsonLogs {
 		formatter = GetLogFormatter(string(flags.JSONLogFormat))
 	}
 	for logMsg := range logEvents {

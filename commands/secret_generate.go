@@ -16,8 +16,9 @@ var (
 )
 
 var secretGenerateCmd = &cobra.Command{
-	Use:   "generate",
-	Short: "Generate a random secret value",
+	Use:     "generate",
+	Aliases: []string{"gen"},
+	Short:   "Generate a random secret value",
 	Long:  "Generate a cryptographically random secret suitable for HMAC payload signing or other shared secrets",
 	Example: `  # Print a 32-byte base64-encoded secret to stdout
   faas-cli secret generate
@@ -59,7 +60,12 @@ func runSecretGenerate(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Printf("Wrote %d-byte secret to %s\n", generateLength, generateOutput)
 	} else {
-		fmt.Println(secret)
+		stat, _ := os.Stdout.Stat()
+		if (stat.Mode() & os.ModeCharDevice) == 0 {
+			fmt.Print(secret)
+		} else {
+			fmt.Println(secret)
+		}
 	}
 
 	return nil
