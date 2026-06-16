@@ -65,6 +65,8 @@ func resetForTest() {
 	version.Version = ""
 	shortVersion = false
 	appendFile = ""
+	tagFormat = 0
+	diffEnvMode = diffEnvLocal
 }
 
 func init() {
