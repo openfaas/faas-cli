@@ -1,7 +1,7 @@
 FROM ghcr.io/openfaas/license-check:0.4.2 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.25 as builder
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.26 as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
