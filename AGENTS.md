@@ -14,3 +14,8 @@ Create and modify files with the write/edit tools, never via cat > file << EOF o
 
 SOTA models like Opus and GPT can ignore the tool calling restrictions.
 
+## When iterating on PRs
+
+If you're committing as Alex or Han, the automated code review bot will run.
+You can use the "gh" CLI to probe the PR and find the last unminimized code review comment 
+from the AI bot, see also: "gh pr list" / "gh pr view --json"
