@@ -179,6 +179,49 @@ func TestLogsJSONOmitsTLSWarning(t *testing.T) {
 	}
 }
 
+func TestLogsOutputJSONOmitsTLSWarning(t *testing.T) {
+	resetJSONCommandTestState(t)
+
+	s := newInsecureWarningHTTPServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/system/logs" {
+			t.Fatalf("expected /system/logs, got %s", r.URL.Path)
+		}
+
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(logs.Message{Name: "fn", Text: "hello"})
+	}))
+
+	gateway = s.URL
+	logFlagValues.logFormat = flags.JSONLogFormat
+	logFlagValues.timeFormat = flags.TimeFormat("")
+	logFlagValues.tail = false
+	logFlagValues.lines = -1
+
+	stdout, stderr := captureStdoutStderr(t, func() {
+		cmd := newLogsTestCommand()
+
+		if err := runLogs(cmd, []string{"fn"}); err != nil {
+			t.Fatalf("runLogs returned error: %s", err)
+		}
+	})
+
+	if strings.Contains(stdout, NoTLSWarn) {
+		t.Fatalf("expected TLS warning off stdout, got: %q", stdout)
+	}
+	if strings.Contains(stderr, NoTLSWarn) {
+		t.Fatalf("expected TLS warning omitted for JSON output, got stderr: %q", stderr)
+	}
+
+	var msg logs.Message
+	if err := json.Unmarshal([]byte(strings.TrimSpace(stdout)), &msg); err != nil {
+		t.Fatalf("expected valid JSON log stdout, got %q: %s", stdout, err)
+	}
+	if msg.Text != "hello" {
+		t.Fatalf("expected log text %q, got %q", "hello", msg.Text)
+	}
+}
+
 func TestLogsTextWarningUsesStdout(t *testing.T) {
 	resetJSONCommandTestState(t)
 
