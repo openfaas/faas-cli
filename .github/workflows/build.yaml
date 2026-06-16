@@ -21,13 +21,13 @@ jobs:
             fetch-depth: 1
       -
         name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       - 
         name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
       - 
         name: Local docker build (non-root image)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -42,7 +42,7 @@ jobs:
           tags: openfaas/faas-cli:${{ github.sha }}
       -
         name: Test for multi-arch build
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
