@@ -1,6 +1,28 @@
 package commands
 
-import "testing"
+import (
+	"reflect"
+	"runtime"
+	"strings"
+	"testing"
+
+	"github.com/google/go-containerregistry/pkg/crane"
+	v1 "github.com/google/go-containerregistry/pkg/v1"
+)
+
+func TestBuildPluginPullOptions(t *testing.T) {
+	platform := &v1.Platform{Architecture: "amd64", OS: "linux"}
+	opts := crane.GetOptions(buildPluginPullOptions(platform)...)
+
+	if opts.Platform != platform {
+		t.Fatalf("want platform %p, got %p", platform, opts.Platform)
+	}
+
+	authOptionName := runtime.FuncForPC(reflect.ValueOf(opts.Remote[0]).Pointer()).Name()
+	if !strings.Contains(authOptionName, "WithAuth") || strings.Contains(authOptionName, "WithAuthFromKeychain") {
+		t.Fatalf("want anonymous auth option, got %q", authOptionName)
+	}
+}
 
 func Test_getDownloadArch(t *testing.T) {
 	tables := []struct {

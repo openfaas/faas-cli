@@ -10,6 +10,7 @@ import (
 
 	"github.com/alexellis/arkade/pkg/archive"
 	"github.com/alexellis/arkade/pkg/env"
+	"github.com/google/go-containerregistry/pkg/authn"
 	"github.com/google/go-containerregistry/pkg/crane"
 	v1 "github.com/google/go-containerregistry/pkg/v1"
 
@@ -116,8 +117,9 @@ func runPluginGetCmd(cmd *cobra.Command, args []string) error {
 	var img v1.Image
 
 	downloadArch, downloadOS := getDownloadArch(clientArch, clientOS)
+	platform := &v1.Platform{Architecture: downloadArch, OS: downloadOS}
 
-	img, err = crane.Pull(src, crane.WithPlatform(&v1.Platform{Architecture: downloadArch, OS: downloadOS}))
+	img, err = crane.Pull(src, buildPluginPullOptions(platform)...)
 	if err != nil {
 		return fmt.Errorf("pulling %s: %w", src, err)
 	}
@@ -178,6 +180,13 @@ func getClientArch() (arch string, os string) {
 	}
 
 	return env.GetClientArch()
+}
+
+func buildPluginPullOptions(platform *v1.Platform) []crane.Option {
+	return []crane.Option{
+		crane.WithPlatform(platform),
+		crane.WithAuth(authn.Anonymous),
+	}
 }
 
 func getDownloadArch(clientArch, clientOS string) (arch string, os string) {
