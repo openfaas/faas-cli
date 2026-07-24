@@ -18,10 +18,6 @@ module.exports = {
             if (arch === 'aarch64') {
                 return '-arm64';
             }
-
-            if (arch === 'armv61' || arch === 'armv71') {
-                return '-armhf'
-            }
         }
 
         if (type === 'Darwin') {

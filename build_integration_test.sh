@@ -23,13 +23,6 @@ get_package() {
         ;;
         esac
     ;;
-    "Linux")
-        case $arch in
-        "armv6l" | "armv7l")
-        cli="./faas-cli-armhf"
-        ;;
-        esac
-    ;;
     esac
 
     echo "Using package $cli"
