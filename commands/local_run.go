@@ -349,9 +349,13 @@ func buildDockerRun(ctx context.Context, name string, fnc stack.Function, opts r
 		// Limits are written as Kubernetes quantities ("256Mi", "100m"), which
 		// Docker does not understand, so convert them to its own units.
 		if fnc.Limits.Memory != "" {
-			memory, err := toDockerMemory(fnc.Limits.Memory)
+			memory, warning, err := toDockerMemoryReservation(fnc.Limits.Memory)
 			if err != nil {
 				return nil, fmt.Errorf("limits: %w", err)
+			}
+
+			if warning != "" {
+				fmt.Fprintf(os.Stderr, "%s\n", warning)
 			}
 
 			// use a soft limit for debugging
