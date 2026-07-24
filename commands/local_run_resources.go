@@ -136,7 +136,7 @@ func negativeMemoryError(value string) error {
 
 func oversizedMemoryError(value string) error {
 	// Typed as int64 so the constant does not take its default type of int,
-	// which overflows when cross-compiling for a 32-bit target such as armhf.
+	// which would overflow when building for a 32-bit target.
 	return fmt.Errorf("invalid memory value %q: must be under %d bytes", value, int64(math.MaxInt64))
 }
 

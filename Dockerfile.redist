@@ -55,13 +55,6 @@ RUN CGO_ENABLED=0 GOOS=windows go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/commands.Platform=x86_64" \
        -o faas-cli.exe
 
-FROM builder as arm
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm GOARM=6 go build --ldflags "-s -w \
-       -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
-       -X github.com/openfaas/faas-cli/version.Version=${VERSION} \
-       -X github.com/openfaas/faas-cli/commands.Platform=armhf" \
-       -o faas-cli-armhf
-
 FROM builder as arm64
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build --ldflags "-s -w \
        -X github.com/openfaas/faas-cli/version.GitCommit=${GIT_COMMIT} \
@@ -83,7 +76,6 @@ WORKDIR /home/app
 COPY --from=linux          /go/src/github.com/openfaas/faas-cli/faas-cli                .
 COPY --from=darwin         /go/src/github.com/openfaas/faas-cli/faas-cli-darwin         .
 COPY --from=darwin-arm64   /go/src/github.com/openfaas/faas-cli/faas-cli-darwin-arm64   .
-COPY --from=arm            /go/src/github.com/openfaas/faas-cli/faas-cli-armhf          .
 COPY --from=windows        /go/src/github.com/openfaas/faas-cli/faas-cli.exe            .
 COPY --from=arm64          /go/src/github.com/openfaas/faas-cli/faas-cli-arm64          .
 

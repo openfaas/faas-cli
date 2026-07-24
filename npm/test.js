@@ -14,13 +14,9 @@ describe('Platform Suffix', function () {
         let result = lib.getSuffix('Linux', 'aarch64');
         assert.equal(result, '-arm64', `Expected '-arm64', but got: ${result}`);
     });
-    it('should return -armhf for Linux armv61', function () {
-        let result = lib.getSuffix('Linux', 'armv61');
-        assert.equal(result, '-armhf', `Expected '-armhf', but got: ${result}`);
-    });
-    it('should return -armhf for Linux armv71', function () {
-        let result = lib.getSuffix('Linux', 'armv71');
-        assert.equal(result, '-armhf', `Expected '-armhf', but got: ${result}`);
+    it('should throw for 32-bit Arm, which is no longer published', function () {
+        assert.throws(() => {lib.getSuffix('Linux', 'armv61')});
+        assert.throws(() => {lib.getSuffix('Linux', 'armv71')});
     });
     it('should return -darwin for MacOS', function () {
         let result = lib.getSuffix('Darwin', '');

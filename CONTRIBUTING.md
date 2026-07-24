@@ -56,7 +56,7 @@ To build the release binaries type in:
 ./extract_binaries.sh
 ```
 
-This creates the faas-cli for Mac, Windows, Linux x64, Linux ARMHF and Linux ARM64.
+This creates the faas-cli for Mac, Windows, Linux x64 and Linux ARM64.
 
 * The project manages dependencies using Go modules and the `vendor/` folder. When updating a dependency you must run
 

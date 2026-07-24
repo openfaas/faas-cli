@@ -65,14 +65,6 @@ dist:
 test-unit:
 	go test $(shell go list ./... | grep -v /vendor/ | grep -v /template/ | grep -v build) -cover
 
-.PHONY: ci-armhf-push
-ci-armhf-push:
-	(docker push openfaas/faas-cli:$(TAG)-armhf && docker push openfaas/faas-cli:$(TAG)-root-armhf)
-
-.PHONY: ci-armhf-build
-ci-armhf-build:
-	(./build.sh $(TAG)-armhf)
-
 .PHONY: ci-arm64-push
 ci-arm64-push:
 	(docker push openfaas/faas-cli:$(TAG)-arm64 && docker push openfaas/faas-cli:$(TAG)-root-arm64)
