@@ -135,7 +135,9 @@ func negativeMemoryError(value string) error {
 }
 
 func oversizedMemoryError(value string) error {
-	return fmt.Errorf("invalid memory value %q: must be under %d bytes", value, math.MaxInt64)
+	// Typed as int64 so the constant does not take its default type of int,
+	// which overflows when cross-compiling for a 32-bit target such as armhf.
+	return fmt.Errorf("invalid memory value %q: must be under %d bytes", value, int64(math.MaxInt64))
 }
 
 // toDockerCPU converts a Kubernetes CPU quantity such as "100m" (millicores)
