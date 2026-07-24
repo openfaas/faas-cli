@@ -55,7 +55,22 @@ jobs:
             GIT_COMMIT=${{ github.sha }}
             REPO_URL=https://github.com/openfaas/faas-cli
           tags: openfaas/faas-cli:${{ github.sha }}
-      - 
+      -
+        name: Test the redistributable binaries cross-compile
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile.redist
+          push: false
+          load: false
+          platforms: linux/amd64
+          target: release
+          build-args: |
+            VERSION=latest-dev
+            GIT_COMMIT=${{ github.sha }}
+            REPO_URL=https://github.com/openfaas/faas-cli
+          tags: openfaas/faas-cli-redist:${{ github.sha }}
+      -
         name: Copy binary to host
         run: |
           docker create --name faas-cli openfaas/faas-cli:${{ github.sha }} && \
