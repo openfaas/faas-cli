@@ -93,22 +93,11 @@ func initLogCmdFlags(cmd *cobra.Command) {
 
 func runLogs(cmd *cobra.Command, args []string) error {
 
-	// Honour the gateway set in stack.yaml, as deploy, describe and list do,
-	// otherwise this falls back to localhost and reports the resulting failure
-	// as an authentication error against the wrong gateway.
-	var yamlGateway string
-	if len(yamlFile) > 0 {
-		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
-		if err != nil {
-			return err
-		}
-
-		if parsedServices != nil {
-			yamlGateway = parsedServices.Provider.GatewayURL
-		}
+	gatewayAddress, err := logsGatewayURL(cmd)
+	if err != nil {
+		return err
 	}
 
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 	jsonLogs := jsonOutput || logFlagValues.logFormat == flags.JSONLogFormat
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 && !jsonLogs {
 		fmt.Println(msg)
@@ -139,6 +128,46 @@ func runLogs(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+// logsGatewayURL works out which gateway the logs command should query.
+//
+// In order of precedence: an explicitly given --gateway, the gateway set in
+// the stack file, the OPENFAAS_URL environment variable, then the default
+// gateway. Honouring the stack file matches deploy, describe and list,
+// otherwise logs falls back to localhost and reports the resulting failure as
+// an authentication error against the wrong gateway.
+func logsGatewayURL(cmd *cobra.Command) (string, error) {
+	// getGatewayURL cannot tell a --gateway that was given on the command line
+	// from the flag's own default value, so ask cobra instead and let an
+	// explicit flag win, even when it names the default gateway. The empty
+	// default here means the argument is always taken, the call is only made
+	// so that the address is normalised in the same way.
+	if cmd.Flags().Changed("gateway") {
+		return getGatewayURL(gateway, "", "", ""), nil
+	}
+
+	var yamlGateway string
+	if len(yamlFile) > 0 {
+		// Only the provider's gateway is read from the file, so no filtering
+		// is applied, it could only make the parse fail. envsubst is passed as
+		// true to match the default of the --envsubst flag on the commands
+		// that do parse functions out of the stack file.
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, "", "", true)
+		if err != nil {
+			// yamlFile is populated from the working directory when -f was not
+			// given, and a file named stack.yaml is not necessarily an
+			// OpenFaaS stack file, so only fail when the user named it. Any
+			// other file simply contributes no gateway.
+			if cmd.Flags().Changed("yaml") {
+				return "", err
+			}
+		} else if parsedServices != nil {
+			yamlGateway = parsedServices.Provider.GatewayURL
+		}
+	}
+
+	return getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment)), nil
 }
 
 func logRequestFromFlags(cmd *cobra.Command, args []string) logs.Request {
