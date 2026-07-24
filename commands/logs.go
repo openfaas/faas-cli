@@ -16,6 +16,7 @@ import (
 	"github.com/openfaas/faas-provider/logs"
 
 	"github.com/openfaas/faas-cli/proxy"
+	"github.com/openfaas/go-sdk/stack"
 	"github.com/spf13/cobra"
 )
 
@@ -92,7 +93,22 @@ func initLogCmdFlags(cmd *cobra.Command) {
 
 func runLogs(cmd *cobra.Command, args []string) error {
 
-	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
+	// Honour the gateway set in stack.yaml, as deploy, describe and list do,
+	// otherwise this falls back to localhost and reports the resulting failure
+	// as an authentication error against the wrong gateway.
+	var yamlGateway string
+	if len(yamlFile) > 0 {
+		parsedServices, err := stack.ParseYAMLFile(yamlFile, regex, filter, envsubst)
+		if err != nil {
+			return err
+		}
+
+		if parsedServices != nil {
+			yamlGateway = parsedServices.Provider.GatewayURL
+		}
+	}
+
+	gatewayAddress := getGatewayURL(gateway, defaultGateway, yamlGateway, os.Getenv(openFaaSURLEnvironment))
 	jsonLogs := jsonOutput || logFlagValues.logFormat == flags.JSONLogFormat
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 && !jsonLogs {
 		fmt.Println(msg)
