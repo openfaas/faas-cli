@@ -44,7 +44,7 @@ func preRunSecretRemoveCmd(cmd *cobra.Command, args []string) error {
 }
 
 func runSecretRemove(cmd *cobra.Command, args []string) error {
-	namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+	namespace := getNamespace(functionNamespace, "")
 	var gatewayAddress string
 	gatewayAddress = getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 

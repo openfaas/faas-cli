@@ -91,7 +91,7 @@ func preRunSecretCreate(cmd *cobra.Command, args []string) error {
 }
 
 func runSecretCreate(cmd *cobra.Command, args []string) error {
-	namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+	namespace := getNamespace(functionNamespace, "")
 	secret := types.Secret{
 		Name:      args[0],
 		Namespace: namespace,

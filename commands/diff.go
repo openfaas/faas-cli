@@ -98,7 +98,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	yamlMap := make(map[string]funcDiff)
 	for name, fn := range yamlFns {
-		key := diffKey(name, getNamespace(functionNamespace, fn.Namespace, os.Getenv(openFaaSNamespaceEnvironment)))
+		key := diffKey(name, getNamespace(functionNamespace, fn.Namespace))
 
 		imageName, err := buildDiffImageName(fn.Image, fn.Handler, tagFormat)
 		if err != nil {
@@ -125,7 +125,7 @@ func runDiff(cmd *cobra.Command, args []string) error {
 
 	deployedMap := make(map[string]funcDiff)
 	ctx := context.Background()
-	for _, namespace := range namespacesForDiff(functionNamespace, parsedServices.Functions, os.Getenv(openFaaSNamespaceEnvironment)) {
+	for _, namespace := range namespacesForDiff(functionNamespace, parsedServices.Functions) {
 		deployed, err := proxyClient.ListFunctions(ctx, namespace)
 		if err != nil {
 			return err
@@ -441,10 +441,10 @@ func sortedAttrKeys(m map[string]string) []string {
 	return keys
 }
 
-func namespacesForDiff(flagNamespace string, functions map[string]stack.Function, environmentNamespace string) []string {
+func namespacesForDiff(flagNamespace string, functions map[string]stack.Function) []string {
 	namespaces := map[string]struct{}{}
 	for _, function := range functions {
-		namespace := getNamespace(flagNamespace, function.Namespace, environmentNamespace)
+		namespace := getNamespace(flagNamespace, function.Namespace)
 		namespaces[namespace] = struct{}{}
 	}
 

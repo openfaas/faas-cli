@@ -83,7 +83,7 @@ func runDescribe(cmd *cobra.Command, args []string) error {
 	}
 
 	ctx := context.Background()
-	namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+	namespace := getNamespace(functionNamespace, "")
 
 	function, err := cliClient.GetFunctionInfo(ctx, functionName, namespace)
 	if err != nil {

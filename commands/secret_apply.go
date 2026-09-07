@@ -42,7 +42,7 @@ func init() {
 }
 
 func runSecretApply(cmd *cobra.Command, args []string) error {
-	namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+	namespace := getNamespace(functionNamespace, "")
 	gatewayAddress := getGatewayURL(gateway, defaultGateway, "", os.Getenv(openFaaSURLEnvironment))
 
 	if msg := checkTLSInsecure(gatewayAddress, tlsInsecure); len(msg) > 0 {

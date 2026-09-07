@@ -179,7 +179,7 @@ func logRequestFromFlags(cmd *cobra.Command, args []string) logs.Request {
 
 	return logs.Request{
 		Name:      args[0],
-		Namespace: getNamespace(ns, "", os.Getenv(openFaaSNamespaceEnvironment)),
+		Namespace: getNamespace(ns, ""),
 		Tail:      logFlagValues.lines,
 		Since:     sinceValue(logFlagValues.sinceTime.AsTime(), logFlagValues.since),
 		Follow:    logFlagValues.tail,

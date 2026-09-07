@@ -63,7 +63,7 @@ func runSecretList(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+	namespace := getNamespace(functionNamespace, "")
 	secrets, err := client.GetSecretList(context.Background(), namespace)
 	if err != nil {
 		return err

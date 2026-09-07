@@ -65,7 +65,7 @@ func getTemplateStoreURL(argumentURL, environmentURL, defaultURL string) string 
 	}
 }
 
-func getNamespace(flagNamespace, stackNamespace, environmentNamespace string) string {
+func getNamespace(flagNamespace, stackNamespace string) string {
 	// If the namespace flag is passed use it
 	if len(flagNamespace) > 0 {
 		return flagNamespace
@@ -74,6 +74,7 @@ func getNamespace(flagNamespace, stackNamespace, environmentNamespace string) st
 	if len(stackNamespace) > 0 {
 		return stackNamespace
 	}
+	environmentNamespace := os.Getenv(openFaaSNamespaceEnvironment)
 	if len(environmentNamespace) > 0 {
 		return environmentNamespace
 	}

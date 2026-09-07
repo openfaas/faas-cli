@@ -42,7 +42,8 @@ func TestGetNamespacePrecedence(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			got := getNamespace(test.flagNamespace, test.stackNamespace, test.environmentNamespace)
+			t.Setenv(openFaaSNamespaceEnvironment, test.environmentNamespace)
+			got := getNamespace(test.flagNamespace, test.stackNamespace)
 			if got != test.want {
 				t.Fatalf("want namespace %q, got %q", test.want, got)
 			}
@@ -52,6 +53,7 @@ func TestGetNamespacePrecedence(t *testing.T) {
 
 func TestGetNamespaceUsesSubstitutedStackNamespaceBeforeEnvironment(t *testing.T) {
 	t.Setenv("STACK_NAMESPACE", "substituted-stack")
+	t.Setenv(openFaaSNamespaceEnvironment, "environment")
 	path := filepath.Join(t.TempDir(), "stack.yaml")
 	contents := `version: 1.0
 provider:
@@ -71,7 +73,7 @@ functions:
 		t.Fatal(err)
 	}
 
-	got := getNamespace("", services.Functions["echo"].Namespace, "environment")
+	got := getNamespace("", services.Functions["echo"].Namespace)
 	if got != "substituted-stack" {
 		t.Fatalf("want substituted stack namespace, got %q", got)
 	}

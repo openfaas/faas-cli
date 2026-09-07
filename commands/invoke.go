@@ -97,7 +97,7 @@ func runInvoke(cmd *cobra.Command, args []string) error {
 			}
 		}
 	}
-	functionNamespace = getNamespace(functionInvokeNamespace, stackNamespace, os.Getenv(openFaaSNamespaceEnvironment))
+	functionNamespace = getNamespace(functionInvokeNamespace, stackNamespace)
 
 	if missingSignFlag(sigHeader, key) {
 		return fmt.Errorf("signing requires both --sign <header-value> and --key <key-value>")

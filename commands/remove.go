@@ -74,7 +74,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 	if len(services.Functions) > 0 {
 
 		for k, function := range services.Functions {
-			function.Namespace = getNamespace(functionNamespace, function.Namespace, os.Getenv(openFaaSNamespaceEnvironment))
+			function.Namespace = getNamespace(functionNamespace, function.Namespace)
 			function.Name = k
 			fmt.Printf("Deleting: %s.%s\n", function.Name, function.Namespace)
 
@@ -86,7 +86,7 @@ func runDelete(cmd *cobra.Command, args []string) error {
 		}
 
 		functionName = args[0]
-		namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+		namespace := getNamespace(functionNamespace, "")
 		fmt.Printf("Deleting: %s.%s\n", functionName, namespace)
 		err := proxyclient.DeleteFunction(ctx, functionName, namespace)
 		if err != nil {

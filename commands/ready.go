@@ -128,7 +128,7 @@ func runReadyCmd(cmd *cobra.Command, args []string) error {
 		}
 
 		ctx := context.Background()
-		namespace := getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment))
+		namespace := getNamespace(functionNamespace, "")
 
 		for i := 0; i < attempts; i++ {
 			suffix := ""

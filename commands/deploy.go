@@ -199,7 +199,7 @@ func runDeployCommand(args []string, image string, fprocess string, functionName
 
 			// Check if there is a functionNamespace flag passed, if so, override the namespace value
 			// defined in the stack.yaml
-			function.Namespace = getNamespace(functionNamespace, function.Namespace, os.Getenv(openFaaSNamespaceEnvironment))
+			function.Namespace = getNamespace(functionNamespace, function.Namespace)
 
 			fileEnvironment, err := readFiles(function.EnvironmentFile)
 			if err != nil {
@@ -319,7 +319,7 @@ Error: %s`, fprocessErr.Error())
 			tlsInsecure,
 			defaultReadOnlyRFS,
 			token,
-			getNamespace(functionNamespace, "", os.Getenv(openFaaSNamespaceEnvironment)),
+			getNamespace(functionNamespace, ""),
 			cpuRequest,
 			cpuLimit,
 			memoryRequest,

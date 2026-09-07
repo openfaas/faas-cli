@@ -129,19 +129,21 @@ functions:
 }
 
 func TestNamespacesForDiffPrecedence(t *testing.T) {
+	t.Setenv(openFaaSNamespaceEnvironment, "environment")
+
 	functions := map[string]stack.Function{
 		"first":  {Namespace: "stack-a"},
 		"second": {Namespace: "stack-b"},
 		"third":  {},
 	}
 
-	got := namespacesForDiff("", functions, "environment")
+	got := namespacesForDiff("", functions)
 	want := []string{"environment", "stack-a", "stack-b"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("want namespaces %v, got %v", want, got)
 	}
 
-	got = namespacesForDiff("flag", functions, "environment")
+	got = namespacesForDiff("flag", functions)
 	want = []string{"flag"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("want flag namespace %v, got %v", want, got)
