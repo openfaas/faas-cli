@@ -3,6 +3,7 @@
 package commands
 
 import (
+	"strings"
 	"testing"
 
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
@@ -587,4 +588,88 @@ func Test_preRunGenerate_API(t *testing.T) {
 	}
 
 	api = defaultAPIVersion
+}
+
+func Test_generateStackYAML(t *testing.T) {
+	labels := map[string]string{"colour": "blue"}
+	annotations := map[string]string{"topic": "oauth"}
+
+	services := stack.Services{
+		Functions: map[string]stack.Function{
+			"nodeinfo": {
+				Name:        "nodeinfo",
+				Image:       "ghcr.io/openfaas/nodeinfo:latest",
+				Environment: map[string]string{"fprocess": "node index.js"},
+				Labels:      &labels,
+				Annotations: &annotations,
+			},
+		},
+	}
+
+	generatedYAML, err := generateStackYAML(services, "https://gateway.example.com")
+	if err != nil {
+		t.Fatalf("failed to generate stack YAML: %s", err)
+	}
+
+	parsed, err := stack.ParseYAMLData([]byte(generatedYAML), "", "", true)
+	if err != nil {
+		t.Fatalf("failed to parse generated stack YAML: %s", err)
+	}
+	if parsed == nil {
+		t.Fatal("generated stack YAML was empty")
+	}
+
+	if parsed.Version != "1.0" {
+		t.Errorf("want version 1.0, got %q", parsed.Version)
+	}
+
+	if parsed.Provider.Name != "openfaas" {
+		t.Errorf("want provider name openfaas, got %q", parsed.Provider.Name)
+	}
+
+	if parsed.Provider.GatewayURL != "https://gateway.example.com" {
+		t.Errorf("want gateway https://gateway.example.com, got %q", parsed.Provider.GatewayURL)
+	}
+
+	function, ok := parsed.Functions["nodeinfo"]
+	if !ok {
+		t.Fatal("want function nodeinfo in generated stack YAML")
+	}
+
+	if !function.SkipBuild {
+		t.Error("want skip_build to be true")
+	}
+
+	if function.Image != "ghcr.io/openfaas/nodeinfo:latest" {
+		t.Errorf("want image ghcr.io/openfaas/nodeinfo:latest, got %q", function.Image)
+	}
+
+	if function.Environment["fprocess"] != "node index.js" {
+		t.Errorf("want fprocess node index.js, got %q", function.Environment["fprocess"])
+	}
+
+	if function.Labels == nil || (*function.Labels)["colour"] != "blue" {
+		t.Errorf("want label colour: blue, got %v", function.Labels)
+	}
+
+	if function.Annotations == nil || (*function.Annotations)["topic"] != "oauth" {
+		t.Errorf("want annotation topic: oauth, got %v", function.Annotations)
+	}
+}
+
+func Test_runGenerate_StackOutputRequiresFromStore(t *testing.T) {
+	outputFormat = "stack.yaml"
+	fromStore = ""
+
+	err := runGenerate(generateCmd, []string{})
+	if err == nil {
+		t.Fatal("expected error when --output stack.yaml is used without --from-store, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "--from-store") {
+		t.Errorf("expected error to mention --from-store, got: %s", err)
+	}
+
+	outputFormat = ""
+	fromStore = ""
 }
