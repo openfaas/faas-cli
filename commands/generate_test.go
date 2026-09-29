@@ -156,7 +156,7 @@ functions:
   environment:
    write_debug: true`,
 		Output: []string{`---
-apiVersion: openfaas.com/v2alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: url-ping
@@ -165,7 +165,7 @@ spec:
   name: url-ping
   image: alexellis/faas-url-ping:0.2
 ---
-apiVersion: openfaas.com/v2alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: astronaut-finder
@@ -176,7 +176,7 @@ spec:
   environment:
     write_debug: "true"
 `, `---
-apiVersion: openfaas.com/v2alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: astronaut-finder
@@ -187,7 +187,7 @@ spec:
   environment:
     write_debug: "true"
 ---
-apiVersion: openfaas.com/v2alpha2
+apiVersion: openfaas.com/v1
 kind: Function
 metadata:
   name: url-ping
@@ -197,7 +197,7 @@ spec:
   image: alexellis/faas-url-ping:0.2
 `},
 		Format:     schema.DefaultFormat,
-		APIVersion: "openfaas.com/v2alpha2",
+		APIVersion: "openfaas.com/v1",
 		Namespace:  "openfaas-fn",
 		Branch:     "",
 		Version:    "",
@@ -559,11 +559,6 @@ func Test_preRunGenerate_API(t *testing.T) {
 		{
 			Name:     "OpenFaaS v2alpha2 API version",
 			API:      "openfaas.com/v2alpha2",
-			Expected: true,
-		},
-		{
-			Name:     "Knative API version",
-			API:      "serving.knative.dev/v1",
 			Expected: false,
 		},
 		{

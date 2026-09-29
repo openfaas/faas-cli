@@ -29,7 +29,7 @@ const (
 	defaultAPIVersion = "openfaas.com/v1"
 )
 
-var apiVersions = []string{"openfaas.com/v1", "openfaas.com/v2alpha2"}
+var apiVersions = []string{"openfaas.com/v1"}
 
 var (
 	api                  string
@@ -49,7 +49,7 @@ func init() {
 	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the generated function")
 	generateCmd.Flags().StringVar(&outputFormat, "output", "", "output format e.g stack.yaml, for use with --from-store to generate an OpenFaaS stack.yaml")
 
-	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, openfaas.com/v2alpha2")
+	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
