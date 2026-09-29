@@ -38,6 +38,7 @@ var (
 	crdFunctionNamespace string
 	fromStore            string
 	desiredArch          string
+	outputFormat         string
 	annotationArgs       []string
 	labelArgs            []string
 )
@@ -46,6 +47,7 @@ func init() {
 
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the Function CR")
+	generateCmd.Flags().StringVar(&outputFormat, "output", "", "output format e.g stack.yaml, for use with --from-store to generate an OpenFaaS stack.yaml")
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, openfaas.com/v2alpha2")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
@@ -65,12 +67,17 @@ var generateCmd = &cobra.Command{
 	Example: `  faas-cli generate --api=openfaas.com/v1 --yaml stack.yaml | kubectl apply  -f -
   faas-cli generate --api=openfaas.com/v1 -f stack.yaml
   faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yaml
-  faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn`,
+  faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn
+  faas-cli generate --from-store nodeinfo --output stack.yaml > stack.yaml`,
 	PreRunE: preRunGenerate,
 	RunE:    runGenerate,
 }
 
 func preRunGenerate(cmd *cobra.Command, args []string) error {
+	if isStackOutput(outputFormat) {
+		return nil
+	}
+
 	if len(api) == 0 {
 		return fmt.Errorf("you must supply the API version with the --api flag")
 	}
@@ -82,6 +89,10 @@ func preRunGenerate(cmd *cobra.Command, args []string) error {
 	}
 
 	return fmt.Errorf("unsupported API version %q, must be one of: %s", api, strings.Join(apiVersions, ", "))
+}
+
+func isStackOutput(format string) bool {
+	return format == "stack.yaml" || format == "stack"
 }
 
 func filterStoreItem(items []v2.StoreFunction, fromStore string) (*v2.StoreFunction, error) {
@@ -102,6 +113,10 @@ func filterStoreItem(items []v2.StoreFunction, fromStore string) (*v2.StoreFunct
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {
+
+	if isStackOutput(outputFormat) && fromStore == "" {
+		return fmt.Errorf("--output %s can only be used with --from-store", outputFormat)
+	}
 
 	desiredArch, _ := cmd.Flags().GetString("arch")
 	var services stack.Services
@@ -197,6 +212,16 @@ Alternatively, to generate a definition for store functions, use "--from-store"`
 		os.Exit(1)
 	}
 
+	if isStackOutput(outputFormat) {
+		stackYAML, err := generateStackYAML(services, gateway)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println(stackYAML)
+		return nil
+	}
+
 	objectsString, err := generateCRDYAML(services, tagFormat, api, crdFunctionNamespace,
 		builder.NewFunctionMetadataSourceLive())
 	if err != nil {
@@ -207,6 +232,63 @@ Alternatively, to generate a definition for store functions, use "--from-store"`
 		fmt.Println(objectsString)
 	}
 	return nil
+}
+
+// stackYAML is the output format for --output stack.yaml, mirroring an
+// OpenFaaS stack.yaml with only the values known from the store item
+type stackYAML struct {
+	Version   string                 `yaml:"version"`
+	Provider  stack.Provider         `yaml:"provider"`
+	Functions map[string]stackYAMLFn `yaml:"functions"`
+}
+
+type stackYAMLFn struct {
+	Image       string             `yaml:"image"`
+	SkipBuild   bool               `yaml:"skip_build"`
+	Environment map[string]string  `yaml:"environment,omitempty"`
+	Labels      *map[string]string `yaml:"labels,omitempty"`
+	Annotations *map[string]string `yaml:"annotations,omitempty"`
+}
+
+// generateStackYAML generates an OpenFaaS stack.yaml for functions, with
+// skip_build set so the pre-built image is deployed without a rebuild
+func generateStackYAML(services stack.Services, gateway string) (string, error) {
+	functions := make(map[string]stackYAMLFn, len(services.Functions))
+	for name, function := range services.Functions {
+		if function.Labels != nil && len(*function.Labels) == 0 {
+			function.Labels = nil
+		}
+
+		if function.Annotations != nil && len(*function.Annotations) == 0 {
+			function.Annotations = nil
+		}
+
+		functions[name] = stackYAMLFn{
+			Image:       function.Image,
+			SkipBuild:   true,
+			Environment: function.Environment,
+			Labels:      function.Labels,
+			Annotations: function.Annotations,
+		}
+	}
+
+	output := stackYAML{
+		Version: "1.0",
+		Provider: stack.Provider{
+			Name:       "openfaas",
+			GatewayURL: gateway,
+		},
+		Functions: functions,
+	}
+
+	var buff bytes.Buffer
+	yamlEncoder := yaml.NewEncoder(&buff)
+	yamlEncoder.SetIndent(2)
+	if err := yamlEncoder.Encode(&output); err != nil {
+		return "", err
+	}
+
+	return buff.String(), nil
 }
 
 // generateCRDYAML generates CRD YAML for functions
