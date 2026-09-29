@@ -46,7 +46,7 @@ var (
 func init() {
 
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
-	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the Function CR")
+	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the generated function")
 	generateCmd.Flags().StringVar(&outputFormat, "output", "", "output format e.g stack.yaml, for use with --from-store to generate an OpenFaaS stack.yaml")
 
 	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, openfaas.com/v2alpha2")
@@ -74,7 +74,15 @@ var generateCmd = &cobra.Command{
 }
 
 func preRunGenerate(cmd *cobra.Command, args []string) error {
+	if outputFormat != "" && !isStackOutput(outputFormat) {
+		return fmt.Errorf("unsupported output format %q, must be one of: stack.yaml, stack", outputFormat)
+	}
+
 	if isStackOutput(outputFormat) {
+		if len(fromStore) == 0 {
+			return fmt.Errorf("--output %s can only be used with --from-store", outputFormat)
+		}
+
 		return nil
 	}
 
@@ -113,10 +121,6 @@ func filterStoreItem(items []v2.StoreFunction, fromStore string) (*v2.StoreFunct
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-
-	if isStackOutput(outputFormat) && fromStore == "" {
-		return fmt.Errorf("--output %s can only be used with --from-store", outputFormat)
-	}
 
 	desiredArch, _ := cmd.Flags().GetString("arch")
 	var services stack.Services
