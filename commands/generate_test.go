@@ -3,7 +3,6 @@
 package commands
 
 import (
-	"strings"
 	"testing"
 
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
@@ -657,17 +656,57 @@ func Test_generateStackYAML(t *testing.T) {
 	}
 }
 
-func Test_runGenerate_StackOutputRequiresFromStore(t *testing.T) {
-	outputFormat = "stack.yaml"
-	fromStore = ""
-
-	err := runGenerate(generateCmd, []string{})
-	if err == nil {
-		t.Fatal("expected error when --output stack.yaml is used without --from-store, got nil")
+func Test_preRunGenerate_Output(t *testing.T) {
+	testcases := []struct {
+		Name        string
+		Output      string
+		FromStore   string
+		ExpectError bool
+	}{
+		{
+			Name:        "stack.yaml output with --from-store",
+			Output:      "stack.yaml",
+			FromStore:   "nodeinfo",
+			ExpectError: false,
+		},
+		{
+			Name:        "stack alias with --from-store",
+			Output:      "stack",
+			FromStore:   "nodeinfo",
+			ExpectError: false,
+		},
+		{
+			Name:        "stack.yaml output without --from-store",
+			Output:      "stack.yaml",
+			FromStore:   "",
+			ExpectError: true,
+		},
+		{
+			Name:        "unknown output format",
+			Output:      "json",
+			FromStore:   "",
+			ExpectError: true,
+		},
+		{
+			Name:        "no output flag",
+			Output:      "",
+			FromStore:   "",
+			ExpectError: false,
+		},
 	}
 
-	if !strings.Contains(err.Error(), "--from-store") {
-		t.Errorf("expected error to mention --from-store, got: %s", err)
+	for _, testcase := range testcases {
+		outputFormat = testcase.Output
+		fromStore = testcase.FromStore
+
+		err := preRunGenerate(generateCmd, []string{})
+		if testcase.ExpectError && err == nil {
+			t.Fatalf("%s: expected error, got nil", testcase.Name)
+		}
+
+		if !testcase.ExpectError && err != nil {
+			t.Fatalf("%s: expected success, got error: %s", testcase.Name, err)
+		}
 	}
 
 	outputFormat = ""
