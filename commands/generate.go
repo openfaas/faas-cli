@@ -14,7 +14,6 @@ import (
 
 	"github.com/openfaas/faas-cli/proxy"
 	"github.com/openfaas/faas-cli/schema"
-	knativev1 "github.com/openfaas/faas-cli/schema/knative/v1"
 	openfaasv1 "github.com/openfaas/faas-cli/schema/openfaas/v1"
 	"github.com/openfaas/faas-cli/util"
 	"github.com/openfaas/go-sdk/stack"
@@ -45,7 +44,7 @@ func init() {
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the Function CR")
 
-	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, serving.knative.dev/v1")
+	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
@@ -62,7 +61,6 @@ var generateCmd = &cobra.Command{
 	Long:  `The generate command creates kubernetes CRD YAML file for functions`,
 	Example: `  faas-cli generate --api=openfaas.com/v1 --yaml stack.yaml | kubectl apply  -f -
   faas-cli generate --api=openfaas.com/v1 -f stack.yaml
-  faas-cli generate --api=serving.knative.dev/v1 -f stack.yaml
   faas-cli generate --api=openfaas.com/v1 --namespace openfaas-fn -f stack.yaml
   faas-cli generate --api=openfaas.com/v1 -f stack.yaml --tag branch -n openfaas-fn`,
 	PreRunE: preRunGenerate,
@@ -209,10 +207,6 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 
 	if len(services.Functions) > 0 {
 
-		if apiVersion == knativev1.APIVersionLatest {
-			return generateknativev1ServingServiceCRDYAML(services, format, api, crdFunctionNamespace)
-		}
-
 		orderedNames := generateFunctionOrder(services.Functions)
 
 		for _, name := range orderedNames {
@@ -274,103 +268,6 @@ func generateCRDYAML(services stack.Services, format schema.BuildFormat, apiVers
 	return objectsString, nil
 }
 
-func generateknativev1ServingServiceCRDYAML(services stack.Services, format schema.BuildFormat, apiVersion, namespace string) (string, error) {
-	crds := []knativev1.ServingServiceCRD{}
-
-	orderedNames := generateFunctionOrder(services.Functions)
-
-	for _, name := range orderedNames {
-
-		function := services.Functions[name]
-
-		fileEnvironment, err := readFiles(function.EnvironmentFile)
-		if err != nil {
-			return "", err
-		}
-
-		//combine all environment variables
-		allEnvironment, envErr := compileEnvironment([]string{}, function.Environment, fileEnvironment)
-		if envErr != nil {
-			return "", envErr
-		}
-
-		env := orderknativeEnv(allEnvironment)
-
-		var annotations map[string]string
-
-		if function.Annotations != nil {
-			annotations = *function.Annotations
-		}
-
-		branch, version, err := builder.GetImageTagValues(tagFormat, function.Handler)
-		if err != nil {
-			return "", err
-		}
-
-		imageName := schema.BuildImageName(format, function.Image, version, branch)
-
-		crd := knativev1.ServingServiceCRD{
-			Metadata: schema.Metadata{
-				Name:        name,
-				Namespace:   namespace,
-				Annotations: annotations,
-			},
-			APIVersion: apiVersion,
-			Kind:       "Service",
-
-			Spec: knativev1.ServingServiceSpec{
-				ServingServiceSpecTemplate: knativev1.ServingServiceSpecTemplate{
-					Template: knativev1.ServingServiceSpecTemplateSpec{
-						Containers: []knativev1.ServingSpecContainersContainerSpec{},
-					},
-				},
-			},
-		}
-
-		crd.Spec.Template.Containers = append(crd.Spec.Template.Containers, knativev1.ServingSpecContainersContainerSpec{
-			Image: imageName,
-			Env:   env,
-		})
-
-		var mounts []knativev1.VolumeMount
-		var volumes []knativev1.Volume
-
-		for _, secret := range function.Secrets {
-			mounts = append(mounts, knativev1.VolumeMount{
-				MountPath: "/var/openfaas/secrets/" + secret,
-				ReadOnly:  true,
-				Name:      secret,
-			})
-			volumes = append(volumes, knativev1.Volume{
-				Name: secret,
-				Secret: knativev1.Secret{
-					SecretName: secret,
-				},
-			})
-		}
-
-		crd.Spec.Template.Volumes = volumes
-		crd.Spec.Template.Containers[0].VolumeMounts = mounts
-
-		crds = append(crds, crd)
-	}
-
-	var objectsString string
-	for _, crd := range crds {
-
-		var buff bytes.Buffer
-		yamlEncoder := yaml.NewEncoder(&buff)
-		yamlEncoder.SetIndent(2) // this is what you're looking for
-		if err := yamlEncoder.Encode(&crd); err != nil {
-			return "", err
-		}
-
-		objectsString += "---\n" + string(buff.Bytes())
-	}
-
-	return objectsString, nil
-}
-
 func generateFunctionOrder(functions map[string]stack.Function) []string {
 
 	var functionNames []string
@@ -382,22 +279,4 @@ func generateFunctionOrder(functions map[string]stack.Function) []string {
 	sort.Strings(functionNames)
 
 	return functionNames
-}
-
-func orderknativeEnv(environment map[string]string) []knativev1.EnvPair {
-
-	var orderedEnvironment []string
-	var envVars []knativev1.EnvPair
-
-	for k := range environment {
-		orderedEnvironment = append(orderedEnvironment, k)
-	}
-
-	sort.Strings(orderedEnvironment)
-
-	for _, envVar := range orderedEnvironment {
-		envVars = append(envVars, knativev1.EnvPair{Name: envVar, Value: environment[envVar]})
-	}
-
-	return envVars
 }
