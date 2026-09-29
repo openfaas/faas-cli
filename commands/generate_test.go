@@ -539,3 +539,52 @@ func Test_generateFunctionOrder(t *testing.T) {
 
 	}
 }
+
+func Test_preRunGenerate_API(t *testing.T) {
+	testcases := []struct {
+		Name     string
+		API      string
+		Expected bool
+	}{
+		{
+			Name:     "Empty API version",
+			API:      "",
+			Expected: false,
+		},
+		{
+			Name:     "OpenFaaS v1 API version",
+			API:      "openfaas.com/v1",
+			Expected: true,
+		},
+		{
+			Name:     "OpenFaaS v2alpha2 API version",
+			API:      "openfaas.com/v2alpha2",
+			Expected: true,
+		},
+		{
+			Name:     "Knative API version",
+			API:      "serving.knative.dev/v1",
+			Expected: false,
+		},
+		{
+			Name:     "Unknown API version",
+			API:      "openfaas.com/v2",
+			Expected: false,
+		},
+	}
+
+	for _, testcase := range testcases {
+		api = testcase.API
+		err := preRunGenerate(generateCmd, []string{})
+
+		if testcase.Expected && err != nil {
+			t.Fatalf("%s: expected success, got error: %s", testcase.Name, err)
+		}
+
+		if !testcase.Expected && err == nil {
+			t.Fatalf("%s: expected error, got nil", testcase.Name)
+		}
+	}
+
+	api = defaultAPIVersion
+}
