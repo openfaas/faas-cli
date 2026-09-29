@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 
 	"github.com/openfaas/faas-cli/builder"
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
@@ -28,6 +29,8 @@ const (
 	defaultAPIVersion = "openfaas.com/v1"
 )
 
+var apiVersions = []string{"openfaas.com/v1", "openfaas.com/v2alpha2"}
+
 var (
 	api                  string
 	name                 string
@@ -44,7 +47,7 @@ func init() {
 	generateCmd.Flags().StringVar(&fromStore, "from-store", "", "generate using a store image")
 	generateCmd.Flags().StringVar(&name, "name", "", "for use with --from-store, override the name for the Function CR")
 
-	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1")
+	generateCmd.Flags().StringVar(&api, "api", defaultAPIVersion, "CRD API version e.g openfaas.com/v1, openfaas.com/v2alpha2")
 	generateCmd.Flags().StringVarP(&crdFunctionNamespace, "namespace", "n", "openfaas-fn", "Kubernetes namespace for functions")
 	generateCmd.Flags().Var(&tagFormat, "tag", "Override latest tag on function Docker image, accepts 'digest', 'latest', 'sha', 'branch', 'describe'")
 	generateCmd.Flags().BoolVar(&envsubst, "envsubst", true, "Substitute environment variables in stack.yaml file")
@@ -72,7 +75,13 @@ func preRunGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("you must supply the API version with the --api flag")
 	}
 
-	return nil
+	for _, version := range apiVersions {
+		if api == version {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unsupported API version %q, must be one of: %s", api, strings.Join(apiVersions, ", "))
 }
 
 func filterStoreItem(items []v2.StoreFunction, fromStore string) (*v2.StoreFunction, error) {
