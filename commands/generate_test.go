@@ -3,6 +3,9 @@
 package commands
 
 import (
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	v2 "github.com/openfaas/faas-cli/schema/store/v2"
@@ -706,4 +709,108 @@ func Test_preRunGenerate_Output(t *testing.T) {
 
 	outputFormat = ""
 	fromStore = ""
+}
+
+func Test_runGenerate_FromStoreEnv(t *testing.T) {
+	s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{
+			"version": "1.0",
+			"functions": [
+				{
+					"title": "NodeInfo",
+					"name": "nodeinfo",
+					"fprocess": "node index.js",
+					"images": {
+						"x86_64": "ghcr.io/openfaas/nodeinfo:latest"
+					},
+					"environment": {
+						"read_timeout": "60"
+					}
+				}
+			]
+		}`))
+	}))
+	defer s.Close()
+
+	savedStoreAddress, savedGateway, savedFromStore := storeAddress, gateway, fromStore
+	savedOutputFormat, savedEnvArgs, savedName := outputFormat, envArgs, name
+
+	storeAddress = s.URL
+	gateway = "http://127.0.0.1:8080"
+	fromStore = "nodeinfo"
+	outputFormat = "stack.yaml"
+	envArgs = []string{"read_timeout=120", "oauth_provider=google"}
+	name = ""
+
+	defer func() {
+		storeAddress, gateway, fromStore = savedStoreAddress, savedGateway, savedFromStore
+		outputFormat, envArgs, name = savedOutputFormat, savedEnvArgs, savedName
+	}()
+
+	stdout, _ := captureStdoutStderr(t, func() {
+		if err := runGenerate(generateCmd, []string{}); err != nil {
+			t.Fatalf("runGenerate returned error: %s", err)
+		}
+	})
+
+	parsed, err := stack.ParseYAMLData([]byte(stdout), "", "", true)
+	if err != nil {
+		t.Fatalf("failed to parse generated stack YAML: %s", err)
+	}
+	if parsed == nil {
+		t.Fatal("generated stack YAML was empty")
+	}
+
+	function, ok := parsed.Functions["nodeinfo"]
+	if !ok {
+		t.Fatal("want function nodeinfo in generated stack YAML")
+	}
+
+	if function.Environment["read_timeout"] != "120" {
+		t.Errorf("want store env read_timeout overridden to 120, got %q", function.Environment["read_timeout"])
+	}
+
+	if function.Environment["oauth_provider"] != "google" {
+		t.Errorf("want env oauth_provider google, got %q", function.Environment["oauth_provider"])
+	}
+
+	if function.Environment["fprocess"] != "node index.js" {
+		t.Errorf("want fprocess folded in from store item, got %q", function.Environment["fprocess"])
+	}
+
+	outputFormat = ""
+
+	stdout, _ = captureStdoutStderr(t, func() {
+		if err := runGenerate(generateCmd, []string{}); err != nil {
+			t.Fatalf("runGenerate returned error: %s", err)
+		}
+	})
+
+	if !strings.Contains(stdout, `read_timeout: "120"`) {
+		t.Errorf("want read_timeout \"120\" in CRD output, got: %s", stdout)
+	}
+
+	if !strings.Contains(stdout, "oauth_provider: google") {
+		t.Errorf("want oauth_provider google in CRD output, got: %s", stdout)
+	}
+}
+
+func Test_runGenerate_FromStoreEnvParseError(t *testing.T) {
+	savedEnvArgs := envArgs
+	envArgs = []string{"read_timeout"}
+
+	defer func() {
+		envArgs = savedEnvArgs
+	}()
+
+	err := runGenerate(generateCmd, []string{})
+	if err == nil {
+		t.Fatal("expected error for malformed --env value, got nil")
+	}
+
+	if !strings.Contains(err.Error(), "environment variables") {
+		t.Errorf("expected error to mention environment variables, got: %s", err)
+	}
 }
