@@ -439,6 +439,7 @@ func WithHandlerOverlay(path string) BuildContextOption {
 //
 // The function returns the path to the build context, `./build/<functionName>` by default.
 // The build directory can be overridden by setting the `builder.WithBuildDir` option.
+// functionName must be a valid directory name.
 // An error is returned if creating the build context fails.
 func CreateBuildContext(functionName string, handler string, language string, copyExtraPaths []string, options ...BuildContextOption) (string, error) {
 	c := &BuildContextConfig{
@@ -451,15 +452,13 @@ func CreateBuildContext(functionName string, handler string, language string, co
 		option(c)
 	}
 
-	contextPath := path.Join(c.BuildDir, functionName)
+	contextPath, err := functionBuildContextPath(c.BuildDir, functionName)
+	if err != nil {
+		return "", err
+	}
 
 	if err := os.RemoveAll(contextPath); err != nil {
 		return contextPath, fmt.Errorf("unable to clear context folder: %s", contextPath)
-	}
-
-	handlerDst := contextPath
-	if language != "dockerfile" {
-		handlerDst = path.Join(contextPath, c.TemplateHandlerOverlay)
 	}
 
 	permissions := defaultDirPermissions
@@ -467,7 +466,16 @@ func CreateBuildContext(functionName string, handler string, language string, co
 		permissions = 0777
 	}
 
-	err := os.MkdirAll(handlerDst, permissions)
+	handlerDst := contextPath
+	if language != "dockerfile" {
+		var err error
+		handlerDst, err = handlerFolderWithinScope(contextPath, c.TemplateHandlerOverlay)
+		if err != nil {
+			return contextPath, err
+		}
+	}
+
+	err = os.MkdirAll(handlerDst, permissions)
 	if err != nil {
 		return contextPath, fmt.Errorf("error creating function handler path %s: %w", handlerDst, err)
 	}
@@ -501,17 +509,12 @@ func CreateBuildContext(functionName string, handler string, language string, co
 	}
 
 	for _, extraPath := range copyExtraPaths {
-		extraPathAbs, err := pathInScope(extraPath, ".")
+		extraPathAbs, extraPathRel, err := pathInScope(extraPath, ".")
 		if err != nil {
 			return contextPath, err
 		}
-		// Note that if template is nil or the language is `dockerfile`, then
-		// handlerDest == contextPath, the docker build context, not the handler folder
-		// inside the docker build context.
-		if err := copyFiles(
-			extraPathAbs,
-			filepath.Clean(path.Join(handlerDst, extraPath)),
-		); err != nil {
+		// Use the validated relative path to keep the destination beneath handlerDst.
+		if err := copyFiles(extraPathAbs, filepath.Join(handlerDst, extraPathRel)); err != nil {
 			return contextPath, fmt.Errorf("error copying extra paths: %w", err)
 		}
 	}
@@ -519,29 +522,60 @@ func CreateBuildContext(functionName string, handler string, language string, co
 	return contextPath, nil
 }
 
-// pathInScope returns the absolute path to `path` and ensures that it is located within the
-// provided scope. An error will be returned, if the path is outside of the provided scope.
-func pathInScope(path string, scope string) (string, error) {
+// functionBuildContextPath constructs the build path for a function.
+// functionName must be a valid directory name.
+func functionBuildContextPath(buildDir, functionName string) (string, error) {
+	if !filepath.IsLocal(functionName) ||
+		functionName == "." ||
+		strings.ContainsAny(functionName, `/\`) {
+		return "", fmt.Errorf("function name %q must be a single path component within the build directory %q", functionName, buildDir)
+	}
+
+	return filepath.Join(buildDir, functionName), nil
+}
+
+// handlerFolderWithinScope validates handlerFolder lexically and returns its path
+// beneath buildRoot. An empty folder or "." selects buildRoot itself.
+// It rejects absolute paths and relative paths that escape buildRoot.
+func handlerFolderWithinScope(buildRoot, handlerFolder string) (string, error) {
+	folder := filepath.FromSlash(handlerFolder)
+	if folder == "" {
+		folder = "."
+	}
+	if !filepath.IsLocal(folder) {
+		return "", fmt.Errorf("handler folder %q must be a relative path within the build context %q", handlerFolder, buildRoot)
+	}
+
+	return filepath.Join(buildRoot, folder), nil
+}
+
+// pathInScope returns the absolute and scope-relative paths after checking lexical
+// containment. It rejects paths outside scope and paths equal to scope itself.
+func pathInScope(path string, scope string) (string, string, error) {
 	scope, err := filepath.Abs(filepath.FromSlash(scope))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	abs, err := filepath.Abs(filepath.FromSlash(path))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	if abs == scope {
-		return "", fmt.Errorf("forbidden path appears to equal the entire project: %s (%s)", path, abs)
+	rel, err := filepath.Rel(scope, abs)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to resolve path %s: %w", path, err)
 	}
 
-	if strings.HasPrefix(abs, scope) {
-		return abs, nil
+	if rel == "." {
+		return "", "", fmt.Errorf("forbidden path appears to equal the entire project: %s (%s)", path, abs)
 	}
 
-	// default return is an error
-	return "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
+	if !filepath.IsLocal(rel) {
+		return "", "", fmt.Errorf("forbidden path appears to be outside of the build context: %s (%s)", path, abs)
+	}
+
+	return abs, rel, nil
 }
 
 const defaultDirPermissions os.FileMode = 0700
