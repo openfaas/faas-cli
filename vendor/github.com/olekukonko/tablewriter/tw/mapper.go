@@ -20,6 +20,35 @@ func NewMapper[K comparable, V any]() Mapper[K, V] {
 	return make(Mapper[K, V])
 }
 
+// NewMapperWithKeys creates a Mapper with the given keys and zero values
+func NewMapperWithKeys[K comparable, V any](keys ...K) Mapper[K, V] {
+	m := make(Mapper[K, V], len(keys))
+	for _, k := range keys {
+		m[k] = *new(V)
+	}
+	return m
+}
+
+// NewMapperFromPairs creates a Mapper from alternating key-value pairs
+func NewMapperFromPairs[K comparable, V any](pairs ...any) Mapper[K, V] {
+	m := make(Mapper[K, V])
+	for i := 0; i < len(pairs); i += 2 {
+		if i+1 >= len(pairs) {
+			break
+		}
+		k, ok := pairs[i].(K)
+		if !ok {
+			continue
+		}
+		v, ok := pairs[i+1].(V)
+		if !ok {
+			continue
+		}
+		m[k] = v
+	}
+	return m
+}
+
 // Get returns the value associated with the key.
 // If the key doesn't exist or the map is nil, it returns the zero value for the value type.
 func (m Mapper[K, V]) Get(key K) V {
@@ -114,21 +143,17 @@ func (m Mapper[K, V]) Values() []V {
 // Each iterates over each key-value pair in the map and calls the provided function.
 // Does nothing if the map is nil.
 func (m Mapper[K, V]) Each(fn func(K, V)) {
-	if m != nil {
-		for k, v := range m {
-			fn(k, v)
-		}
+	for k, v := range m {
+		fn(k, v)
 	}
 }
 
 // Filter returns a new Mapper containing only the key-value pairs that satisfy the predicate.
 func (m Mapper[K, V]) Filter(fn func(K, V) bool) Mapper[K, V] {
 	result := NewMapper[K, V]()
-	if m != nil {
-		for k, v := range m {
-			if fn(k, v) {
-				result[k] = v
-			}
+	for k, v := range m {
+		if fn(k, v) {
+			result[k] = v
 		}
 	}
 	return result
@@ -137,10 +162,8 @@ func (m Mapper[K, V]) Filter(fn func(K, V) bool) Mapper[K, V] {
 // MapValues returns a new Mapper with the same keys but values transformed by the provided function.
 func (m Mapper[K, V]) MapValues(fn func(V) V) Mapper[K, V] {
 	result := NewMapper[K, V]()
-	if m != nil {
-		for k, v := range m {
-			result[k] = fn(v)
-		}
+	for k, v := range m {
+		result[k] = fn(v)
 	}
 	return result
 }
@@ -148,10 +171,8 @@ func (m Mapper[K, V]) MapValues(fn func(V) V) Mapper[K, V] {
 // Clone returns a shallow copy of the Mapper.
 func (m Mapper[K, V]) Clone() Mapper[K, V] {
 	result := NewMapper[K, V]()
-	if m != nil {
-		for k, v := range m {
-			result[k] = v
-		}
+	for k, v := range m {
+		result[k] = v
 	}
 	return result
 }
@@ -217,4 +238,37 @@ func (m Mapper[K, V]) SortedKeys() []K {
 	})
 
 	return keys
+}
+
+func NewBoolMapper[K comparable](keys ...K) Mapper[K, bool] {
+	if len(keys) == 0 {
+		return nil
+	}
+	mapper := NewMapper[K, bool]()
+	for _, key := range keys {
+		mapper.Set(key, true)
+	}
+	return mapper
+}
+
+func NewIntMapper[K comparable](keys ...K) Mapper[K, int] {
+	if len(keys) == 0 {
+		return nil
+	}
+	mapper := NewMapper[K, int]()
+	for _, key := range keys {
+		mapper.Set(key, 0)
+	}
+	return mapper
+}
+
+func NewIdentityMapper[K comparable](keys ...K) Mapper[K, K] {
+	if len(keys) == 0 {
+		return nil
+	}
+	mapper := NewMapper[K, K]()
+	for _, key := range keys {
+		mapper.Set(key, key)
+	}
+	return mapper
 }

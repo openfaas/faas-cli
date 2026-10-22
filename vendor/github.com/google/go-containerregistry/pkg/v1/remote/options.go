@@ -45,6 +45,8 @@ type options struct {
 	retryBackoff                   Backoff
 	retryPredicate                 retry.Predicate
 	retryStatusCodes               []int
+	limiter                        *pullLimiter
+	referrersTagFallback           bool
 
 	// Only these options can overwrite Reuse()d options.
 	platform v1.Platform
@@ -92,6 +94,7 @@ var fastBackoff = Backoff{
 
 var defaultRetryStatusCodes = []int{
 	http.StatusRequestTimeout,
+	http.StatusTooManyRequests, // 429: OCI distribution-spec rate limit; TooManyRequestsErrorCode is already classified temporary in transport/error.go
 	http.StatusInternalServerError,
 	http.StatusBadGateway,
 	http.StatusServiceUnavailable,
@@ -106,6 +109,8 @@ const (
 	// ECR returns an error if n > 1000:
 	// https://github.com/google/go-containerregistry/issues/1091
 	defaultPageSize = 1000
+
+	defaultReferrersTagFallback = true
 )
 
 // DefaultTransport is based on http.DefaultTransport with modifications
@@ -127,14 +132,15 @@ var DefaultTransport http.RoundTripper = &http.Transport{
 
 func makeOptions(opts ...Option) (*options, error) {
 	o := &options{
-		transport:        DefaultTransport,
-		platform:         defaultPlatform,
-		context:          context.Background(),
-		jobs:             defaultJobs,
-		pageSize:         defaultPageSize,
-		retryPredicate:   defaultRetryPredicate,
-		retryBackoff:     defaultRetryBackoff,
-		retryStatusCodes: defaultRetryStatusCodes,
+		transport:            DefaultTransport,
+		platform:             defaultPlatform,
+		context:              context.Background(),
+		jobs:                 defaultJobs,
+		pageSize:             defaultPageSize,
+		retryPredicate:       defaultRetryPredicate,
+		retryBackoff:         defaultRetryBackoff,
+		retryStatusCodes:     defaultRetryStatusCodes,
+		referrersTagFallback: defaultReferrersTagFallback,
 	}
 
 	for _, option := range opts {
@@ -142,6 +148,7 @@ func makeOptions(opts ...Option) (*options, error) {
 			return nil, err
 		}
 	}
+	o.limiter = newPullLimiter(o.jobs)
 
 	switch {
 	case o.auth != nil && o.keychain != nil:
@@ -162,9 +169,14 @@ func makeOptions(opts ...Option) (*options, error) {
 			o.transport = transport.NewLogger(o.transport)
 		}
 
-		// Wrap the transport in something that can retry network flakes.
-		o.transport = transport.NewRetry(o.transport, transport.WithRetryPredicate(defaultRetryPredicate), transport.WithRetryStatusCodes(o.retryStatusCodes...))
+		// Using customized retry predicate if provided, and fallback to default if not.
+		predicate := o.retryPredicate
+		if predicate == nil {
+			predicate = defaultRetryPredicate
+		}
 
+		// Wrap the transport in something that can retry network flakes.
+		o.transport = transport.NewRetry(o.transport, transport.WithRetryBackoff(o.retryBackoff), transport.WithRetryPredicate(predicate), transport.WithRetryStatusCodes(o.retryStatusCodes...))
 		// Wrap this last to prevent transport.New from double-wrapping.
 		if o.userAgent != "" {
 			o.transport = transport.NewUserAgent(o.transport, o.userAgent)
@@ -316,6 +328,24 @@ func WithRetryPredicate(predicate retry.Predicate) Option {
 func WithRetryStatusCodes(codes ...int) Option {
 	return func(o *options) error {
 		o.retryStatusCodes = codes
+		return nil
+	}
+}
+
+// WithReferrersTagFallback toggles the referrers tag fallback scheme, see:
+// https://github.com/opencontainers/distribution-spec/blob/main/spec.md#referrers-tag-schema
+//
+// When enabled, pushing a manifest with a subject to a registry that doesn't
+// support the Referrers API maintains an image index of referrers under a
+// fallback tag, and listing referrers reads from that tag. When disabled,
+// the Referrers API is required: pushing a manifest with a subject and
+// listing referrers both fail against a registry that doesn't support it,
+// rather than falling back to the tag scheme.
+//
+// The default is true.
+func WithReferrersTagFallback(enabled bool) Option {
+	return func(o *options) error {
+		o.referrersTagFallback = enabled
 		return nil
 	}
 }
