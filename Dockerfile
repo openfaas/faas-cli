@@ -1,7 +1,8 @@
 FROM ghcr.io/openfaas/license-check:0.4.2 as license-check
 
 # Build stage
-FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.27.3 as builder
+# Keep this toolchain aligned with Dockerfile.redist for consistent release builds.
+FROM --platform=${BUILDPLATFORM:-linux/amd64} golang:1.27 as builder
 
 ARG TARGETPLATFORM
 ARG BUILDPLATFORM
