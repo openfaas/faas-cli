@@ -28,7 +28,7 @@ go get github.com/olekukonko/tablewriter@v0.0.5
 #### Latest  Version
 The latest stable version
 ```bash
-go get github.com/olekukonko/tablewriter@v1.0.9
+go get github.com/olekukonko/tablewriter@v1.1.5
 ```
 
 **Warning:** Version `v1.0.0` contains missing functionality and should not be used.
@@ -62,7 +62,7 @@ func main() {
 	data := [][]string{
 		{"Package", "Version", "Status"},
 		{"tablewriter", "v0.0.5", "legacy"},
-		{"tablewriter", "v1.0.9", "latest"},
+		{"tablewriter", "v1.1.5", "latest"},
 	}
 
 	table := tablewriter.NewWriter(os.Stdout)
@@ -77,7 +77,7 @@ func main() {
 │   PACKAGE   │ VERSION │ STATUS │
 ├─────────────┼─────────┼────────┤
 │ tablewriter │ v0.0.5  │ legacy │
-│ tablewriter │ v1.0.9  │ latest │
+│ tablewriter │ v1.1.5  │ latest │
 └─────────────┴─────────┴────────┘
 ```
 
@@ -426,6 +426,30 @@ func main() {
 
 ![Colorized Table with Long Values](_readme/color_1.png "Title")
 
+##### 24-bit (RGB / true color) tints
+
+Besides the named `color.Fg*`/`color.Bg*` attributes, tints accept 24-bit
+colors. `renderer.RGB` and `renderer.BgRGB` take red, green and blue channels
+(0-255, out-of-range values are clamped), while `renderer.Hex`/`renderer.BgHex`
+parse a `#RRGGBB` or `#RGB` string. All of them return a `renderer.Colors`, so
+they slot in wherever named attributes do and can be combined with `append`:
+
+```go
+orange, _ := renderer.Hex("#ff8800")
+
+colorCfg := renderer.ColorizedConfig{
+	// Bold orange headers on a dark-grey background.
+	Header: renderer.Tint{
+		FG: append(orange, color.Bold),
+		BG: renderer.BgRGB(30, 30, 30),
+	},
+	// Teal rows.
+	Column: renderer.Tint{FG: renderer.RGB(0, 200, 180)},
+}
+```
+
+Terminals without true-color support may approximate or ignore these colors.
+
 #### 5. Streaming Table with Truncation
 
 Stream a table incrementally with truncation and a footer, simulating a real-time data feed (inspired by `TestOceanStreamTruncation` and `TestOceanStreamSlowOutput`).
@@ -520,7 +544,7 @@ func main() {
 		tablewriter.WithConfig(tablewriter.Config{
 			Header: tw.CellConfig{Alignment: tw.CellAlignment{Global: tw.AlignCenter}},
 			Row: tw.CellConfig{
-				Formatting: tw.CellFormatting{MergeMode: tw.MergeHierarchical},
+				Merging: tw.CellMerging{Mode: tw.MergeHierarchical},
 				Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
 			},
 		}),
@@ -579,8 +603,8 @@ func main() {
 		})),
 		tablewriter.WithConfig(tablewriter.Config{
 			Row: tw.CellConfig{
-				Formatting: tw.CellFormatting{MergeMode: tw.MergeBoth},
-				Alignment:  tw.CellAlignment{PerColumn: []tw.Align{tw.Skip, tw.Skip, tw.AlignRight, tw.AlignLeft}},
+				Merging:   tw.CellMerging{Mode: tw.MergeBoth},
+				Alignment: tw.CellAlignment{PerColumn: []tw.Align{tw.Skip, tw.Skip, tw.AlignRight, tw.AlignLeft}},
 			},
 
 			Footer: tw.CellConfig{
@@ -806,12 +830,12 @@ func main() {
 		tablewriter.WithRenderer(renderer.NewHTML(htmlCfg)),
 		tablewriter.WithConfig(tablewriter.Config{
 			Header: tw.CellConfig{
-				Formatting: tw.CellFormatting{MergeMode: tw.MergeHorizontal}, // Merge identical header cells
-				Alignment:  tw.CellAlignment{Global: tw.AlignCenter},
+				Merging:   tw.CellMerging{Mode: tw.MergeHorizontal}, // Merge identical header cells
+				Alignment: tw.CellAlignment{Global: tw.AlignCenter},
 			},
 			Row: tw.CellConfig{
-				Formatting: tw.CellFormatting{MergeMode: tw.MergeHorizontal}, // Merge identical row cells
-				Alignment:  tw.CellAlignment{Global: tw.AlignLeft},
+				Merging:   tw.CellMerging{Mode: tw.MergeHorizontal}, // Merge identical row cells
+				Alignment: tw.CellAlignment{Global: tw.AlignLeft},
 			},
 			Footer: tw.CellConfig{Alignment: tw.CellAlignment{Global: tw.AlignRight}},
 		}),
@@ -1081,6 +1105,8 @@ func (t Time) Format() string {
 
 - `AutoFormat` changes See [#261](https://github.com/olekukonko/tablewriter/issues/261)
 
+## What is new
+- `Counting` changes See [#294](https://github.com/olekukonko/tablewriter/issues/294)
 
 ## Command-Line Tool
 

@@ -16,6 +16,10 @@ package v1
 
 import (
 	"crypto"
+	// nolint: depguard
+	_ "crypto/sha256" // Registered for Hasher.
+	// nolint: depguard
+	_ "crypto/sha512" // Registered for Hasher.
 	"encoding"
 	"encoding/hex"
 	"encoding/json"
@@ -78,33 +82,43 @@ func Hasher(name string) (hash.Hash, error) {
 	switch name {
 	case "sha256":
 		return crypto.SHA256.New(), nil
+	case "sha512":
+		return crypto.SHA512.New(), nil
 	default:
 		return nil, fmt.Errorf("unsupported hash: %q", name)
 	}
 }
 
 func (h *Hash) parse(unquoted string) error {
-	parts := strings.Split(unquoted, ":")
-	if len(parts) != 2 {
+	algo, body, ok := strings.Cut(unquoted, ":")
+	if !ok || algo == "" || body == "" {
 		return fmt.Errorf("cannot parse hash: %q", unquoted)
 	}
 
-	rest := strings.TrimLeft(parts[1], "0123456789abcdef")
+	rest := strings.TrimLeft(body, "0123456789abcdef")
 	if len(rest) != 0 {
 		return fmt.Errorf("found non-hex character in hash: %c", rest[0])
 	}
 
-	hasher, err := Hasher(parts[0])
-	if err != nil {
-		return err
-	}
-	// Compare the hex to the expected size (2 hex characters per byte)
-	if len(parts[1]) != hasher.Size()*2 {
-		return fmt.Errorf("wrong number of hex digits for %s: %s", parts[0], parts[1])
+	var wantBytes int
+	switch algo {
+	case "sha256":
+		wantBytes = crypto.SHA256.Size()
+	default:
+		hasher, err := Hasher(algo)
+		if err != nil {
+			return err
+		}
+		wantBytes = hasher.Size()
 	}
 
-	h.Algorithm = parts[0]
-	h.Hex = parts[1]
+	// Compare the hex to the expected size (2 hex characters per byte)
+	if len(body) != hex.EncodedLen(wantBytes) {
+		return fmt.Errorf("wrong number of hex digits for %s: %s", algo, body)
+	}
+
+	h.Algorithm = algo
+	h.Hex = body
 	return nil
 }
 

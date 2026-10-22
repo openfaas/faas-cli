@@ -9,6 +9,9 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 	"time"
@@ -20,9 +23,58 @@ import (
 const GitHubVersionStrategy = "github"
 const GitLabVersionStrategy = "gitlab"
 const k8sVersionStrategy = "k8s"
+const AmpStrategy = `amp`
+
+const HashicorpShasumStrategy = `hashicorp-sha`
+const ClaudeShasumStrategy = `claude-sha`
+const AmpShasumStrategy = `amp-sha`
 
 var supportedOS = [...]string{"linux", "darwin", "ming"}
 var supportedArchitectures = [...]string{"x86_64", "arm", "amd64", "armv6l", "armv7l", "arm64", "aarch64"}
+
+// retryWithBackoff implements exponential backoff with retry logic
+func retryWithBackoff(fn func() (string, error), maxRetries int, initialBackoff time.Duration) (string, error) {
+	var lastErr error
+	for attempt := 0; attempt <= maxRetries; attempt++ {
+		if attempt > 0 {
+			backoff := initialBackoff * time.Duration(1<<uint(attempt-1))
+			if backoff > 10*time.Second {
+				backoff = 10 * time.Second
+			}
+			log.Printf("Attempt %d: Retrying after %v due to: %v", attempt, backoff, lastErr)
+			time.Sleep(backoff)
+		}
+
+		result, err := fn()
+		if err == nil {
+			return result, nil
+		}
+
+		lastErr = err
+
+		// Don't retry permanent errors
+		if isPermanentError(err) {
+			return "", err
+		}
+	}
+	return "", fmt.Errorf("failed after %d attempts: %w", maxRetries+1, lastErr)
+}
+
+func isPermanentError(err error) bool {
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) && urlErr.Op == "parse" {
+		return true
+	}
+
+	// 404, 429 are permanent errors
+	if strings.Contains(err.Error(), "404") {
+		return true
+	}
+	if strings.Contains(err.Error(), "429") {
+		return true
+	}
+	return false
+}
 
 // Tool describes how to download a CLI tool from a binary
 // release - whether a single binary, or an archive.
@@ -59,9 +111,24 @@ type Tool struct {
 	// URL.
 	BinaryTemplate string
 
+	// PackageBinaries opts into preserving a tar.gz package's directory layout.
+	// These named executables from bin/ are linked into the install directory.
+	// Windows targets automatically receive the .exe suffix.
+	PackageBinaries []string
+
 	// NoExtension is required for tooling such as kubectx
 	// which at time of writing is a bash script.
 	NoExtension bool
+
+	VerifyTemplate string
+
+	VerifyStrategy string
+
+	// OCIImage, when set, means the binary is extracted from this
+	// OCI image (e.g. "ghcr.io/openfaasltd/signet") rather than
+	// downloaded from a GitHub release. The image must ship the
+	// binary for each supported OS/architecture.
+	OCIImage string
 }
 
 type ReleaseLocation struct {
@@ -82,7 +149,12 @@ var releaseLocations = map[string]ReleaseLocation{
 		Method:  http.MethodHead,
 	},
 	k8sVersionStrategy: {
-		Url:     "https://cdn.dl.k8s.io/release/stable.txt",
+		Url:     "https://dl.k8s.io/release/stable.txt",
+		Timeout: time.Second * 10,
+		Method:  http.MethodGet,
+	},
+	AmpStrategy: {
+		Url:     "https://static.ampcode.com/cli/cli-version.txt",
 		Timeout: time.Second * 5,
 		Method:  http.MethodGet,
 	},
@@ -91,6 +163,8 @@ var releaseLocations = map[string]ReleaseLocation{
 type ToolLocal struct {
 	Name string
 	Path string
+	// Package means the entry point requires its adjacent package directory.
+	Package bool
 }
 
 var templateFuncs = map[string]interface{}{
@@ -101,7 +175,7 @@ func (tool Tool) IsArchive(quiet bool) (bool, error) {
 	arch, operatingSystem := env.GetClientArch()
 	version := ""
 
-	downloadURL, err := GetDownloadURL(&tool, strings.ToLower(operatingSystem), strings.ToLower(arch), version, quiet)
+	downloadURL, _, err := GetDownloadURL(&tool, strings.ToLower(operatingSystem), strings.ToLower(arch), version, quiet)
 	if err != nil {
 		return false, err
 	}
@@ -115,20 +189,58 @@ func isArchiveStr(downloadURL string) bool {
 
 	return strings.HasSuffix(downloadURL, "tar.gz") ||
 		strings.HasSuffix(downloadURL, "zip") ||
-		strings.HasSuffix(downloadURL, "tgz")
+		strings.HasSuffix(downloadURL, "tgz") ||
+		strings.HasSuffix(downloadURL, ".gz") ||
+		strings.HasSuffix(downloadURL, ".bz2") ||
+		strings.HasSuffix(downloadURL, "tar.xz")
+}
+
+// ResolveVersion determines the version for a tool. When version is
+// non-empty it is returned as-is. Otherwise the latest release is
+// looked up using the tool's VersionStrategy.
+func ResolveVersion(tool *Tool, version string) (string, error) {
+	ver := GetToolVersion(tool, version)
+	if len(ver) > 0 {
+		return ver, nil
+	}
+
+	// OCI-backed tools ship a "latest" tag, so there is no version
+	// lookup unless the tool is pinned or a version was given.
+	if len(tool.OCIImage) > 0 {
+		return "latest", nil
+	}
+
+	var releaseType string
+	if len(tool.URLTemplate) == 0 ||
+		strings.Contains(tool.URLTemplate, "https://github.com/") {
+		releaseType = GitHubVersionStrategy
+	}
+	if len(tool.VersionStrategy) > 0 {
+		releaseType = tool.VersionStrategy
+	}
+
+	if _, supported := releaseLocations[releaseType]; supported {
+		v, err := FindRelease(releaseType, tool.Owner, tool.Repo)
+		if err != nil {
+			return "", err
+		}
+		return v, nil
+	}
+
+	return ver, nil
 }
 
 // GetDownloadURL fetches the download URL for a release of a tool
 // for a given os, architecture and version
-func GetDownloadURL(tool *Tool, os, arch, version string, quiet bool) (string, error) {
+func GetDownloadURL(tool *Tool, os, arch, version string, quiet bool) (string, string, error) {
 	ver := GetToolVersion(tool, version)
 
-	dlURL, err := tool.GetURL(os, arch, ver, quiet)
+	dlURL, resolvedVersion, err := tool.GetURL(os, arch, ver, quiet)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return dlURL, nil
+	return dlURL, resolvedVersion, nil
 }
 
 func GetToolVersion(tool *Tool, version string) string {
@@ -162,7 +274,8 @@ func (tool Tool) Head(uri string) (int, string, http.Header, error) {
 	return res.StatusCode, body, res.Header, nil
 }
 
-func (tool Tool) GetURL(os, arch, version string, quiet bool) (string, error) {
+func (tool Tool) GetURL(os, arch, version string, quiet bool) (string, string, error) {
+	resolvedVersion := version
 
 	if len(version) == 0 {
 
@@ -184,23 +297,49 @@ func (tool Tool) GetURL(os, arch, version string, quiet bool) (string, error) {
 
 		if _, supported := releaseLocations[releaseType]; supported {
 
+			start := time.Now()
 			v, err := FindRelease(releaseType, tool.Owner, tool.Repo)
 			if err != nil {
-				return "", err
+				return "", "", err
 			}
 			version = v
+			if !quiet {
+				log.Printf("Found %s version: %s (in %s)", tool.Name, version, time.Since(start).Round(time.Millisecond))
+			}
 		}
 
-		if !quiet {
-			log.Printf("Found: %s", version)
+		resolvedVersion = version
+
+		if len(tool.URLTemplate) > 0 {
+			res, err := getByDownloadTemplate(tool, os, arch, version)
+			if err != nil {
+				return "", "", err
+			}
+			return res, resolvedVersion, nil
 		}
+
+		res, err := getURLByGithubTemplate(tool, os, arch, version)
+		if err != nil {
+			return "", "", err
+		}
+		return res, resolvedVersion, nil
 	}
+
+	resolvedVersion = version
 
 	if len(tool.URLTemplate) > 0 {
-		return getByDownloadTemplate(tool, os, arch, version)
+		res, err := getByDownloadTemplate(tool, os, arch, version)
+		if err != nil {
+			return "", "", err
+		}
+		return res, resolvedVersion, nil
 	}
 
-	return getURLByGithubTemplate(tool, os, arch, version)
+	res, err := getURLByGithubTemplate(tool, os, arch, version)
+	if err != nil {
+		return "", "", err
+	}
+	return res, resolvedVersion, nil
 }
 
 func getURLByGithubTemplate(tool Tool, os, arch, version string) (string, error) {
@@ -227,7 +366,7 @@ func getURLByGithubTemplate(tool Tool, os, arch, version string) (string, error)
 		return "", err
 	}
 
-	downloadName := strings.TrimSpace(buf.String())
+	downloadName := sanitizeTemplateResult(buf.String())
 
 	return getBinaryURL(tool.Owner, tool.Repo, version, downloadName), nil
 }
@@ -245,46 +384,48 @@ func FindRelease(location, owner, repo string) (string, error) {
 		return http.ErrUseLastResponse
 	}
 
-	req, err := http.NewRequest(releaseLocations[location].Method, url, nil)
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("User-Agent", pkg.UserAgent())
-
-	res, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-
-	defer res.Body.Close()
-
-	if releaseLocations[location].Method == http.MethodHead {
-
-		if res.StatusCode != http.StatusMovedPermanently && res.StatusCode != http.StatusFound {
-			return "", fmt.Errorf("server returned status: %d", res.StatusCode)
+	return retryWithBackoff(func() (string, error) {
+		req, err := http.NewRequest(releaseLocations[location].Method, url, nil)
+		if err != nil {
+			return "", err
 		}
 
-		loc := res.Header.Get("Location")
-		if len(loc) == 0 {
+		req.Header.Set("User-Agent", pkg.UserAgent())
+
+		res, err := client.Do(req)
+		if err != nil {
+			return "", err
+		}
+
+		defer res.Body.Close()
+
+		if releaseLocations[location].Method == http.MethodHead {
+
+			if res.StatusCode != http.StatusMovedPermanently && res.StatusCode != http.StatusFound {
+				return "", fmt.Errorf("server returned status: %d", res.StatusCode)
+			}
+
+			loc := res.Header.Get("Location")
+			if len(loc) == 0 {
+				return "", fmt.Errorf("unable to determine release of tool")
+			}
+
+			version := loc[strings.LastIndex(loc, "/")+1:]
+			return version, nil
+		}
+
+		if res.Body == nil {
 			return "", fmt.Errorf("unable to determine release of tool")
 		}
 
-		version := loc[strings.LastIndex(loc, "/")+1:]
+		bodyBytes, err := io.ReadAll(res.Body)
+		if err != nil {
+			return "", err
+		}
+
+		version := strings.TrimSpace(string(bodyBytes))
 		return version, nil
-	}
-
-	if res.Body == nil {
-		return "", fmt.Errorf("unable to determine release of tool")
-	}
-
-	bodyBytes, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", err
-	}
-
-	version := string(bodyBytes)
-	return version, nil
+	}, 10, 100*time.Millisecond)
 }
 
 func formatUrl(url, owner, repo string) string {
@@ -329,7 +470,7 @@ func getByDownloadTemplate(tool Tool, os, arch, version string) (string, error) 
 		return "", err
 	}
 
-	res := strings.TrimSpace(buf.String())
+	res := sanitizeTemplateResult(buf.String())
 	return res, nil
 }
 
@@ -395,11 +536,15 @@ func GetBinaryName(tool *Tool, os, arch, version string) (string, error) {
 			return "", err
 		}
 
-		res := strings.TrimSpace(buf.String())
+		res := sanitizeTemplateResult(buf.String())
 		return res, nil
 	}
 
 	return "", errors.New("BinaryTemplate is not set")
+}
+
+func sanitizeTemplateResult(in string) string {
+	return strings.Join(strings.Fields(strings.TrimSpace(in)), "")
 }
 
 // GetDownloadURLs generates a list of URL for each tool, for download
@@ -452,39 +597,101 @@ func PostToolNotFoundMsg(url string) string {
 // PostInstallationMsg generates installation message after tool has been downloaded
 func PostInstallationMsg(movePath string, localToolsStore []ToolLocal) ([]byte, error) {
 
-	t := template.New("Installation Instructions")
+	var buf bytes.Buffer
+	for _, tl := range localToolsStore {
+		if tl.Package {
+			if movePath == "" && !ArkadeInPath() {
+				buf.WriteString("# Add arkade binary directory to your PATH variable\n")
+				buf.WriteString(pathExportInstructions())
+				buf.WriteString("\n")
+			}
+			buf.WriteString("# Keep package entry points with their adjacent .arkade-NAME directories.\n")
+			buf.WriteString("# Install to system (optional):\n")
+			for _, tool := range localToolsStore {
+				if tool.Package {
+					fmt.Fprintf(&buf, "sudo arkade get %s --path /usr/local/bin\n", tool.Name)
+				} else if movePath == "" {
+					fmt.Fprintf(&buf, "sudo mv %s /usr/local/bin/\n", tool.Path)
+				} else {
+					fmt.Fprintf(&buf, "sudo install -m 755 %s /usr/local/bin/%s\n", tool.Path, tool.Name)
+				}
+			}
+			return bytes.TrimRight(buf.Bytes(), "\n"), nil
+		}
+	}
 
 	if movePath != "" {
-		t.Parse(`Run the following to copy to install the tool:
-
-{{- range . }}
-sudo install -m 755 {{.Path}} /usr/local/bin/{{.Name}}
-{{- end}}`)
-
+		buf.WriteString("# Install to system (optional):\n")
+		for _, tl := range localToolsStore {
+			fmt.Fprintf(&buf, "sudo install -m 755 %s /usr/local/bin/%s\n", tl.Path, tl.Name)
+		}
+	} else if ArkadeInPath() {
+		buf.WriteString("# Install to system (optional):\n")
+		for _, tl := range localToolsStore {
+			fmt.Fprintf(&buf, "sudo mv %s /usr/local/bin/\n", tl.Path)
+		}
 	} else {
-		t.Parse(`# Add arkade binary directory to your PATH variable
-export PATH=$PATH:$HOME/.arkade/bin/
-
-# Test the binary:
-{{- range . }}
-{{.Path}}
-{{- end }}
-
-# Or install with:
-{{- range . }}
-sudo mv {{.Path}} /usr/local/bin/
-
-{{- end}}`)
+		buf.WriteString("# Add arkade binary directory to your PATH variable\n")
+		buf.WriteString(pathExportInstructions())
+		buf.WriteString("\n")
+		buf.WriteString("# Install to system (optional):\n")
+		for _, tl := range localToolsStore {
+			fmt.Fprintf(&buf, "sudo mv %s /usr/local/bin/\n", tl.Path)
+		}
 	}
 
-	var tpl bytes.Buffer
+	return bytes.TrimRight(buf.Bytes(), "\n"), nil
+}
 
-	err := t.Execute(&tpl, localToolsStore)
-	if err != nil {
-		return nil, err
+func pathExportInstructions() string {
+	initFile := detectShellInitFile()
+
+	switch initFile {
+	case "~/.config/fish/config.fish":
+		return "set -U fish_user_paths $HOME/.arkade/bin $fish_user_paths\n"
+	default:
+		return fmt.Sprintf("echo 'export PATH=\"$HOME/.arkade/bin:$PATH\"' >> %s\nexport PATH=\"$HOME/.arkade/bin:$PATH\"\n", initFile)
+	}
+}
+
+func detectShellInitFile() string {
+	shell := filepath.Base(os.Getenv("SHELL"))
+
+	switch shell {
+	case "zsh":
+		return "~/.zshrc"
+	case "bash":
+		if home, err := os.UserHomeDir(); err == nil {
+			bashrc := filepath.Join(home, ".bashrc")
+			if _, err := os.Stat(bashrc); err == nil {
+				return "~/.bashrc"
+			}
+
+			bashProfile := filepath.Join(home, ".bash_profile")
+			if _, err := os.Stat(bashProfile); err == nil {
+				return "~/.bash_profile"
+			}
+		}
+
+		return "~/.bashrc"
+	case "fish":
+		return "~/.config/fish/config.fish"
 	}
 
-	return tpl.Bytes(), err
+	if home, err := os.UserHomeDir(); err == nil {
+		for _, candidate := range []string{".zshrc", ".bashrc", ".bash_profile", ".profile"} {
+			if _, err := os.Stat(filepath.Join(home, candidate)); err == nil {
+				return "~/" + candidate
+			}
+		}
+	}
+
+	return "~/.profile"
+}
+
+// ArkadeInPath returns true when $PATH already contains .arkade/bin.
+func ArkadeInPath() bool {
+	return strings.Contains(os.Getenv("PATH"), ".arkade/bin")
 }
 
 // ValidateOS returns whether a given operating system is supported

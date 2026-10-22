@@ -13,17 +13,38 @@ import (
 // These include common string literals for separators, empty strings, and special representations,
 // as well as limits like recursion depth. Defining them as constants allows for compile-time
 // optimizations, readability, and consistent usage in functions like Space, Path, CSV, and reflection handlers.
+// cat.go (updated constants section)
 const (
 	empty   = ""   // Empty string constant, used for checks and defaults.
 	space   = " "  // Single space, default separator.
 	slash   = "/"  // Forward slash, for paths.
 	dot     = "."  // Period, for extensions or decimals.
 	comma   = ","  // Comma, for CSV or lists.
+	equal   = "="  // Equals, for comparisons.
 	newline = "\n" // Newline, for multi-line strings.
 
-	maxRecursionDepth = 32      // Maximum recursion depth for nested structure handling to prevent stack overflow in reflection-based conversions.
-	nilString         = "<nil>" // String representation for nil values in output.
-	unexportedString  = "<?>"   // Placeholder for unexported or inaccessible fields during reflection.
+	// SQL-specific constants
+	and        = "AND"      // AND operator, for SQL conditions.
+	inOpen     = " IN ("    // Opening for SQL IN clause
+	inClose    = ")"        // Closing for SQL IN clause
+	asSQL      = " AS "     // SQL AS for aliasing
+	count      = "COUNT("   // SQL COUNT function prefix
+	sum        = "SUM("     // SQL SUM function prefix
+	avg        = "AVG("     // SQL AVG function prefix
+	maxOpen    = "MAX("     // SQL MAX function prefix
+	minOpen    = "MIN("     // SQL MIN function prefix
+	caseSQL    = "CASE "    // SQL CASE keyword
+	when       = "WHEN "    // SQL WHEN clause
+	then       = " THEN "   // SQL THEN clause
+	elseSQL    = " ELSE "   // SQL ELSE clause
+	end        = " END"     // SQL END for CASE
+	countAll   = "COUNT(*)" // SQL COUNT(*) for all rows
+	parenOpen  = "("        // Opening parenthesis
+	parenClose = ")"        // Closing parenthesis
+
+	maxRecursionDepth = 32      // Maximum recursion depth for nested structure handling.
+	nilString         = "<nil>" // String representation for nil values.
+	unexportedString  = "<?>"   // Placeholder for unexported fields.
 )
 
 // Numeric is a generic constraint interface for numeric types.

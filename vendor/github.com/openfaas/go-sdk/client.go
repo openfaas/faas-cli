@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -16,6 +17,13 @@ import (
 	"github.com/openfaas/faas-provider/logs"
 	"github.com/openfaas/faas-provider/types"
 	"github.com/openfaas/go-sdk/internal/httpclient"
+)
+
+var (
+	ErrNotFound         = errors.New("not found")
+	ErrUnauthorized     = errors.New("unauthorized")
+	ErrForbidden        = errors.New("forbidden")
+	ErrUnexpectedStatus = errors.New("unexpected response status")
 )
 
 // Client is used to manage OpenFaaS and invoke functions
@@ -64,6 +72,20 @@ func WithAuthentication(auth ClientAuth) ClientOption {
 func WithFunctionTokenCache(cache TokenCache) ClientOption {
 	return func(c *Client) {
 		c.fnTokenCache = cache
+	}
+}
+
+// FunctionOption configures a function operation.
+type FunctionOption func(*functionOptions)
+
+type functionOptions struct {
+	usage bool
+}
+
+// WithUsage includes CPU and RAM usage metrics in function query responses.
+func WithUsage() FunctionOption {
+	return func(opts *functionOptions) {
+		opts.usage = true
 	}
 }
 
@@ -127,24 +149,37 @@ func (s *Client) GetNamespaces(ctx context.Context) ([]string, error) {
 		defer res.Body.Close()
 	}
 
-	bytesOut, err := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return namespaces, err
 	}
 
-	if res.StatusCode == http.StatusUnauthorized {
-		return namespaces, fmt.Errorf("check authorization, status code: %d", res.StatusCode)
-	}
+	switch res.StatusCode {
+	case http.StatusOK:
+		if len(body) == 0 {
+			return namespaces, nil
+		}
 
-	if len(bytesOut) == 0 {
+		if err := json.Unmarshal(body, &namespaces); err != nil {
+			return namespaces, fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+		}
 		return namespaces, nil
-	}
 
-	if err := json.Unmarshal(bytesOut, &namespaces); err != nil {
-		return namespaces, fmt.Errorf("unable to marshal to JSON: %s, error: %w", string(bytesOut), err)
-	}
+	case http.StatusUnauthorized:
+		if len(body) > 0 {
+			return namespaces, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return namespaces, ErrUnauthorized
 
-	return namespaces, err
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return namespaces, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return namespaces, ErrForbidden
+
+	default:
+		return namespaces, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
+	}
 }
 
 // GetNamespaces get openfaas namespaces
@@ -183,13 +218,22 @@ func (s *Client) GetNamespace(ctx context.Context, namespace string) (types.Func
 		return fnNamespace, err
 
 	case http.StatusNotFound:
-		return types.FunctionNamespace{}, fmt.Errorf("namespace %s not found", namespace)
+		return types.FunctionNamespace{}, fmt.Errorf("%w: namespace %s", ErrNotFound, namespace)
 
 	case http.StatusUnauthorized:
-		return types.FunctionNamespace{}, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return types.FunctionNamespace{}, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return types.FunctionNamespace{}, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return types.FunctionNamespace{}, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return types.FunctionNamespace{}, ErrForbidden
 
 	default:
-		return types.FunctionNamespace{}, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return types.FunctionNamespace{}, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -246,10 +290,19 @@ func (s *Client) CreateNamespace(ctx context.Context, spec types.FunctionNamespa
 		return res.StatusCode, nil
 
 	case http.StatusUnauthorized:
-		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return res.StatusCode, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return res.StatusCode, ErrForbidden
 
 	default:
-		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return res.StatusCode, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -306,13 +359,22 @@ func (s *Client) UpdateNamespace(ctx context.Context, spec types.FunctionNamespa
 		return res.StatusCode, nil
 
 	case http.StatusNotFound:
-		return res.StatusCode, fmt.Errorf("namespace %s not found", spec.Name)
+		return res.StatusCode, fmt.Errorf("%w: namespace %s", ErrNotFound, spec.Name)
 
 	case http.StatusUnauthorized:
-		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return res.StatusCode, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return res.StatusCode, ErrForbidden
 
 	default:
-		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return res.StatusCode, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -355,24 +417,29 @@ func (s *Client) DeleteNamespace(ctx context.Context, namespace string) error {
 		defer res.Body.Close()
 	}
 
+	body, _ := io.ReadAll(res.Body)
+
 	switch res.StatusCode {
 	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
 		break
 
 	case http.StatusNotFound:
-		return fmt.Errorf("namespace %s not found", namespace)
+		return fmt.Errorf("%w: namespace %s", ErrNotFound, namespace)
 
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return ErrForbidden
 
 	default:
-		var err error
-		bytesOut, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(bytesOut))
+		return fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 	return nil
 }
@@ -410,13 +477,30 @@ func (s *Client) GetFunctions(ctx context.Context, namespace string) ([]types.Fu
 
 	body, _ := io.ReadAll(res.Body)
 
-	functions := []types.FunctionStatus{}
-	if err := json.Unmarshal(body, &functions); err != nil {
-		return []types.FunctionStatus{},
-			fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
-	}
+	switch res.StatusCode {
+	case http.StatusOK:
+		functions := []types.FunctionStatus{}
+		if err := json.Unmarshal(body, &functions); err != nil {
+			return []types.FunctionStatus{},
+				fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+		}
+		return functions, nil
 
-	return functions, nil
+	case http.StatusUnauthorized:
+		if len(body) > 0 {
+			return []types.FunctionStatus{}, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return []types.FunctionStatus{}, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return []types.FunctionStatus{}, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return []types.FunctionStatus{}, ErrForbidden
+
+	default:
+		return []types.FunctionStatus{}, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
+	}
 }
 
 func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
@@ -445,23 +529,50 @@ func (s *Client) GetInfo(ctx context.Context) (SystemInfo, error) {
 
 	body, _ := io.ReadAll(res.Body)
 
-	info := SystemInfo{}
-	if err := json.Unmarshal(body, &info); err != nil {
-		return SystemInfo{},
-			fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
-	}
+	switch res.StatusCode {
+	case http.StatusOK:
+		info := SystemInfo{}
+		if err := json.Unmarshal(body, &info); err != nil {
+			return SystemInfo{},
+				fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+		}
+		return info, nil
 
-	return info, nil
+	case http.StatusUnauthorized:
+		if len(body) > 0 {
+			return SystemInfo{}, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return SystemInfo{}, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return SystemInfo{}, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return SystemInfo{}, ErrForbidden
+
+	default:
+		return SystemInfo{}, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
+	}
 }
 
 // GetFunction gives a richer payload than GetFunctions, but for a specific function
-func (s *Client) GetFunction(ctx context.Context, name, namespace string) (types.FunctionStatus, error) {
+func (s *Client) GetFunction(ctx context.Context, name, namespace string, opts ...FunctionOption) (types.FunctionStatus, error) {
 	u, _ := url.Parse(s.GatewayURL.String())
 	u.Path = "/system/function/" + name
 
-	if len(namespace) > 0 {
+	functionOpts := &functionOptions{}
+	for _, opt := range opts {
+		opt(functionOpts)
+	}
+
+	if len(namespace) > 0 || functionOpts.usage {
 		query := u.Query()
-		query.Set("namespace", namespace)
+		if len(namespace) > 0 {
+			query.Set("namespace", namespace)
+		}
+		if functionOpts.usage {
+			query.Set("usage", "1")
+		}
 		u.RawQuery = query.Encode()
 	}
 
@@ -487,13 +598,33 @@ func (s *Client) GetFunction(ctx context.Context, name, namespace string) (types
 
 	body, _ := io.ReadAll(res.Body)
 
-	function := types.FunctionStatus{}
-	if err := json.Unmarshal(body, &function); err != nil {
-		return types.FunctionStatus{},
-			fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
-	}
+	switch res.StatusCode {
+	case http.StatusOK:
+		function := types.FunctionStatus{}
+		if err := json.Unmarshal(body, &function); err != nil {
+			return types.FunctionStatus{},
+				fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+		}
+		return function, nil
 
-	return function, nil
+	case http.StatusNotFound:
+		return types.FunctionStatus{}, fmt.Errorf("%w: function %s", ErrNotFound, name)
+
+	case http.StatusUnauthorized:
+		if len(body) > 0 {
+			return types.FunctionStatus{}, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return types.FunctionStatus{}, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return types.FunctionStatus{}, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return types.FunctionStatus{}, ErrForbidden
+
+	default:
+		return types.FunctionStatus{}, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
+	}
 }
 
 func (s *Client) Deploy(ctx context.Context, spec types.FunctionDeployment) (int, error) {
@@ -545,10 +676,19 @@ func (s *Client) deploy(ctx context.Context, method string, spec types.FunctionD
 		return res.StatusCode, nil
 
 	case http.StatusUnauthorized:
-		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return res.StatusCode, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return res.StatusCode, ErrForbidden
 
 	default:
-		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return res.StatusCode, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -590,24 +730,29 @@ func (s *Client) ScaleFunction(ctx context.Context, functionName, namespace stri
 		defer res.Body.Close()
 	}
 
+	body, _ := io.ReadAll(res.Body)
+
 	switch res.StatusCode {
 	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
 		break
 
 	case http.StatusNotFound:
-		return fmt.Errorf("function %s not found", functionName)
+		return fmt.Errorf("%w: function %s", ErrNotFound, functionName)
 
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return ErrForbidden
 
 	default:
-		var err error
-		bytesOut, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("server returned unexpected status code %d, message: %q", res.StatusCode, string(bytesOut))
+		return fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 	return nil
 }
@@ -649,24 +794,29 @@ func (s *Client) DeleteFunction(ctx context.Context, functionName, namespace str
 		defer res.Body.Close()
 	}
 
+	body, _ := io.ReadAll(res.Body)
+
 	switch res.StatusCode {
 	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
 		break
 
 	case http.StatusNotFound:
-		return fmt.Errorf("function %s not found", functionName)
+		return fmt.Errorf("%w: function %s", ErrNotFound, functionName)
 
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return ErrForbidden
 
 	default:
-		var err error
-		bytesOut, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("server returned unexpected status code %d, message: %q", res.StatusCode, string(bytesOut))
+		return fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 	return nil
 }
@@ -704,13 +854,30 @@ func (s *Client) GetSecrets(ctx context.Context, namespace string) ([]types.Secr
 
 	body, _ := io.ReadAll(res.Body)
 
-	secrets := []types.Secret{}
-	if err := json.Unmarshal(body, &secrets); err != nil {
-		return []types.Secret{},
-			fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
-	}
+	switch res.StatusCode {
+	case http.StatusOK:
+		secrets := []types.Secret{}
+		if err := json.Unmarshal(body, &secrets); err != nil {
+			return []types.Secret{},
+				fmt.Errorf("unable to unmarshal value: %q, error: %w", string(body), err)
+		}
+		return secrets, nil
 
-	return secrets, nil
+	case http.StatusUnauthorized:
+		if len(body) > 0 {
+			return []types.Secret{}, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return []types.Secret{}, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return []types.Secret{}, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return []types.Secret{}, ErrForbidden
+
+	default:
+		return []types.Secret{}, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
+	}
 }
 
 // CreateSecret creates a secret
@@ -754,10 +921,19 @@ func (s *Client) CreateSecret(ctx context.Context, spec types.Secret) (int, erro
 		return res.StatusCode, nil
 
 	case http.StatusUnauthorized:
-		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return res.StatusCode, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return res.StatusCode, ErrForbidden
 
 	default:
-		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return res.StatusCode, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -802,13 +978,22 @@ func (s *Client) UpdateSecret(ctx context.Context, spec types.Secret) (int, erro
 		return res.StatusCode, nil
 
 	case http.StatusNotFound:
-		return res.StatusCode, fmt.Errorf("secret %s not found", spec.Name)
+		return res.StatusCode, fmt.Errorf("%w: secret %s", ErrNotFound, spec.Name)
 
 	case http.StatusUnauthorized:
-		return res.StatusCode, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return res.StatusCode, ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return res.StatusCode, fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return res.StatusCode, ErrForbidden
 
 	default:
-		return res.StatusCode, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(body))
+		return res.StatusCode, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 }
 
@@ -849,24 +1034,29 @@ func (s *Client) DeleteSecret(ctx context.Context, secretName, namespace string)
 		defer res.Body.Close()
 	}
 
+	body, _ := io.ReadAll(res.Body)
+
 	switch res.StatusCode {
 	case http.StatusAccepted, http.StatusOK, http.StatusCreated:
 		break
 
 	case http.StatusNotFound:
-		return fmt.Errorf("secret %s not found", secretName)
+		return fmt.Errorf("%w: secret %s", ErrNotFound, secretName)
 
 	case http.StatusUnauthorized:
-		return fmt.Errorf("unauthorized action, please setup authentication for this server")
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrUnauthorized, string(body))
+		}
+		return ErrUnauthorized
+
+	case http.StatusForbidden:
+		if len(body) > 0 {
+			return fmt.Errorf("%w: %s", ErrForbidden, string(body))
+		}
+		return ErrForbidden
 
 	default:
-		var err error
-		bytesOut, err := io.ReadAll(res.Body)
-		if err != nil {
-			return err
-		}
-
-		return fmt.Errorf("server returned unexpected status code %d, message: %q", res.StatusCode, string(bytesOut))
+		return fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(body))
 	}
 	return nil
 }
@@ -949,16 +1139,28 @@ func (s *Client) GetLogs(ctx context.Context, functionName, namespace string, fo
 		}()
 
 	case http.StatusNotFound:
-		return nil, fmt.Errorf("function: %s not found", functionName)
+		return nil, fmt.Errorf("%w: function %s", ErrNotFound, functionName)
 
 	case http.StatusUnauthorized:
-		return nil, fmt.Errorf("unauthorized action, please setup authentication for this server")
+		bytesOut, err := io.ReadAll(res.Body)
+		if err == nil && len(bytesOut) > 0 {
+			return nil, fmt.Errorf("%w: %s", ErrUnauthorized, string(bytesOut))
+		}
+		return nil, ErrUnauthorized
+
+	case http.StatusForbidden:
+		bytesOut, err := io.ReadAll(res.Body)
+		if err == nil && len(bytesOut) > 0 {
+			return nil, fmt.Errorf("%w: %s", ErrForbidden, string(bytesOut))
+		}
+		return nil, ErrForbidden
 
 	default:
 		bytesOut, err := io.ReadAll(res.Body)
 		if err == nil {
-			return nil, fmt.Errorf("unexpected status code: %d, message: %q", res.StatusCode, string(bytesOut))
+			return nil, fmt.Errorf("%w: status code %d, message: %q", ErrUnexpectedStatus, res.StatusCode, string(bytesOut))
 		}
+		return nil, fmt.Errorf("%w: status code %d", ErrUnexpectedStatus, res.StatusCode)
 	}
 	return logStream, nil
 }
